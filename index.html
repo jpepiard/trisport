@@ -296,9 +296,23 @@
           // darts selects
           Array.prototype.forEach.call(el.querySelectorAll('select[data-match][data-kind]'), function(sel){ sel.addEventListener('change', function(){ var kind=sel.getAttribute('data-kind'); var idx=parseInt(sel.getAttribute('data-index'),10); var val = sel.value===''? null : parseInt(sel.value,10); var match=state.matches.find(function(x){return x.id===m.id}); match[kind][idx]=val; saveState(); renderMatches(); renderLeaderboard(); }); });
           // ping inputs
-          Array.prototype.forEach.call(el.querySelectorAll('input[data-ping]'), function(inp){ inp.addEventListener('input', function(){ var which=inp.getAttribute('data-ping'); var idx=parseInt(inp.getAttribute('data-index'),10); var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,11); var match=state.matches.find(function(x){return x.id===m.id}); if(!Array.isArray(match.pingPts)){ match.pingPts=getPingPts(match); } match.pingPts[idx][which]=val; saveState(); renderMatches(); renderLeaderboard(); }); });
+          Array.prototype.forEach.call(el.querySelectorAll('input[data-ping]'), function(inp){
+            inp.addEventListener('input', function(){
+              var which=inp.getAttribute('data-ping'); var idx=parseInt(inp.getAttribute('data-index'),10);
+              var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,99);
+              var match=state.matches.find(function(x){return x.id===m.id}); if(!Array.isArray(match.pingPts)){ match.pingPts=getPingPts(match); }
+              match.pingPts[idx][which]=val; saveState(); renderLeaderboard();
+            });
+            inp.addEventListener('change', function(){ renderMatches(); });
+          }); if(!Array.isArray(match.pingPts)){ match.pingPts=getPingPts(match); } match.pingPts[idx][which]=val; saveState(); renderMatches(); renderLeaderboard(); }); });
           // palet inputs
-          Array.prototype.forEach.call(el.querySelectorAll('input[data-palet]'), function(inp){ inp.addEventListener('input', function(){ var which=inp.getAttribute('data-palet'); var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,11); var match=state.matches.find(function(x){return x.id===m.id}); match.palet[which]=val; saveState(); renderMatches(); renderLeaderboard(); }); });
+          Array.prototype.forEach.call(el.querySelectorAll('input[data-palet]'), function(inp){
+            inp.addEventListener('input', function(){
+              var which=inp.getAttribute('data-palet'); var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,11);
+              var match=state.matches.find(function(x){return x.id===m.id}); match.palet[which]=val; saveState(); renderLeaderboard();
+            });
+            inp.addEventListener('change', function(){ renderMatches(); });
+          }); match.palet[which]=val; saveState(); renderMatches(); renderLeaderboard(); }); });
           // clear & delete
           el.querySelector('[data-clear]').addEventListener('click', function(){ clearMatch(m.id); });
           el.querySelector('[data-delete]').addEventListener('click', function(){ deleteMatch(m.id); });
@@ -333,6 +347,26 @@
       var sets=getPingPts(m); var names=[teamName(m.a), teamName(m.b)].map(escapeHtml); var labels=['Simple 1','Simple 2','Double']; var html='';
       for(var i=0;i<3;i++){
         var s=sets[i] || {a:null,b:null};
+        var note='';
+        if(s.a==null || s.b==null){ note='Saisissez deux scores (au moins 11 pour le vainqueur et 2 pts d\'écart).'; }
+        else if(isPingValid(s.a,s.b)){ note='✔️ Score valide (11+ et écart ≥ 2)'; }
+        else { note='⚠️ Vainqueur à 11+ et écart de 2 requis (ex: 11–9, 12–10, 13–11…).'; }
+        html += '\
+          <div class="grid cols-4" style="align-items:end; margin-top:6px">\
+            <div>\
+              <label>Ping-pong — '+labels[i]+' — Points '+names[0]+'</label>\
+              <input type="number" min="0" max="99" step="1" placeholder="0–99" value="'+(s.a==null?'':s.a)+'" data-ping="a" data-index="'+i+'"/>\
+            </div>\
+            <div>\
+              <label>Ping-pong — '+labels[i]+' — Points '+names[1]+'</label>\
+              <input type="number" min="0" max="99" step="1" placeholder="0–99" value="'+(s.b==null?'':s.b)+'" data-ping="b" data-index="'+i+'"/>\
+            </div>\
+            <div class="help">'+note+'</div>\
+            <div></div>\
+          </div>';
+      }
+      return html;
+    };
         var note='';
         if(s.a==null || s.b==null){ note='Saisissez deux scores (l’un doit être 11).'; }
         else if(isPingValid(s.a,s.b)){ note='✔️ Score valide'; }
@@ -381,7 +415,7 @@
     function computeSetWins(m){
       var aw={darts:0,ping:0}, bw={darts:0,ping:0};
       m.darts.forEach(function(v){ if(v===0){ aw.darts++; } else if(v===1){ bw.darts++; } });
-      getPingPts(m).forEach(function(s){ if(isPingValid(s.a,s.b)){ if(s.a===11){ aw.ping++; } else if(s.b===11){ bw.ping++; } } });
+      getPingPts(m).forEach(function(s){ if(isPingValid(s.a,s.b)){ if(s.a > s.b){ aw.ping++; } else if(s.b > s.a){ bw.ping++; } } });
       return {aw:aw, bw:bw};
     }
 
@@ -392,7 +426,7 @@
         // fléchettes
         m.darts.forEach(function(v){ if(v===0){ sA.dartsW++; sA.points+=5; } else if(v===1){ sB.dartsW++; sB.points+=5; } });
         // ping-pong via scores (11 gagnant)
-        getPingPts(m).forEach(function(s){ if(isPingValid(s.a,s.b)){ if(s.a===11){ sA.pingW++; sA.points+=5; } else if(s.b===11){ sB.pingW++; sB.points+=5; } } });
+        getPingPts(m).forEach(function(s){ if(isPingValid(s.a,s.b)){ if(s.a > s.b){ sA.pingW++; sA.points += 5; } else if(s.b > s.a){ sB.pingW++; sB.points += 5; } } });
         // palet: addition des points marqués
         var pa=m.palet.a, pb=m.palet.b; if(pa!=null && pb!=null){ sA.palFor+=pa; sB.palFor+=pb; sA.palAg+=pb; sB.palAg+=pa; sA.points+=pa; sB.points+=pb; }
         if(isMatchComplete(m)){ sA.matchesComplete++; sB.matchesComplete++; }
@@ -427,7 +461,7 @@
     function escapeHtml(str){ return (str==null? '' : String(str)).replace(/[&<>"']/g, function(s){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s]; }); }
     function clampInt(v,min,max){ if(isNaN(v)) return null; if(v<min) return min; if(v>max) return max; return v; }
     function getPingPts(m){ if(Array.isArray(m.pingPts)) return m.pingPts; if(Array.isArray(m.ping)) return m.ping.map(function(v){ return v===0? {a:11,b:0} : v===1? {a:0,b:11} : {a:null,b:null}; }); return [{a:null,b:null},{a:null,b:null},{a:null,b:null}]; }
-    function isPingValid(a,b){ return (a===11 && b>=0 && b<=10) || (b===11 && a>=0 && a<=10); }
+    function isPingValid(a,b){ if(a==null || b==null) return false; if(isNaN(a) || isNaN(b)) return false; var max = Math.max(a,b), diff = Math.abs(a-b); return (max>=11) && (diff>=2); }
     function migrateState(){ if(!state || !Array.isArray(state.matches)) return; state.matches.forEach(function(m){ if(!Array.isArray(m.pingPts)){ m.pingPts = getPingPts(m); delete m.ping; } }); saveState(); }
 
     // -------------------- Init --------------------
