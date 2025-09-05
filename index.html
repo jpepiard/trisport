@@ -6,115 +6,49 @@
   <title>Tournoi entre amis — Fléchettes • Ping-pong • Palet</title>
   <style>
     :root {
-      --bg: #0f1220;
-      --panel: #161a2e;
-      --muted: #8b94b8;
-      --text: #e7e9f7;
-      --accent: #6ee7b7; /* mint */
-      --accent-2: #7aa2ff; /* cornflower */
-      --danger: #ff6b6b;
-      --warning: #fbbf24;
-      --ok: #34d399;
-      --card: #1b2242;
-      --chip: #242b55;
-      --border: #2b315f;
-      --shadow: 0 10px 25px rgba(0,0,0,.35);
-      --radius: 16px;
+      --bg: #0f1220; --panel: #161a2e; --muted: #8b94b8; --text: #e7e9f7;
+      --accent: #6ee7b7; --accent-2: #7aa2ff; --danger: #ff6b6b; --border:#2b315f;
+      --chip:#242b55; --card:#1b2242; --shadow: 0 10px 25px rgba(0,0,0,.35); --radius:16px;
     }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      background: radial-gradient(1200px 800px at 20% -10%, #1c2040, transparent),
-                  radial-gradient(1000px 600px at 120% 0%, #1b2550, transparent), var(--bg);
-      color: var(--text);
-    }
-    header {
-      position: sticky; top: 0; z-index: 5; backdrop-filter: saturate(130%) blur(8px);
-      background: linear-gradient(180deg, rgba(15,18,32,.9), rgba(15,18,32,.6));
-      border-bottom: 1px solid var(--border);
-    }
-    .container { max-width: 1100px; margin: 0 auto; padding: 18px 16px; }
-    .brand { display: flex; gap: 12px; align-items: center; }
-    .logo { width: 36px; height: 36px; border-radius: 10px; background:
-      conic-gradient(from 210deg, var(--accent), var(--accent-2)); box-shadow: var(--shadow);
-      display: grid; place-items: center; font-weight: 900; color: #0a0d1c; }
-    .brand h1 { font-size: 18px; margin: 0; letter-spacing:.3px; }
-    nav { display: flex; gap: 8px; flex-wrap: wrap; }
-    .row { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-
-    .tabs { display: flex; gap: 8px; }
-    .tab {
-      background: var(--chip); color: var(--text); border: 1px solid var(--border);
-      padding: 8px 12px; border-radius: 999px; cursor: pointer; user-select: none;
-    }
-    .tab[aria-selected="true"] { background: linear-gradient(180deg,#1d2a57,#1a2450); border-color: #3a4aa0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
-
-    main .container { padding-top: 22px; }
-    section { display: none; }
-    section.active { display: block; }
-
-    .card { background: linear-gradient(180deg, #171d3a, #121632); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
-    .card .hd { padding: 14px 16px; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:12px; }
-    .card .bd { padding: 16px; }
-
-    .muted { color: var(--muted); }
-    .btn { appearance: none; border: 1px solid var(--border); background: var(--chip); color: var(--text); padding: 10px 14px; border-radius: 12px; cursor: pointer; }
-    .btn:hover { filter: brightness(1.08); }
-    .btn.primary { background: linear-gradient(180deg, #2f3da2, #25337d); border-color: #3a4aa0; }
-    .btn.good { background: linear-gradient(180deg, #2b7a61, #245f4c); border-color: #2b8a6a; }
-    .btn.danger { background: linear-gradient(180deg, #7a2b2b, #5c2222); border-color: #8a2b2b; }
-    .btn.ghost { background: transparent; }
-    .btn.small { padding: 6px 10px; border-radius: 10px; font-size: 13px; }
-
-    .grid { display: grid; gap: 12px; }
-    .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .grid.responsive { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-
-    input[type="text"], input[type="number"], select {
-      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #0f1331; color: var(--text);
-    }
-    label { font-size: 13px; color: var(--muted); }
-
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: left; }
-    th { color: var(--muted); font-weight: 600; }
-    tbody tr:hover { background: rgba(255,255,255,.02); }
-
-    .match-card { border-radius: 14px; border: 1px solid var(--border); background: var(--card); overflow: hidden; }
-    .match-head { display:flex; justify-content: space-between; align-items:center; padding:12px; gap:8px; cursor: pointer; }
-    .teams { display: flex; align-items:center; gap: 8px; font-weight: 600; }
-    .chip { font-size: 12px; padding: 4px 8px; background: var(--chip); border: 1px solid var(--border); border-radius: 999px; color: var(--muted); }
-    .scoreline { display:flex; align-items:center; gap:6px; font-variant-numeric: tabular-nums; }
-    .caret { transform: rotate(0deg); transition: transform .2s ease; }
-    .match-card[aria-expanded="true"] .caret { transform: rotate(90deg); }
-
-    .match-body { display:none; border-top: 1px solid var(--border); padding: 12px; }
-    .match-card[aria-expanded="true"] .match-body { display:block; }
-
-    .row-flex { display:flex; gap: 10px; align-items: center; }
-
-    .inline { display: inline-flex; align-items: center; gap: 8px; }
-    .pill { padding: 4px 8px; border-radius: 999px; background: #0f1331; border: 1px solid var(--border); color: var(--muted); font-size: 12px; }
-
-    .help { font-size: 13px; color: var(--muted); }
-    .footer { padding: 18px; color: var(--muted); text-align: center; }
-
-    .alert { padding: 10px 12px; border: 1px dashed var(--border); border-radius: 12px; background: #0f1331; }
-
-    @media (max-width: 720px) { .grid.cols-3, .grid.cols-4 { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 480px) { .row { flex-direction: column; align-items: stretch; } }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;background:radial-gradient(1200px 800px at 20% -10%, #1c2040, transparent),radial-gradient(1000px 600px at 120% 0%, #1b2550, transparent),var(--bg);color:var(--text)}
+    header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(130%) blur(8px);background:linear-gradient(180deg, rgba(15,18,32,.9), rgba(15,18,32,.6));border-bottom:1px solid var(--border)}
+    .container{max-width:1100px;margin:0 auto;padding:18px 16px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(from 210deg, var(--accent), var(--accent-2));box-shadow:var(--shadow);display:grid;place-items:center;font-weight:900;color:#0a0d1c}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{background:var(--chip);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:999px;cursor:pointer}
+    .tab[aria-selected="true"]{background:linear-gradient(180deg,#1d2a57,#1a2450);border-color:#3a4aa0}
+    main .container{padding-top:22px}
+    section{display:none} section.active{display:block}
+    .card{background:linear-gradient(180deg,#171d3a,#121632);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card .hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .card .bd{padding:16px}
+    .muted{color:var(--muted)}
+    .btn{appearance:none;border:1px solid var(--border);background:var(--chip);color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
+    .btn.primary{background:linear-gradient(180deg,#2f3da2,#25337d);border-color:#3a4aa0}
+    .btn.small{padding:6px 10px;border-radius:10px;font-size:13px}
+    .btn.danger{background:linear-gradient(180deg,#7a2b2b,#5c2222);border-color:#8a2b2b}
+    .grid{display:grid;gap:12px} .grid.cols-2{grid-template-columns:repeat(2,1fr)} .grid.cols-3{grid-template-columns:repeat(3,1fr)} .grid.cols-4{grid-template-columns:repeat(4,1fr)} .grid.responsive{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:var(--text)}
+    label{font-size:13px;color:var(--muted)}
+    table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left} th{color:var(--muted);font-weight:600}
+    .match-card{border-radius:14px;border:1px solid var(--border);background:var(--card);overflow:hidden}
+    .match-head{display:flex;justify-content:space-between;align-items:center;padding:12px;gap:8px;cursor:pointer}
+    .teams{display:flex;align-items:center;gap:8px;font-weight:600}
+    .chip{font-size:12px;padding:4px 8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;color:var(--muted)}
+    .pill{padding:4px 8px;border-radius:999px;background:#0f1331;border:1px solid var(--border);color:var(--muted);font-size:12px}
+    .caret{transform:rotate(0deg);transition:transform .2s ease}
+    .match-card[aria-expanded=true] .caret{transform:rotate(90deg)}
+    .match-body{display:none;border-top:1px solid var(--border);padding:12px}
+    .match-card[aria-expanded=true] .match-body{display:block}
+    .help{font-size:13px;color:var(--muted)}
   </style>
 </head>
 <body>
   <header>
-    <div class="container row">
-      <div class="brand">
-        <div class="logo">T</div>
-        <h1>Tournoi entre amis</h1>
-      </div>
+    <div class="container" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+      <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">Tournoi entre amis</h1></div>
       <nav class="tabs" role="tablist" aria-label="Sections">
         <button class="tab" role="tab" aria-selected="true" data-tab="equipes">Équipes</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="calendrier">Rencontres</button>
@@ -126,16 +60,17 @@
 
   <main>
     <div class="container">
-      <div id="storage-warning" class="alert" style="display:none; margin-bottom:12px">⚠️ Le stockage du navigateur est indisponible (navigation privée ou blocage). Les données ne seront pas conservées après rechargement.</div>
+      <div id="storage-warning" class="help" style="display:none;margin-bottom:12px;border:1px dashed var(--border);border-radius:12px;padding:10px 12px;background:#0f1331">⚠️ Le stockage du navigateur est indisponible (navigation privée/blocage). Les données ne seront pas conservées.</div>
+
       <!-- Équipes -->
-      <section id="equipes" class="active" aria-labelledby="tab-equipes">
+      <section id="equipes" class="active">
         <div class="card">
           <div class="hd">
             <div>
               <strong>Équipes</strong>
-              <div class="help">Ajoutez vos équipes (2 joueurs par équipe). Le calendrier sera généré automatiquement en toutes rondes (chacun rencontre tous les autres).</div>
+              <div class="help">Ajoutez vos équipes (2 joueurs par équipe). Le calendrier sera généré automatiquement en journées équilibrées.</div>
             </div>
-            <div class="inline">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <button class="btn" id="btn-add-team">+ Ajouter une équipe</button>
               <button class="btn primary" id="btn-generate">Générer/Mettre à jour le calendrier</button>
             </div>
@@ -147,65 +82,52 @@
       </section>
 
       <!-- Rencontres -->
-      <section id="calendrier" aria-labelledby="tab-calendrier">
+      <section id="calendrier">
         <div class="card">
           <div class="hd">
             <strong>Rencontres</strong>
-            <div class="inline">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="stats-matches">0 / 0 matches complets</span>
               <button class="btn small" id="btn-expand">Tout déployer</button>
               <button class="btn small" id="btn-collapse">Tout replier</button>
             </div>
           </div>
           <div class="bd">
-            <div id="match-list" class="grid">
-              <div class="help">Créez d'abord des équipes puis cliquez sur « Générer/Mettre à jour le calendrier ».</div>
-            </div>
+            <div id="match-list" class="grid"></div>
           </div>
         </div>
       </section>
 
       <!-- Classement -->
-      <section id="classement" aria-labelledby="tab-classement">
+      <section id="classement">
         <div class="card">
           <div class="hd">
             <strong>Classement en direct</strong>
-            <div class="inline">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="teams-count">0 équipes</span>
               <span class="pill" id="rounds-count">0 matchs par équipe</span>
             </div>
           </div>
-          <div class="bd">
-            <div class="alert help" style="margin-bottom:12px">
-              Règles de points — Fléchettes : 3 parties (2 simples + 1 double), <strong>5 pts</strong> par partie gagnée.
-              Ping-pong : 3 parties (2 simples + 1 double), <strong>5 pts</strong> par partie gagnée.
-              Palet : une partie en double, la première équipe à <strong>11</strong> gagne. <em>On additionne au total de tournoi les points marqués par chaque équipe</em> (donc <strong>11</strong> pour la gagnante et <strong>0–10</strong> pour la perdante).
+          <div class="bd" style="overflow:auto">
+            <div class="help" style="margin-bottom:10px">
+              Règles — Fléchettes : 3 parties (2 simples + 1 double), <b>5 pts</b> par partie gagnée.
+              Ping-pong : 3 parties (2 simples + 1 double), <b>5 pts</b> par partie gagnée. <i>On saisit les points, la manche est validée quand l’un a 11 et l’autre 0–10.</i>
+              Palet : 1 partie en double, la première équipe à <b>11</b> gagne, et <i>les points marqués par chaque équipe s’ajoutent au total du tournoi</i>.
             </div>
-            <div style="overflow:auto">
-              <table id="table-classement">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Équipe</th>
-                    <th>Points</th>
-                    <th>Fléchettes (G)</th>
-                    <th>Ping-pong (G)</th>
-                    <th>Palet (PF–PA)</th>
-                    <th>Matchs complets</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
+            <table id="table-classement">
+              <thead>
+                <tr><th>#</th><th>Équipe</th><th>Points</th><th>Fléchettes (G)</th><th>Ping-pong (G)</th><th>Palet (PF–PA)</th><th>Matchs complets</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
           </div>
         </div>
       </section>
 
       <!-- Options -->
-      <section id="options" aria-labelledby="tab-options">
+      <section id="options">
         <div class="grid cols-2">
-          <div class="card">
-            <div class="hd"><strong>Exporter / Importer</strong></div>
+          <div class="card"><div class="hd"><strong>Exporter / Importer</strong></div>
             <div class="bd grid" style="gap:10px">
               <button class="btn" id="btn-export">Exporter en JSON</button>
               <input type="file" id="file-import" accept="application/json" />
@@ -213,613 +135,304 @@
               <div class="help">Partagez le fichier d'export pour reprendre un tournoi ailleurs.</div>
             </div>
           </div>
-
-          <div class="card">
-            <div class="hd"><strong>Réinitialisation</strong></div>
+          <div class="card"><div class="hd"><strong>Réinitialisation</strong></div>
             <div class="bd grid" style="gap:10px">
               <button class="btn danger" id="btn-reset">Nouvelle compétition (tout effacer)</button>
               <div class="help">Efface les équipes, le calendrier et les scores de cet appareil.</div>
             </div>
           </div>
         </div>
-        <div class="footer">Fichier unique — fonctionne hors-ligne. Vos données restent dans le navigateur (localStorage).</div>
+        <div class="help" style="text-align:center;padding:18px">Fichier unique — fonctionne hors-ligne. Vos données restent dans le navigateur (localStorage).</div>
       </section>
     </div>
   </main>
 
   <script>
-    // --- State & Persistence -------------------------------------------------
-    const STORAGE_KEY = 'tournoi_amis_v1';
-    let MEMORY_ONLY = false; // passe à true si le stockage navigateur est indisponible
+    // -------------------- State & Storage --------------------
+    var STORAGE_KEY = 'tournoi_amis_v2';
+    var MEMORY_ONLY = false;
+    function saveState(){ try{ if(!MEMORY_ONLY){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } }catch(e){ MEMORY_ONLY=true; updateStorageWarning(); } }
+    function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null; }catch(e){ MEMORY_ONLY=true; return null; } }
+    function updateStorageWarning(){ var el=document.getElementById('storage-warning'); if(el){ el.style.display = MEMORY_ONLY? 'block':'none'; } }
 
-    function saveState(){
-      try {
-        if(!MEMORY_ONLY){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-      } catch(e){
-        MEMORY_ONLY = true;
-        console.warn('Stockage navigateur indisponible : données non persistées', e);
-        updateStorageWarning();
-      }
-    }
-    function loadState(){
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : null;
-      } catch(e){
-        MEMORY_ONLY = true;
-        console.warn('Impossible de lire le stockage navigateur', e);
-        return null;
-      }
-    }
-    function updateStorageWarning(){
-      const el = document.getElementById('storage-warning');
-      if(!el) return;
-      el.style.display = MEMORY_ONLY ? 'block' : 'none';
-    }
+    var state = loadState() || { version:2, teams:[], matches:[], createdAt: new Date().toISOString() };
 
-    let state = loadState() || {
-      version: 1,
-      teams: [], // {id, name, p1, p2}
-      matches: [], // {id, a, b, darts:[null|null|0|1,...x3], ping:[...x3], palet:{a:null,b:null}}
-      createdAt: new Date().toISOString()
-    };
-
-    function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    function loadState() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e){ return null; } }
-    const uid = () => Math.random().toString(36).slice(2, 10);
-
-    // --- Tabs ----------------------------------------------------------------
-    document.querySelectorAll('.tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', 'false'));
-        btn.setAttribute('aria-selected', 'true');
-        const tab = btn.dataset.tab;
-        document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
-        document.getElementById(tab).classList.add('active');
-      })
+    // -------------------- Tabs --------------------
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(btn){
+      btn.addEventListener('click', function(){
+        Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(b){ b.setAttribute('aria-selected','false'); });
+        btn.setAttribute('aria-selected','true');
+        Array.prototype.forEach.call(document.querySelectorAll('main section'), function(s){ s.classList.remove('active'); });
+        document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
+      });
     });
 
-    // --- Teams UI ------------------------------------------------------------
-    const teamListEl = document.getElementById('team-list');
-    const btnAddTeam = document.getElementById('btn-add-team');
-    const btnGenerate = document.getElementById('btn-generate');
-
-    btnAddTeam.addEventListener('click', () => {
-      state.teams.push({ id: uid(), name: `Équipe ${state.teams.length+1}`, p1: '', p2: '' });
-      saveState();
-      renderTeams();
+    // -------------------- Teams UI --------------------
+    var teamListEl = document.getElementById('team-list');
+    document.getElementById('btn-add-team').addEventListener('click', function(){
+      state.teams.push({ id: uid(), name: 'Équipe ' + (state.teams.length+1), p1: '', p2: '' });
+      saveState(); renderTeams();
     });
-
-    btnGenerate.addEventListener('click', () => {
-      generateSchedule();
-      renderMatches();
-      renderLeaderboard();
-      // switch to calendrier
+    document.getElementById('btn-generate').addEventListener('click', function(){
+      generateSchedule(); renderMatches(); renderLeaderboard();
       document.querySelector('.tab[data-tab="calendrier"]').click();
     });
 
     function renderTeams(){
-      teamListEl.innerHTML = '';
-      if(state.teams.length === 0){
-        const empty = document.createElement('div');
-        empty.className = 'help';
-        empty.textContent = 'Aucune équipe pour le moment. Ajoutez votre première équipe !';
-        teamListEl.appendChild(empty);
-        updateCounts();
-        return;
-      }
-      state.teams.forEach((t, idx) => {
-        const card = document.createElement('div');
-        card.className = 'match-card';
-        card.innerHTML = `
-          <div class="match-head">
-            <div class="teams"><span class="chip">#${idx+1}</span> <input type="text" value="${escapeHtml(t.name)}" data-field="name" data-id="${t.id}"/></div>
-            <div class="inline">
-              <button class="btn small danger" data-action="del-team" data-id="${t.id}">Supprimer</button>
-            </div>
-          </div>
-          <div class="match-body" style="display:block">
-            <div class="grid cols-2">
-              <div>
-                <label>Joueur·se 1</label>
-                <input type="text" placeholder="Nom" value="${escapeHtml(t.p1)}" data-field="p1" data-id="${t.id}"/>
-              </div>
-              <div>
-                <label>Joueur·se 2</label>
-                <input type="text" placeholder="Nom" value="${escapeHtml(t.p2)}" data-field="p2" data-id="${t.id}"/>
-              </div>
-            </div>
-          </div>
-        `;
+      teamListEl.innerHTML='';
+      if(state.teams.length===0){ var empty=document.createElement('div'); empty.className='help'; empty.textContent='Aucune équipe pour le moment. Ajoutez votre première équipe !'; teamListEl.appendChild(empty); updateCounts(); return; }
+      state.teams.forEach(function(t, idx){
+        var card=document.createElement('div'); card.className='match-card';
+        card.innerHTML = '\
+          <div class="match-head">\
+            <div class="teams"><span class="chip">#'+(idx+1)+'</span> <input type="text" value="'+escapeHtml(t.name)+'" data-field="name" data-id="'+t.id+'"/></div>\
+            <div><button class="btn small danger" data-action="del-team" data-id="'+t.id+'">Supprimer</button></div>\
+          </div>\
+          <div class="match-body" style="display:block">\
+            <div class="grid cols-2">\
+              <div><label>Joueur·se 1</label><input type="text" placeholder="Nom" value="'+escapeHtml(t.p1)+'" data-field="p1" data-id="'+t.id+'"/></div>\
+              <div><label>Joueur·se 2</label><input type="text" placeholder="Nom" value="'+escapeHtml(t.p2)+'" data-field="p2" data-id="'+t.id+'"/></div>\
+            </div>\
+          </div>';
         teamListEl.appendChild(card);
       });
-
-      teamListEl.querySelectorAll('input[data-field]').forEach(inp => {
-        inp.addEventListener('input', (e) => {
-          const id = inp.dataset.id; const field = inp.dataset.field; const val = inp.value;
-          const t = state.teams.find(x => x.id === id); if(!t) return; t[field] = val; saveState(); updateMatchTeamNames(); renderLeaderboard();
-        });
+      Array.prototype.forEach.call(teamListEl.querySelectorAll('input[data-field]'), function(inp){
+        inp.addEventListener('input', function(){ var id=inp.getAttribute('data-id'); var field=inp.getAttribute('data-field'); var t = state.teams.find(function(x){return x.id===id}); if(!t) return; t[field]=inp.value; saveState(); updateMatchTeamNames(); renderLeaderboard(); });
       });
-
-      teamListEl.querySelectorAll('button[data-action="del-team"]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          if(!confirm('Supprimer cette équipe ?')) return;
-          state.teams = state.teams.filter(t => t.id !== id);
-          // Purger les matches impliquant cette équipe
-          state.matches = state.matches.filter(m => m.a !== id && m.b !== id);
-          saveState();
-          renderTeams();
-          renderMatches();
-          renderLeaderboard();
-        });
+      Array.prototype.forEach.call(teamListEl.querySelectorAll('button[data-action="del-team"]'), function(btn){
+        btn.addEventListener('click', function(){ var id=btn.getAttribute('data-id'); if(!confirm('Supprimer cette équipe ?')) return; state.teams = state.teams.filter(function(tt){return tt.id!==id}); state.matches = state.matches.filter(function(m){return m.a!==id && m.b!==id}); saveState(); renderTeams(); renderMatches(); renderLeaderboard(); });
       });
       updateCounts();
     }
 
     function updateCounts(){
-      document.getElementById('teams-count').textContent = `${state.teams.length} ${state.teams.length>1?'équipes':'équipe'}`;
-      const perTeam = Math.max(0, state.teams.length - 1);
-      document.getElementById('rounds-count').textContent = `${perTeam} ${perTeam>1?'matchs':'match'} par équipe`;
+      document.getElementById('teams-count').textContent = state.teams.length + ' ' + (state.teams.length>1?'équipes':'équipe');
+      var perTeam = Math.max(0, state.teams.length - 1);
+      document.getElementById('rounds-count').textContent = perTeam + ' ' + (perTeam>1?'matchs':'match') + ' par équipe';
     }
 
-    function updateMatchTeamNames(){
-      // only UI needs updating; the match objects store team IDs
-      renderMatches();
-    }
+    function updateMatchTeamNames(){ renderMatches(); }
 
-    // --- Schedule Generation -------------------------------------------------
+    // -------------------- Schedule (round-robin homogène) --------------------
     function generateSchedule(){
-      // Génère un calendrier en "toutes rondes" (méthode du cercle) pour éviter qu'une équipe joue plusieurs matches d'affilée.
-      const teamIds = state.teams.map(t => t.id);
+      var teamIds = state.teams.map(function(t){return t.id});
       if(teamIds.length < 2){ state.matches = []; saveState(); return; }
-
-      // Copie et éventuelle case vide (BYE) si impair
-      const ids = [...teamIds];
-      const BYE = '__BYE__';
-      if(ids.length % 2 === 1) ids.push(BYE);
-
-      // Option: mélanger légèrement l'ordre (hors premier) pour varier
-      const fixed = ids[0];
-      let rest = ids.slice(1);
-      // petit shuffle simple
-      for(let i=rest.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [rest[i],rest[j]] = [rest[j],rest[i]]; }
-
-      const n = ids.length; // pair
-      const rounds = n - 1;
-      const pairsByRound = [];
-
-      for(let r=0; r<rounds; r++){
-        const arr = [fixed, ...rest];
-        const half = n/2; const pairs = [];
-        for(let i=0;i<half;i++){
-          const t1 = arr[i];
-          const t2 = arr[n-1-i];
-          if(t1 !== BYE && t2 !== BYE){
-            // alterner l'ordre pour ne pas fixer toujours la même équipe en "premier"
-            pairs.push((r % 2 === 0) ? [t1,t2] : [t2,t1]);
-          }
+      var ids = teamIds.slice(); var BYE='__BYE__'; if(ids.length % 2 === 1) ids.push(BYE);
+      var fixed = ids[0]; var rest = ids.slice(1);
+      for(var i=rest.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var tmp=rest[i]; rest[i]=rest[j]; rest[j]=tmp; }
+      var n = ids.length; var rounds = n - 1; var pairsByRound = [];
+      for(var r=0;r<rounds;r++){
+        var arr=[fixed].concat(rest); var half=n/2; var pairs=[];
+        for(var k=0;k<half;k++){
+          var t1=arr[k], t2=arr[n-1-k];
+          if(t1!==BYE && t2!==BYE){ pairs.push( (r%2===0)? [t1,t2]:[t2,t1] ); }
         }
-        // faire tourner les équipes (méthode du cercle)
-        rest = [rest[rest.length-1], ...rest.slice(0, rest.length-1)];
-        // faire également tourner l'ordre d'affichage des matches de la journée
-        if(pairs.length > 1){ const shift = r % pairs.length; for(let s=0;s<shift;s++){ pairs.unshift(pairs.pop()); } }
+        // rotation
+        rest = [rest[rest.length-1]].concat(rest.slice(0,rest.length-1));
+        if(pairs.length>1){ var shift=r%pairs.length; for(var s=0;s<shift;s++){ pairs.unshift(pairs.pop()); } }
         pairsByRound.push(pairs);
       }
-
-      const existing = new Map(state.matches.map(m => [pairKey(m.a, m.b), m]));
-      const newMatches = [];
-      let order = 0;
-      pairsByRound.forEach((pairs, roundIdx) => {
-        pairs.forEach(pair => {
-          const [a,b] = pair; const key = pairKey(a,b);
-          let m = existing.get(key);
-          if(m){
-            m.round = roundIdx + 1; m.order = order++;
+      var existing = new Map(state.matches.map(function(m){ return [pairKey(m.a,m.b), m]; }));
+      var newMatches=[]; var order=0;
+      pairsByRound.forEach(function(pairs, roundIdx){
+        pairs.forEach(function(pair){
+          var a=pair[0], b=pair[1]; var key=pairKey(a,b); var m=existing.get(key);
+          if(m){ m.round=roundIdx+1; m.order=order++; if(!Array.isArray(m.pingPts)){ m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; }
           } else {
-            m = { id: uid(), a, b, darts:[null,null,null], ping:[null,null,null], palet:{a:null,b:null}, round: roundIdx + 1, order: order++ };
+            m={ id: uid(), a:a, b:b, darts:[null,null,null], pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}], palet:{a:null,b:null}, round: roundIdx+1, order: order++ };
           }
           newMatches.push(m);
         });
       });
-
-      // trier par journée puis par ordre
-      newMatches.sort((x,y)=> (x.round - y.round) || (x.order - y.order));
+      newMatches.sort(function(x,y){ return (x.round-y.round) || (x.order-y.order); });
       state.matches = newMatches; saveState();
-    } else {
-            matches.push({ id: uid(), a: ids[i], b: ids[j], darts:[null,null,null], ping:[null,null,null], palet:{a:null,b:null} });
-          }
-        }
-      }
-      state.matches = matches; saveState();
     }
-    const pairKey = (x,y) => [x,y].sort().join('|');
 
-    // --- Matches UI ----------------------------------------------------------
-    const matchListEl = document.getElementById('match-list');
-    const statsMatchesEl = document.getElementById('stats-matches');
+    function pairKey(x,y){ return [x,y].sort().join('|'); }
+    function teamName(id){ var t=state.teams.find(function(tt){return tt.id===id}); return t? t.name : '—'; }
 
-    function teamName(id){ const t = state.teams.find(t=>t.id===id); return t? t.name : '—'; }
+    // -------------------- Matches UI --------------------
+    var matchListEl = document.getElementById('match-list');
+    var statsMatchesEl = document.getElementById('stats-matches');
 
     function renderMatches(){
-      matchListEl.innerHTML = '';
-      if(state.matches.length === 0){
-        const empty = document.createElement('div'); empty.className = 'help';
-        empty.textContent = 'Aucune rencontre planifiée.'; matchListEl.appendChild(empty);
-        statsMatchesEl.textContent = '0 / 0 matches complets';
-        return;
-      }
-      // Grouper par journée
-      const groups = new Map();
-      for(const m of state.matches){ const r = m.round || 1; if(!groups.has(r)) groups.set(r, []); groups.get(r).push(m); }
-      const rounds = Array.from(groups.keys()).sort((a,b)=>a-b);
-
-      let completeCount = 0; let globalIdx = 0;
-      for(const r of rounds){
-        const hdr = document.createElement('div');
-        hdr.className = 'help'; hdr.style.fontWeight = '600'; hdr.style.margin = '8px 0';
-        hdr.textContent = `Journée ${r}`;
-        matchListEl.appendChild(hdr);
-
-        for(const m of groups.get(r)){
-          const [aw, bw] = computeSetWins(m);
-          const pal = m.palet; const palScore = (pal.a!=null && pal.b!=null) ? `${pal.a}–${pal.b}` : '—';
-          const isComplete = isMatchComplete(m); if(isComplete) completeCount++;
-
-          const el = document.createElement('div'); el.className = 'match-card'; el.setAttribute('aria-expanded','false');
-          const roundLabel = (m.round!=null ? m.round : '?');
-          el.innerHTML = `
-            <div class=\"match-head\" data-expand>
-              <div class=\"teams\"><span class=\"chip\">#${++globalIdx}</span> ${escapeHtml(teamName(m.a))} <span class=\"muted\">vs</span> ${escapeHtml(teamName(m.b))}</div>
-              <div class=\"inline\">
-                <span class=\"chip\">Journée ${roundLabel}</span>
-                <span class=\"chip\">Fléchettes G: ${aw.darts}-${bw.darts}</span>
-                <span class=\"chip\">Ping G: ${aw.ping}-${bw.ping}</span>
-                <span class=\"chip\">Palet: ${palScore}</span>
-                ${isComplete ? '<span class=\"pill\" style=\"border-color:#2c6; color:#8fd\">✅ Complet</span>' : '<span class=\"pill\" style=\"border-color:#aa6; color:#ffc\">⏳ Incomplet</span>'}
-                <span class=\"caret\">▶</span>
-              </div>
-            </div>
-            <div class=\"match-body\">
-              ${renderSportBlock('Fléchettes', 'darts', m)}
-              ${renderSportBlock('Ping-pong', 'ping', m)}
-              ${renderPaletBlock(m)}
-              <div class=\"row\" style=\"margin-top:8px\">
-                <div class=\"inline help\">Astuce : les résultats sont sauvegardés automatiquement.</div>
-                <div class=\"inline\">
-                  <button class=\"btn small\" data-clear=\"${m.id}\">Effacer ce match</button>
-                  <button class=\"btn small danger\" data-delete=\"${m.id}\">Supprimer le match</button>
-                </div>
-              </div>
-            </div>
-          `;
-          // Events
-          el.querySelector('[data-expand]').addEventListener('click', () => {
-            el.setAttribute('aria-expanded', el.getAttribute('aria-expanded') === 'true' ? 'false' : 'true');
-          });
-          // Listeners for selects
-          el.querySelectorAll('select[data-match][data-kind]').forEach(sel => {
-            sel.addEventListener('change', () => {
-              const kind = sel.dataset.kind; const idx = parseInt(sel.dataset.index,10);
-              const val = sel.value === '' ? null : parseInt(sel.value,10); // 0 -> team A, 1 -> team B
-              const match = state.matches.find(x=>x.id===m.id);
-              match[kind][idx] = val; saveState(); renderMatches(); renderLeaderboard();
-            })
-          });
-          // Listeners for palet inputs
-          el.querySelectorAll('input[data-palet]').forEach(inp => {
-            inp.addEventListener('input', () => {
-              const which = inp.dataset.palet; const val = inp.value === '' ? null : clampInt(parseInt(inp.value,10), 0, 11);
-              const match = state.matches.find(x=>x.id===m.id);
-              match.palet[which] = val; saveState(); renderMatches(); renderLeaderboard();
-            })
-          });
-          // Clear & delete
-          el.querySelector('[data-clear]').addEventListener('click', () => { clearMatch(m.id); });
-          el.querySelector('[data-delete]').addEventListener('click', () => { deleteMatch(m.id); });
+      matchListEl.innerHTML='';
+      if(state.matches.length===0){ var empty=document.createElement('div'); empty.className='help'; empty.textContent='Aucune rencontre planifiée.'; matchListEl.appendChild(empty); statsMatchesEl.textContent='0 / 0 matches complets'; return; }
+      var groups=new Map();
+      state.matches.forEach(function(m){ var r=m.round||1; if(!groups.has(r)) groups.set(r,[]); groups.get(r).push(m); });
+      var rounds=Array.from(groups.keys()).sort(function(a,b){return a-b});
+      var completeCount=0; var globalIdx=0;
+      rounds.forEach(function(r){
+        var hdr=document.createElement('div'); hdr.className='help'; hdr.style.fontWeight='600'; hdr.style.margin='8px 0'; hdr.textContent='Journée '+r; matchListEl.appendChild(hdr);
+        groups.get(r).forEach(function(m){
+          var wins = computeSetWins(m); var pal=m.palet; var palScore=(pal.a!=null && pal.b!=null)? (pal.a+'–'+pal.b) : '—';
+          var isComplete=isMatchComplete(m); if(isComplete) completeCount++;
+          var el=document.createElement('div'); el.className='match-card'; el.setAttribute('aria-expanded','false');
+          el.innerHTML='\
+            <div class="match-head" data-expand>\
+              <div class="teams"><span class="chip">#'+(++globalIdx)+'</span> '+escapeHtml(teamName(m.a))+' <span class="muted">vs</span> '+escapeHtml(teamName(m.b))+'</div>\
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">\
+                <span class="chip">Journée '+(m.round||'?')+'</span>\
+                <span class="chip">Fléchettes G: '+wins.aw.darts+'-'+wins.bw.darts+'</span>\
+                <span class="chip">Ping G: '+wins.aw.ping+'-'+wins.bw.ping+'</span>\
+                <span class="chip">Palet: '+palScore+'</span>\
+                '+(isComplete? '<span class="pill" style="border-color:#2c6;color:#8fd">✅ Complet</span>' : '<span class="pill" style="border-color:#aa6;color:#ffc">⏳ Incomplet</span>')+'\
+                <span class="caret">▶</span>\
+              </div>\
+            </div>\
+            <div class="match-body">\
+              '+renderSportBlock('Fléchettes','darts',m)+'\
+              '+renderPingBlock(m)+'\
+              '+renderPaletBlock(m)+'\
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">\
+                <div class="help">Astuce : les résultats sont sauvegardés automatiquement.</div>\
+                <div>\
+                  <button class="btn small" data-clear="'+m.id+'">Effacer ce match</button>\
+                  <button class="btn small danger" data-delete="'+m.id+'">Supprimer le match</button>\
+                </div>\
+              </div>\
+            </div>';
+          el.querySelector('[data-expand]').addEventListener('click', function(){ el.setAttribute('aria-expanded', el.getAttribute('aria-expanded')==='true'? 'false':'true'); });
+          // darts selects
+          Array.prototype.forEach.call(el.querySelectorAll('select[data-match][data-kind]'), function(sel){ sel.addEventListener('change', function(){ var kind=sel.getAttribute('data-kind'); var idx=parseInt(sel.getAttribute('data-index'),10); var val = sel.value===''? null : parseInt(sel.value,10); var match=state.matches.find(function(x){return x.id===m.id}); match[kind][idx]=val; saveState(); renderMatches(); renderLeaderboard(); }); });
+          // ping inputs
+          Array.prototype.forEach.call(el.querySelectorAll('input[data-ping]'), function(inp){ inp.addEventListener('input', function(){ var which=inp.getAttribute('data-ping'); var idx=parseInt(inp.getAttribute('data-index'),10); var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,11); var match=state.matches.find(function(x){return x.id===m.id}); if(!Array.isArray(match.pingPts)){ match.pingPts=getPingPts(match); } match.pingPts[idx][which]=val; saveState(); renderMatches(); renderLeaderboard(); }); });
+          // palet inputs
+          Array.prototype.forEach.call(el.querySelectorAll('input[data-palet]'), function(inp){ inp.addEventListener('input', function(){ var which=inp.getAttribute('data-palet'); var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,11); var match=state.matches.find(function(x){return x.id===m.id}); match.palet[which]=val; saveState(); renderMatches(); renderLeaderboard(); }); });
+          // clear & delete
+          el.querySelector('[data-clear]').addEventListener('click', function(){ clearMatch(m.id); });
+          el.querySelector('[data-delete]').addEventListener('click', function(){ deleteMatch(m.id); });
 
           matchListEl.appendChild(el);
-        }
-      }
-      statsMatchesEl.textContent = `${completeCount} / ${state.matches.length} matches complets`;
-    }
-      // Grouper par journée
-      const groups = new Map();
-      for(const m of state.matches){ const r = m.round || 1; if(!groups.has(r)) groups.set(r, []); groups.get(r).push(m); }
-      const rounds = Array.from(groups.keys()).sort((a,b)=>a-b);
-
-      let completeCount = 0; let globalIdx = 0;
-      for(const r of rounds){
-        const hdr = document.createElement('div');
-        hdr.className = 'help'; hdr.style.fontWeight = '600'; hdr.style.margin = '8px 0';
-        hdr.textContent = `Journée ${r}`;
-        matchListEl.appendChild(hdr);
-
-        for(const m of groups.get(r)){
-          const [aw, bw] = computeSetWins(m);
-          const pal = m.palet; const palScore = (pal.a!=null && pal.b!=null) ? `${pal.a}–${pal.b}` : '—';
-          const isComplete = isMatchComplete(m); if(isComplete) completeCount++;
-
-          const el = document.createElement('div'); el.className = 'match-card'; el.setAttribute('aria-expanded','false');
-          el.innerHTML = `
-            <div class=\"match-head\" data-expand>
-              <div class=\"teams\"><span class=\"chip\">#${++globalIdx}</span> ${escapeHtml(teamName(m.a))} <span class=\"muted\">vs</span> ${escapeHtml(teamName(m.b))}</div>
-              <div class=\"inline\">
-                <span class=\"chip\">Journée ${m.round ?? '?'}</span>
-                <span class=\"chip\">Fléchettes G: ${aw.darts}-${bw.darts}</span>
-                <span class=\"chip\">Ping G: ${aw.ping}-${bw.ping}</span>
-                <span class=\"chip\">Palet: ${palScore}</span>
-                ${isComplete ? '<span class=\"pill\" style=\"border-color:#2c6; color:#8fd\">✅ Complet</span>' : '<span class=\"pill\" style=\"border-color:#aa6; color:#ffc\">⏳ Incomplet</span>'}
-                <span class=\"caret\">▶</span>
-              </div>
-            </div>
-            <div class=\"match-body\">
-              ${renderSportBlock('Fléchettes', 'darts', m)}
-              ${renderSportBlock('Ping-pong', 'ping', m)}
-              ${renderPaletBlock(m)}
-              <div class=\"row\" style=\"margin-top:8px\">
-                <div class=\"inline help\">Astuce : les résultats sont sauvegardés automatiquement.</div>
-                <div class=\"inline\">
-                  <button class=\"btn small\" data-clear=\"${m.id}\">Effacer ce match</button>
-                  <button class=\"btn small danger\" data-delete=\"${m.id}\">Supprimer le match</button>
-                </div>
-              </div>
-            </div>
-          `;
-          // Events
-          el.querySelector('[data-expand]').addEventListener('click', () => {
-            el.setAttribute('aria-expanded', el.getAttribute('aria-expanded') === 'true' ? 'false' : 'true');
-          });
-          // Listeners for selects
-          el.querySelectorAll('select[data-match][data-kind]').forEach(sel => {
-            sel.addEventListener('change', () => {
-              const kind = sel.dataset.kind; const idx = parseInt(sel.dataset.index,10);
-              const val = sel.value === '' ? null : parseInt(sel.value,10); // 0 -> team A, 1 -> team B
-              const match = state.matches.find(x=>x.id===m.id);
-              match[kind][idx] = val; saveState(); renderMatches(); renderLeaderboard();
-            })
-          });
-          // Listeners for palet inputs
-          el.querySelectorAll('input[data-palet]').forEach(inp => {
-            inp.addEventListener('input', () => {
-              const which = inp.dataset.palet; const val = inp.value === '' ? null : clampInt(parseInt(inp.value,10), 0, 11);
-              const match = state.matches.find(x=>x.id===m.id);
-              match.palet[which] = val; saveState(); renderMatches(); renderLeaderboard();
-            })
-          });
-          // Clear & delete
-          el.querySelector('[data-clear]').addEventListener('click', () => { clearMatch(m.id); });
-          el.querySelector('[data-delete]').addEventListener('click', () => { deleteMatch(m.id); });
-
-          matchListEl.appendChild(el);
-        }
-      }
-      statsMatchesEl.textContent = `${completeCount} / ${state.matches.length} matches complets`;
-    }
-      let completeCount = 0;
-      state.matches.forEach((m, idx) => {
-        const [aw, bw] = computeSetWins(m);
-        const pal = m.palet; const palScore = (pal.a!=null && pal.b!=null) ? `${pal.a}–${pal.b}` : '—';
-        const isComplete = isMatchComplete(m); if(isComplete) completeCount++;
-
-        const el = document.createElement('div'); el.className = 'match-card'; el.setAttribute('aria-expanded','false');
-        el.innerHTML = `
-          <div class="match-head" data-expand>
-            <div class="teams"><span class="chip">#${idx+1}</span> ${escapeHtml(teamName(m.a))} <span class="muted">vs</span> ${escapeHtml(teamName(m.b))}</div>
-            <div class="inline">
-              <span class="chip">Fléchettes G: ${aw.darts}-${bw.darts}</span>
-              <span class="chip">Ping G: ${aw.ping}-${bw.ping}</span>
-              <span class="chip">Palet: ${palScore}</span>
-              ${isComplete ? '<span class="pill" style="border-color:#2c6; color:#8fd">✅ Complet</span>' : '<span class="pill" style="border-color:#aa6; color:#ffc">⏳ Incomplet</span>'}
-              <span class="caret">▶</span>
-            </div>
-          </div>
-          <div class="match-body">
-            ${renderSportBlock('Fléchettes', 'darts', m)}
-            ${renderSportBlock('Ping-pong', 'ping', m)}
-            ${renderPaletBlock(m)}
-            <div class="row" style="margin-top:8px">
-              <div class="inline help">Astuce : les résultats sont sauvegardés automatiquement.</div>
-              <div class="inline">
-                <button class="btn small" data-clear="${m.id}">Effacer ce match</button>
-                <button class="btn small danger" data-delete="${m.id}">Supprimer le match</button>
-              </div>
-            </div>
-          </div>
-        `;
-        // Events
-        el.querySelector('[data-expand]').addEventListener('click', () => {
-          el.setAttribute('aria-expanded', el.getAttribute('aria-expanded') === 'true' ? 'false' : 'true');
         });
-        // Listeners for selects
-        el.querySelectorAll('select[data-match][data-kind]').forEach(sel => {
-          sel.addEventListener('change', () => {
-            const kind = sel.dataset.kind; const idx = parseInt(sel.dataset.index,10);
-            const val = sel.value === '' ? null : parseInt(sel.value,10); // 0 -> team A, 1 -> team B
-            const match = state.matches.find(x=>x.id===m.id);
-            match[kind][idx] = val; saveState(); renderMatches(); renderLeaderboard();
-          })
-        });
-        // Listeners for palet inputs
-        el.querySelectorAll('input[data-palet]').forEach(inp => {
-          inp.addEventListener('input', () => {
-            const which = inp.dataset.palet; const val = inp.value === '' ? null : clampInt(parseInt(inp.value,10), 0, 11);
-            const match = state.matches.find(x=>x.id===m.id);
-            match.palet[which] = val; saveState(); renderMatches(); renderLeaderboard();
-          })
-        });
-        // Clear & delete
-        el.querySelector('[data-clear]').addEventListener('click', () => { clearMatch(m.id); });
-        el.querySelector('[data-delete]').addEventListener('click', () => { deleteMatch(m.id); });
-
-        matchListEl.appendChild(el);
       });
-      statsMatchesEl.textContent = `${completeCount} / ${state.matches.length} matches complets`;
+      statsMatchesEl.textContent = completeCount + ' / ' + state.matches.length + ' matches complets';
     }
 
     function renderSportBlock(label, kind, m){
-      const names = [teamName(m.a), teamName(m.b)].map(escapeHtml);
-      const lines = ['Simple 1','Simple 2','Double'].map((sub, i) => {
-        const val = m[kind][i];
-        return `<div class="grid cols-3" style="align-items:end">
-          <div>
-            <label>${label} — ${sub}</label>
-            <select data-match="${m.id}" data-kind="${kind}" data-index="${i}">
-              <option value="" ${val===null?'selected':''}>Non joué</option>
-              <option value="0" ${val===0?'selected':''}>Victoire ${names[0]}</option>
-              <option value="1" ${val===1?'selected':''}>Victoire ${names[1]}</option>
-            </select>
-          </div>
-          <div></div><div></div>
-        </div>`
-      }).join('');
-      return `<div style="margin-top:6px">${lines}</div>`;
+      var names=[teamName(m.a), teamName(m.b)].map(escapeHtml);
+      var subs=['Simple 1','Simple 2','Double']; var html='';
+      for(var i=0;i<3;i++){
+        var val=m[kind][i];
+        html += '\
+          <div class="grid cols-3" style="align-items:end">\
+            <div>\
+              <label>'+label+' — '+subs[i]+'</label>\
+              <select data-match="'+m.id+'" data-kind="'+kind+'" data-index="'+i+'">\
+                <option value="" '+(val===null?'selected':'')+'>Non joué</option>\
+                <option value="0" '+(val===0?'selected':'')+'>Victoire '+names[0]+'</option>\
+                <option value="1" '+(val===1?'selected':'')+'>Victoire '+names[1]+'</option>\
+              </select>\
+            </div><div></div><div></div>\
+          </div>';
+      }
+      return html;
+    }
+
+    function renderPingBlock(m){
+      var sets=getPingPts(m); var names=[teamName(m.a), teamName(m.b)].map(escapeHtml); var labels=['Simple 1','Simple 2','Double']; var html='';
+      for(var i=0;i<3;i++){
+        var s=sets[i] || {a:null,b:null};
+        var note='';
+        if(s.a==null || s.b==null){ note='Saisissez deux scores (l’un doit être 11).'; }
+        else if(isPingValid(s.a,s.b)){ note='✔️ Score valide'; }
+        else { note='⚠️ Un des deux doit être 11, l’autre entre 0 et 10.'; }
+        html += '\
+          <div class="grid cols-4" style="align-items:end; margin-top:6px">\
+            <div>\
+              <label>Ping-pong — '+labels[i]+' — Points '+names[0]+'</label>\
+              <input type="number" min="0" max="11" step="1" placeholder="0–11" value="'+(s.a==null?'':s.a)+'" data-ping="a" data-index="'+i+'"/>\
+            </div>\
+            <div>\
+              <label>Ping-pong — '+labels[i]+' — Points '+names[1]+'</label>\
+              <input type="number" min="0" max="11" step="1" placeholder="0–11" value="'+(s.b==null?'':s.b)+'" data-ping="b" data-index="'+i+'"/>\
+            </div>\
+            <div class="help">'+note+'</div>\
+            <div></div>\
+          </div>';
+      }
+      return html;
     }
 
     function renderPaletBlock(m){
-      const a = m.palet.a, b = m.palet.b;
-      const note = paletNote(a,b);
-      const valA = (a==null ? '' : a);
-      const valB = (b==null ? '' : b);
-      return `<div class="grid cols-4" style="align-items:end; margin-top:6px">
-        <div>
-          <label>Palet — Points ${escapeHtml(teamName(m.a))}</label>
-          <input type="number" min="0" max="11" step="1" placeholder="0–11" value="${valA}" data-palet="a" />
-        </div>
-        <div>
-          <label>Palet — Points ${escapeHtml(teamName(m.b))}</label>
-          <input type="number" min="0" max="11" step="1" placeholder="0–11" value="${valB}" data-palet="b" />
-        </div>
-        <div class="help">${note}</div>
-        <div></div>
-      </div>`;
-    }</label>
-          <input type="number" min="0" max="11" step="1" placeholder="0–11" value="${a??''}" data-palet="a" />
-        </div>
-        <div>
-          <label>Palet — Points ${escapeHtml(teamName(m.b))}</label>
-          <input type="number" min="0" max="11" step="1" placeholder="0–11" value="${b??''}" data-palet="b" />
-        </div>
-        <div class="help">${note}</div>
-        <div></div>
-      </div>`;
+      var a=m.palet.a, b=m.palet.b; var valA=(a==null?'':a), valB=(b==null?'':b); var note='';
+      if(a==null || b==null) note='Saisissez les deux scores (l’un doit être 11).';
+      else if((a===11 && b>=0 && b<=10) || (b===11 && a>=0 && a<=10)) note='✔️ Score valide';
+      else note='⚠️ Un score doit être 11, l’autre entre 0 et 10.';
+      return '\
+        <div class="grid cols-4" style="align-items:end; margin-top:6px">\
+          <div>\
+            <label>Palet — Points '+escapeHtml(teamName(m.a))+'</label>\
+            <input type="number" min="0" max="11" step="1" placeholder="0–11" value="'+valA+'" data-palet="a" />\
+          </div>\
+          <div>\
+            <label>Palet — Points '+escapeHtml(teamName(m.b))+'</label>\
+            <input type="number" min="0" max="11" step="1" placeholder="0–11" value="'+valB+'" data-palet="b" />\
+          </div>\
+          <div class="help">'+note+'</div>\
+          <div></div>\
+        </div>';
     }
 
-    function isMatchComplete(m){
-      // darts & ping: 3 values each (0/1). palet: one must be 11 and other 0..10
-      const okSets = [...m.darts, ...m.ping].every(v => v===0 || v===1);
-      const pa = m.palet.a, pb = m.palet.b;
-      const okPal = (pa!=null && pb!=null) && ((pa===11 && pb>=0 && pb<=10) || (pb===11 && pa>=0 && pa<=10));
-      return okSets && okPal;
-    }
+    function clearMatch(id){ var m=state.matches.find(function(x){return x.id===id}); if(!m) return; if(!confirm('Effacer tous les scores de ce match ?')) return; m.darts=[null,null,null]; m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; m.palet={a:null,b:null}; saveState(); renderMatches(); renderLeaderboard(); }
+    function deleteMatch(id){ if(!confirm('Supprimer cette rencontre du calendrier ?')) return; state.matches = state.matches.filter(function(x){return x.id!==id}); saveState(); renderMatches(); renderLeaderboard(); }
 
-    function paletNote(a,b){
-      if(a==null || b==null) return 'Saisissez les deux scores (l’un doit être 11).';
-      if(a===11 && b>=0 && b<=10) return `✔️ ${escapeHtml(teamNameByScore(a,b,true))} gagne`;
-      if(b===11 && a>=0 && a<=10) return `✔️ ${escapeHtml(teamNameByScore(a,b,false))} gagne`;
-      return '⚠️ Un score doit être 11, l’autre entre 0 et 10.';
-    }
-    function teamNameByScore(a,b,assumeA){ return assumeA ? teamName(currentMatchTeamA()) : teamName(currentMatchTeamB()); }
-    // (helper above replaced at runtime via closures inside renderPaletBlock)
-
-    function clampInt(v,min,max){ if(Number.isNaN(v)) return null; return Math.max(min, Math.min(max, v)); }
-
+    // -------------------- Leaderboard --------------------
     function computeSetWins(m){
-      const aw = { darts: 0, ping: 0 }; const bw = { darts: 0, ping: 0 };
-      m.darts.forEach(v => { if(v===0) aw.darts++; if(v===1) bw.darts++; });
-      m.ping.forEach(v => { if(v===0) aw.ping++; if(v===1) bw.ping++; });
-      return [aw,bw];
+      var aw={darts:0,ping:0}, bw={darts:0,ping:0};
+      m.darts.forEach(function(v){ if(v===0){ aw.darts++; } else if(v===1){ bw.darts++; } });
+      getPingPts(m).forEach(function(s){ if(isPingValid(s.a,s.b)){ if(s.a===11){ aw.ping++; } else if(s.b===11){ bw.ping++; } } });
+      return {aw:aw, bw:bw};
     }
 
-    function clearMatch(id){
-      const m = state.matches.find(x=>x.id===id); if(!m) return;
-      if(!confirm('Effacer tous les scores de ce match ?')) return;
-      m.darts = [null,null,null]; m.ping = [null,null,null]; m.palet = {a:null,b:null}; saveState(); renderMatches(); renderLeaderboard();
-    }
-    function deleteMatch(id){
-      if(!confirm('Supprimer cette rencontre du calendrier ?')) return;
-      state.matches = state.matches.filter(x=>x.id!==id); saveState(); renderMatches(); renderLeaderboard();
-    }
-
-    // --- Leaderboard ---------------------------------------------------------
     function computeLeaderboard(){
-      const stats = new Map(state.teams.map(t => [t.id, { teamId: t.id, name: t.name, points: 0, dartsW: 0, pingW: 0, palFor: 0, palAg: 0, matchesComplete: 0 }]));
-      for(const m of state.matches){
-        const sA = stats.get(m.a); const sB = stats.get(m.b);
-        // darts & ping: 5 pts per won set
-        m.darts.forEach(v => { if(v===0){ sA.dartsW++; sA.points += 5; } else if(v===1){ sB.dartsW++; sB.points += 5; } });
-        m.ping.forEach(v => { if(v===0){ sA.pingW++; sA.points += 5; } else if(v===1){ sB.pingW++; sB.points += 5; } });
-        // palet: add scored points to totals; winner gets 11, loser gets [0..10]
-        const pa = m.palet.a, pb = m.palet.b; if(pa!=null && pb!=null){ sA.palFor += pa; sB.palFor += pb; sA.palAg += pb; sB.palAg += pa; sA.points += pa; sB.points += pb; }
+      var stats=new Map(state.teams.map(function(t){ return [t.id,{ teamId:t.id, name:t.name, points:0, dartsW:0, pingW:0, palFor:0, palAg:0, matchesComplete:0 }]; }));
+      state.matches.forEach(function(m){
+        var sA=stats.get(m.a), sB=stats.get(m.b);
+        // fléchettes
+        m.darts.forEach(function(v){ if(v===0){ sA.dartsW++; sA.points+=5; } else if(v===1){ sB.dartsW++; sB.points+=5; } });
+        // ping-pong via scores (11 gagnant)
+        getPingPts(m).forEach(function(s){ if(isPingValid(s.a,s.b)){ if(s.a===11){ sA.pingW++; sA.points+=5; } else if(s.b===11){ sB.pingW++; sB.points+=5; } } });
+        // palet: addition des points marqués
+        var pa=m.palet.a, pb=m.palet.b; if(pa!=null && pb!=null){ sA.palFor+=pa; sB.palFor+=pb; sA.palAg+=pb; sB.palAg+=pa; sA.points+=pa; sB.points+=pb; }
         if(isMatchComplete(m)){ sA.matchesComplete++; sB.matchesComplete++; }
-      }
-      const rows = Array.from(stats.values());
-      rows.sort((x,y) =>
-        y.points - x.points || // points desc
-        (y.palFor - y.palAg) - (x.palFor - x.palAg) || // palet diff desc
-        (y.dartsW + y.pingW) - (x.dartsW + x.pingW) || // total sets won desc
-        x.name.localeCompare(y.name) // name asc
-      );
-      return rows.map((row, idx) => ({ rank: idx+1, ...row }));
+      });
+      var rows=Array.from(stats.values());
+      rows.sort(function(x,y){ return (y.points-x.points) || ((y.palFor-y.palAg)-(x.palFor-x.palAg)) || ((y.dartsW+y.pingW)-(x.dartsW+x.pingW)) || x.name.localeCompare(y.name); });
+      return rows.map(function(row,idx){ row.rank=idx+1; return row; });
     }
 
-    function renderLeaderboard(){
-      const tbody = document.querySelector('#table-classement tbody');
-      tbody.innerHTML = '';
-      const rows = computeLeaderboard();
-      for(const r of rows){
-        const tr = document.createElement('tr');
-        const palDiff = r.palFor - r.palAg;
-        tr.innerHTML = `
-          <td>${r.rank}</td>
-          <td>${escapeHtml(r.name)}</td>
-          <td><strong>${r.points}</strong></td>
-          <td>${r.dartsW}</td>
-          <td>${r.pingW}</td>
-          <td>${r.palFor}–${r.palAg} <span class="muted">(${palDiff>=0?'+':''}${palDiff})</span></td>
-          <td>${r.matchesComplete}</td>
-        `;
-        tbody.appendChild(tr);
-      }
+    function renderLeaderboard(){ var tbody=document.querySelector('#table-classement tbody'); tbody.innerHTML=''; var rows=computeLeaderboard(); rows.forEach(function(r){ var palDiff=r.palFor-r.palAg; var tr=document.createElement('tr'); tr.innerHTML='<td>'+r.rank+'</td><td>'+escapeHtml(r.name)+'</td><td><b>'+r.points+'</b></td><td>'+r.dartsW+'</td><td>'+r.pingW+'</td><td>'+r.palFor+'–'+r.palAg+' <span class="muted">('+(palDiff>=0?'+':'')+palDiff+')</span></td><td>'+r.matchesComplete+'</td>'; tbody.appendChild(tr); }); }
+
+    // -------------------- Completeness & helpers --------------------
+    function isMatchComplete(m){
+      var okDarts = m.darts.every(function(v){ return v===0 || v===1; });
+      var okPing = getPingPts(m).every(function(s){ return isPingValid(s.a,s.b); });
+      var pa=m.palet.a, pb=m.palet.b; var okPal = (pa!=null && pb!=null) && ((pa===11 && pb>=0 && pb<=10) || (pb===11 && pa>=0 && pa<=10));
+      return okDarts && okPing && okPal;
     }
 
-    // --- Bulk expand/collapse ----------------------------------------------
-    (function(){ const el = document.getElementById('btn-expand'); if(!el) return; el.addEventListener('click', () => { document.querySelectorAll('.match-card').forEach(node => node.setAttribute('aria-expanded','true')); }); })();
-    (function(){ const el = document.getElementById('btn-collapse'); if(!el) return; el.addEventListener('click', () => { document.querySelectorAll('.match-card').forEach(node => node.setAttribute('aria-expanded','false')); }); })();
+    // -------------------- Export / Import / Reset --------------------
+    (function(){ var el=document.getElementById('btn-expand'); if(el) el.addEventListener('click', function(){ Array.prototype.forEach.call(document.querySelectorAll('.match-card'), function(node){ node.setAttribute('aria-expanded','true'); }); }); })();
+    (function(){ var el=document.getElementById('btn-collapse'); if(el) el.addEventListener('click', function(){ Array.prototype.forEach.call(document.querySelectorAll('.match-card'), function(node){ node.setAttribute('aria-expanded','false'); }); }); })();
 
-    // --- Export / Import / Reset --------------------------------------------
-    (function(){ const el = document.getElementById('btn-export'); if(!el) return; el.addEventListener('click', () => { const data = JSON.stringify(state, null, 2); const blob = new Blob([data], {type: 'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `tournoi-amis-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); }); })();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = `tournoi-amis-${new Date().toISOString().slice(0,10)}.json`; a.click();
-      URL.revokeObjectURL(url);
-    });
+    (function(){ var el=document.getElementById('btn-export'); if(el) el.addEventListener('click', function(){ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='tournoi-amis-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url); }); })();
+    var importFile;
+    (function(){ var el=document.getElementById('file-import'); if(el) el.addEventListener('change', function(e){ importFile=e.target.files[0]; }); })();
+    (function(){ var el=document.getElementById('btn-import'); if(el) el.addEventListener('click', function(){ if(!importFile){ alert('Sélectionnez d\'abord un fichier JSON.'); return; } importFile.text().then(function(text){ try{ var data=JSON.parse(text); if(!data || !Array.isArray(data.teams) || !Array.isArray(data.matches)) throw new Error('format'); state=data; migrateState(); saveState(); renderTeams(); renderMatches(); renderLeaderboard(); alert('Import réussi !'); }catch(e){ alert('Fichier invalide.'); } }); }); })();
+    (function(){ var el=document.getElementById('btn-reset'); if(el) el.addEventListener('click', function(){ if(!confirm('Tout effacer et recommencer ?')) return; state={version:2,teams:[],matches:[],createdAt:new Date().toISOString()}; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); }); })();
 
-    let importFile;
-    (function(){ const el = document.getElementById('file-import'); if(!el) return; el.addEventListener('change', (e) => { importFile = e.target.files[0]; }); })();
-    (function(){ const el = document.getElementById('btn-import'); if(!el) return; el.addEventListener('click', async () => { if(!importFile){ alert('Sélectionnez d\'abord un fichier JSON.'); return; } const text = await importFile.text(); try { const data = JSON.parse(text); if(!data || !Array.isArray(data.teams) || !Array.isArray(data.matches)) throw new Error('format'); state = data; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); alert('Import réussi !'); } catch(e){ alert('Fichier invalide.'); } }); })();
+    // -------------------- Utilities --------------------
+    function uid(){ return Math.random().toString(36).slice(2,10); }
+    function escapeHtml(str){ return (str==null? '' : String(str)).replace(/[&<>"']/g, function(s){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s]; }); }
+    function clampInt(v,min,max){ if(isNaN(v)) return null; if(v<min) return min; if(v>max) return max; return v; }
+    function getPingPts(m){ if(Array.isArray(m.pingPts)) return m.pingPts; if(Array.isArray(m.ping)) return m.ping.map(function(v){ return v===0? {a:11,b:0} : v===1? {a:0,b:11} : {a:null,b:null}; }); return [{a:null,b:null},{a:null,b:null},{a:null,b:null}]; }
+    function isPingValid(a,b){ return (a===11 && b>=0 && b<=10) || (b===11 && a>=0 && a<=10); }
+    function migrateState(){ if(!state || !Array.isArray(state.matches)) return; state.matches.forEach(function(m){ if(!Array.isArray(m.pingPts)){ m.pingPts = getPingPts(m); delete m.ping; } }); saveState(); }
 
-    (function(){ const el = document.getElementById('btn-reset'); if(!el) return; el.addEventListener('click', () => { if(!confirm('Tout effacer et recommencer ?')) return; state = { version: 1, teams: [], matches: [], createdAt: new Date().toISOString() }; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); }); })();
-
-    // --- Utilities -----------------------------------------------------------
-    function escapeHtml(str){ return (str==null?'' : String(str)).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s])); }
-
-    // Override helper to show winner name in paletNote
-    function currentMatchTeamA(){ return window.__currentTeamA; }
-    function currentMatchTeamB(){ return window.__currentTeamB; }
-
-    // Patch teamNameByScore to use closure values when rendering palet blocks
-    const _renderPaletBlock = renderPaletBlock;
-    renderPaletBlock = function(m){
-      window.__currentTeamA = m.a; window.__currentTeamB = m.b; // used by paletNote → teamNameByScore
-      return _renderPaletBlock(m);
-    }
-
-    // --- Init ----------------------------------------------------------------
-    renderTeams();
-    renderMatches();
-    renderLeaderboard();
-    updateStorageWarning();
-
+    // -------------------- Init --------------------
+    migrateState();
+    renderTeams(); renderMatches(); renderLeaderboard(); updateStorageWarning();
   </script>
 </body>
 </html>
