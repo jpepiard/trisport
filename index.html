@@ -66,8 +66,8 @@
               <div class="help">Ajoutez vos équipes (2 joueurs par équipe). Le calendrier sera généré automatiquement en journées équilibrées.</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <button class="btn" id="btn-add-team">+ Ajouter une équipe</button>
-              <button class="btn primary" id="btn-generate">Générer/Mettre à jour le calendrier</button>
+              <button type="button" class="btn" id="btn-add-team">+ Ajouter une équipe</button>
+              <button type="button" class="btn primary" id="btn-generate">Générer/Mettre à jour le calendrier</button>
             </div>
           </div>
           <div class="bd"><div id="team-list" class="grid responsive"></div></div>
@@ -80,8 +80,8 @@
             <strong>Rencontres</strong>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="stats-matches">0 / 0 matches complets</span>
-              <button class="btn small" id="btn-expand">Tout déployer</button>
-              <button class="btn small" id="btn-collapse">Tout replier</button>
+              <button type="button" class="btn small" id="btn-expand">Tout déployer</button>
+              <button type="button" class="btn small" id="btn-collapse">Tout replier</button>
             </div>
           </div>
           <div class="bd"><div id="match-list" class="grid"></div></div>
@@ -112,15 +112,15 @@
         <div class="grid cols-2">
           <div class="card"><div class="hd"><strong>Exporter / Importer</strong></div>
             <div class="bd grid" style="gap:10px">
-              <button class="btn" id="btn-export">Exporter en JSON</button>
+              <button type="button" class="btn" id="btn-export">Exporter en JSON</button>
               <input type="file" id="file-import" accept="application/json" />
-              <button class="btn" id="btn-import">Importer le fichier JSON</button>
+              <button type="button" class="btn" id="btn-import">Importer le fichier JSON</button>
               <div class="help">Partagez le fichier d'export pour reprendre un tournoi ailleurs.</div>
             </div>
           </div>
           <div class="card"><div class="hd"><strong>Réinitialisation</strong></div>
             <div class="bd grid" style="gap:10px">
-              <button class="btn danger" id="btn-reset">Nouvelle compétition (tout effacer)</button>
+              <button type="button" class="btn danger" id="btn-reset">Nouvelle compétition (tout effacer)</button>
               <div class="help">Efface les équipes, le calendrier et les scores de cet appareil.</div>
             </div>
           </div>
