@@ -141,8 +141,11 @@
     var MEMORY_ONLY=false;
     function saveState(){ try{ if(!MEMORY_ONLY){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } }catch(e){ MEMORY_ONLY=true; updateStorageWarning(); } }
     function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null; }catch(e){ MEMORY_ONLY=true; return null; } }
-    function updateStorageWarning(){ var el=document.getElementById('storage-warning'); if(el){ el.style.display = MEMORY_ONLY? 'block':'none'; } }
+    function updateStorageWarning(){ var el=document.getElementById('storage-warning'); if(el){ el.style.display = MEMORY_ONLY? 'block':'none'; el.textContent = (MEMORY_ONLY? '⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.' : ''); el.textContent += (el.textContent? ' ' : '') + 'JS OK '+APP_VERSION; } }
     var state = loadState() || { version:3, teams:[], matches:[], createdAt:new Date().toISOString() };
+    var APP_VERSION='v7';
+    // --- UI state (préserver l'ouverture des cartes entre re-renders)
+    var ui = { open: {} }; 
     // --- UI state (préserver l'ouverture des cartes entre re-renders)
     var ui = { open: {} };
 
@@ -421,6 +424,20 @@
     function getPingPts(m){ if(isArray(m.pingPts)) return m.pingPts; if(isArray(m.ping)) { var arr=[]; for(var i=0;i<m.ping.length;i++){ var v=m.ping[i]; arr.push(v===0? {a:11,b:0} : v===1? {a:0,b:11} : {a:null,b:null}); } return arr; } return [{a:null,b:null},{a:null,b:null},{a:null,b:null}]; }
     function isPingValid(a,b){ if(a==null || b==null) return false; if(isNaN(a)||isNaN(b)) return false; var max=a>b?a:b; var diff=a>b?a-b:b-a; return (max>=11) && (diff>=2); }
     function migrateState(){ if(!(state && isArray(state.matches))) return; for(var i=0;i<state.matches.length;i++){ var m=state.matches[i]; if(!isArray(m.pingPts)){ m.pingPts=getPingPts(m); if(m.ping) delete m.ping; } } saveState(); }
+
+    // -------- Global click delegation (secours) --------
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest ? e.target.closest('button') : null; if(!btn) return;
+      var id = btn.id || '';
+      if(id==='btn-add-team'){ e.preventDefault(); state.teams.push({ id: uid(), name: 'Équipe '+(state.teams.length+1), p1:'', p2:'' }); saveState(); renderTeams(); return; }
+      if(id==='btn-generate'){ e.preventDefault(); generateSchedule(); renderMatches(); renderLeaderboard(); var tab=document.querySelector('.tab[data-tab="calendrier"]'); if(tab && tab.click) tab.click(); return; }
+      if(id==='btn-expand'){ e.preventDefault(); var cards=document.querySelectorAll('.match-card'); for(var i=0;i<cards.length;i++){ cards[i].setAttribute('aria-expanded','true'); } return; }
+      if(id==='btn-collapse'){ e.preventDefault(); var cards2=document.querySelectorAll('.match-card'); for(var j=0;j<cards2.length;j++){ cards2[j].setAttribute('aria-expanded','false'); } return; }
+      if(id==='btn-reset'){ e.preventDefault(); if(!confirm('Tout effacer et recommencer ?')) return; state={version:3,teams:[],matches:[],createdAt:new Date().toISOString()}; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); return; }
+      if(btn.getAttribute('data-action')==='del-team'){ e.preventDefault(); var tid=btn.getAttribute('data-id'); if(!confirm('Supprimer cette équipe ?')) return; var i=findTeamIndex(tid); if(i>-1){ state.teams.splice(i,1); } state.matches = state.matches.filter(function(m){return m.a!==tid && m.b!==tid}); saveState(); renderTeams(); renderMatches(); renderLeaderboard(); return; }
+      if(btn.getAttribute('data-clear')){ e.preventDefault(); clearMatch(btn.getAttribute('data-clear')); return; }
+      if(btn.getAttribute('data-delete')){ e.preventDefault(); deleteMatch(btn.getAttribute('data-delete')); return; }
+    });
 
     // -------- Init --------
     migrateState(); renderTeams(); renderMatches(); renderLeaderboard(); updateStorageWarning();
