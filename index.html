@@ -279,7 +279,7 @@
             </div>';
           el.querySelector('[data-expand]').addEventListener('click', (function(node,id){ return function(){ var isOpen = node.getAttribute('aria-expanded')==='true'; var next = !isOpen; node.setAttribute('aria-expanded', next ? 'true' : 'false'); ui.open[id]=next; }; })(el, mm.id));
           // darts
-          Array.prototype.forEach.call(el.querySelectorAll('select[data-match][data-kind]'), function(sel){ sel.addEventListener('change', function(){ var kind=sel.getAttribute('data-kind'); var idx=parseInt(sel.getAttribute('data-index'),10); var val = sel.value===''? null : parseInt(sel.value,10); var match=findMatch(mm.id); match[kind][idx]=val; saveState(); renderMatches(); renderLeaderboard(); }); });
+          Array.prototype.forEach.call(el.querySelectorAll('select[data-match][data-kind]'), function(sel){ sel.addEventListener('change', function(){ var kind=sel.getAttribute('data-kind'); var idx=parseInt(sel.getAttribute('data-index'),10); var val = sel.value===''? null : parseInt(sel.value,10); var match=findMatch(mm.id); match[kind][idx]=val; saveState(); renderLeaderboard(); }); });
           // ping inputs
           Array.prototype.forEach.call(el.querySelectorAll('input[data-ping]'), function(inp){
           inp.addEventListener('input', function(){
@@ -292,10 +292,10 @@
             var which=inp.getAttribute('data-ping'); var idx=parseInt(inp.getAttribute('data-index'),10);
             var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,99);
             var match=findMatch(mm.id); if(!isArray(match.pingPts)) match.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}];
-            match.pingPts[idx][which]=val; saveState(); renderMatches(); renderLeaderboard();
+            match.pingPts[idx][which]=val; saveState(); renderLeaderboard();
           });
           inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } });
-        }); inp.addEventListener('change', function(){ renderMatches(); }); });
+        }); inp.addEventListener('change', function(){ /* no re-render on change */ }); });
           // palet inputs
           Array.prototype.forEach.call(el.querySelectorAll('input[data-palet]'), function(inp){
           inp.addEventListener('input', function(){
@@ -307,7 +307,7 @@
             var match=findMatch(mm.id); match.palet[which]=val; saveState(); renderMatches(); renderLeaderboard();
           });
           inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } });
-        }); inp.addEventListener('change', function(){ renderMatches(); }); });
+        }); inp.addEventListener('change', function(){ /* no re-render on change */ }); });
           // clear & delete
           el.querySelector('[data-clear]').addEventListener('click', (function(id){ return function(){ clearMatch(id); }; })(mm.id));
           el.querySelector('[data-delete]').addEventListener('click', (function(id){ return function(){ deleteMatch(id); }; })(mm.id));
