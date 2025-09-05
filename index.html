@@ -143,6 +143,8 @@
     function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null; }catch(e){ MEMORY_ONLY=true; return null; } }
     function updateStorageWarning(){ var el=document.getElementById('storage-warning'); if(el){ el.style.display = MEMORY_ONLY? 'block':'none'; } }
     var state = loadState() || { version:3, teams:[], matches:[], createdAt:new Date().toISOString() };
+    // --- UI state (préserver l'ouverture des cartes entre re-renders)
+    var ui = { open: {} };
 
     // -------- Tabs --------
     Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(btn){
@@ -250,7 +252,7 @@
         for(var j=0;j<list.length;j++){
           var mm=list[j]; var wins=computeSetWins(mm); var pal=mm.palet; var palScore=(pal.a!=null && pal.b!=null)? (pal.a+'–'+pal.b) : '—';
           var isComplete=isMatchComplete(mm); if(isComplete) completeCount++;
-          var el=document.createElement('div'); el.className='match-card'; el.setAttribute('aria-expanded','false');
+          var el=document.createElement('div'); el.className='match-card'; el.setAttribute('data-id', mm.id); var opened = ui.open[mm.id]; if(opened===undefined){ opened = true; } el.setAttribute('aria-expanded', opened ? 'true' : 'false');
           el.innerHTML='\
             <div class="match-head" data-expand>\
               <div class="teams"><span class="chip">#'+(++globalIdx)+'</span> '+escapeHtml(teamName(mm.a))+' <span class="muted">vs</span> '+escapeHtml(teamName(mm.b))+'</div>\
@@ -275,13 +277,37 @@
                 </div>\
               </div>\
             </div>';
-          el.querySelector('[data-expand]').addEventListener('click', function(node){ return function(){ node.setAttribute('aria-expanded', node.getAttribute('aria-expanded')==='true'? 'false':'true'); }; }(el));
+          el.querySelector('[data-expand]').addEventListener('click', (function(node,id){ return function(){ var isOpen = node.getAttribute('aria-expanded')==='true'; var next = !isOpen; node.setAttribute('aria-expanded', next ? 'true' : 'false'); ui.open[id]=next; }; })(el, mm.id));
           // darts
           Array.prototype.forEach.call(el.querySelectorAll('select[data-match][data-kind]'), function(sel){ sel.addEventListener('change', function(){ var kind=sel.getAttribute('data-kind'); var idx=parseInt(sel.getAttribute('data-index'),10); var val = sel.value===''? null : parseInt(sel.value,10); var match=findMatch(mm.id); match[kind][idx]=val; saveState(); renderMatches(); renderLeaderboard(); }); });
           // ping inputs
-          Array.prototype.forEach.call(el.querySelectorAll('input[data-ping]'), function(inp){ inp.addEventListener('input', function(){ var which=inp.getAttribute('data-ping'); var idx=parseInt(inp.getAttribute('data-index'),10); var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,99); var match=findMatch(mm.id); if(!isArray(match.pingPts)) match.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; match.pingPts[idx][which]=val; saveState(); renderLeaderboard(); }); inp.addEventListener('change', function(){ renderMatches(); }); });
+          Array.prototype.forEach.call(el.querySelectorAll('input[data-ping]'), function(inp){
+          inp.addEventListener('input', function(){
+            var which=inp.getAttribute('data-ping'); var idx=parseInt(inp.getAttribute('data-index'),10);
+            var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,99);
+            var match=findMatch(mm.id); if(!isArray(match.pingPts)) match.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}];
+            match.pingPts[idx][which]=val; saveState(); renderLeaderboard();
+          });
+          inp.addEventListener('change', function(){
+            var which=inp.getAttribute('data-ping'); var idx=parseInt(inp.getAttribute('data-index'),10);
+            var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,99);
+            var match=findMatch(mm.id); if(!isArray(match.pingPts)) match.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}];
+            match.pingPts[idx][which]=val; saveState(); renderMatches(); renderLeaderboard();
+          });
+          inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } });
+        }); inp.addEventListener('change', function(){ renderMatches(); }); });
           // palet inputs
-          Array.prototype.forEach.call(el.querySelectorAll('input[data-palet]'), function(inp){ inp.addEventListener('input', function(){ var which=inp.getAttribute('data-palet'); var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,11); var match=findMatch(mm.id); match.palet[which]=val; saveState(); renderLeaderboard(); }); inp.addEventListener('change', function(){ renderMatches(); }); });
+          Array.prototype.forEach.call(el.querySelectorAll('input[data-palet]'), function(inp){
+          inp.addEventListener('input', function(){
+            var which=inp.getAttribute('data-palet'); var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,11);
+            var match=findMatch(mm.id); match.palet[which]=val; saveState(); renderLeaderboard();
+          });
+          inp.addEventListener('change', function(){
+            var which=inp.getAttribute('data-palet'); var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,11);
+            var match=findMatch(mm.id); match.palet[which]=val; saveState(); renderMatches(); renderLeaderboard();
+          });
+          inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } });
+        }); inp.addEventListener('change', function(){ renderMatches(); }); });
           // clear & delete
           el.querySelector('[data-clear]').addEventListener('click', (function(id){ return function(){ clearMatch(id); }; })(mm.id));
           el.querySelector('[data-delete]').addEventListener('click', (function(id){ return function(){ deleteMatch(id); }; })(mm.id));
