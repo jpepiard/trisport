@@ -30,21 +30,9 @@
     label{font-size:13px;color:var(--muted)}
     table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left} th{color:var(--muted);font-weight:600}
     .match-card{border-radius:14px;border:1px solid var(--border);background:var(--card);overflow:hidden}
-    .match-head{display:flex;justify-content:space-between;align-items:center;padding:12px;gap:8px;cursor:pointer}
-    .teams{display:flex;align-items:center;gap:8px;font-weight:600}
+    .help{font-size:13px;color:var(--muted)}
     .chip{font-size:12px;padding:4px 8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;color:var(--muted)}
     .pill{padding:4px 8px;border-radius:999px;background:#0f1331;border:1px solid var(--border);color:var(--muted);font-size:12px}
-    .caret{transform:rotate(0deg);transition:transform .2s ease}
-    .match-card[aria-expanded=true] .caret{transform:rotate(90deg)}
-    .match-body{display:none;border-top:1px solid var(--border);padding:12px}
-    .match-card[aria-expanded=true] .match-body{display:block}
-    .help{font-size:13px;color:var(--muted)}
-    .h2h-table th, .h2h-table td { white-space:nowrap; }
-    .h2h-badge{display:inline-block;border:1px solid var(--border);border-radius:10px;padding:2px 6px;font-size:12px}
-    .h2h-win{background:#0f2b1a;color:#9be7b0;border-color:#1e5f3a}
-    .h2h-loss{background:#2b1515;color:#ffb3b3;border-color:#7a2a2a}
-    .h2h-pend{background:#141a33;color:#b9c3ef}
-    .h2h-clickable{cursor:pointer}
     .avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:#0f1331;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;color:#cbd5ff;font-weight:700;font-size:14px;flex:0 0 auto}
     .avatar img{width:100%;height:100%;object-fit:cover}
     .avatar .avatar-initials{display:inline-block;line-height:40px}
@@ -52,13 +40,12 @@
     .avatar-lg .avatar-initials{line-height:48px}
     .avatar-sm{width:32px;height:32px;font-size:12px}
     .avatar-sm .avatar-initials{line-height:32px}
-    .team-name{display:inline-flex;align-items:center;gap:8px}
     #storage-warning{position:fixed; right:12px; bottom:12px; display:none; background:#0f1331; border:1px solid var(--border); color:var(--muted); border-radius:10px; padding:8px 10px; z-index:99; box-shadow:0 6px 24px rgba(0,0,0,.35)}
   </style>
 
+  <!-- Firebase (live) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-
   <script>
     window.FIREBASE_CONFIG = {
       apiKey: "AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",
@@ -79,14 +66,15 @@
       </div>
 
       <nav class="tabs" role="tablist" aria-label="Sections" style="flex:1;justify-content:center;display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" class="tab" role="tab" aria-selected="true" data-tab="equipes">Équipes</button>
+        <button type="button" class="tab" role="tab" aria-selected="true" data-tab="setup">Tournoi</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="equipes">Équipes</button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-tab="calendrier">Rencontres</button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-tab="classement">Classement</button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-tab="options">Options</button>
       </nav>
 
-      <!-- Identité + plein écran -->
       <div style="display:flex;align-items:center;gap:8px">
+        <span id="tname-top" class="pill" title="Nom du tournoi" style="display:none"></span>
         <span id="whoami-top" class="pill">visiteur</span>
         <button type="button" class="btn small" id="btn-fullscreen" title="Plein écran (Esc pour quitter)">⛶ Plein écran</button>
       </div>
@@ -97,8 +85,33 @@
     <div class="container">
       <div id="storage-warning" class="help" style="display:none"></div>
 
-      <!-- Équipes -->
-      <section id="equipes" class="active">
+      <!-- 1) Création du tournoi -->
+      <section id="setup" class="active">
+        <div class="card">
+          <div class="hd"><strong>Créer le tournoi (admin)</strong></div>
+          <div class="bd grid cols-2">
+            <div>
+              <label>Nom du tournoi</label>
+              <input type="text" id="tname-input" placeholder="ex : Tournoi de la plage" />
+            </div>
+            <div>
+              <label>Nombre d'équipes</label>
+              <input type="number" id="teams-count-input" min="2" max="64" step="1" value="4" />
+            </div>
+            <div style="grid-column:1 / -1;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button type="button" class="btn primary" id="btn-create-tournament">Générer</button>
+              <span class="help">Seul l’<b>administrateur</b> peut créer/écraser un tournoi (PIN : 30041991).</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="help" style="margin-top:10px">
+          Astuce : après génération, rendez-vous dans l’onglet <b>Équipes</b> pour saisir les noms / avatars, puis cliquez <b>Générer le calendrier</b>.
+        </div>
+      </section>
+
+      <!-- 2) Équipes -->
+      <section id="equipes">
         <div class="card">
           <div class="hd">
             <div>
@@ -115,7 +128,7 @@
         </div>
       </section>
 
-      <!-- Rencontres -->
+      <!-- 3) Rencontres -->
       <section id="calendrier">
         <div class="card">
           <div class="hd">
@@ -130,7 +143,7 @@
         </div>
       </section>
 
-      <!-- Classement -->
+      <!-- 4) Classement -->
       <section id="classement">
         <div class="card">
           <div class="hd">
@@ -159,7 +172,7 @@
         </div>
       </section>
 
-      <!-- Options -->
+      <!-- 5) Options -->
       <section id="options">
         <div class="grid cols-2">
           <div class="card">
@@ -204,6 +217,6 @@
     </div>
   </main>
 
-  <script defer src="app.js?v=roles2c12"></script>
+  <script defer src="app.js?v=roles2c13"></script>
 </body>
 </html>
