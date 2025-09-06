@@ -1,4 +1,4 @@
-// JS OK roles2c3 — Cloud join sans écraser, classement auto, H2H fiable, normalisation état, admin/équipes protégés
+// JS OK roles2c4 — Avatars d’équipe (upload/crop), Cloud join sûr, classement auto, H2H cliquable
 (function () {
   window.onerror = function (msg, src, line, col) {
     var el = document.getElementById("storage-warning");
@@ -8,18 +8,18 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
-    banner("JS OK roles2c3");
+    banner("JS OK roles2c4");
 
     // ---------- Local storage
-    var STORAGE_KEY = "tournoi_amis_roles2c3";
+    var STORAGE_KEY = "tournoi_amis_roles2c4";
     var MEMORY_ONLY = false;
     function saveLocal(){ try{ if(!MEMORY_ONLY) localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ MEMORY_ONLY=true; warnStorage(); } }
     function loadLocal(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw?JSON.parse(raw):null; }catch(e){ MEMORY_ONLY=true; return null; } }
-    function warnStorage(){ var el=id("storage-warning"); if(el){ el.style.display="block"; el.textContent="JS OK roles2c3"+(MEMORY_ONLY?" — ⚠️ stockage local indisponible":""); } }
+    function warnStorage(){ var el=id("storage-warning"); if(el){ el.style.display="block"; el.textContent="JS OK roles2c4"+(MEMORY_ONLY?" — ⚠️ stockage local indisponible":""); } }
     function banner(msg){ var el=id("storage-warning"); if(!el) return; el.style.display="block"; el.textContent=msg; }
 
     // ---------- State + session
-    var state = loadLocal() || { version: 16, teams: [], matches: [], locked:false, createdAt:new Date().toISOString(), protect:{teamPassHash:{}} };
+    var state = loadLocal() || { version: 17, teams: [], matches: [], locked:false, createdAt:new Date().toISOString(), protect:{teamPassHash:{}} };
     normalizeState();
     var ui = { open:{}, h2h:false };
     var session = { admin:false, claims:{} };
@@ -62,7 +62,7 @@
           }
         }
 
-        if(!val) return; // rien d'autre à faire
+        if(!val) return;
         const remoteAt = +val.updatedAt || 0;
         if(remoteAt <= cloud.lastRemoteAt) return;
 
@@ -76,7 +76,7 @@
 
       // ⚠️ NE PAS pousser ici (sinon on écrase depuis un appareil vierge)
       try{
-        history.replaceState(null,"", location.pathname+"?v=roles2c3&id="+encodeURIComponent(cloud.id));
+        history.replaceState(null,"", location.pathname+"?v=roles2c4&id="+encodeURIComponent(cloud.id));
       }catch(_){}
     }
     function leaveCloud(){ if(cloud.ref) cloud.ref.off(); cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloud("hors ligne"); loadSession(); }
@@ -124,9 +124,18 @@
     // ---------- Rôles & droits
     function isAdmin(){ return !!session.admin; }
     function hasClaim(teamId){ return !!session.claims[teamId]; }
-    function canEditTeam(teamId){ return isAdmin(); } // admin seulement
+    function canEditTeam(teamId){ return isAdmin(); } // admin seulement pour nom/joueurs
+    function canEditAvatar(teamId){ return isAdmin() || hasClaim(teamId); } // avatar autorisé équipe connectée
     function canEditMatch(m){ return isAdmin() || hasClaim(m.a) || hasClaim(m.b); }
-    function teamName(tid){ var t=state.teams.find(x=>x.id===tid); return t?t.name:"—"; }
+    function teamObj(tid){ return state.teams.find(x=>x.id===tid)||null; }
+    function teamName(tid){ var t=teamObj(tid); return t?t.name:"—"; }
+    function initials(name){ var s=(name||'').trim(); if(!s) return '?'; var p=s.split(/\s+/); var ini=p[0][0] + (p.length>1 ? p[p.length-1][0] : ''); return ini.toUpperCase(); }
+    function avatarHtml(tid, size){
+      var t=teamObj(tid)||{name:'?'}; var url=t.avatar;
+      var cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':'');
+      var content = url ? '<img src="'+esc(url)+'" alt="avatar">' : '<span class="avatar-initials">'+esc(initials(t.name))+'</span>';
+      return '<span class="avatar '+cls+'" title="'+esc(t.name)+'">'+content+'</span>';
+    }
     function updateWho(){
       var who=id("whoami"); if(!who) return;
       var role = isAdmin() ? "ADMIN" : (Object.keys(session.claims||{}).length? ("équipe: "+Object.keys(session.claims).map(k=>teamName(k)).filter(Boolean).join(", ")) : "visiteur (lecture seule)");
@@ -149,7 +158,7 @@
     onClick(id("btn-cloud-leave"), ()=>leaveCloud());
     onClick(id("btn-cloud-copy"), ()=>{
       var code=id("cloud-id").value.trim(); if(!code){ alert("Renseigne d’abord le code tournoi."); return; }
-      var url=location.origin+location.pathname+"?v=roles2c3&id="+encodeURIComponent(code);
+      var url=location.origin+location.pathname+"?v=roles2c4&id="+encodeURIComponent(code);
       navigator.clipboard && navigator.clipboard.writeText(url);
       alert("Lien copié !\n"+url);
     });
@@ -162,13 +171,13 @@
     });
     onClick(id("btn-admin-off"), ()=>{ session.admin=false; saveSession(); renderAll(); });
 
-    // ---------- Teams (ADMIN crée/édite, joueurs se connectent)
+    // ---------- Teams (ADMIN crée/édite, joueurs se connectent; avatar: admin ou équipe)
     var teamListEl=id("team-list");
 
     onClick(id("btn-add-team"), ()=>{
       if(!isAdmin()){ alert("Réservé à l’admin."); return; }
       if(state.locked){ alert("Calendrier figé."); return; }
-      state.teams.push({ id:uid(), name:"Équipe "+(state.teams.length+1), p1:"", p2:"" });
+      state.teams.push({ id:uid(), name:"Équipe "+(state.teams.length+1), p1:"", p2:"", avatar:null });
       saveState(); renderTeams(); updateCounts(); updateLockUI();
     });
 
@@ -194,29 +203,37 @@
                         + (!iOwn ? '<button type="button" class="btn small" data-act="login" data-id="'+t.id+'">Se connecter à cette équipe</button>'
                                  : '<button type="button" class="btn small" data-act="logout" data-id="'+t.id+'">Se déconnecter</button>');
 
+        var canAvatar = canEditAvatar(t.id);
+        var avatarBtn = canAvatar ? '<button type="button" class="btn small" data-act="avatar" data-id="'+t.id+'">Changer avatar</button>' : '';
+        var avatarClr = (canAvatar && t.avatar) ? '<button type="button" class="btn small" data-act="avatar-clear" data-id="'+t.id+'">Retirer avatar</button>' : '';
+
         var card=document.createElement("div"); card.className="match-card";
         card.innerHTML=''
-          +'<div class="match-head"><div class="teams"><span class="chip">#'+(idx+1)+'</span> '
-          +'<input type="text"'+dis+' value="'+esc(t.name)+'" data-field="name" data-id="'+t.id+'"/></div><div>'+delBtn+'</div></div>'
-          +'<div class="match-body" style="display:block"><div class="grid cols-2">'
+          +'<div class="match-head"><div class="teams" style="width:100%"><span class="chip">#'+(idx+1)+'</span> '
+          +'<span class="team-name">'+avatarHtml(t.id,'lg')+'<input type="text"'+dis+' value="'+esc(t.name)+'" data-field="name" data-id="'+t.id+'" style="min-width:0;flex:1"/></span></div><div>'+delBtn+'</div></div>'
+          +'<div class="match-body" style="display:block">'
+          +'<input type="file" accept="image/*" data-avatar="'+t.id+'" style="display:none" />'
+          +'<div class="grid cols-2">'
           +'<div><label>Joueur·se 1</label><input type="text"'+dis+' value="'+esc(t.p1)+'" data-field="p1" data-id="'+t.id+'"/></div>'
           +'<div><label>Joueur·se 2</label><input type="text"'+dis+' value="'+esc(t.p2)+'" data-field="p2" data-id="'+t.id+'"/></div>'
           +'</div>'
           +'<div class="help" style="margin-top:6px">'+protectInfo+'</div>'
-          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+protectBtns+'</div>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+avatarBtn+avatarClr+protectBtns+'</div>'
           +'</div>';
         teamListEl.appendChild(card);
       });
 
-      // champs équipe -> ADMIN seulement
+      // champs équipe -> ADMIN uniquement
       qsa('#team-list input[data-field]').forEach(inp=>{
         inp.addEventListener("input", ()=>{
           var tid=inp.getAttribute("data-id"), f=inp.getAttribute("data-field");
           if(!canEditTeam(tid)) return;
-          var t=state.teams.find(x=>x.id===tid); if(!t) return;
+          var t=teamObj(tid); if(!t) return;
           t[f]=inp.value; saveState(); renderMatches(); renderLeaderboard(); renderH2H();
         });
       });
+
+      // supprimer équipe
       qsa('#team-list [data-act="del"]').forEach(btn=>{
         btn.addEventListener("click", ()=>{
           if(!isAdmin()||state.locked) return;
@@ -228,6 +245,8 @@
           saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts();
         });
       });
+
+      // mots de passe équipe
       qsa('#team-list [data-act="setpass"]').forEach(btn=>{
         btn.addEventListener("click", async ()=>{
           if(!isAdmin()){ alert("Réservé à l’administrateur."); return; }
@@ -237,6 +256,8 @@
           alert("Mot de passe défini.");
         });
       });
+
+      // login / logout équipe
       qsa('#team-list [data-act="login"]').forEach(btn=>{
         btn.addEventListener("click", async ()=>{
           var tid=btn.getAttribute("data-id");
@@ -253,7 +274,59 @@
         btn.addEventListener("click", ()=>{ var tid=btn.getAttribute("data-id"); delete session.claims[tid]; saveSession(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); });
       });
 
+      // avatar: ouvrir sélecteur
+      qsa('#team-list [data-act="avatar"]').forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          var tid=btn.getAttribute("data-id");
+          if(!canEditAvatar(tid)){ alert("Accès refusé."); return; }
+          var input = qs('[data-avatar="'+tid+'"]'); if(input) input.click();
+        });
+      });
+      // avatar: retirer
+      qsa('#team-list [data-act="avatar-clear"]').forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          var tid=btn.getAttribute("data-id"); if(!canEditAvatar(tid)) return;
+          var t=teamObj(tid); if(!t) return; t.avatar=null; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H();
+        });
+      });
+      // avatar: file change + crop + save
+      qsa('#team-list input[type="file"][data-avatar]').forEach(inp=>{
+        inp.addEventListener("change", async ()=>{
+          var tid=inp.getAttribute("data-avatar"); if(!canEditAvatar(tid)) return;
+          var file=inp.files && inp.files[0]; if(!file) return;
+          try{
+            const url = await fileToSquareDataURL(file, 128); // crop & resize
+            var t=teamObj(tid); if(!t) return; t.avatar=url; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H();
+          }catch(e){ alert("Échec du chargement de l’avatar."); }
+          finally{ inp.value=""; }
+        });
+      });
+
       updateCounts(); updateLockUI();
+    }
+
+    // Image -> DataURL carré (crop centre), taille px
+    function fileToSquareDataURL(file, size){
+      return new Promise((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onerror=()=>reject(new Error("read"));
+        reader.onload=()=>{
+          const img=new Image();
+          img.onload=()=>{
+            try{
+              const min=Math.min(img.width,img.height);
+              const sx=(img.width-min)/2, sy=(img.height-min)/2;
+              const c=document.createElement('canvas'); c.width=size; c.height=size;
+              const ctx=c.getContext('2d');
+              ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+              resolve(c.toDataURL('image/jpeg',0.85));
+            }catch(e){ reject(e); }
+          };
+          img.onerror=()=>reject(new Error("img"));
+          img.src=reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
     }
 
     function updateCounts(){ id("teams-count").textContent = state.teams.length + " " + (state.teams.length>1?"équipes":"équipe"); var perTeam=Math.max(0,state.teams.length-1); id("rounds-count").textContent = perTeam + " " + (perTeam>1?"matchs":"match") + " par équipe"; }
@@ -279,7 +352,7 @@
       out.sort((x,y)=>(x.round-y.round)||(x.order-y.order)); state.matches=out; saveState(); renderMatches();
     }
 
-    // ---------- Rencontres (édition limitée)
+    // ---------- Rencontres
     var matchListEl=id("match-list"), statsMatchesEl=id("stats-matches");
     function renderMatches(){
       matchListEl.innerHTML="";
@@ -297,7 +370,9 @@
           el.setAttribute("aria-expanded", (ui.open[m.id]!==undefined?ui.open[m.id]:true)?"true":"false");
           el.innerHTML=''
             +'<div class="match-head" data-expand>'
-            +'<div class="teams"><span class="chip">#'+(++idx)+'</span> '+esc(teamName(m.a))+' <span class="muted">vs</span> '+esc(teamName(m.b))+'</div>'
+            +'<div class="teams"><span class="chip">#'+(++idx)+'</span> '
+            +'<span class="team-name">'+avatarHtml(m.a,'sm')+esc(teamName(m.a))+'</span> <span class="muted">vs</span> '
+            +'<span class="team-name">'+avatarHtml(m.b,'sm')+esc(teamName(m.b))+'</span></div>'
             +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
             +'<span class="chip">Journée '+(m.round||"?")+'</span>'
             +'<span class="chip">Fléchettes G: '+wins.aw.darts+'-'+wins.bw.darts+'</span>'
@@ -411,7 +486,7 @@
       return okD&&okP&&okL;
     }
     function computeLeaderboard(){
-      var stats={}; state.teams.forEach(t=>{ stats[t.id]={teamId:t.id,name:t.name,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0}; });
+      var stats={}; state.teams.forEach(t=>{ stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0}; });
       state.matches.forEach(m=>{
         var A=stats[m.a], B=stats[m.b];
         (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0){A.dartsW++;A.points+=5;} else if(v===1){B.dartsW++;B.points+=5;} });
@@ -427,7 +502,11 @@
       var tbody=qs("#table-classement tbody"); if(!tbody) return; tbody.innerHTML="";
       computeLeaderboard().forEach(r=>{
         var diff=r.palFor-r.palAg; var tr=document.createElement("tr");
-        tr.innerHTML='<td>'+r.rank+'</td><td>'+esc(r.name)+'</td><td><b>'+r.points+'</b></td><td>'+r.dartsW+'</td><td>'+r.pingW+'</td><td>'+r.palFor+'–'+r.palAg+' <span class="muted">('+(diff>=0?'+':'')+diff+')</span></td><td>'+r.matchesComplete+'</td>';
+        tr.innerHTML='<td>'+r.rank+'</td>'
+          +'<td><span class="team-name">'+(r.avatar?('<span class="avatar">'+('<img src="'+esc(r.avatar)+'" alt="avatar">')+'</span>'):( '<span class="avatar"><span class="avatar-initials">'+esc(initials(r.name))+'</span></span>' ))+' '+esc(r.name)+'</span></td>'
+          +'<td><b>'+r.points+'</b></td><td>'+r.dartsW+'</td><td>'+r.pingW+'</td>'
+          +'<td>'+r.palFor+'–'+r.palAg+' <span class="muted">('+(diff>=0?'+':'')+diff+')</span></td>'
+          +'<td>'+r.matchesComplete+'</td>';
         tbody.appendChild(tr);
       });
     }
@@ -445,11 +524,11 @@
       thead.innerHTML=""; tbody.innerHTML="";
       var teams=state.teams.slice(); if(!teams.length){ tbody.appendChild(help("Ajoutez des équipes pour voir la matrice.")); return; }
       var trH=document.createElement("tr"); trH.appendChild(document.createElement("th")).textContent="Équipe";
-      teams.forEach(t=>{ var th=document.createElement("th"); th.textContent=t.name; trH.appendChild(th); });
+      teams.forEach(t=>{ var th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>'; trH.appendChild(th); });
       thead.appendChild(trH);
       var byPair={}; state.matches.forEach(m=>{ byPair[[m.a,m.b].sort().join("|")]=m; });
       teams.forEach(ti=>{
-        var tr=document.createElement("tr"); var th=document.createElement("th"); th.textContent=ti.name; tr.appendChild(th);
+        var tr=document.createElement("tr"); var th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>'; tr.appendChild(th);
         teams.forEach(tj=>{
           var td=document.createElement("td");
           if(ti.id===tj.id){ td.textContent="—"; tr.appendChild(td); return; }
@@ -473,11 +552,11 @@
     onClick(id("btn-export"), ()=>{ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:"application/json"}); var url=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=url; a.download="tournoi-amis-"+new Date().toISOString().slice(0,10)+".json"; a.click(); URL.revokeObjectURL(url); });
     var importFile=null; id("file-import").addEventListener("change", e=>importFile=e.target.files[0]);
     onClick(id("btn-import"), ()=>{ if(!importFile){ alert("Sélectionnez un fichier JSON."); return; } importFile.text().then(text=>{ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveState(); renderAll(); alert("Import réussi !"); }catch(e){ alert("Fichier invalide."); } }); });
-    onClick(id("btn-share"), ()=>{ var json=JSON.stringify(state); var b64=btoa(unescape(encodeURIComponent(json))); var enc=encodeURIComponent(b64); var url=location.origin+location.pathname+"?v=roles2c3#s="+enc; var inp=id("share-url"); inp.value=url; inp.select(); document.execCommand && document.execCommand("copy"); navigator.clipboard && navigator.clipboard.writeText(url); alert("Lien (offline) copié !"); });
+    onClick(id("btn-share"), ()=>{ var json=JSON.stringify(state); var b64=btoa(unescape(encodeURIComponent(json))); var enc=encodeURIComponent(b64); var url=location.origin+location.pathname+"?v=roles2c4#s="+enc; var inp=id("share-url"); inp.value=url; inp.select(); document.execCommand && document.execCommand("copy"); navigator.clipboard && navigator.clipboard.writeText(url); alert("Lien (offline) copié !"); });
     (function(){ var m=location.hash.match(/^#s=([^&]+)$/); if(!m) return; try{ var b64=decodeURIComponent(m[1]); var json=decodeURIComponent(escape(atob(b64))); var data=JSON.parse(json); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveLocal(); history.replaceState(null,"",location.pathname+location.search); }catch(_){ alert("Lien de partage invalide."); } })();
 
     // ---------- Reset & unlock
-    onClick(id("btn-reset"), ()=>{ var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; } if(!confirm("Confirmer la ré-initialisation complète du tournoi ?")) return; state={version:16,teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; normalizeState(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); });
+    onClick(id("btn-reset"), ()=>{ var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; } if(!confirm("Confirmer la ré-initialisation complète du tournoi ?")) return; state={version:17,teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; normalizeState(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); });
     onClick(id("btn-unlock"), ()=>{ if(!isAdmin()){ alert("Réservé à l’admin."); return; } if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
 
     // ---------- Divers
