@@ -39,6 +39,12 @@
     .match-body{display:none;border-top:1px solid var(--border);padding:12px}
     .match-card[aria-expanded=true] .match-body{display:block}
     .help{font-size:13px;color:var(--muted)}
+    /* mini styles H2H */
+    .h2h-table th, .h2h-table td { white-space:nowrap; }
+    .h2h-badge{display:inline-block;border:1px solid var(--border);border-radius:10px;padding:2px 6px;font-size:12px}
+    .h2h-win{background:#0f2b1a;color:#9be7b0;border-color:#1e5f3a}
+    .h2h-loss{background:#2b1515;color:#ffb3b3;border-color:#7a2a2a}
+    .h2h-pend{background:#141a33;color:#b9c3ef}
   </style>
 </head>
 <body>
@@ -98,20 +104,32 @@
       <section id="classement">
         <div class="card">
           <div class="hd">
-            <strong>Classement en direct</strong>
+            <strong>Classement</strong>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="teams-count">0 équipes</span>
               <span class="pill" id="rounds-count">0 matchs par équipe</span>
-              <button type="button" class="btn small" id="btn-refresh-standings-2">Mettre à jour le classement</button>
+              <button type="button" class="btn small" id="btn-toggle-h2h">Vue face-à-face</button>
+              <button type="button" class="btn small" id="btn-refresh-standings-2">Mettre à jour</button>
             </div>
           </div>
           <div class="bd" style="overflow:auto">
-            <div class="help" style="margin-bottom:10px">
-              Règles — Fléchettes : 3 parties (2 simples + 1 double), <b>5 pts</b> par partie gagnée.
-              Ping-pong : 3 parties (2 simples + 1 double), saisir les points ; manche valide si vainqueur à <b>11+</b> et <b>écart ≥ 2</b>.
-              Palet : 1 partie en double, vainqueur à <b>11</b>, les points marqués s’ajoutent au total du tournoi.
+            <!-- Vue 1 : Classement standard -->
+            <div id="view-summary">
+              <div class="help" style="margin-bottom:10px">
+                Règles — Fléchettes : 3 parties (2 simples + 1 double), <b>5 pts</b> par partie gagnée.
+                Ping-pong : 3 parties (2 simples + 1 double), victoire de manche = <b>5 pts</b> (score valide si <b>11+</b> et <b>écart ≥ 2</b>).
+                Palet : 1 double à 11, les points marqués s’ajoutent au total.
+              </div>
+              <table id="table-classement"><thead><tr><th>#</th><th>Équipe</th><th>Points</th><th>Fléchettes (G)</th><th>Ping-pong (G)</th><th>Palet (PF–PA)</th><th>Matchs complets</th></tr></thead><tbody></tbody></table>
             </div>
-            <table id="table-classement"><thead><tr><th>#</th><th>Équipe</th><th>Points</th><th>Fléchettes (G)</th><th>Ping-pong (G)</th><th>Palet (PF–PA)</th><th>Matchs complets</th></tr></thead><tbody></tbody></table>
+
+            <!-- Vue 2 : Face-à-face -->
+            <div id="view-h2h" style="display:none">
+              <div class="help" style="margin-bottom:10px">
+                Face-à-face : pour chaque duel, on affiche <b>Victoire/ Défaite</b> et le total de points gagnés par l’équipe en ligne contre l’adversaire en colonne.
+              </div>
+              <table id="table-h2h" class="h2h-table"><thead></thead><tbody></tbody></table>
+            </div>
           </div>
         </div>
       </section>
@@ -140,6 +158,6 @@
   </main>
 
   <!-- JS externe -->
-  <script defer src="app.js?v=final1"></script>
+  <script defer src="app.js?v=final2"></script>
 </body>
 </html>
