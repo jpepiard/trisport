@@ -109,7 +109,8 @@
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="teams-count">0 équipes</span>
               <span class="pill" id="rounds-count">0 matchs par équipe</span>
-              <button type="button" class="btn small" id="btn-toggle-h2h">Vue face-à-face</button>
+              <!-- Fallback inline en plus des listeners JS -->
+              <button type="button" class="btn small" id="btn-toggle-h2h" onclick="window.__toggleH2H && window.__toggleH2H()">Vue face-à-face</button>
               <button type="button" class="btn small" id="btn-refresh-standings-2">Mettre à jour</button>
             </div>
           </div>
@@ -127,7 +128,7 @@
             <!-- Vue 2 : Face-à-face -->
             <div id="view-h2h" style="display:none">
               <div class="help" style="margin-bottom:10px">
-                Face-à-face : cliquez sur une cellule pour ouvrir directement la rencontre et voir le détail des parties.
+                Face-à-face : cliquez sur une cellule pour ouvrir la rencontre correspondante.
               </div>
               <table id="table-h2h" class="h2h-table"><thead></thead><tbody></tbody></table>
             </div>
@@ -159,6 +160,6 @@
   </main>
 
   <!-- JS externe -->
-  <script defer src="app.js?v=h2h2"></script>
+  <script defer src="app.js?v=h2h3"></script>
 </body>
 </html>
