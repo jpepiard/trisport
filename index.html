@@ -1,149 +1,128 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tournoi entre amis — Fléchettes • Ping-pong • Palet</title>
-  <style>
-    :root { --bg:#0f1220; --border:#2b315f; --text:#e7e9f7; --muted:#8b94b8; --chip:#242b55; --card:#1b2242; }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;background:radial-gradient(1200px 800px at 20% -10%, #1c2040, transparent),radial-gradient(1000px 600px at 120% 0%, #1b2550, transparent),var(--bg);color:var(--text)}
-    header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(130%) blur(8px);background:linear-gradient(180deg, rgba(15,18,32,.9), rgba(15,18,32,.6));border-bottom:1px solid var(--border)}
-    .container{max-width:1100px;margin:0 auto;padding:18px 16px}
-    .brand{display:flex;gap:12px;align-items:center}
-    .logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(from 210deg, #6ee7b7, #7aa2ff);display:grid;place-items:center;font-weight:900;color:#0a0d1c}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap}
-    .tab{background:var(--chip);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:999px;cursor:pointer}
-    .tab[aria-selected="true"]{background:linear-gradient(180deg,#1d2a57,#1a2450);border-color:#3a4aa0}
-    main .container{padding-top:22px}
-    section{display:none} section.active{display:block}
-    .card{background:linear-gradient(180deg,#171d3a,#121632);border:1px solid var(--border);border-radius:16px}
-    .card .hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .card .bd{padding:16px}
-    .muted{color:var(--muted)}
-    .btn{appearance:none;border:1px solid var(--border);background:var(--chip);color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
-    .btn.primary{background:linear-gradient(180deg,#2f3da2,#25337d);border-color:#3a4aa0}
-    .btn.small{padding:6px 10px;border-radius:10px;font-size:13px}
-    .btn.danger{background:linear-gradient(180deg,#7a2b2b,#5c2222);border-color:#8a2b2b}
-    .grid{display:grid;gap:12px}
-    .grid.cols-2{grid-template-columns:repeat(2,1fr)}
-    .grid.cols-3{grid-template-columns:repeat(3,1fr)}
-    .grid.cols-4{grid-template-columns:repeat(4,1fr)}
-    .grid.responsive{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-    input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:var(--text)}
-    label{font-size:13px;color:var(--muted)}
-    table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left} th{color:var(--muted);font-weight:600}
-    .match-card{border-radius:14px;border:1px solid var(--border);background:var(--card);overflow:hidden}
-    .match-head{display:flex;justify-content:space-between;align-items:center;padding:12px;gap:8px;cursor:pointer}
-    .teams{display:flex;align-items:center;gap:8px;font-weight:600}
-    .chip{font-size:12px;padding:4px 8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;color:var(--muted)}
-    .pill{padding:4px 8px;border-radius:999px;background:#0f1331;border:1px solid var(--border);color:var(--muted);font-size:12px}
-    .caret{transform:rotate(0deg);transition:transform .2s ease}
-    .match-card[aria-expanded=true] .caret{transform:rotate(90deg)}
-    .match-body{display:none;border-top:1px solid var(--border);padding:12px}
-    .match-card[aria-expanded=true] .match-body{display:block}
-    .help{font-size:13px;color:var(--muted)}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tournoi entre amis — Fléchettes • Ping-pong • Palet</title>
+<style>
+:root{--bg:#0f1220;--border:#2b315f;--text:#e7e9f7;--muted:#8b94b8;--chip:#242b55;--card:#1b2242}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;background:radial-gradient(1200px 800px at 20% -10%, #1c2040, transparent),radial-gradient(1000px 600px at 120% 0%, #1b2550, transparent),var(--bg);color:var(--text)}
+header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(130%) blur(8px);background:linear-gradient(180deg,rgba(15,18,32,.9),rgba(15,18,32,.6));border-bottom:1px solid var(--border)}
+.container{max-width:1100px;margin:0 auto;padding:18px 16px}.brand{display:flex;gap:12px;align-items:center}.logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(from 210deg,#6ee7b7,#7aa2ff);display:grid;place-items:center;font-weight:900;color:#0a0d1c}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}.tab{background:var(--chip);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:999px;cursor:pointer}.tab[aria-selected="true"]{background:linear-gradient(180deg,#1d2a57,#1a2450);border-color:#3a4aa0}
+main .container{padding-top:22px}section{display:none}section.active{display:block}
+.card{background:linear-gradient(180deg,#171d3a,#121632);border:1px solid var(--border);border-radius:16px}.card .hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}.card .bd{padding:16px}
+.muted{color:var(--muted)}.btn{appearance:none;border:1px solid var(--border);background:var(--chip);color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
+.btn.primary{background:linear-gradient(180deg,#2f3da2,#25337d);border-color:#3a4aa0}.btn.small{padding:6px 10px;border-radius:10px;font-size:13px}.btn.danger{background:linear-gradient(180deg,#7a2b2b,#5c2222);border-color:#8a2b2b}
+.grid{display:grid;gap:12px}.grid.cols-2{grid-template-columns:repeat(2,1fr)}.grid.cols-3{grid-template-columns:repeat(3,1fr)}.grid.cols-4{grid-template-columns:repeat(4,1fr)}.grid.responsive{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:var(--text)}label{font-size:13px;color:var(--muted)}
+table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left}th{color:var(--muted);font-weight:600}
+.match-card{border-radius:14px;border:1px solid var(--border);background:var(--card);overflow:hidden}.match-head{display:flex;justify-content:space-between;align-items:center;padding:12px;gap:8px;cursor:pointer}
+.teams{display:flex;align-items:center;gap:8px;font-weight:600}.chip{font-size:12px;padding:4px 8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;color:var(--muted)}
+.pill{padding:4px 8px;border-radius:999px;background:#0f1331;border:1px solid var(--border);color:var(--muted);font-size:12px}.caret{transform:rotate(0deg);transition:transform .2s ease}
+.match-card[aria-expanded=true] .caret{transform:rotate(90deg)}.match-body{display:none;border-top:1px solid var(--border);padding:12px}.match-card[aria-expanded=true] .match-body{display:block}
+.help{font-size:13px;color:var(--muted)}
+</style>
 </head>
 <body>
-  <header>
-    <div class="container" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
-      <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">Tournoi entre amis</h1></div>
-      <nav class="tabs" role="tablist" aria-label="Sections">
-        <button type="button" class="tab" role="tab" aria-selected="true" data-tab="equipes">Équipes</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="calendrier">Rencontres</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="classement">Classement</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="options">Options</button>
-      </nav>
-    </div>
-  </header>
+<header>
+  <div class="container" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+    <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">Tournoi entre amis</h1></div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button type="button" class="tab" role="tab" aria-selected="true" data-tab="equipes">Équipes</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="calendrier">Rencontres</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="classement">Classement</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="options">Options</button>
+    </nav>
+  </div>
+</header>
 
-  <main>
-    <div class="container">
-      <div id="storage-warning" class="help" style="display:none;margin-bottom:12px;border:1px dashed var(--border);border-radius:12px;padding:10px 12px;background:#0f1331">
-        ⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.
+<main>
+  <div class="container">
+    <div id="storage-warning" class="help" style="display:none;margin-bottom:12px;border:1px dashed var(--border);border-radius:12px;padding:10px 12px;background:#0f1331">
+      ⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.
+    </div>
+
+    <!-- Équipes -->
+    <section id="equipes" class="active">
+      <div class="card">
+        <div class="hd">
+          <div>
+            <strong>Équipes</strong>
+            <div class="help">Ajoutez vos équipes (2 joueurs par équipe). Le calendrier sera généré automatiquement en journées équilibrées.</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="pill" id="lock-pill" style="display:none">Calendrier figé 🔒</span>
+            <button type="button" class="btn" id="btn-add-team">+ Ajouter une équipe</button>
+            <button type="button" class="btn primary" id="btn-generate">Générer le calendrier</button>
+          </div>
+        </div>
+        <div class="bd"><div id="team-list" class="grid responsive"></div></div>
       </div>
+    </section>
 
-      <!-- Équipes -->
-      <section id="equipes" class="active">
-        <div class="card">
-          <div class="hd">
-            <div>
-              <strong>Équipes</strong>
-              <div class="help">Ajoutez vos équipes (2 joueurs par équipe). Le calendrier sera généré automatiquement en journées équilibrées.</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <span class="pill" id="lock-pill" style="display:none">Calendrier figé 🔒</span>
-              <button type="button" class="btn" id="btn-add-team">+ Ajouter une équipe</button>
-              <button type="button" class="btn primary" id="btn-generate">Générer le calendrier</button>
-            </div>
-          </div>
-          <div class="bd"><div id="team-list" class="grid responsive"></div></div>
-        </div>
-      </section>
-
-      <!-- Rencontres -->
-      <section id="calendrier">
-        <div class="card">
-          <div class="hd">
-            <strong>Rencontres</strong>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <span class="pill" id="stats-matches">0 / 0 matches complets</span>
-              <button type="button" class="btn small" id="btn-refresh-standings">Mettre à jour le classement</button>
-              <button type="button" class="btn small" id="btn-expand">Tout déployer</button>
-              <button type="button" class="btn small" id="btn-collapse">Tout replier</button>
-            </div>
-          </div>
-          <div class="bd"><div id="match-list" class="grid"></div></div>
-        </div>
-      </section>
-
-      <!-- Classement -->
-      <section id="classement">
-        <div class="card">
-          <div class="hd">
-            <strong>Classement en direct</strong>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <span class="pill" id="teams-count">0 équipes</span>
-              <span class="pill" id="rounds-count">0 matchs par équipe</span>
-              <button type="button" class="btn small" id="btn-refresh-standings-2">Mettre à jour le classement</button>
-            </div>
-          </div>
-          <div class="bd" style="overflow:auto">
-            <div class="help" style="margin-bottom:10px">
-              Règles — Fléchettes : 3 parties (2 simples + 1 double), <b>5 pts</b> par partie gagnée.
-              Ping-pong : 3 parties (2 simples + 1 double), saisir les points ; manche valide si vainqueur à <b>11+</b> et <b>écart ≥ 2</b> (ex. 11–9, 12–10…).
-              Palet : 1 partie en double, vainqueur à <b>11</b>, les points marqués s’ajoutent au total du tournoi.
-            </div>
-            <table id="table-classement"><thead><tr><th>#</th><th>Équipe</th><th>Points</th><th>Fléchettes (G)</th><th>Ping-pong (G)</th><th>Palet (PF–PA)</th><th>Matchs complets</th></tr></thead><tbody></tbody></table>
+    <!-- Rencontres -->
+    <section id="calendrier">
+      <div class="card">
+        <div class="hd">
+          <strong>Rencontres</strong>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="pill" id="stats-matches">0 / 0 matches complets</span>
+            <button type="button" class="btn small" id="btn-refresh-standings">Mettre à jour le classement</button>
+            <button type="button" class="btn small" id="btn-expand">Tout déployer</button>
+            <button type="button" class="btn small" id="btn-collapse">Tout replier</button>
           </div>
         </div>
-      </section>
+        <div class="bd"><div id="match-list" class="grid"></div></div>
+      </div>
+    </section>
 
-      <!-- Options -->
-      <section id="options">
-        <div class="grid cols-2">
-          <div class="card"><div class="hd"><strong>Exporter / Importer</strong></div>
-            <div class="bd grid" style="gap:10px">
-              <button type="button" class="btn" id="btn-export">Exporter en JSON</button>
-              <input type="file" id="file-import" accept="application/json" />
-              <button type="button" class="btn" id="btn-import">Importer le fichier JSON</button>
-              <div class="help">Partagez le fichier d'export pour reprendre un tournoi ailleurs.</div>
-            </div>
-          </div>
-          <div class="card"><div class="hd"><strong>Réinitialisation</strong></div>
-            <div class="bd grid" style="gap:10px">
-              <button type="button" class="btn danger" id="btn-reset">Nouvelle compétition (tout effacer)</button>
-              <button type="button" class="btn" id="btn-unlock">🔓 Déverrouiller le calendrier</button>
-            </div>
+    <!-- Classement -->
+    <section id="classement">
+      <div class="card">
+        <div class="hd">
+          <strong>Classement en direct</strong>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="pill" id="teams-count">0 équipes</span>
+            <span class="pill" id="rounds-count">0 matchs par équipe</span>
+            <button type="button" class="btn small" id="btn-refresh-standings-2">Mettre à jour le classement</button>
           </div>
         </div>
-        <div class="help" style="text-align:center;padding:18px">Fichier unique — fonctionne hors-ligne. Vos données restent dans le navigateur (localStorage).</div>
-      </section>
-    </div>
-  </main>
+        <div class="bd" style="overflow:auto">
+          <div class="help" style="margin-bottom:10px">
+            Règles — Fléchettes : 3 parties (2 simples + 1 double), <b>5 pts</b> par partie gagnée.
+            Ping-pong : 3 parties (2 simples + 1 double), saisir les points ; manche valide si vainqueur à <b>11+</b> et <b>écart ≥ 2</b>.
+            Palet : 1 partie en double, vainqueur à <b>11</b>, les points marqués s’ajoutent au total du tournoi.
+          </div>
+          <table id="table-classement"><thead><tr><th>#</th><th>Équipe</th><th>Points</th><th>Fléchettes (G)</th><th>Ping-pong (G)</th><th>Palet (PF–PA)</th><th>Matchs complets</th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+    </section>
 
-  <!-- JS externe -->
-  <script defer src="app.js?v=ext2"></script>
+    <!-- Options -->
+    <section id="options">
+      <div class="grid cols-2">
+        <div class="card"><div class="hd"><strong>Exporter / Importer</strong></div>
+          <div class="bd grid" style="gap:10px">
+            <button type="button" class="btn" id="btn-export">Exporter en JSON</button>
+            <input type="file" id="file-import" accept="application/json" />
+            <button type="button" class="btn" id="btn-import">Importer le fichier JSON</button>
+            <div class="help">Partagez le fichier d'export pour reprendre un tournoi ailleurs.</div>
+          </div>
+        </div>
+        <div class="card"><div class="hd"><strong>Réinitialisation</strong></div>
+          <div class="bd grid" style="gap:10px">
+            <button type="button" class="btn danger" id="btn-reset">Nouvelle compétition (tout effacer)</button>
+            <button type="button" class="btn" id="btn-unlock">🔓 Déverrouiller le calendrier</button>
+          </div>
+        </div>
+      </div>
+      <div class="help" style="text-align:center;padding:18px">Fichier unique — fonctionne hors-ligne. Vos données restent dans le navigateur (localStorage).</div>
+    </section>
+  </div>
+</main>
+
+<!-- IMPORTANT : charge le JS externe -->
+<script defer src="app.js?v=ext3"></script>
 </body>
 </html>
