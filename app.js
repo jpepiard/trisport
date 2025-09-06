@@ -20,7 +20,7 @@
 
   // Utils
   function uid(){ return Math.random().toString(36).slice(2,10); }
-  function esc(s){ return (s==null?'':String(s)).replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',\"'\":'&#39;'}[c];}); }
+  function esc(s){ return (s == null ? '' : String(s)).replace(/[&<>"']/g, function (ch) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch];});}
   function clampInt(v,min,max){ if(isNaN(v)) return null; if(v<min) return min; if(v>max) return max; return v; }
   function id(x){return document.getElementById(x);} function qs(s){return document.querySelector(s);} function qsa(s){return [].slice.call(document.querySelectorAll(s));}
   function qsaIn(n,s){return [].slice.call(n.querySelectorAll(s));}
