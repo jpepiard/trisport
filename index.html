@@ -46,10 +46,10 @@
     <div class="container" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
       <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">Tournoi entre amis</h1></div>
       <nav class="tabs" role="tablist" aria-label="Sections">
-        <button type="button" class="tab" role="tab" aria-selected="true" data-tab="equipes">Équipes</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="calendrier">Rencontres</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="classement">Classement</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="options">Options</button>
+        <button class="tab" role="tab" aria-selected="true" data-tab="equipes">Équipes</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="calendrier">Rencontres</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="classement">Classement</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="options">Options</button>
       </nav>
     </div>
   </header>
@@ -66,8 +66,9 @@
               <div class="help">Ajoutez vos équipes (2 joueurs par équipe). Le calendrier sera généré automatiquement en journées équilibrées.</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <span class="pill" id="lock-pill" style="display:none">Calendrier figé 🔒</span>
               <button type="button" class="btn" id="btn-add-team">+ Ajouter une équipe</button>
-              <button type="button" class="btn primary" id="btn-generate">Générer/Mettre à jour le calendrier</button>
+              <button type="button" class="btn primary" id="btn-generate">Générer le calendrier</button>
             </div>
           </div>
           <div class="bd"><div id="team-list" class="grid responsive"></div></div>
@@ -80,6 +81,7 @@
             <strong>Rencontres</strong>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="stats-matches">0 / 0 matches complets</span>
+              <button type="button" class="btn small" id="btn-refresh-standings">Mettre à jour le classement</button>
               <button type="button" class="btn small" id="btn-expand">Tout déployer</button>
               <button type="button" class="btn small" id="btn-collapse">Tout replier</button>
             </div>
@@ -95,6 +97,7 @@
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="teams-count">0 équipes</span>
               <span class="pill" id="rounds-count">0 matchs par équipe</span>
+              <button type="button" class="btn small" id="btn-refresh-standings-2">Mettre à jour le classement</button>
             </div>
           </div>
           <div class="bd" style="overflow:auto">
@@ -121,6 +124,7 @@
           <div class="card"><div class="hd"><strong>Réinitialisation</strong></div>
             <div class="bd grid" style="gap:10px">
               <button type="button" class="btn danger" id="btn-reset">Nouvelle compétition (tout effacer)</button>
+              <button type="button" class="btn" id="btn-unlock">🔓 Déverrouiller le calendrier</button>
               <div class="help">Efface les équipes, le calendrier et les scores de cet appareil.</div>
             </div>
           </div>
@@ -130,7 +134,330 @@
     </div>
   </main>
 
-  <!-- JS external to avoid any inline-script CSP issue -->
-  <script defer src="app.js"></script>
+  <script>
+    // -------- Compat et Debug --------
+    window.addEventListener('error', function(e){
+      try { var w=document.getElementById('storage-warning'); if(w){ w.style.display='block'; w.textContent='⚠️ Erreur JS: '+(e.message||''); } } catch(_){}
+    });
+
+    // -------- State & Storage --------
+    var STORAGE_KEY='tournoi_amis_v3';
+    var MEMORY_ONLY=false;
+    function saveState(){ try{ if(!MEMORY_ONLY){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } }catch(e){ MEMORY_ONLY=true; updateStorageWarning(); } }
+    function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null; }catch(e){ MEMORY_ONLY=true; return null; } }
+    function updateStorageWarning(){ var el=document.getElementById('storage-warning'); if(el){ el.style.display = MEMORY_ONLY? 'block':'none'; el.textContent = (MEMORY_ONLY? '⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.' : ''); el.textContent += (el.textContent? ' ' : '') + 'JS OK '+APP_VERSION; } }
+    var state = loadState() || { version:3, teams:[], matches:[], createdAt:new Date().toISOString(), locked:false };
+    var APP_VERSION='v7';
+    // --- UI state (préserver l'ouverture des cartes entre re-renders)
+    var ui = { open: {} }; 
+    // --- UI state (préserver l'ouverture des cartes entre re-renders)
+    var ui = { open: {} };
+
+    // -------- Tabs --------
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(btn){
+      btn.addEventListener('click', function(){
+        Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(b){ b.setAttribute('aria-selected','false'); });
+        btn.setAttribute('aria-selected','true');
+        Array.prototype.forEach.call(document.querySelectorAll('main section'), function(s){ s.classList.remove('active'); });
+        document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
+      });
+    });
+
+    // -------- Teams UI --------
+    var teamListEl=document.getElementById('team-list');
+    document.getElementById('btn-add-team').addEventListener('click', function(){
+      if(state.locked){ alert('Calendrier figé : ajoutez/modifiez les équipes uniquement après avoir déverrouillé dans Options.'); return; }
+      state.teams.push({ id: uid(), name: 'Équipe '+(state.teams.length+1), p1:'', p2:'' });
+      saveState(); renderTeams(); updateLockUI();
+    });
+      saveState(); renderTeams();
+    });
+    document.getElementById('btn-generate').addEventListener('click', function(){
+      if(state.locked){ return; }
+      generateSchedule(); state.locked = true; saveState(); renderMatches(); renderLeaderboard(); renderTeams(); updateLockUI();
+      var t=document.querySelector('.tab[data-tab="calendrier"]'); if(t && t.click) t.click();
+    }); renderMatches(); renderLeaderboard(); document.querySelector('.tab[data-tab="calendrier"]').click(); });
+
+    function renderTeams(){
+      teamListEl.innerHTML='';
+      if(state.teams.length===0){ var empty=document.createElement('div'); empty.className='help'; empty.textContent='Aucune équipe pour le moment. Ajoutez votre première équipe !'; teamListEl.appendChild(empty); updateCounts(); updateLockUI(); return; }
+      state.teams.forEach(function(t, idx){
+        var disabledAttr = state.locked ? ' disabled' : '';
+        var delBtn = state.locked ? '' : '<button type="button" class="btn small danger" data-action="del-team" data-id="'+t.id+'">Supprimer</button>';
+        var card=document.createElement('div'); card.className='match-card';
+        card.innerHTML = '\
+          <div class="match-head">\
+            <div class="teams"><span class="chip">#'+(idx+1)+'</span> <input type="text"'+disabledAttr+' value="'+escapeHtml(t.name)+'" data-field="name" data-id="'+t.id+'"/></div>\
+            <div>'+delBtn+'</div>\
+          </div>\
+          <div class="match-body" style="display:block">\
+            <div class="grid cols-2">\
+              <div><label>Joueur·se 1</label><input type="text"'+disabledAttr+' placeholder="Nom" value="'+escapeHtml(t.p1)+'" data-field="p1" data-id="'+t.id+'"/></div>\
+              <div><label>Joueur·se 2</label><input type="text"'+disabledAttr+' placeholder="Nom" value="'+escapeHtml(t.p2)+'" data-field="p2" data-id="'+t.id+'"/></div>\
+            </div>\
+          </div>';
+        teamListEl.appendChild(card);
+      });
+      Array.prototype.forEach.call(teamListEl.querySelectorAll('input[data-field]'), function(inp){
+        inp.addEventListener('input', function(){ if(state.locked) return; var id=inp.getAttribute('data-id'); var field=inp.getAttribute('data-field'); var t = state.teams.find(function(x){return x.id===id}); if(!t) return; t[field]=inp.value; saveState(); updateMatchTeamNames(); renderLeaderboard(); });
+      });
+      Array.prototype.forEach.call(teamListEl.querySelectorAll('button[data-action="del-team"]'), function(btn){
+        btn.addEventListener('click', function(){ if(state.locked) return; var id=btn.getAttribute('data-id'); if(!confirm('Supprimer cette équipe ?')) return; state.teams = state.teams.filter(function(tt){return tt.id!==id}); state.matches = state.matches.filter(function(m){return m.a!==id && m.b!==id}); saveState(); renderTeams(); renderMatches(); renderLeaderboard(); });
+      });
+      updateCounts(); updateLockUI();
+    }
+      for(var idx=0; idx<state.teams.length; idx++){
+        var t=state.teams[idx];
+        var card=document.createElement('div'); card.className='match-card';
+        card.innerHTML='\
+          <div class="match-head">\
+            <div class="teams"><span class="chip">#'+(idx+1)+'</span> <input type="text" value="'+escapeHtml(t.name)+'" data-field="name" data-id="'+t.id+'"/></div>\
+            <div><button class="btn small danger" data-action="del-team" data-id="'+t.id+'">Supprimer</button></div>\
+          </div>\
+          <div class="match-body" style="display:block">\
+            <div class="grid cols-2">\
+              <div><label>Joueur·se 1</label><input type="text" placeholder="Nom" value="'+escapeHtml(t.p1)+'" data-field="p1" data-id="'+t.id+'"/></div>\
+              <div><label>Joueur·se 2</label><input type="text" placeholder="Nom" value="'+escapeHtml(t.p2)+'" data-field="p2" data-id="'+t.id+'"/></div>\
+            </div>\
+          </div>';
+        teamListEl.appendChild(card);
+      }
+      Array.prototype.forEach.call(teamListEl.querySelectorAll('input[data-field]'), function(inp){
+        inp.addEventListener('input', function(){ var id=inp.getAttribute('data-id'); var field=inp.getAttribute('data-field'); var t=findTeam(id); if(!t) return; t[field]=inp.value; saveState(); updateMatchTeamNames(); renderLeaderboard(); });
+      });
+      Array.prototype.forEach.call(teamListEl.querySelectorAll('button[data-action="del-team"]'), function(btn){
+        btn.addEventListener('click', function(){ var id=btn.getAttribute('data-id'); if(!confirm('Supprimer cette équipe ?')) return; var i=findTeamIndex(id); if(i>-1){ state.teams.splice(i,1); } state.matches = state.matches.filter(function(m){return m.a!==id && m.b!==id}); saveState(); renderTeams(); renderMatches(); renderLeaderboard(); });
+      });
+      updateCounts();
+    }
+
+    function updateCounts(){ document.getElementById('teams-count').textContent = state.teams.length + ' ' + (state.teams.length>1?'équipes':'équipe'); var perTeam=Math.max(0,state.teams.length-1); document.getElementById('rounds-count').textContent = perTeam + ' ' + (perTeam>1?'matchs':'match') + ' par équipe'; }
+    function updateMatchTeamNames(){ renderMatches(); }
+    function findTeam(id){ for(var i=0;i<state.teams.length;i++){ if(state.teams[i].id===id) return state.teams[i]; } return null; }
+    function findTeamIndex(id){ for(var i=0;i<state.teams.length;i++){ if(state.teams[i].id===id) return i; } return -1; }
+
+    // -------- Schedule: Round-robin équilibré --------
+    function generateSchedule(){
+      var teamIds = []; for(var i=0;i<state.teams.length;i++){ teamIds.push(state.teams[i].id); }
+      if(teamIds.length < 2){ state.matches=[]; saveState(); return; }
+      var ids = teamIds.slice(); var BYE='__BYE__'; if(ids.length%2===1) ids.push(BYE);
+      var fixed = ids[0]; var rest = ids.slice(1);
+      // shuffle léger
+      for(var i=rest.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var tmp=rest[i]; rest[i]=rest[j]; rest[j]=tmp; }
+      var n=ids.length, rounds=n-1; var pairsByRound=[];
+      for(var r=0;r<rounds;r++){
+        var arr=[fixed].concat(rest); var half=n/2; var pairs=[];
+        for(var k=0;k<half;k++){
+          var t1=arr[k], t2=arr[n-1-k];
+          if(t1!==BYE && t2!==BYE){ pairs.push( (r%2===0)? [t1,t2]:[t2,t1] ); }
+        }
+        rest = [rest[rest.length-1]].concat(rest.slice(0,rest.length-1));
+        if(pairs.length>1){ var shift=r%pairs.length; while(shift-- >0){ pairs.unshift(pairs.pop()); } }
+        pairsByRound.push(pairs);
+      }
+      var existing = {}; for(var m=0;m<state.matches.length;m++){ var mm=state.matches[m]; existing[pairKey(mm.a,mm.b)]=mm; }
+      var newMatches=[]; var order=0;
+      for(var rr=0; rr<pairsByRound.length; rr++){
+        var pairs=pairsByRound[rr];
+        for(var p=0;p<pairs.length;p++){
+          var a=pairs[p][0], b=pairs[p][1]; var key=pairKey(a,b); var m=existing[key];
+          if(m){ m.round=rr+1; m.order=order++; if(!isArray(m.pingPts)){ m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; }
+          } else { m={ id:uid(), a:a, b:b, darts:[null,null,null], pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}], palet:{a:null,b:null}, round:rr+1, order:order++ }; }
+          newMatches.push(m);
+        }
+      }
+      newMatches.sort(function(x,y){ return (x.round-y.round) || (x.order-y.order); });
+      state.matches=newMatches; saveState();
+    }
+    function isArray(v){ return Object.prototype.toString.call(v)==='[object Array]'; }
+    function pairKey(x,y){ return [x,y].sort().join('|'); }
+    function teamName(id){ var t=findTeam(id); return t? t.name : '—'; }
+
+    // -------- Matches UI --------
+    var matchListEl=document.getElementById('match-list');
+    var statsMatchesEl=document.getElementById('stats-matches');
+
+    function renderMatches(){
+      matchListEl.innerHTML='';
+      if(state.matches.length===0){ var empty=document.createElement('div'); empty.className='help'; empty.textContent='Aucune rencontre planifiée.'; matchListEl.appendChild(empty); statsMatchesEl.textContent='0 / 0 matches complets'; return; }
+      var groups={};
+      for(var i=0;i<state.matches.length;i++){ var m=state.matches[i]; var r=m.round||1; if(!groups[r]) groups[r]=[]; groups[r].push(m); }
+      var rounds=[]; for(var key in groups){ if(groups.hasOwnProperty(key)) rounds.push(parseInt(key,10)); } rounds.sort(function(a,b){return a-b});
+      var completeCount=0; var globalIdx=0;
+      for(var g=0; g<rounds.length; g++){
+        var r=rounds[g];
+        var hdr=document.createElement('div'); hdr.className='help'; hdr.style.fontWeight='600'; hdr.style.margin='8px 0'; hdr.textContent='Journée '+r; matchListEl.appendChild(hdr);
+        var list=groups[r];
+        for(var j=0;j<list.length;j++){
+          var mm=list[j]; var wins=computeSetWins(mm); var pal=mm.palet; var palScore=(pal.a!=null && pal.b!=null)? (pal.a+'–'+pal.b) : '—';
+          var isComplete=isMatchComplete(mm); if(isComplete) completeCount++;
+          var el=document.createElement('div'); el.className='match-card'; el.setAttribute('data-id', mm.id); var opened = (typeof ui.open[mm.id]!== 'undefined')? ui.open[mm.id] : true; el.setAttribute('aria-expanded', opened? 'true':'false');
+          var deleteBtn = state.locked ? '' : '<button type="button" class="btn small danger" data-delete="'+mm.id+'">Supprimer le match</button>';
+          el.innerHTML='\
+            <div class="match-head" data-expand>\
+              <div class="teams"><span class="chip">#'+(++globalIdx)+'</span> '+escapeHtml(teamName(mm.a))+' <span class="muted">vs</span> '+escapeHtml(teamName(mm.b))+'</div>\
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">\
+                <span class="chip">Journée '+(mm.round||'?')+'</span>\
+                <span class="chip">Fléchettes G: '+wins.aw.darts+'-'+wins.bw.darts+'</span>\
+                <span class="chip">Ping G: '+wins.aw.ping+'-'+wins.bw.ping+'</span>\
+                <span class="chip">Palet: '+palScore+'</span>\
+                '+(isComplete? '<span class="pill" style="border-color:#2c6;color:#8fd">✅ Complet</span>' : '<span class="pill" style="border-color:#aa6;color:#ffc">⏳ Incomplet</span>')+'\
+                <span class="caret">▶</span>\
+              </div>\
+            </div>\
+            <div class="match-body">\
+              '+renderSportBlock('Fléchettes','darts',mm)+'\
+              '+renderPingBlock(mm)+'\
+              '+renderPaletBlock(mm)+'\
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">\
+                <div class="help">Astuce : les résultats sont sauvegardés automatiquement.</div>\
+                <div>\
+                  <button type="button" class="btn small" data-clear="'+mm.id+'">Effacer ce match</button>\
+                  '+deleteBtn+'\
+                </div>\
+              </div>\
+            </div>';
+          el.querySelector('[data-expand]').addEventListener('click', (function(node,id){ return function(){ var isOpen = node.getAttribute('aria-expanded')==='true'; var next=!isOpen; node.setAttribute('aria-expanded', next? 'true':'false'); ui.open[id]=next; }; })(el, mm.id));
+          Array.prototype.forEach.call(el.querySelectorAll('select[data-match][data-kind]'), function(sel){ sel.addEventListener('change', function(){ var kind=sel.getAttribute('data-kind'); var idx=parseInt(sel.getAttribute('data-index'),10); var val = sel.value===''? null : parseInt(sel.value,10); var match=findMatch(mm.id); match[kind][idx]=val; saveState(); renderLeaderboard(); }); });
+          Array.prototype.forEach.call(el.querySelectorAll('input[data-ping]'), function(inp){ inp.addEventListener('input', function(){ var which=inp.getAttribute('data-ping'); var idx=parseInt(inp.getAttribute('data-index'),10); var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,99); var match=findMatch(mm.id); if(!isArray(match.pingPts)) match.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; match.pingPts[idx][which]=val; saveState(); renderLeaderboard(); }); inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } }); });
+          Array.prototype.forEach.call(el.querySelectorAll('input[data-palet]'), function(inp){ inp.addEventListener('input', function(){ var which=inp.getAttribute('data-palet'); var val = inp.value===''? null : clampInt(parseInt(inp.value,10),0,11); var match=findMatch(mm.id); match.palet[which]=val; saveState(); renderLeaderboard(); }); inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); inp.blur(); } }); });
+          el.querySelector('[data-clear]').addEventListener('click', (function(id){ return function(){ clearMatch(id); }; })(mm.id));
+          var delEl = el.querySelector('[data-delete]'); if(delEl){ delEl.addEventListener('click', (function(id){ return function(){ deleteMatch(id); }; })(mm.id)); }
+          matchListEl.appendChild(el);
+        }
+      }
+      statsMatchesEl.textContent = completeCount + ' / ' + state.matches.length + ' matches complets';
+    }
+
+    function findMatch(id){ for(var i=0;i<state.matches.length;i++){ if(state.matches[i].id===id) return state.matches[i]; } return null; }
+
+    function renderSportBlock(label, kind, m){
+      var names=[teamName(m.a), teamName(m.b)]; var subs=['Simple 1','Simple 2','Double']; var html='';
+      for(var i=0;i<3;i++){
+        var val=m[kind][i];
+        html += '\
+          <div class="grid cols-3" style="align-items:end">\
+            <div>\
+              <label>'+label+' — '+subs[i]+'</label>\
+              <select data-match="'+m.id+'" data-kind="'+kind+'" data-index="'+i+'">\
+                <option value="" '+(val===null?'selected':'')+'>Non joué</option>\
+                <option value="0" '+(val===0?'selected':'')+'>Victoire '+escapeHtml(names[0])+'</option>\
+                <option value="1" '+(val===1?'selected':'')+'>Victoire '+escapeHtml(names[1])+'</option>\
+              </select>\
+            </div><div></div><div></div>\
+          </div>';
+      }
+      return html;
+    }
+
+    function renderPingBlock(m){
+      var sets=getPingPts(m); var names=[teamName(m.a), teamName(m.b)]; var labels=['Simple 1','Simple 2','Double']; var html='';
+      for(var i=0;i<3;i++){
+        var s=sets[i] || {a:null,b:null};
+        var note=''; if(s.a==null || s.b==null){ note='Saisissez deux scores (11+ et écart ≥ 2).'; } else if(isPingValid(s.a,s.b)){ note='✔️ Score valide'; } else { note='⚠️ Vainqueur à 11+ et écart de 2 (11–9, 12–10…).'; }
+        html += '\
+          <div class="grid cols-4" style="align-items:end;margin-top:6px">\
+            <div><label>Ping — '+labels[i]+' — '+escapeHtml(names[0])+'</label><input type="number" min="0" max="99" step="1" placeholder="0–99" value="'+(s.a==null?'':s.a)+'" data-ping="a" data-index="'+i+'"/></div>\
+            <div><label>Ping — '+labels[i]+' — '+escapeHtml(names[1])+'</label><input type="number" min="0" max="99" step="1" placeholder="0–99" value="'+(s.b==null?'':s.b)+'" data-ping="b" data-index="'+i+'"/></div>\
+            <div class="help">'+note+'</div><div></div>\
+          </div>';
+      }
+      return html;
+    }
+
+    function renderPaletBlock(m){
+      var a=m.palet.a, b=m.palet.b; var note='';
+      if(a==null || b==null) note='Saisissez les deux scores (l’un doit être 11).';
+      else if((a===11 && b>=0 && b<=10) || (b===11 && a>=0 && a<=10)) note='✔️ Score valide';
+      else note='⚠️ Un score doit être 11, l’autre entre 0 et 10.';
+      return '\
+        <div class="grid cols-4" style="align-items:end;margin-top:6px">\
+          <div><label>Palet — '+escapeHtml(teamName(m.a))+'</label><input type="number" min="0" max="11" step="1" placeholder="0–11" value="'+(a==null?'':a)+'" data-palet="a"/></div>\
+          <div><label>Palet — '+escapeHtml(teamName(m.b))+'</label><input type="number" min="0" max="11" step="1" placeholder="0–11" value="'+(b==null?'':b)+'" data-palet="b"/></div>\
+          <div class="help">'+note+'</div><div></div>\
+        </div>';
+    }
+
+    function clearMatch(id){ var m=findMatch(id); if(!m) return; if(!confirm('Effacer tous les scores de ce match ?')) return; m.darts=[null,null,null]; m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; m.palet={a:null,b:null}; saveState(); renderMatches(); renderLeaderboard(); }
+    function deleteMatch(id){ if(!confirm('Supprimer cette rencontre du calendrier ?')) return; var out=[]; for(var i=0;i<state.matches.length;i++){ if(state.matches[i].id!==id) out.push(state.matches[i]); } state.matches=out; saveState(); renderMatches(); renderLeaderboard(); }
+
+    // -------- Leaderboard --------
+    function computeSetWins(m){
+      var aw={darts:0,ping:0}, bw={darts:0,ping:0};
+      for(var i=0;i<m.darts.length;i++){ var v=m.darts[i]; if(v===0) aw.darts++; else if(v===1) bw.darts++; }
+      var sets=getPingPts(m); for(var j=0;j<sets.length;j++){ var s=sets[j]; if(isPingValid(s.a,s.b)){ if(s.a>s.b) aw.ping++; else if(s.b>s.a) bw.ping++; } }
+      return {aw:aw, bw:bw};
+    }
+
+    function computeLeaderboard(){
+      var stats={}; for(var i=0;i<state.teams.length;i++){ var t=state.teams[i]; stats[t.id]={ teamId:t.id, name:t.name, points:0, dartsW:0, pingW:0, palFor:0, palAg:0, matchesComplete:0 }; }
+      for(var m=0;m<state.matches.length;m++){
+        var mm=state.matches[m]; var sA=stats[mm.a], sB=stats[mm.b];
+        // darts
+        for(var d=0; d<mm.darts.length; d++){ var v=mm.darts[d]; if(v===0){ sA.dartsW++; sA.points+=5; } else if(v===1){ sB.dartsW++; sB.points+=5; } }
+        // ping
+        var sets=getPingPts(mm); for(var p=0;p<sets.length;p++){ var s=sets[p]; if(isPingValid(s.a,s.b)){ if(s.a>s.b){ sA.pingW++; sA.points+=5; } else if(s.b>s.a){ sB.pingW++; sB.points+=5; } } }
+        // palet
+        var pa=mm.palet.a, pb=mm.palet.b; if(pa!=null && pb!=null){ sA.palFor+=pa; sB.palFor+=pb; sA.palAg+=pb; sB.palAg+=pa; sA.points+=pa; sB.points+=pb; }
+        if(isMatchComplete(mm)){ sA.matchesComplete++; sB.matchesComplete++; }
+      }
+      var rows=[]; for(var id in stats){ if(stats.hasOwnProperty(id)) rows.push(stats[id]); }
+      rows.sort(function(x,y){ var v=(y.points-x.points); if(v!==0) return v; v=( (y.palFor-y.palAg) - (x.palFor-x.palAg) ); if(v!==0) return v; v=((y.dartsW+y.pingW)-(x.dartsW+x.pingW)); if(v!==0) return v; return x.name.localeCompare(y.name); });
+      for(var r=0;r<rows.length;r++){ rows[r].rank=r+1; }
+      return rows;
+    }
+
+    function renderLeaderboard(){ var tbody=document.querySelector('#table-classement tbody'); tbody.innerHTML=''; var rows=computeLeaderboard(); for(var i=0;i<rows.length;i++){ var r=rows[i]; var palDiff=r.palFor-r.palAg; var tr=document.createElement('tr'); tr.innerHTML='<td>'+r.rank+'</td><td>'+escapeHtml(r.name)+'</td><td><b>'+r.points+'</b></td><td>'+r.dartsW+'</td><td>'+r.pingW+'</td><td>'+r.palFor+'–'+r.palAg+' <span class="muted">('+(palDiff>=0?'+':'')+palDiff+')</span></td><td>'+r.matchesComplete+'</td>'; tbody.appendChild(tr); } }
+
+    // -------- Completeness & helpers --------
+    function isMatchComplete(m){
+      var okDarts=true; for(var i=0;i<m.darts.length;i++){ var v=m.darts[i]; if(!(v===0 || v===1)){ okDarts=false; break; } }
+      var okPing=true; var sets=getPingPts(m); for(var j=0;j<sets.length;j++){ var s=sets[j]; if(!isPingValid(s.a,s.b)){ okPing=false; break; } }
+      var pa=m.palet.a, pb=m.palet.b; var okPal = (pa!=null && pb!=null) && ((pa===11 && pb>=0 && pb<=10) || (pb===11 && pa>=0 && pa<=10));
+      return okDarts && okPing && okPal;
+    }
+
+    (function(){ var el=document.getElementById('btn-expand'); if(el) el.addEventListener('click', function(){ Array.prototype.forEach.call(document.querySelectorAll('.match-card'), function(node){ node.setAttribute('aria-expanded','true'); }); }); })();
+    (function(){ var el=document.getElementById('btn-collapse'); if(el) el.addEventListener('click', function(){ Array.prototype.forEach.call(document.querySelectorAll('.match-card'), function(node){ node.setAttribute('aria-expanded','false'); }); }); })();
+
+    (function(){ var el=document.getElementById('btn-export'); if(el) el.addEventListener('click', function(){ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='tournoi-amis-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url); }); })();
+    var importFile; (function(){ var el=document.getElementById('file-import'); if(el) el.addEventListener('change', function(e){ importFile=e.target.files[0]; }); })();
+    (function(){ var el=document.getElementById('btn-import'); if(el) el.addEventListener('click', function(){ if(!importFile){ alert('Sélectionnez d\'abord un fichier JSON.'); return; } importFile.text().then(function(text){ try{ var data=JSON.parse(text); if(!(data && isArray(data.teams) && isArray(data.matches))) throw new Error('format'); state=data; migrateState(); saveState(); renderTeams(); renderMatches(); renderLeaderboard(); alert('Import réussi !'); }catch(e){ alert('Fichier invalide.'); } }); }); })();
+    (function(){ var el=document.getElementById('btn-reset'); if(el) el.addEventListener('click', function(){ if(!confirm('Tout effacer et recommencer ?')) return; state={version:3,teams:[],matches:[],createdAt:new Date().toISOString()}; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); }); })();
+
+    // -------- Utils --------
+    function uid(){ return Math.random().toString(36).slice(2,10); }
+    function escapeHtml(str){ return (str==null? '' : String(str)).replace(/[&<>"']/g, function(s){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s]; }); }
+    function clampInt(v,min,max){ if(isNaN(v)) return null; if(v<min) return min; if(v>max) return max; return v; }
+    function getPingPts(m){ if(isArray(m.pingPts)) return m.pingPts; if(isArray(m.ping)) { var arr=[]; for(var i=0;i<m.ping.length;i++){ var v=m.ping[i]; arr.push(v===0? {a:11,b:0} : v===1? {a:0,b:11} : {a:null,b:null}); } return arr; } return [{a:null,b:null},{a:null,b:null},{a:null,b:null}]; }
+    function isPingValid(a,b){ if(a==null || b==null) return false; if(isNaN(a)||isNaN(b)) return false; var max=a>b?a:b; var diff=a>b?a-b:b-a; return (max>=11) && (diff>=2); }
+    function migrateState(){ if(!(state && isArray(state.matches))) { saveState(); return; } for(var i=0;i<state.matches.length;i++){ var m=state.matches[i]; if(!isArray(m.pingPts)){ m.pingPts=getPingPts(m); if(m.ping) delete m.ping; } } if(typeof state.locked==='undefined'){ state.locked=false; } saveState(); }
+
+    // -------- Global click delegation (secours) --------
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest ? e.target.closest('button') : null; if(!btn) return;
+      var id = btn.id || '';
+      if(id==='btn-add-team'){ e.preventDefault(); if(state.locked){ alert('Calendrier figé : déverrouillez dans Options pour modifier les équipes.'); return; } state.teams.push({ id: uid(), name: 'Équipe '+(state.teams.length+1), p1:'', p2:'' }); saveState(); renderTeams(); updateLockUI(); return; }
+      if(id==='btn-generate'){ e.preventDefault(); if(state.locked){ return; } generateSchedule(); state.locked=true; saveState(); renderMatches(); renderLeaderboard(); renderTeams(); updateLockUI(); var tab=document.querySelector('.tab[data-tab="calendrier"]'); if(tab && tab.click) tab.click(); return; }
+      if(id==='btn-expand'){ e.preventDefault(); var cards=document.querySelectorAll('.match-card'); for(var i=0;i<cards.length;i++){ cards[i].setAttribute('aria-expanded','true'); } return; }
+      if(id==='btn-collapse'){ e.preventDefault(); var cards2=document.querySelectorAll('.match-card'); for(var j=0;j<cards2.length;j++){ cards2[j].setAttribute('aria-expanded','false'); } return; }
+      if(id==='btn-reset'){ e.preventDefault(); if(!confirm('Tout effacer et recommencer ?')) return; state={version:3,teams:[],matches:[],createdAt:new Date().toISOString(),locked:false}; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); updateLockUI(); return; }
+      if(id==='btn-unlock'){ e.preventDefault(); if(!confirm('Déverrouiller le calendrier ? Vous pourrez modifier les équipes et régénérer.')) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); return; }
+      if(id==='btn-refresh-standings' || id==='btn-refresh-standings-2'){ e.preventDefault(); renderMatches(); renderLeaderboard(); return; }
+      if(btn.getAttribute('data-action')==='del-team'){ e.preventDefault(); if(state.locked){ alert('Calendrier figé : déverrouillez pour supprimer une équipe.'); return; } var tid=btn.getAttribute('data-id'); if(!confirm('Supprimer cette équipe ?')) return; var i=findTeamIndex(tid); if(i>-1){ state.teams.splice(i,1); } state.matches = state.matches.filter(function(m){return m.a!==tid && m.b!==tid}); saveState(); renderTeams(); renderMatches(); renderLeaderboard(); updateLockUI(); return; }
+      if(btn.getAttribute('data-clear')){ e.preventDefault(); clearMatch(btn.getAttribute('data-clear')); return; }
+      if(btn.getAttribute('data-delete')){ e.preventDefault(); if(state.locked){ alert('Calendrier figé : suppression de matchs désactivée.'); return; } deleteMatch(btn.getAttribute('data-delete')); return; }
+    });
+
+    // -------- Lock UI helper --------
+    function updateLockUI(){
+      var pill = document.getElementById('lock-pill'); if(pill) pill.style.display = state.locked? 'inline-block':'none';
+      var addBtn = document.getElementById('btn-add-team'); if(addBtn){ addBtn.disabled = !!state.locked; }
+      var genBtn = document.getElementById('btn-generate'); if(genBtn){ genBtn.disabled = !!state.locked; genBtn.textContent = state.locked? 'Calendrier figé' : 'Générer le calendrier'; }
+    }
+
+    // -------- Init --------
+    migrateState(); renderTeams(); renderMatches(); renderLeaderboard(); updateLockUI(); updateStorageWarning();
+  </script>
 </body>
 </html>
