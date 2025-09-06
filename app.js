@@ -30,7 +30,22 @@
     // ---------- Firebase (compat)
     var cloud = { enabled:false, db:null, id:null, ref:null, lastRemoteAt:0, pushTimer:null };
     var hasFB = !!(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey);
-    function initFB(){ if(!hasFB) return null; try{ if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(window.FIREBASE_CONFIG); return firebase.database(); }catch(e){ console.warn('Firebase init error', e); return null; } }
+    function initFB(){
+  // Sécurise l’accès à firebase.apps (peut être undefined)
+  if(!hasFB) return null;
+  try{
+    // si firebase.apps n’est pas un tableau, on considère qu’il n’y a aucune app
+    var apps = (window.firebase && typeof firebase.apps !== 'undefined') ? firebase.apps : [];
+    if (!Array.isArray(apps) || apps.length === 0) {
+      firebase.initializeApp(window.FIREBASE_CONFIG);
+    }
+    return firebase.database();
+  }catch(e){
+    console.warn('Firebase init error', e);
+    return null;
+  }
+}
+
     function setCloud(txt){ var el=id('cloud-status'); if(el) el.textContent=txt; }
 
     function joinCloud(code){
@@ -245,26 +260,46 @@
     }
 
     // ---------- Calendrier homogène
-    function generateSchedule(){
-      var ids=state.teams.map(t=>t.id);
-      if(ids.length<2){ state.matches=[]; saveState(); return; }
-      var BYE='__BYE__'; if(ids.length%2===1) ids.push(BYE);
-      var fixed=ids[0], rest=ids.slice(1);
-      for(let i=rest.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)), tmp=rest[i]; rest[i]=rest[j]; rest[j]=tmp; }
-      var n=ids.length, rounds=n-1, out=[], order=0;
-      for(let r=0;r<rounds;r++){
-        var arr=[fixed].concat(rest), half=n/2, pairs=[];
-        for(let k=0;k<half;k++){ var a=arr[k], b=arr[n-1-k]; if(a!==BYE&&b!==BYE) pairs.push((r%2===0)?[a,b]:[b,a]); }
-        rest=[rest[rest.length-1]].concat(rest.slice(0,rest.length-1));
-        if(pairs.length>1){ var shift=r%pairs.length; while(shift-->0) pairs.unshift(pairs.pop()); }
-        for(let p=0;p<pairs.length;p++){
-          var pr=pairs[p];
-          out.push({ id:uid(), a:pr[0], b:pr[1], darts:[null,null,null], pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}], palet:{a:null,b:null}, round:r+1, order:order++ });
-        }
-      }
-      out.sort((x,y)=>(x.round-y.round)||(x.order-y.order));
-      state.matches=out; saveState();
+  function generateSchedule(){
+  // protège contre des états inattendus
+  var teamArr = Array.isArray(state.teams) ? state.teams : [];
+  var ids = teamArr.map(t => t.id);
+  if(ids.length < 2){ state.matches = []; saveState(); return; }
+
+  var BYE='__BYE__';
+  if(ids.length % 2 === 1) ids.push(BYE);
+
+  var fixed = ids[0];
+  var rest  = ids.slice(1);                  // toujours un tableau
+  if(!Array.isArray(rest)) rest = [];
+
+  // mélange sécurisé
+  for (let i = rest.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [rest[i], rest[j]] = [rest[j], rest[i]];
+  }
+
+  var n = ids.length, rounds = n - 1, out = [], order = 0;
+  for (let r = 0; r < rounds; r++) {
+    var arr = [fixed].concat(rest), half = n/2, pairs = [];
+    for (let k = 0; k < half; k++) {
+      var a = arr[k], b = arr[n-1-k];
+      if (a !== BYE && b !== BYE) pairs.push((r % 2 === 0) ? [a,b] : [b,a]);
     }
+    rest = [rest[rest.length-1]].concat(rest.slice(0, rest.length-1));
+    if (pairs.length > 1) { var shift = r % pairs.length; while (shift-- > 0) pairs.unshift(pairs.pop()); }
+    for (let p = 0; p < pairs.length; p++) {
+      var pr = pairs[p];
+      out.push({ id:uid(), a:pr[0], b:pr[1], darts:[null,null,null],
+                 pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}],
+                 palet:{a:null,b:null}, round:r+1, order:order++ });
+    }
+  }
+  out.sort((x,y)=>(x.round-y.round)||(x.order-y.order));
+  state.matches = out;
+  saveState();
+}
+
 
     // ---------- Rencontres
     var matchListEl=id('match-list'), statsMatchesEl=id('stats-matches');
