@@ -46,7 +46,7 @@
     .h2h-pend{background:#141a33;color:#b9c3ef}
     .h2h-clickable{cursor:pointer}
 
-    /* ---------- Avatars (plus gros) ---------- */
+    /* Avatars (taille c6 : 40/48/32) */
     .avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:#0f1331;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;color:#cbd5ff;font-weight:700;font-size:14px;flex:0 0 auto}
     .avatar img{width:100%;height:100%;object-fit:cover}
     .avatar .avatar-initials{display:inline-block;line-height:40px}
@@ -119,7 +119,7 @@
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="stats-matches">0 / 0 matches complets</span>
               <button type="button" class="btn small" id="btn-refresh-standings">Mettre à jour le classement</button>
-              <button type="button" class="btn small" id="btn-expand">Tout déployer</button>
+              <!-- Bouton "Tout déployer" supprimé -->
               <button type="button" class="btn small" id="btn-collapse">Tout replier</button>
             </div>
           </div>
@@ -206,6 +206,6 @@
     </div>
   </main>
 
-  <script defer src="app.js?v=roles2c6"></script>
+  <script defer src="app.js?v=roles2c7"></script>
 </body>
 </html>

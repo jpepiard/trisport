@@ -1,4 +1,4 @@
-// JS OK roles2c6 — force le titre "TriSports", avatars plus gros via override, cloud sûr, H2H cliquable, classements
+// JS OK roles2c7 — saisie nom d’équipe fluide (pas de push cloud pendant la frappe), rencontres repliées par défaut, titre TriSports
 (function () {
   window.onerror = function (msg, src, line, col) {
     var el = document.getElementById("storage-warning");
@@ -8,12 +8,12 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
-    // Forcer le titre & l'en-tête (au cas où un vieux index.html serait en cache)
+    // Forcer le titre & l'en-tête
     document.title = "TriSports — Fléchettes • Ping-pong • Palet";
     var h1 = document.querySelector(".brand h1");
     if (h1) h1.textContent = "TriSports";
 
-    // Override CSS avatars (garantie taille)
+    // Garantir la taille des avatars
     var style = document.createElement("style");
     style.textContent = `
       .avatar{width:40px;height:40px;font-size:14px}
@@ -25,18 +25,19 @@
     `;
     document.head.appendChild(style);
 
-    banner("JS OK roles2c6");
+    banner("JS OK roles2c7");
 
     // ---------- Local storage
+    // (on garde la même clé que c6 pour ne pas perdre l'état local)
     var STORAGE_KEY = "tournoi_amis_roles2c6";
     var MEMORY_ONLY = false;
     function saveLocal(){ try{ if(!MEMORY_ONLY) localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ MEMORY_ONLY=true; warnStorage(); } }
     function loadLocal(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw?JSON.parse(raw):null; }catch(e){ MEMORY_ONLY=true; return null; } }
-    function warnStorage(){ var el=id("storage-warning"); if(el){ el.style.display="block"; el.textContent="JS OK roles2c6"+(MEMORY_ONLY?" — ⚠️ stockage local indisponible":""); } }
+    function warnStorage(){ var el=id("storage-warning"); if(el){ el.style.display="block"; el.textContent="JS OK roles2c7"+(MEMORY_ONLY?" — ⚠️ stockage local indisponible":""); } }
     function banner(msg){ var el=id("storage-warning"); if(!el) return; el.style.display="block"; el.textContent=msg; }
 
     // ---------- State + session
-    var state = loadLocal() || { version: 18, teams: [], matches: [], locked:false, createdAt:new Date().toISOString(), protect:{teamPassHash:{}} };
+    var state = loadLocal() || { version: 19, teams: [], matches: [], locked:false, createdAt:new Date().toISOString(), protect:{teamPassHash:{}} };
     normalizeState();
     var ui = { open:{}, h2h:false };
     var session = { admin:false, claims:{} };
@@ -79,7 +80,7 @@
           }
         }
 
-        if(!val) return; // rien d'autre à faire
+        if(!val) return;
         const remoteAt = +val.updatedAt || 0;
         if(remoteAt <= cloud.lastRemoteAt) return;
 
@@ -91,9 +92,8 @@
         setCloud("connecté ("+cloud.id+")");
       });
 
-      // ⚠️ NE PAS pousser ici (sinon on écrase depuis un appareil vierge)
       try{
-        history.replaceState(null,"", location.pathname+"?v=roles2c6&id="+encodeURIComponent(cloud.id));
+        history.replaceState(null,"", location.pathname+"?v=roles2c7&id="+encodeURIComponent(cloud.id));
       }catch(_){}
     }
     function leaveCloud(){ if(cloud.ref) cloud.ref.off(); cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloud("hors ligne"); loadSession(); }
@@ -142,7 +142,7 @@
     function isAdmin(){ return !!session.admin; }
     function hasClaim(teamId){ return !!session.claims[teamId]; }
     function canEditTeam(teamId){ return isAdmin(); } // admin seulement pour nom/joueurs
-    function canEditAvatar(teamId){ return isAdmin() || hasClaim(teamId); } // avatar autorisé équipe connectée
+    function canEditAvatar(teamId){ return isAdmin() || hasClaim(teamId); }
     function canEditMatch(m){ return isAdmin() || hasClaim(m.a) || hasClaim(m.b); }
     function teamObj(tid){ return state.teams.find(x=>x.id===tid)||null; }
     function teamName(tid){ var t=teamObj(tid); return t?t.name:"—"; }
@@ -175,7 +175,7 @@
     onClick(id("btn-cloud-leave"), ()=>leaveCloud());
     onClick(id("btn-cloud-copy"), ()=>{
       var code=id("cloud-id").value.trim(); if(!code){ alert("Renseigne d’abord le code tournoi."); return; }
-      var url=location.origin+location.pathname+"?v=roles2c6&id="+encodeURIComponent(code);
+      var url=location.origin+location.pathname+"?v=roles2c7&id="+encodeURIComponent(code);
       navigator.clipboard && navigator.clipboard.writeText(url);
       alert("Lien copié !\n"+url);
     });
@@ -188,7 +188,7 @@
     });
     onClick(id("btn-admin-off"), ()=>{ session.admin=false; saveSession(); renderAll(); });
 
-    // ---------- Teams (ADMIN crée/édite, joueurs se connectent; avatar: admin ou équipe)
+    // ---------- Teams
     var teamListEl=id("team-list");
 
     onClick(id("btn-add-team"), ()=>{
@@ -240,13 +240,24 @@
         teamListEl.appendChild(card);
       });
 
-      // champs équipe -> ADMIN uniquement
+      // Saisie fluide : on NE pousse PAS au cloud tant que l’input n’a pas perdu le focus
       qsa('#team-list input[data-field]').forEach(inp=>{
+        const tid=inp.getAttribute("data-id"), f=inp.getAttribute("data-field");
+        // frappe → local + rendu minimal (pas de cloud)
         inp.addEventListener("input", ()=>{
-          var tid=inp.getAttribute("data-id"), f=inp.getAttribute("data-field");
           if(!canEditTeam(tid)) return;
           var t=teamObj(tid); if(!t) return;
-          t[f]=inp.value; saveState(); renderMatches(); renderLeaderboard(); renderH2H();
+          t[f]=inp.value;
+          saveState({cloud:false}); // pas de push cloud -> pas de re-render imprévu
+        });
+        // validation (quitte le champ) → push cloud + rerenders dépendants
+        inp.addEventListener("blur", ()=>{
+          if(!canEditTeam(tid)) return;
+          var t=teamObj(tid); if(!t) return;
+          t[f]=inp.value;
+          saveState();            // avec push cloud
+          renderTeams();          // met à jour l’avatar/initiales
+          renderMatches(); renderLeaderboard(); renderH2H();
         });
       });
 
@@ -312,7 +323,7 @@
           var tid=inp.getAttribute("data-avatar"); if(!canEditAvatar(tid)) return;
           var file=inp.files && inp.files[0]; if(!file) return;
           try{
-            const url = await fileToSquareDataURL(file, 160); // un poil plus grand pour la qualité
+            const url = await fileToSquareDataURL(file, 160);
             var t=teamObj(tid); if(!t) return; t.avatar=url; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H();
           }catch(e){ alert("Échec du chargement de l’avatar."); }
           finally{ inp.value=""; }
@@ -369,7 +380,7 @@
       out.sort((x,y)=>(x.round-y.round)||(x.order-y.order)); state.matches=out; saveState(); renderMatches();
     }
 
-    // ---------- Rencontres
+    // ---------- Rencontres (par défaut repliées)
     var matchListEl=id("match-list"), statsMatchesEl=id("stats-matches");
     function renderMatches(){
       matchListEl.innerHTML="";
@@ -384,7 +395,11 @@
           var done=isMatchComplete(m); if(done) complete++;
           var can = canEditMatch(m);
           var el=document.createElement("div"); el.className="match-card"; el.dataset.id=m.id;
-          el.setAttribute("aria-expanded", (ui.open[m.id]!==undefined?ui.open[m.id]:true)?"true":"false");
+
+          // ▼▼ par défaut replié (si aucune préférence en mémoire)
+          var isOpen = (typeof ui.open[m.id] === "boolean") ? ui.open[m.id] : false;
+          el.setAttribute("aria-expanded", isOpen ? "true" : "false");
+
           el.innerHTML=''
             +'<div class="match-head" data-expand>'
             +'<div class="teams"><span class="chip">#'+(++idx)+'</span> '
@@ -401,7 +416,12 @@
             +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">'
             +'<div class="help">'+(can?'':'Lecture seule — connectez-vous à une des deux équipes.')+'</div>'
             +'<div>'+(can?'<button type="button" class="btn small" data-clear="'+m.id+'">Effacer ce match</button>':'')+'</div></div></div>';
-          el.querySelector("[data-expand]").addEventListener("click", ()=>{ var isOpen=el.getAttribute("aria-expanded")==="true"; el.setAttribute("aria-expanded", isOpen?"false":"true"); ui.open[m.id]=!isOpen; });
+
+          el.querySelector("[data-expand]").addEventListener("click", ()=>{
+            var open=el.getAttribute("aria-expanded")==="true";
+            el.setAttribute("aria-expanded", open?"false":"true");
+            ui.open[m.id]=!open;
+          });
 
           // fléchettes
           qsaIn(el,'select[data-match][data-kind]').forEach(sel=>{
@@ -445,7 +465,7 @@
         });
       });
       statsMatchesEl.textContent=complete+" / "+state.matches.length+" matches complets";
-      renderLeaderboard(); // sécurité
+      renderLeaderboard();
     }
 
     function renderDarts(m,can){
@@ -569,17 +589,23 @@
     onClick(id("btn-export"), ()=>{ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:"application/json"}); var url=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=url; a.download="tournoi-amis-"+new Date().toISOString().slice(0,10)+".json"; a.click(); URL.revokeObjectURL(url); });
     var importFile=null; id("file-import").addEventListener("change", e=>importFile=e.target.files[0]);
     onClick(id("btn-import"), ()=>{ if(!importFile){ alert("Sélectionnez un fichier JSON."); return; } importFile.text().then(text=>{ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveState(); renderAll(); alert("Import réussi !"); }catch(e){ alert("Fichier invalide."); } }); });
-    onClick(id("btn-share"), ()=>{ var json=JSON.stringify(state); var b64=btoa(unescape(encodeURIComponent(json))); var enc=encodeURIComponent(b64); var url=location.origin+location.pathname+"?v=roles2c6#s="+enc; var inp=id("share-url"); inp.value=url; inp.select(); document.execCommand && document.execCommand("copy"); navigator.clipboard && navigator.clipboard.writeText(url); alert("Lien (offline) copié !"); });
+    onClick(id("btn-share"), ()=>{ var json=JSON.stringify(state); var b64=btoa(unescape(encodeURIComponent(json))); var enc=encodeURIComponent(b64); var url=location.origin+location.pathname+"?v=roles2c7#s="+enc; var inp=id("share-url"); inp.value=url; inp.select(); document.execCommand && document.execCommand("copy"); navigator.clipboard && navigator.clipboard.writeText(url); alert("Lien (offline) copié !"); });
     (function(){ var m=location.hash.match(/^#s=([^&]+)$/); if(!m) return; try{ var b64=decodeURIComponent(m[1]); var json=decodeURIComponent(escape(atob(b64))); var data=JSON.parse(json); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveLocal(); history.replaceState(null,"",location.pathname+location.search); }catch(_){ alert("Lien de partage invalide."); } })();
 
     // ---------- Reset & unlock
-    onClick(id("btn-reset"), ()=>{ var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; } if(!confirm("Confirmer la ré-initialisation complète du tournoi ?")) return; state={version:18,teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; normalizeState(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); });
+    onClick(id("btn-reset"), ()=>{ var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; } if(!confirm("Confirmer la ré-initialisation complète du tournoi ?")) return; state={version:19,teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; normalizeState(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); });
     onClick(id("btn-unlock"), ()=>{ if(!isAdmin()){ alert("Réservé à l’admin."); return; } if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
 
     // ---------- Divers
     function updateLockUI(){ var pill=id("lock-pill"); if(pill) pill.style.display=state.locked?"inline-block":"none"; var gen=id("btn-generate"); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"; } }
     function onClick(el,fn){ if(el&&el.addEventListener) el.addEventListener("click",fn); }
-    function saveState(){ saveLocal(); renderLeaderboard(); renderH2H(); if(cloud.enabled) pushCloud(false); }
+
+    // saveState avec option pour désactiver le push cloud (utile pendant la frappe)
+    function saveState(opts){
+      saveLocal();
+      renderLeaderboard(); renderH2H(); // ces vues ne cassent pas la saisie
+      if(cloud.enabled && !(opts && opts.cloud===false)) pushCloud(false);
+    }
 
     // ---------- Init
     loadSession(); renderAll(); warnStorage(); showH2H(false); setCloud(cloud.enabled?"connecté":"hors ligne");
@@ -590,7 +616,7 @@
     onClick(id("btn-toggle-h2h"), e=>{ e.preventDefault(); showH2H(!ui.h2h); });
     onClick(id("btn-refresh-standings"), renderLeaderboard);
     onClick(id("btn-refresh-standings-2"), renderLeaderboard);
-    onClick(id("btn-expand"), ()=>{ qsa(".match-card").forEach(c=>c.setAttribute("aria-expanded","true")); });
+    // btn-expand supprimé dans l’HTML ; on garde seulement "Tout replier"
     onClick(id("btn-collapse"), ()=>{ qsa(".match-card").forEach(c=>c.setAttribute("aria-expanded","false")); });
   });
 })();
