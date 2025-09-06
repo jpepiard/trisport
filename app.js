@@ -1,4 +1,4 @@
-// JS OK roles2c2 — fixes: classement auto + toggle H2H fiable + normalisation état + Firebase robuste
+// JS OK roles2c3 — Cloud join sans écraser, classement auto, H2H fiable, normalisation état, admin/équipes protégés
 (function () {
   window.onerror = function (msg, src, line, col) {
     var el = document.getElementById("storage-warning");
@@ -8,18 +8,18 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
-    banner("JS OK roles2c2");
+    banner("JS OK roles2c3");
 
     // ---------- Local storage
-    var STORAGE_KEY = "tournoi_amis_roles2c2";
+    var STORAGE_KEY = "tournoi_amis_roles2c3";
     var MEMORY_ONLY = false;
     function saveLocal(){ try{ if(!MEMORY_ONLY) localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ MEMORY_ONLY=true; warnStorage(); } }
     function loadLocal(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw?JSON.parse(raw):null; }catch(e){ MEMORY_ONLY=true; return null; } }
-    function warnStorage(){ var el=id("storage-warning"); if(el){ el.style.display="block"; el.textContent="JS OK roles2c2"+(MEMORY_ONLY?" — ⚠️ stockage local indisponible":""); } }
+    function warnStorage(){ var el=id("storage-warning"); if(el){ el.style.display="block"; el.textContent="JS OK roles2c3"+(MEMORY_ONLY?" — ⚠️ stockage local indisponible":""); } }
     function banner(msg){ var el=id("storage-warning"); if(!el) return; el.style.display="block"; el.textContent=msg; }
 
     // ---------- State + session
-    var state = loadLocal() || { version: 15, teams: [], matches: [], locked:false, createdAt:new Date().toISOString(), protect:{teamPassHash:{}} };
+    var state = loadLocal() || { version: 16, teams: [], matches: [], locked:false, createdAt:new Date().toISOString(), protect:{teamPassHash:{}} };
     normalizeState();
     var ui = { open:{}, h2h:false };
     var session = { admin:false, claims:{} };
@@ -37,25 +37,52 @@
     function joinCloud(code){
       if(!hasFB){ alert("Firebase non configuré (voir index.html)."); return; }
       if(!cloud.db){ cloud.db=initFB(); if(!cloud.db){ alert("Initialisation Firebase impossible."); return; } }
-      cloud.id=(code||"").trim(); if(!cloud.id){ alert("Saisis un code tournoi."); return; }
+
+      cloud.id = (code||"").trim();
+      if(!cloud.id){ alert("Saisis un code tournoi."); return; }
+
       cloud.ref = cloud.db.ref("tournaments/"+cloud.id+"/payload");
-      cloud.enabled=true; setCloud("connexion…"); loadSession();
+      cloud.enabled = true;
+      cloud.lastRemoteAt = 0;
+      setCloud("connexion…");
+      loadSession();
+
+      let firstSnapshot = true;
 
       cloud.ref.on("value", function(snap){
-        var val=snap.val();
-        if(!val){ pushCloud(true); return; }
-        var remoteAt=+val.updatedAt||0; if(remoteAt<=cloud.lastRemoteAt) return;
-        cloud.lastRemoteAt=remoteAt;
-        state=val.state||state; normalizeState();
-        saveLocal(); renderAll(); setCloud("connecté ("+cloud.id+")");
+        const val = snap.val();
+
+        if(firstSnapshot){
+          firstSnapshot = false;
+          if(!val){
+            // Crée seulement si la branche est vide (premier créateur)
+            pushCloud(true);
+            setCloud("connecté (créé)");
+            return;
+          }
+        }
+
+        if(!val) return; // rien d'autre à faire
+        const remoteAt = +val.updatedAt || 0;
+        if(remoteAt <= cloud.lastRemoteAt) return;
+
+        cloud.lastRemoteAt = remoteAt;
+        state = val.state || state;
+        normalizeState();
+        saveLocal();
+        renderAll();
+        setCloud("connecté ("+cloud.id+")");
       });
 
-      pushCloud(true); setCloud("connecté ("+cloud.id+")");
-      try{ history.replaceState(null,"", location.pathname+"?v=roles2c2&id="+encodeURIComponent(cloud.id)); }catch(_){}
+      // ⚠️ NE PAS pousser ici (sinon on écrase depuis un appareil vierge)
+      try{
+        history.replaceState(null,"", location.pathname+"?v=roles2c3&id="+encodeURIComponent(cloud.id));
+      }catch(_){}
     }
     function leaveCloud(){ if(cloud.ref) cloud.ref.off(); cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloud("hors ligne"); loadSession(); }
     function pushCloud(immediate){ if(!cloud.enabled||!cloud.ref) return; var doPush=function(){ cloud.ref.set({ state:state, updatedAt:Date.now() }); }; if(immediate){ clearTimeout(cloud.pushTimer); doPush(); } else { clearTimeout(cloud.pushTimer); cloud.pushTimer=setTimeout(doPush,250); } }
 
+    // Auto-join via ?id=
     (function(){ var p=new URLSearchParams(location.search); var idp=p.get("id"); if(idp){ id("cloud-id").value=idp; joinCloud(idp); } })();
 
     // ---------- Utils
@@ -97,7 +124,7 @@
     // ---------- Rôles & droits
     function isAdmin(){ return !!session.admin; }
     function hasClaim(teamId){ return !!session.claims[teamId]; }
-    function canEditTeam(teamId){ return isAdmin(); }
+    function canEditTeam(teamId){ return isAdmin(); } // admin seulement
     function canEditMatch(m){ return isAdmin() || hasClaim(m.a) || hasClaim(m.b); }
     function teamName(tid){ var t=state.teams.find(x=>x.id===tid); return t?t.name:"—"; }
     function updateWho(){
@@ -122,7 +149,7 @@
     onClick(id("btn-cloud-leave"), ()=>leaveCloud());
     onClick(id("btn-cloud-copy"), ()=>{
       var code=id("cloud-id").value.trim(); if(!code){ alert("Renseigne d’abord le code tournoi."); return; }
-      var url=location.origin+location.pathname+"?v=roles2c2&id="+encodeURIComponent(code);
+      var url=location.origin+location.pathname+"?v=roles2c3&id="+encodeURIComponent(code);
       navigator.clipboard && navigator.clipboard.writeText(url);
       alert("Lien copié !\n"+url);
     });
@@ -135,7 +162,7 @@
     });
     onClick(id("btn-admin-off"), ()=>{ session.admin=false; saveSession(); renderAll(); });
 
-    // ---------- Teams
+    // ---------- Teams (ADMIN crée/édite, joueurs se connectent)
     var teamListEl=id("team-list");
 
     onClick(id("btn-add-team"), ()=>{
@@ -181,7 +208,7 @@
         teamListEl.appendChild(card);
       });
 
-      // admin seulement
+      // champs équipe -> ADMIN seulement
       qsa('#team-list input[data-field]').forEach(inp=>{
         inp.addEventListener("input", ()=>{
           var tid=inp.getAttribute("data-id"), f=inp.getAttribute("data-field");
@@ -231,9 +258,9 @@
 
     function updateCounts(){ id("teams-count").textContent = state.teams.length + " " + (state.teams.length>1?"équipes":"équipe"); var perTeam=Math.max(0,state.teams.length-1); id("rounds-count").textContent = perTeam + " " + (perTeam>1?"matchs":"match") + " par équipe"; }
 
-    // ---------- Calendrier
+    // ---------- Calendrier homogène
     function generateSchedule(){
-      var ids=(Array.isArray(state.teams)?state.teams:[]).map(t=>t.id);
+      var teamArr=Array.isArray(state.teams)?state.teams:[]; var ids=teamArr.map(t=>t.id);
       if(ids.length<2){ state.matches=[]; saveState(); renderMatches(); return; }
       var BYE="__BYE__"; if(ids.length%2===1) ids.push(BYE);
       var fixed=ids[0], rest=ids.slice(1); if(!Array.isArray(rest)) rest=[];
@@ -252,7 +279,7 @@
       out.sort((x,y)=>(x.round-y.round)||(x.order-y.order)); state.matches=out; saveState(); renderMatches();
     }
 
-    // ---------- Rencontres
+    // ---------- Rencontres (édition limitée)
     var matchListEl=id("match-list"), statsMatchesEl=id("stats-matches");
     function renderMatches(){
       matchListEl.innerHTML="";
@@ -320,15 +347,13 @@
           });
 
           // clear
-          var clr=el.querySelector("[data-clear]");
-          if(clr) clr.addEventListener("click", ()=>{ if(!can) return; clearMatch(m.id); renderLeaderboard(); renderH2H(); });
+          var clr=el.querySelector("[data-clear]"); if(clr) clr.addEventListener("click", ()=>{ if(!can) return; clearMatch(m.id); renderLeaderboard(); renderH2H(); });
 
           matchListEl.appendChild(el);
         });
       });
       statsMatchesEl.textContent=complete+" / "+state.matches.length+" matches complets";
-      // sécurité : recalcule au cas où
-      renderLeaderboard();
+      renderLeaderboard(); // sécurité
     }
 
     function renderDarts(m,can){
@@ -407,7 +432,7 @@
       });
     }
 
-    // ---------- H2H cliquable + bouton fiable
+    // ---------- H2H cliquable
     function pointsForTeamInMatch(m,teamId){
       var isA=m.a===teamId, isB=m.b===teamId; if(!isA&&!isB) return 0;
       var pts=0; (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0&&isA) pts+=5; else if(v===1&&isB) pts+=5; });
@@ -448,11 +473,11 @@
     onClick(id("btn-export"), ()=>{ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:"application/json"}); var url=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=url; a.download="tournoi-amis-"+new Date().toISOString().slice(0,10)+".json"; a.click(); URL.revokeObjectURL(url); });
     var importFile=null; id("file-import").addEventListener("change", e=>importFile=e.target.files[0]);
     onClick(id("btn-import"), ()=>{ if(!importFile){ alert("Sélectionnez un fichier JSON."); return; } importFile.text().then(text=>{ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveState(); renderAll(); alert("Import réussi !"); }catch(e){ alert("Fichier invalide."); } }); });
-    onClick(id("btn-share"), ()=>{ var json=JSON.stringify(state); var b64=btoa(unescape(encodeURIComponent(json))); var enc=encodeURIComponent(b64); var url=location.origin+location.pathname+"?v=roles2c2#s="+enc; var inp=id("share-url"); inp.value=url; inp.select(); document.execCommand && document.execCommand("copy"); navigator.clipboard && navigator.clipboard.writeText(url); alert("Lien (offline) copié !"); });
+    onClick(id("btn-share"), ()=>{ var json=JSON.stringify(state); var b64=btoa(unescape(encodeURIComponent(json))); var enc=encodeURIComponent(b64); var url=location.origin+location.pathname+"?v=roles2c3#s="+enc; var inp=id("share-url"); inp.value=url; inp.select(); document.execCommand && document.execCommand("copy"); navigator.clipboard && navigator.clipboard.writeText(url); alert("Lien (offline) copié !"); });
     (function(){ var m=location.hash.match(/^#s=([^&]+)$/); if(!m) return; try{ var b64=decodeURIComponent(m[1]); var json=decodeURIComponent(escape(atob(b64))); var data=JSON.parse(json); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveLocal(); history.replaceState(null,"",location.pathname+location.search); }catch(_){ alert("Lien de partage invalide."); } })();
 
     // ---------- Reset & unlock
-    onClick(id("btn-reset"), ()=>{ var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; } if(!confirm("Confirmer la ré-initialisation complète du tournoi ?")) return; state={version:15,teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; normalizeState(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); });
+    onClick(id("btn-reset"), ()=>{ var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; } if(!confirm("Confirmer la ré-initialisation complète du tournoi ?")) return; state={version:16,teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; normalizeState(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); });
     onClick(id("btn-unlock"), ()=>{ if(!isAdmin()){ alert("Réservé à l’admin."); return; } if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
 
     // ---------- Divers
@@ -464,7 +489,7 @@
     loadSession(); renderAll(); warnStorage(); showH2H(false); setCloud(cloud.enabled?"connecté":"hors ligne");
     function renderAll(){ renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI(); updateWho(); }
 
-    // Toggle H2H – version fiable (pas d'onclick inline)
+    // Toggle H2H
     function showH2H(on){ ui.h2h=!!on; var a=id("view-summary"), b=id("view-h2h"), btn=id("btn-toggle-h2h"); if(a&&b){ a.style.display=on?"none":"block"; b.style.display=on?"block":"none"; } if(btn) btn.textContent=on?"Vue classement":"Vue face-à-face"; if(on) renderH2H(); }
     onClick(id("btn-toggle-h2h"), e=>{ e.preventDefault(); showH2H(!ui.h2h); });
     onClick(id("btn-refresh-standings"), renderLeaderboard);
