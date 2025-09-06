@@ -1,4 +1,4 @@
-// JS OK roles2c10 — fix: computeSetWins + isMatchComplete restaurées
+// JS OK roles2c11 — identité en haut à droite + bouton partage retiré
 (function () {
   window.onerror = function (msg, src, line, col) {
     var el = document.getElementById("storage-warning");
@@ -24,8 +24,6 @@
     `;
     document.head.appendChild(style);
 
-    console.log("JS OK roles2c10");
-
     // ---------- Local storage
     var STORAGE_KEY = "tournoi_amis_roles2c6";
     var MEMORY_ONLY = false;
@@ -37,11 +35,6 @@
         el.style.display="block";
         el.textContent="⚠️ Stockage local indisponible (navigation privée ?)";
       }
-    }
-    function banner(msg){
-      if(/^JS OK/.test(msg)) return;
-      var el=id("storage-warning"); if(!el) return;
-      el.style.display="block"; el.textContent=msg;
     }
 
     // ---------- State + session
@@ -93,7 +86,7 @@
         setCloud("connecté ("+cloud.id+")");
       });
 
-      try{ history.replaceState(null,"", location.pathname+"?v=roles2c10&id="+encodeURIComponent(cloud.id)); }catch(_){}
+      try{ history.replaceState(null,"", location.pathname+"?v=roles2c11&id="+encodeURIComponent(cloud.id)); }catch(_){}
     }
     function leaveCloud(){ if(cloud.ref) cloud.ref.off(); cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloud("hors ligne"); loadSession(); }
     function pushCloud(immediate){ if(!cloud.enabled||!cloud.ref) return; var doPush=function(){ cloud.ref.set({ state:state, updatedAt:Date.now() }); }; if(immediate){ clearTimeout(cloud.pushTimer); doPush(); } else { clearTimeout(cloud.pushTimer); cloud.pushTimer=setTimeout(doPush,250); } }
@@ -112,7 +105,7 @@
     async function sha256(str){ try{ if(window.crypto&&window.crypto.subtle){ const enc=new TextEncoder().encode(str); const buf=await crypto.subtle.digest("SHA-256",enc); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join(""); } }catch(_){} let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return ("00000000"+h.toString(16)).slice(-8).repeat(8); }
     function salt(){ return cloud.id || "local"; }
 
-    // --- Normalisation de l'état
+    // --- Normalisation
     function _arr(x){ return Array.isArray(x) ? x : []; }
     function _normMatch(m){
       m = m || {};
@@ -136,7 +129,7 @@
     }
     function normalizeState(){ if(!state) state={}; if(!state.protect) state.protect={teamPassHash:{}}; state.teams=_arr(state.teams); state.matches=_arr(state.matches).map(_normMatch); }
 
-    // ---------- Rôles & droits
+    // ---------- Rôles & identité
     function isAdmin(){ return !!session.admin; }
     function hasClaim(teamId){ return !!session.claims[teamId]; }
     function canEditTeam(teamId){ return isAdmin(); }
@@ -151,10 +144,16 @@
       var content = url ? '<img src="'+esc(url)+'" alt="avatar">' : '<span class="avatar-initials">'+esc(initials(t.name))+'</span>';
       return '<span class="avatar '+cls+'" title="'+esc(t.name)+'">'+content+'</span>';
     }
+
+    function identityText(){
+      const teams = Object.keys(session.claims||{}).map(teamName).filter(Boolean);
+      if (isAdmin()) return teams.length ? `Admin · ${teams.join(", ")}` : "Admin";
+      if (teams.length) return teams.join(", ");
+      return "visiteur";
+    }
     function updateWho(){
-      var who=id("whoami"); if(!who) return;
-      var role = isAdmin() ? "ADMIN" : (Object.keys(session.claims||{}).length? ("équipe: "+Object.keys(session.claims).map(k=>teamName(k)).filter(Boolean).join(", ")) : "visiteur (lecture seule)");
-      who.textContent = "vous : " + role;
+      var who=id("whoami"); if(who) who.textContent = "vous : " + identityText();
+      var whoTop=id("whoami-top"); if(whoTop) whoTop.textContent = identityText();
       var addBtn=id("btn-add-team"); if(addBtn) addBtn.style.display = isAdmin()? "inline-block":"none";
     }
 
@@ -173,7 +172,7 @@
     onClick(id("btn-cloud-leave"), ()=>leaveCloud());
     onClick(id("btn-cloud-copy"), ()=>{
       var code=id("cloud-id").value.trim(); if(!code){ alert("Renseigne d’abord le code tournoi."); return; }
-      var url=location.origin+location.pathname+"?v=roles2c10&id="+encodeURIComponent(code);
+      var url=location.origin+location.pathname+"?v=roles2c11&id="+encodeURIComponent(code);
       navigator.clipboard && navigator.clipboard.writeText(url);
       alert("Lien copié !\n"+url);
     });
@@ -238,7 +237,7 @@
         teamListEl.appendChild(card);
       });
 
-      // saisie fluide (pas de push cloud pendant la frappe)
+      // saisie fluide
       qsa('#team-list input[data-field]').forEach(inp=>{
         const tid=inp.getAttribute("data-id"), f=inp.getAttribute("data-field");
         inp.addEventListener("input", ()=>{
@@ -373,11 +372,9 @@
       out.sort((x,y)=>(x.round-y.round)||(x.order-y.order)); state.matches=out; saveState(); renderMatches();
     }
 
-    // ---------- Helpers scores (REMIS 🛠️)
+    // ---------- Helpers scores
     function getPingPts(m){ return Array.isArray(m.pingPts)?m.pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; }
     function isPingValid(a,b){ if(a==null||b==null) return false; if(isNaN(a)||isNaN(b)) return false; var max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
-
-    // ➤ Calcule les victoires de sets fléchettes/ping pour l’entête des cartes
     function computeSetWins(m){
       var darts = Array.isArray(m.darts) ? m.darts : [null,null,null];
       var sets  = getPingPts(m);
@@ -386,8 +383,6 @@
       sets.forEach(function(s){ var a=(s&&typeof s.a==='number')?s.a:null; var b=(s&&typeof s.b==='number')?s.b:null; if(isPingValid(a,b)){ if(a>b) aw.ping++; else if(b>a) bw.ping++; } });
       return {aw:aw, bw:bw};
     }
-
-    // ➤ Détermine si un match est complètement saisi
     function isMatchComplete(m){
       var okD=(Array.isArray(m.darts)?m.darts:[null,null,null]).every(v=>v===0||v===1);
       var okP=getPingPts(m).every(s=>isPingValid(s.a,s.b));
@@ -396,7 +391,7 @@
       return okD&&okP&&okL;
     }
 
-    // ---------- Rencontres (par défaut repliées)
+    // ---------- Rencontres
     var matchListEl=id("match-list"), statsMatchesEl=id("stats-matches");
     function renderMatches(){
       matchListEl.innerHTML="";
@@ -496,7 +491,6 @@
       }
       return html;
     }
-
     function renderPing(m,can){
       var labels=["Simple 1","Simple 2","Double"], sets=getPingPts(m), html="";
       for(var i=0;i<3;i++){
@@ -508,7 +502,6 @@
       }
       return html;
     }
-
     function renderPalet(m,can){
       var a=m.palet.a, b=m.palet.b, note=(a==null||b==null)?'Saisissez les deux scores (l’un doit être 11).':((a===11&&b>=0&&b<=10)||(b===11&&a>=0&&a<=10)?'✔️ Score valide':'⚠️ Un score doit être 11, l’autre entre 0 et 10.');
       return '<div class="grid cols-4" style="align-items:end;margin-top:6px">'
@@ -572,7 +565,11 @@
           if(!m){ td.innerHTML='<span class="h2h-badge h2h-pend">—</span>'; tr.appendChild(td); return; }
           var pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id);
           if(pI===0 && pJ===0){ td.innerHTML='<span class="h2h-badge h2h-pend">•</span>'; }
-          else{ var cls=(pI>pJ)?'h2h-win':(pI<pJ)?'h2h-loss':'h2h-pend'; var tag=(pI>pJ)?'W':(pI<pP? 'L':'='); td.innerHTML='<span class="h2h-badge '+cls+'">'+tag+' '+pI+'–'+pJ+'</span>'; }
+          else{
+            var cls=(pI>pJ)?'h2h-win':(pI<pJ)?'h2h-loss':'h2h-pend';
+            var tag=(pI>pJ)?'W':(pI<pJ)?'L':'=';
+            td.innerHTML='<span class="h2h-badge '+cls+'">'+tag+' '+pI+'–'+pJ+'</span>';
+          }
           td.className="h2h-clickable"; td.dataset.matchId=m.id; tr.appendChild(td);
         });
         tbody.appendChild(tr);
@@ -584,12 +581,10 @@
     }
     function goToMatch(mid){ var tab=qs('.tab[data-tab="calendrier"]'); tab&&tab.click&&tab.click(); ui.open[mid]=true; setTimeout(()=>{ var card=qs('.match-card[data-id="'+mid+'"]'); if(card){ card.setAttribute("aria-expanded","true"); try{ card.scrollIntoView({behavior:"smooth",block:"start"}); }catch(_){ card.scrollIntoView(); } } },0); }
 
-    // ---------- Export/Import/Share
+    // ---------- Export/Import (partage supprimé)
     onClick(id("btn-export"), ()=>{ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:"application/json"}); var url=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=url; a.download="tournoi-amis-"+new Date().toISOString().slice(0,10)+".json"; a.click(); URL.revokeObjectURL(url); });
     var importFile=null; id("file-import").addEventListener("change", e=>importFile=e.target.files[0]);
     onClick(id("btn-import"), ()=>{ if(!importFile){ alert("Sélectionnez un fichier JSON."); return; } importFile.text().then(text=>{ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveState(); renderAll(); alert("Import réussi !"); }catch(e){ alert("Fichier invalide."); } }); });
-    onClick(id("btn-share"), ()=>{ var json=JSON.stringify(state); var b64=btoa(unescape(encodeURIComponent(json))); var enc=encodeURIComponent(b64); var url=location.origin+location.pathname+"?v=roles2c10#s="+enc; var inp=id("share-url"); inp.value=url; inp.select(); document.execCommand && document.execCommand("copy"); navigator.clipboard && navigator.clipboard.writeText(url); alert("Lien (offline) copié !"); });
-    (function(){ var m=location.hash.match(/^#s=([^&]+)$/); if(!m) return; try{ var b64=decodeURIComponent(m[1]); var json=decodeURIComponent(escape(atob(b64))); var data=JSON.parse(json); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveLocal(); history.replaceState(null,"",location.pathname+location.search); }catch(_){ alert("Lien de partage invalide."); } })();
 
     // ---------- Reset & unlock
     onClick(id("btn-reset"), ()=>{ var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; } if(!confirm("Confirmer la ré-initialisation complète du tournoi ?")) return; state={version:20,teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; normalizeState(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); });
@@ -598,7 +593,6 @@
     // ---------- Divers
     function updateLockUI(){ var pill=id("lock-pill"); if(pill) pill.style.display=state.locked?"inline-block":"none"; var gen=id("btn-generate"); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"; } }
     function onClick(el,fn){ if(el&&el.addEventListener) el.addEventListener("click",fn); }
-
     function saveState(opts){
       saveLocal();
       renderLeaderboard(); renderH2H();
