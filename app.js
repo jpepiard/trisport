@@ -1,4 +1,4 @@
-// JS OK roles2c7 — saisie nom d’équipe fluide (pas de push cloud pendant la frappe), rencontres repliées par défaut, titre TriSports
+// JS OK roles2c8 — avatars + grands en classement, "JS OK" masqué (badge discret uniquement pour vraies alertes)
 (function () {
   window.onerror = function (msg, src, line, col) {
     var el = document.getElementById("storage-warning");
@@ -25,19 +25,32 @@
     `;
     document.head.appendChild(style);
 
-    banner("JS OK roles2c7");
+    banner("JS OK roles2c8"); // ne s'affiche plus visuellement (voir banner())
 
     // ---------- Local storage
-    // (on garde la même clé que c6 pour ne pas perdre l'état local)
-    var STORAGE_KEY = "tournoi_amis_roles2c6";
+    var STORAGE_KEY = "tournoi_amis_roles2c6"; // on garde la même clé
     var MEMORY_ONLY = false;
     function saveLocal(){ try{ if(!MEMORY_ONLY) localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ MEMORY_ONLY=true; warnStorage(); } }
     function loadLocal(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw?JSON.parse(raw):null; }catch(e){ MEMORY_ONLY=true; return null; } }
-    function warnStorage(){ var el=id("storage-warning"); if(el){ el.style.display="block"; el.textContent="JS OK roles2c7"+(MEMORY_ONLY?" — ⚠️ stockage local indisponible":""); } }
-    function banner(msg){ var el=id("storage-warning"); if(!el) return; el.style.display="block"; el.textContent=msg; }
+    function warnStorage(){
+      var el=id("storage-warning");
+      if(el){
+        el.style.display="block";
+        el.textContent="⚠️ Stockage local indisponible (navigation privée ?)";
+      }
+    }
+    function banner(msg){
+      // On LOG juste, et on n'affiche pas les messages "JS OK"
+      console.log(msg);
+      if(/^JS OK/.test(msg)) return;
+      var el=id("storage-warning");
+      if(!el) return;
+      el.style.display="block";
+      el.textContent=msg;
+    }
 
     // ---------- State + session
-    var state = loadLocal() || { version: 19, teams: [], matches: [], locked:false, createdAt:new Date().toISOString(), protect:{teamPassHash:{}} };
+    var state = loadLocal() || { version: 20, teams: [], matches: [], locked:false, createdAt:new Date().toISOString(), protect:{teamPassHash:{}} };
     normalizeState();
     var ui = { open:{}, h2h:false };
     var session = { admin:false, claims:{} };
@@ -93,7 +106,7 @@
       });
 
       try{
-        history.replaceState(null,"", location.pathname+"?v=roles2c7&id="+encodeURIComponent(cloud.id));
+        history.replaceState(null,"", location.pathname+"?v=roles2c8&id="+encodeURIComponent(cloud.id));
       }catch(_){}
     }
     function leaveCloud(){ if(cloud.ref) cloud.ref.off(); cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloud("hors ligne"); loadSession(); }
@@ -175,7 +188,7 @@
     onClick(id("btn-cloud-leave"), ()=>leaveCloud());
     onClick(id("btn-cloud-copy"), ()=>{
       var code=id("cloud-id").value.trim(); if(!code){ alert("Renseigne d’abord le code tournoi."); return; }
-      var url=location.origin+location.pathname+"?v=roles2c7&id="+encodeURIComponent(code);
+      var url=location.origin+location.pathname+"?v=roles2c8&id="+encodeURIComponent(code);
       navigator.clipboard && navigator.clipboard.writeText(url);
       alert("Lien copié !\n"+url);
     });
@@ -240,23 +253,21 @@
         teamListEl.appendChild(card);
       });
 
-      // Saisie fluide : on NE pousse PAS au cloud tant que l’input n’a pas perdu le focus
+      // Saisie fluide : pas de push cloud pendant la frappe
       qsa('#team-list input[data-field]').forEach(inp=>{
         const tid=inp.getAttribute("data-id"), f=inp.getAttribute("data-field");
-        // frappe → local + rendu minimal (pas de cloud)
         inp.addEventListener("input", ()=>{
           if(!canEditTeam(tid)) return;
           var t=teamObj(tid); if(!t) return;
           t[f]=inp.value;
-          saveState({cloud:false}); // pas de push cloud -> pas de re-render imprévu
+          saveState({cloud:false});
         });
-        // validation (quitte le champ) → push cloud + rerenders dépendants
         inp.addEventListener("blur", ()=>{
           if(!canEditTeam(tid)) return;
           var t=teamObj(tid); if(!t) return;
           t[f]=inp.value;
-          saveState();            // avec push cloud
-          renderTeams();          // met à jour l’avatar/initiales
+          saveState();            // push cloud
+          renderTeams();          // MAJ avatar/initiales
           renderMatches(); renderLeaderboard(); renderH2H();
         });
       });
@@ -333,7 +344,7 @@
       updateCounts(); updateLockUI();
     }
 
-    // Image -> DataURL carré (crop centre), taille px
+    // Image -> DataURL carré
     function fileToSquareDataURL(file, size){
       return new Promise((resolve,reject)=>{
         const reader=new FileReader();
@@ -396,7 +407,6 @@
           var can = canEditMatch(m);
           var el=document.createElement("div"); el.className="match-card"; el.dataset.id=m.id;
 
-          // ▼▼ par défaut replié (si aucune préférence en mémoire)
           var isOpen = (typeof ui.open[m.id] === "boolean") ? ui.open[m.id] : false;
           el.setAttribute("aria-expanded", isOpen ? "true" : "false");
 
@@ -507,21 +517,6 @@
     function clearMatch(idv){ var m=findMatch(idv); if(!m||!canEditMatch(m)) return; if(!confirm("Effacer tous les scores de ce match ?")) return; m.darts=[null,null,null]; m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; m.palet={a:null,b:null}; saveState(); renderMatches(); }
 
     // ---------- Classement
-    function computeSetWins(m){
-      var darts = Array.isArray(m.darts) ? m.darts : [null,null,null];
-      var sets  = Array.isArray(m.pingPts) ? m.pingPts : [{a:null,b:null},{a:null,b:null},{a:null,b:null}];
-      var aw={darts:0,ping:0}, bw={darts:0,ping:0};
-      darts.forEach(function(v){ if(v===0) aw.darts++; else if(v===1) bw.darts++; });
-      sets.forEach(function(s){ var a=(s&&typeof s.a==='number')?s.a:null; var b=(s&&typeof s.b==='number')?s.b:null; if(isPingValid(a,b)){ if(a>b) aw.ping++; else if(b>a) bw.ping++; } });
-      return {aw:aw, bw:bw};
-    }
-    function isMatchComplete(m){
-      var okD=(Array.isArray(m.darts)?m.darts:[null,null,null]).every(v=>v===0||v===1);
-      var okP=getPingPts(m).every(s=>isPingValid(s.a,s.b));
-      var pa=m.palet.a, pb=m.palet.b;
-      var okL=(pa!=null&&pb!=null)&&((pa===11&&pb>=0&&pb<=10)||(pb===11&&pa>=0&&pa<=10));
-      return okD&&okP&&okL;
-    }
     function computeLeaderboard(){
       var stats={}; state.teams.forEach(t=>{ stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0}; });
       state.matches.forEach(m=>{
@@ -539,8 +534,9 @@
       var tbody=qs("#table-classement tbody"); if(!tbody) return; tbody.innerHTML="";
       computeLeaderboard().forEach(r=>{
         var diff=r.palFor-r.palAg; var tr=document.createElement("tr");
+        // ▼ avatar plus grand en classement : avatar-lg
         tr.innerHTML='<td>'+r.rank+'</td>'
-          +'<td><span class="team-name">'+(r.avatar?('<span class="avatar">'+('<img src="'+esc(r.avatar)+'" alt="avatar">')+'</span>'):( '<span class="avatar"><span class="avatar-initials">'+esc(initials(r.name))+'</span></span>' ))+' '+esc(r.name)+'</span></td>'
+          +'<td><span class="team-name">'+(r.avatar?('<span class="avatar avatar-lg">'+('<img src="'+esc(r.avatar)+'" alt="avatar">')+'</span>'):( '<span class="avatar avatar-lg"><span class="avatar-initials">'+esc(initials(r.name))+'</span></span>' ))+' '+esc(r.name)+'</span></td>'
           +'<td><b>'+r.points+'</b></td><td>'+r.dartsW+'</td><td>'+r.pingW+'</td>'
           +'<td>'+r.palFor+'–'+r.palAg+' <span class="muted">('+(diff>=0?'+':'')+diff+')</span></td>'
           +'<td>'+r.matchesComplete+'</td>';
@@ -548,7 +544,7 @@
       });
     }
 
-    // ---------- H2H cliquable
+    // ---------- H2H
     function pointsForTeamInMatch(m,teamId){
       var isA=m.a===teamId, isB=m.b===teamId; if(!isA&&!isB) return 0;
       var pts=0; (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0&&isA) pts+=5; else if(v===1&&isB) pts+=5; });
@@ -589,26 +585,25 @@
     onClick(id("btn-export"), ()=>{ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:"application/json"}); var url=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=url; a.download="tournoi-amis-"+new Date().toISOString().slice(0,10)+".json"; a.click(); URL.revokeObjectURL(url); });
     var importFile=null; id("file-import").addEventListener("change", e=>importFile=e.target.files[0]);
     onClick(id("btn-import"), ()=>{ if(!importFile){ alert("Sélectionnez un fichier JSON."); return; } importFile.text().then(text=>{ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveState(); renderAll(); alert("Import réussi !"); }catch(e){ alert("Fichier invalide."); } }); });
-    onClick(id("btn-share"), ()=>{ var json=JSON.stringify(state); var b64=btoa(unescape(encodeURIComponent(json))); var enc=encodeURIComponent(b64); var url=location.origin+location.pathname+"?v=roles2c7#s="+enc; var inp=id("share-url"); inp.value=url; inp.select(); document.execCommand && document.execCommand("copy"); navigator.clipboard && navigator.clipboard.writeText(url); alert("Lien (offline) copié !"); });
+    onClick(id("btn-share"), ()=>{ var json=JSON.stringify(state); var b64=btoa(unescape(encodeURIComponent(json))); var enc=encodeURIComponent(b64); var url=location.origin+location.pathname+"?v=roles2c8#s="+enc; var inp=id("share-url"); inp.value=url; inp.select(); document.execCommand && document.execCommand("copy"); navigator.clipboard && navigator.clipboard.writeText(url); alert("Lien (offline) copié !"); });
     (function(){ var m=location.hash.match(/^#s=([^&]+)$/); if(!m) return; try{ var b64=decodeURIComponent(m[1]); var json=decodeURIComponent(escape(atob(b64))); var data=JSON.parse(json); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveLocal(); history.replaceState(null,"",location.pathname+location.search); }catch(_){ alert("Lien de partage invalide."); } })();
 
     // ---------- Reset & unlock
-    onClick(id("btn-reset"), ()=>{ var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; } if(!confirm("Confirmer la ré-initialisation complète du tournoi ?")) return; state={version:19,teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; normalizeState(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); });
+    onClick(id("btn-reset"), ()=>{ var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; } if(!confirm("Confirmer la ré-initialisation complète du tournoi ?")) return; state={version:20,teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; normalizeState(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); });
     onClick(id("btn-unlock"), ()=>{ if(!isAdmin()){ alert("Réservé à l’admin."); return; } if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
 
     // ---------- Divers
     function updateLockUI(){ var pill=id("lock-pill"); if(pill) pill.style.display=state.locked?"inline-block":"none"; var gen=id("btn-generate"); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"; } }
     function onClick(el,fn){ if(el&&el.addEventListener) el.addEventListener("click",fn); }
 
-    // saveState avec option pour désactiver le push cloud (utile pendant la frappe)
     function saveState(opts){
       saveLocal();
-      renderLeaderboard(); renderH2H(); // ces vues ne cassent pas la saisie
+      renderLeaderboard(); renderH2H();
       if(cloud.enabled && !(opts && opts.cloud===false)) pushCloud(false);
     }
 
     // ---------- Init
-    loadSession(); renderAll(); warnStorage(); showH2H(false); setCloud(cloud.enabled?"connecté":"hors ligne");
+    loadSession(); renderAll(); setCloud(cloud.enabled?"connecté":"hors ligne");
     function renderAll(){ renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI(); updateWho(); }
 
     // Toggle H2H
@@ -616,7 +611,6 @@
     onClick(id("btn-toggle-h2h"), e=>{ e.preventDefault(); showH2H(!ui.h2h); });
     onClick(id("btn-refresh-standings"), renderLeaderboard);
     onClick(id("btn-refresh-standings-2"), renderLeaderboard);
-    // btn-expand supprimé dans l’HTML ; on garde seulement "Tout replier"
     onClick(id("btn-collapse"), ()=>{ qsa(".match-card").forEach(c=>c.setAttribute("aria-expanded","false")); });
   });
 })();

@@ -46,7 +46,7 @@
     .h2h-pend{background:#141a33;color:#b9c3ef}
     .h2h-clickable{cursor:pointer}
 
-    /* Avatars (taille c6 : 40/48/32) */
+    /* Avatars (40/48/32) */
     .avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:#0f1331;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;color:#cbd5ff;font-weight:700;font-size:14px;flex:0 0 auto}
     .avatar img{width:100%;height:100%;object-fit:cover}
     .avatar .avatar-initials{display:inline-block;line-height:40px}
@@ -55,6 +55,13 @@
     .avatar-sm{width:32px;height:32px;font-size:12px}
     .avatar-sm .avatar-initials{line-height:32px}
     .team-name{display:inline-flex;align-items:center;gap:8px}
+
+    /* Badge d’alerte (bas droite) */
+    #storage-warning{
+      position:fixed; right:12px; bottom:12px; display:none;
+      background:#0f1331; border:1px solid var(--border); color:var(--muted);
+      border-radius:10px; padding:8px 10px; z-index:99; box-shadow:0 6px 24px rgba(0,0,0,.35)
+    }
   </style>
 
   <!-- Firebase (compat) -->
@@ -91,7 +98,8 @@
 
   <main>
     <div class="container">
-      <div id="storage-warning" class="help" style="display:none;margin-bottom:12px;border:1px dashed var(--border);border-radius:12px;padding:10px 12px;background:#0f1331"></div>
+      <!-- Ce badge est désormais discret en bas à droite -->
+      <div id="storage-warning" class="help" style="display:none"></div>
 
       <!-- Équipes -->
       <section id="equipes" class="active">
@@ -119,7 +127,6 @@
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="stats-matches">0 / 0 matches complets</span>
               <button type="button" class="btn small" id="btn-refresh-standings">Mettre à jour le classement</button>
-              <!-- Bouton "Tout déployer" supprimé -->
               <button type="button" class="btn small" id="btn-collapse">Tout replier</button>
             </div>
           </div>
@@ -206,6 +213,6 @@
     </div>
   </main>
 
-  <script defer src="app.js?v=roles2c7"></script>
+  <script defer src="app.js?v=roles2c8"></script>
 </body>
 </html>
