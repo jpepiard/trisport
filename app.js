@@ -1,4 +1,4 @@
-// JS OK roles2c4 — Avatars d’équipe (upload/crop), Cloud join sûr, classement auto, H2H cliquable
+// JS OK roles2c6 — force le titre "TriSports", avatars plus gros via override, cloud sûr, H2H cliquable, classements
 (function () {
   window.onerror = function (msg, src, line, col) {
     var el = document.getElementById("storage-warning");
@@ -8,18 +8,35 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
-    banner("JS OK roles2c4");
+    // Forcer le titre & l'en-tête (au cas où un vieux index.html serait en cache)
+    document.title = "TriSports — Fléchettes • Ping-pong • Palet";
+    var h1 = document.querySelector(".brand h1");
+    if (h1) h1.textContent = "TriSports";
+
+    // Override CSS avatars (garantie taille)
+    var style = document.createElement("style");
+    style.textContent = `
+      .avatar{width:40px;height:40px;font-size:14px}
+      .avatar .avatar-initials{line-height:40px}
+      .avatar-lg{width:48px;height:48px;font-size:15px}
+      .avatar-lg .avatar-initials{line-height:48px}
+      .avatar-sm{width:32px;height:32px;font-size:12px}
+      .avatar-sm .avatar-initials{line-height:32px}
+    `;
+    document.head.appendChild(style);
+
+    banner("JS OK roles2c6");
 
     // ---------- Local storage
-    var STORAGE_KEY = "tournoi_amis_roles2c4";
+    var STORAGE_KEY = "tournoi_amis_roles2c6";
     var MEMORY_ONLY = false;
     function saveLocal(){ try{ if(!MEMORY_ONLY) localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ MEMORY_ONLY=true; warnStorage(); } }
     function loadLocal(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw?JSON.parse(raw):null; }catch(e){ MEMORY_ONLY=true; return null; } }
-    function warnStorage(){ var el=id("storage-warning"); if(el){ el.style.display="block"; el.textContent="JS OK roles2c4"+(MEMORY_ONLY?" — ⚠️ stockage local indisponible":""); } }
+    function warnStorage(){ var el=id("storage-warning"); if(el){ el.style.display="block"; el.textContent="JS OK roles2c6"+(MEMORY_ONLY?" — ⚠️ stockage local indisponible":""); } }
     function banner(msg){ var el=id("storage-warning"); if(!el) return; el.style.display="block"; el.textContent=msg; }
 
     // ---------- State + session
-    var state = loadLocal() || { version: 17, teams: [], matches: [], locked:false, createdAt:new Date().toISOString(), protect:{teamPassHash:{}} };
+    var state = loadLocal() || { version: 18, teams: [], matches: [], locked:false, createdAt:new Date().toISOString(), protect:{teamPassHash:{}} };
     normalizeState();
     var ui = { open:{}, h2h:false };
     var session = { admin:false, claims:{} };
@@ -62,7 +79,7 @@
           }
         }
 
-        if(!val) return;
+        if(!val) return; // rien d'autre à faire
         const remoteAt = +val.updatedAt || 0;
         if(remoteAt <= cloud.lastRemoteAt) return;
 
@@ -76,7 +93,7 @@
 
       // ⚠️ NE PAS pousser ici (sinon on écrase depuis un appareil vierge)
       try{
-        history.replaceState(null,"", location.pathname+"?v=roles2c4&id="+encodeURIComponent(cloud.id));
+        history.replaceState(null,"", location.pathname+"?v=roles2c6&id="+encodeURIComponent(cloud.id));
       }catch(_){}
     }
     function leaveCloud(){ if(cloud.ref) cloud.ref.off(); cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloud("hors ligne"); loadSession(); }
@@ -158,7 +175,7 @@
     onClick(id("btn-cloud-leave"), ()=>leaveCloud());
     onClick(id("btn-cloud-copy"), ()=>{
       var code=id("cloud-id").value.trim(); if(!code){ alert("Renseigne d’abord le code tournoi."); return; }
-      var url=location.origin+location.pathname+"?v=roles2c4&id="+encodeURIComponent(code);
+      var url=location.origin+location.pathname+"?v=roles2c6&id="+encodeURIComponent(code);
       navigator.clipboard && navigator.clipboard.writeText(url);
       alert("Lien copié !\n"+url);
     });
@@ -295,7 +312,7 @@
           var tid=inp.getAttribute("data-avatar"); if(!canEditAvatar(tid)) return;
           var file=inp.files && inp.files[0]; if(!file) return;
           try{
-            const url = await fileToSquareDataURL(file, 128); // crop & resize
+            const url = await fileToSquareDataURL(file, 160); // un poil plus grand pour la qualité
             var t=teamObj(tid); if(!t) return; t.avatar=url; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H();
           }catch(e){ alert("Échec du chargement de l’avatar."); }
           finally{ inp.value=""; }
@@ -319,7 +336,7 @@
               const c=document.createElement('canvas'); c.width=size; c.height=size;
               const ctx=c.getContext('2d');
               ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
-              resolve(c.toDataURL('image/jpeg',0.85));
+              resolve(c.toDataURL('image/jpeg',0.9));
             }catch(e){ reject(e); }
           };
           img.onerror=()=>reject(new Error("img"));
@@ -552,11 +569,11 @@
     onClick(id("btn-export"), ()=>{ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:"application/json"}); var url=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=url; a.download="tournoi-amis-"+new Date().toISOString().slice(0,10)+".json"; a.click(); URL.revokeObjectURL(url); });
     var importFile=null; id("file-import").addEventListener("change", e=>importFile=e.target.files[0]);
     onClick(id("btn-import"), ()=>{ if(!importFile){ alert("Sélectionnez un fichier JSON."); return; } importFile.text().then(text=>{ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveState(); renderAll(); alert("Import réussi !"); }catch(e){ alert("Fichier invalide."); } }); });
-    onClick(id("btn-share"), ()=>{ var json=JSON.stringify(state); var b64=btoa(unescape(encodeURIComponent(json))); var enc=encodeURIComponent(b64); var url=location.origin+location.pathname+"?v=roles2c4#s="+enc; var inp=id("share-url"); inp.value=url; inp.select(); document.execCommand && document.execCommand("copy"); navigator.clipboard && navigator.clipboard.writeText(url); alert("Lien (offline) copié !"); });
+    onClick(id("btn-share"), ()=>{ var json=JSON.stringify(state); var b64=btoa(unescape(encodeURIComponent(json))); var enc=encodeURIComponent(b64); var url=location.origin+location.pathname+"?v=roles2c6#s="+enc; var inp=id("share-url"); inp.value=url; inp.select(); document.execCommand && document.execCommand("copy"); navigator.clipboard && navigator.clipboard.writeText(url); alert("Lien (offline) copié !"); });
     (function(){ var m=location.hash.match(/^#s=([^&]+)$/); if(!m) return; try{ var b64=decodeURIComponent(m[1]); var json=decodeURIComponent(escape(atob(b64))); var data=JSON.parse(json); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveLocal(); history.replaceState(null,"",location.pathname+location.search); }catch(_){ alert("Lien de partage invalide."); } })();
 
     // ---------- Reset & unlock
-    onClick(id("btn-reset"), ()=>{ var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; } if(!confirm("Confirmer la ré-initialisation complète du tournoi ?")) return; state={version:17,teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; normalizeState(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); });
+    onClick(id("btn-reset"), ()=>{ var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; } if(!confirm("Confirmer la ré-initialisation complète du tournoi ?")) return; state={version:18,teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; normalizeState(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); });
     onClick(id("btn-unlock"), ()=>{ if(!isAdmin()){ alert("Réservé à l’admin."); return; } if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
 
     // ---------- Divers
