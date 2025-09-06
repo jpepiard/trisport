@@ -86,11 +86,10 @@
           <div class="hd">
             <div>
               <strong>Équipes</strong>
-              <div class="help">Créez/claim votre équipe avec un mot de passe. Ensuite, vous pourrez éditer <b>vos</b> matchs (les autres restent en lecture seule).</div>
+              <div class="help">Les <b>administrateurs</b> créent et éditent les équipes. Les joueurs se <b>connectent</b> à leur équipe avec un mot de passe pour saisir <b>leurs scores uniquement</b>.</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="lock-pill" style="display:none">Calendrier figé 🔒</span>
-              <button type="button" class="btn" id="btn-create-my-team">+ Créer mon équipe</button>
               <button type="button" class="btn" id="btn-add-team" style="display:none">+ Ajouter équipe (admin)</button>
               <button type="button" class="btn primary" id="btn-generate">Générer le calendrier</button>
             </div>
@@ -177,7 +176,7 @@
                 <button type="button" class="btn" id="btn-admin-off">Désactiver admin</button>
                 <span class="pill" id="whoami">vous : visiteur (lecture seule)</span>
               </div>
-              <!-- AUCUN PIN N'EST AFFICHÉ DANS L'UI -->
+              <!-- Le PIN admin n'est affiché nulle part -->
             </div>
           </div>
         </div>
@@ -190,11 +189,11 @@
           </div>
         </div>
 
-        <div class="help" style="text-align:center;padding:18px">Les mots de passe d’équipe restent privés (hachés côté client). Les droits sont appliqués dans l’interface.</div>
+        <div class="help" style="text-align:center;padding:18px">Les mots de passe d’équipe sont définis par l’administrateur. Les joueurs se connectent à leur équipe pour modifier uniquement leurs matchs.</div>
       </section>
     </div>
   </main>
 
-  <script defer src="app.js?v=roles2b"></script>
+  <script defer src="app.js?v=roles2c"></script>
 </body>
 </html>
