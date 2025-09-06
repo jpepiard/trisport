@@ -58,10 +58,8 @@
       authDomain: "trisport-9a7b2.firebaseapp.com",
       databaseURL: "https://trisport-9a7b2-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "trisport-9a7b2",
-      storageBucket: "trisport-9a7b2.firebasestorage.app",
       messagingSenderId: "132024051367",
       appId: "1:132024051367:web:f9aa39785a3d4a43875d82"
-      // measurementId facultatif, non nécessaire ici
     };
   </script>
 </head>
@@ -88,11 +86,12 @@
           <div class="hd">
             <div>
               <strong>Équipes</strong>
-              <div class="help">Ajoutez vos équipes (2 joueurs par équipe). Le calendrier sera généré automatiquement en journées équilibrées.</div>
+              <div class="help">Créez/claim votre équipe avec un mot de passe. Ensuite, vous pourrez éditer <b>vos</b> matchs (les autres restent en lecture seule).</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="lock-pill" style="display:none">Calendrier figé 🔒</span>
-              <button type="button" class="btn" id="btn-add-team">+ Ajouter une équipe</button>
+              <button type="button" class="btn" id="btn-create-my-team">+ Créer mon équipe</button>
+              <button type="button" class="btn" id="btn-add-team" style="display:none">+ Ajouter équipe (admin)</button>
               <button type="button" class="btn primary" id="btn-generate">Générer le calendrier</button>
             </div>
           </div>
@@ -161,7 +160,7 @@
           </div>
 
           <div class="card">
-            <div class="hd"><strong>Cloud (live) — tout le monde peut saisir</strong></div>
+            <div class="hd"><strong>Cloud (live) — droits selon votre rôle</strong></div>
             <div class="bd grid" style="gap:10px">
               <label>Code tournoi</label>
               <input type="text" id="cloud-id" placeholder="ex: apero2025" />
@@ -171,6 +170,14 @@
                 <button type="button" class="btn" id="btn-cloud-leave">Se déconnecter</button>
               </div>
               <div class="help">Statut : <span id="cloud-status">hors ligne</span></div>
+
+              <hr style="border:none;border-top:1px dashed var(--border)">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <button type="button" class="btn" id="btn-admin-on">Activer mode administrateur</button>
+                <button type="button" class="btn" id="btn-admin-off">Désactiver admin</button>
+                <span class="pill" id="whoami">vous : visiteur (lecture seule)</span>
+              </div>
+              <!-- AUCUN PIN N'EST AFFICHÉ DANS L'UI -->
             </div>
           </div>
         </div>
@@ -183,11 +190,11 @@
           </div>
         </div>
 
-        <div class="help" style="text-align:center;padding:18px">Stockage local + option cloud. Sur cloud, toutes les modifications sont synchronisées en direct entre appareils.</div>
+        <div class="help" style="text-align:center;padding:18px">Les mots de passe d’équipe restent privés (hachés côté client). Les droits sont appliqués dans l’interface.</div>
       </section>
     </div>
   </main>
 
-  <script defer src="app.js?v=live1"></script>
+  <script defer src="app.js?v=roles2"></script>
 </body>
 </html>
