@@ -39,12 +39,13 @@
     .match-body{display:none;border-top:1px solid var(--border);padding:12px}
     .match-card[aria-expanded=true] .match-body{display:block}
     .help{font-size:13px;color:var(--muted)}
-    /* mini styles H2H */
+    /* H2H */
     .h2h-table th, .h2h-table td { white-space:nowrap; }
     .h2h-badge{display:inline-block;border:1px solid var(--border);border-radius:10px;padding:2px 6px;font-size:12px}
     .h2h-win{background:#0f2b1a;color:#9be7b0;border-color:#1e5f3a}
     .h2h-loss{background:#2b1515;color:#ffb3b3;border-color:#7a2a2a}
     .h2h-pend{background:#141a33;color:#b9c3ef}
+    .h2h-clickable{cursor:pointer}
   </style>
 </head>
 <body>
@@ -126,7 +127,7 @@
             <!-- Vue 2 : Face-à-face -->
             <div id="view-h2h" style="display:none">
               <div class="help" style="margin-bottom:10px">
-                Face-à-face : pour chaque duel, on affiche <b>Victoire/ Défaite</b> et le total de points gagnés par l’équipe en ligne contre l’adversaire en colonne.
+                Face-à-face : cliquez sur une cellule pour ouvrir directement la rencontre et voir le détail des parties.
               </div>
               <table id="table-h2h" class="h2h-table"><thead></thead><tbody></tbody></table>
             </div>
@@ -158,6 +159,6 @@
   </main>
 
   <!-- JS externe -->
-  <script defer src="app.js?v=final2"></script>
+  <script defer src="app.js?v=h2h1"></script>
 </body>
 </html>

@@ -1,26 +1,26 @@
-// JS OK final2 — Classement + vue face-à-face (H2H)
+// JS OK h2h1 — H2H cliquable + reset protégé
 (function(){
   // Bandeau de contrôle
   function banner(extra){
     var el=document.getElementById('storage-warning');
     if(!el) return; el.style.display='block';
-    var txt=el.textContent||''; if(txt.indexOf('JS OK')===-1){ el.textContent=(txt?txt+' ':'')+'JS OK final2'; }
+    var txt=el.textContent||''; if(txt.indexOf('JS OK')===-1){ el.textContent=(txt?txt+' ':'')+'JS OK h2h1'; }
     if(extra){ el.textContent+=' '+extra; }
   }
   banner();
 
   // Storage
-  var STORAGE_KEY='tournoi_amis_final2';
+  var STORAGE_KEY='tournoi_amis_h2h1';
   var MEMORY_ONLY=false;
   function saveState(){ try{ if(!MEMORY_ONLY){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } }catch(e){ MEMORY_ONLY=true; updateStorageWarning(); } }
   function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null; }catch(e){ MEMORY_ONLY=true; return null; } }
   function updateStorageWarning(){
     var el=document.getElementById('storage-warning');
-    if(el){ el.style.display='block'; var m=MEMORY_ONLY?'⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.':''; el.textContent=(m?m+' ':'')+'JS OK final2'; }
+    if(el){ el.style.display='block'; var m=MEMORY_ONLY?'⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.':''; el.textContent=(m?m+' ':'')+'JS OK h2h1'; }
   }
 
   // State
-  var state = loadState() || { version:4, teams:[], matches:[], locked:false, createdAt:new Date().toISOString() };
+  var state = loadState() || { version:5, teams:[], matches:[], locked:false, createdAt:new Date().toISOString() };
   var ui = { open:{}, h2h:false };
 
   // Utils
@@ -33,6 +33,7 @@
   function qsaIn(n,s){ return Array.prototype.slice.call(n.querySelectorAll(s)); }
   function help(t){ var d=document.createElement('div'); d.className='help'; d.textContent=t; return d; }
   function onClick(el,fn){ if(el&&el.addEventListener) el.addEventListener('click',fn); }
+  function teamName(idv){ var t=state.teams.find(function(tt){return tt.id===idv}); return t? t.name : '—'; }
 
   // Onglets
   qsa('.tab').forEach(function(btn){
@@ -120,7 +121,6 @@
     out.sort(function(x,y){ return (x.round-y.round)||(x.order-y.order); });
     state.matches=out; saveState();
   }
-  function teamName(idv){ var t=state.teams.find(function(tt){return tt.id===idv}); return t? t.name : '—'; }
 
   // Rencontres
   var matchListEl=id('match-list'), statsMatchesEl=id('stats-matches');
@@ -239,7 +239,6 @@
   }
 
   // ---- Face-à-face (H2H) ----
-  // Points gagnés par teamId dans UN match m
   function pointsForTeamInMatch(m, teamId){
     var isA = (m.a===teamId), isB=(m.b===teamId);
     if(!isA && !isB) return 0;
@@ -265,12 +264,10 @@
     teams.forEach(function(t){ var th=document.createElement('th'); th.textContent=t.name; trH.appendChild(th); });
     thead.appendChild(trH);
 
-    // Pré-index des matches par paire
-    var byPair={}; state.matches.forEach(function(m){
-      var key=[m.a,m.b].sort().join('|'); byPair[key]=m;
-    });
+    // Index par paire
+    var byPair={}; state.matches.forEach(function(m){ byPair[[m.a,m.b].sort().join('|')]=m; });
 
-    // Lignes
+    // Corps
     teams.forEach(function(ti){
       var tr=document.createElement('tr'); var th=document.createElement('th'); th.textContent=ti.name; tr.appendChild(th);
       teams.forEach(function(tj){
@@ -280,43 +277,71 @@
         if(!m){ td.innerHTML='<span class="h2h-badge h2h-pend">—</span>'; tr.appendChild(td); return; }
         var pI = pointsForTeamInMatch(m, ti.id);
         var pJ = pointsForTeamInMatch(m, tj.id);
-        if(pI===0 && pJ===0){ td.innerHTML='<span class="h2h-badge h2h-pend">•</span>'; tr.appendChild(td); return; }
-        var win = (pI>pJ), loss=(pI<pJ);
-        var cls = win? 'h2h-win' : (loss? 'h2h-loss' : 'h2h-pend');
-        var tag = win? 'W' : (loss? 'L' : '=');
-        td.innerHTML='<span class="h2h-badge '+cls+'">'+tag+' '+pI+'–'+pJ+'</span>';
+        if(pI===0 && pJ===0){
+          td.innerHTML='<span class="h2h-badge h2h-pend">•</span>';
+        }else{
+          var win = (pI>pJ), loss=(pI<pJ);
+          var cls = win? 'h2h-win' : (loss? 'h2h-loss' : 'h2h-pend');
+          var tag = win? 'W' : (loss? 'L' : '=');
+          td.innerHTML='<span class="h2h-badge '+cls+'">'+tag+' '+pI+'–'+pJ+'</span>';
+        }
+        // rendre cliquable
+        td.className='h2h-clickable';
+        td.setAttribute('data-match-id', m.id);
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
     });
+
+    // Délégation de clic : ouvrir le match
+    tbody.addEventListener('click', function(e){
+      var node=e.target; while(node && node!==tbody && !(node.tagName==='TD' && node.getAttribute('data-match-id'))) node=node.parentNode;
+      if(!node || node===tbody) return;
+      var mid=node.getAttribute('data-match-id'); if(mid) goToMatch(mid);
+    });
   }
 
-  // Toggle H2H
-  function showH2H(on){
-    ui.h2h = !!on;
-    var a=id('view-summary'), b=id('view-h2h'), btn=id('btn-toggle-h2h');
-    if(a&&b){ a.style.display = on? 'none':'block'; b.style.display = on? 'block':'none'; }
-    if(btn){ btn.textContent = on? 'Vue classement' : 'Vue face-à-face'; }
-    if(on) renderH2H();
+  // Aller sur une rencontre donnée (ouvre l’onglet Rencontres, déplie et scroll)
+  function goToMatch(matchId){
+    var tab=qs('.tab[data-tab="calendrier"]'); if(tab&&tab.click) tab.click();
+    // forcer l'ouverture de la carte
+    ui.open[matchId]=true;
+    // attendre un tick pour que l’onglet s’affiche
+    setTimeout(function(){
+      var card=qs('.match-card[data-id="'+matchId+'"]');
+      if(card){
+        card.setAttribute('aria-expanded','true');
+        try{ card.scrollIntoView({behavior:'smooth', block:'start'}); }catch(_){ card.scrollIntoView(); }
+      }
+    }, 0);
   }
-  onClick(id('btn-toggle-h2h'), function(){ showH2H(!ui.h2h); });
 
-  // Actions globales
+  // Actions globales / utilitaires
   onClick(id('btn-expand'), function(){ qsa('.match-card').forEach(function(n){ n.setAttribute('aria-expanded','true'); }); });
   onClick(id('btn-collapse'), function(){ qsa('.match-card').forEach(function(n){ n.setAttribute('aria-expanded','false'); }); });
   onClick(id('btn-refresh-standings'), function(){ renderMatches(); renderLeaderboard(); renderH2H(); });
   onClick(id('btn-refresh-standings-2'), function(){ renderMatches(); renderLeaderboard(); renderH2H(); });
-
-  // Export / Import / Reset / Unlock
   onClick(id('btn-export'), function(){ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='tournoi-amis-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url); });
+
+  // Import
   var importFile=null; id('file-import').addEventListener('change', function(e){ importFile=e.target.files[0]; });
   onClick(id('btn-import'), function(){ if(!importFile){ alert('Sélectionnez un fichier JSON.'); return; } importFile.text().then(function(text){ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error('format'); state=data; if(typeof state.locked==='undefined') state.locked=false; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); alert('Import réussi !'); }catch(e){ alert('Fichier invalide.'); } }); });
-  onClick(id('btn-reset'), function(){ if(!confirm('Tout effacer et recommencer ?')) return; state={version:4,teams:[],matches:[],locked:false,createdAt:new Date().toISOString()}; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI(); });
+
+  // Reset protégé
+  onClick(id('btn-reset'), function(){
+    var pwd = prompt('Mot de passe requis pour tout effacer :');
+    if(pwd !== '30041991'){ alert('Mot de passe incorrect.'); return; }
+    if(!confirm('Confirmer la ré-initialisation complète du tournoi ?')) return;
+    state={version:5,teams:[],matches:[],locked:false,createdAt:new Date().toISOString()};
+    saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI();
+  });
+
+  // Unlock
   onClick(id('btn-unlock'), function(){ if(!confirm('Déverrouiller le calendrier ?')) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
 
-  // Helpers divers
+  // Helpers
   function findMatch(idv){ return state.matches.find(function(x){return x.id===idv}); }
-  function clearMatch(idv){ var m=findMatch(idv); if(!m) return; if(!confirm('Effacer tous les scores de ce match ?')) return; m.darts=[null,null,null]; m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; m.palet={a:null,b:null}; saveState(); renderMatches(); }
+  function clearMatch(idv){ var m=findMatch(idv); if(!m) return; if(!confirm('Effacer tous les scores de ce match ?')) return; m.darts=[null,null,null]; m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; m.palet={a:null,b:null}; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); }
   function updateLockUI(){ var pill=id('lock-pill'); if(pill) pill.style.display=state.locked?'inline-block':'none'; var add=id('btn-add-team'); if(add) add.disabled=!!state.locked; var gen=id('btn-generate'); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?'Calendrier figé':'Générer le calendrier'; } }
 
   // Init
