@@ -1,26 +1,26 @@
-// JS OK h2h1 — H2H cliquable + reset protégé
+// JS OK h2h2 — Bouton H2H blindé + reset protégé + H2H cliquable
 (function(){
   // Bandeau de contrôle
   function banner(extra){
     var el=document.getElementById('storage-warning');
     if(!el) return; el.style.display='block';
-    var txt=el.textContent||''; if(txt.indexOf('JS OK')===-1){ el.textContent=(txt?txt+' ':'')+'JS OK h2h1'; }
+    var txt=el.textContent||''; if(txt.indexOf('JS OK')===-1){ el.textContent=(txt?txt+' ':'')+'JS OK h2h2'; }
     if(extra){ el.textContent+=' '+extra; }
   }
   banner();
 
   // Storage
-  var STORAGE_KEY='tournoi_amis_h2h1';
+  var STORAGE_KEY='tournoi_amis_h2h2';
   var MEMORY_ONLY=false;
   function saveState(){ try{ if(!MEMORY_ONLY){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } }catch(e){ MEMORY_ONLY=true; updateStorageWarning(); } }
   function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null; }catch(e){ MEMORY_ONLY=true; return null; } }
   function updateStorageWarning(){
     var el=document.getElementById('storage-warning');
-    if(el){ el.style.display='block'; var m=MEMORY_ONLY?'⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.':''; el.textContent=(m?m+' ':'')+'JS OK h2h1'; }
+    if(el){ el.style.display='block'; var m=MEMORY_ONLY?'⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.':''; el.textContent=(m?m+' ':'')+'JS OK h2h2'; }
   }
 
   // State
-  var state = loadState() || { version:5, teams:[], matches:[], locked:false, createdAt:new Date().toISOString() };
+  var state = loadState() || { version:6, teams:[], matches:[], locked:false, createdAt:new Date().toISOString() };
   var ui = { open:{}, h2h:false };
 
   // Utils
@@ -304,9 +304,7 @@
   // Aller sur une rencontre donnée (ouvre l’onglet Rencontres, déplie et scroll)
   function goToMatch(matchId){
     var tab=qs('.tab[data-tab="calendrier"]'); if(tab&&tab.click) tab.click();
-    // forcer l'ouverture de la carte
     ui.open[matchId]=true;
-    // attendre un tick pour que l’onglet s’affiche
     setTimeout(function(){
       var card=qs('.match-card[data-id="'+matchId+'"]');
       if(card){
@@ -315,6 +313,22 @@
       }
     }, 0);
   }
+
+  // --- Toggle H2H : blindé (attache directe + délégation globale) ---
+  function showH2H(on){
+    ui.h2h = !!on;
+    var a=id('view-summary'), b=id('view-h2h'), btn=id('btn-toggle-h2h');
+    if(a&&b){ a.style.display = on? 'none':'block'; b.style.display = on? 'block':'none'; }
+    if(btn){ btn.textContent = on? 'Vue classement' : 'Vue face-à-face'; }
+    if(on) renderH2H();
+  }
+  // attache standard
+  onClick(id('btn-toggle-h2h'), function(ev){ ev.preventDefault(); showH2H(!ui.h2h); });
+  // délégation de secours (au cas où le DOM change)
+  document.addEventListener('click', function(e){
+    var trg = e.target && e.target.closest ? e.target.closest('#btn-toggle-h2h') : null;
+    if(trg){ e.preventDefault(); showH2H(!ui.h2h); }
+  });
 
   // Actions globales / utilitaires
   onClick(id('btn-expand'), function(){ qsa('.match-card').forEach(function(n){ n.setAttribute('aria-expanded','true'); }); });
@@ -327,12 +341,12 @@
   var importFile=null; id('file-import').addEventListener('change', function(e){ importFile=e.target.files[0]; });
   onClick(id('btn-import'), function(){ if(!importFile){ alert('Sélectionnez un fichier JSON.'); return; } importFile.text().then(function(text){ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error('format'); state=data; if(typeof state.locked==='undefined') state.locked=false; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); alert('Import réussi !'); }catch(e){ alert('Fichier invalide.'); } }); });
 
-  // Reset protégé
+  // Reset protégé (mot de passe 30041991)
   onClick(id('btn-reset'), function(){
     var pwd = prompt('Mot de passe requis pour tout effacer :');
     if(pwd !== '30041991'){ alert('Mot de passe incorrect.'); return; }
     if(!confirm('Confirmer la ré-initialisation complète du tournoi ?')) return;
-    state={version:5,teams:[],matches:[],locked:false,createdAt:new Date().toISOString()};
+    state={version:6,teams:[],matches:[],locked:false,createdAt:new Date().toISOString()};
     saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI();
   });
 
@@ -346,4 +360,6 @@
 
   // Init
   renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI(); updateStorageWarning();
+  // Assure l'état initial (au cas où)
+  showH2H(ui.h2h);
 })();
