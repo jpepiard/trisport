@@ -85,8 +85,11 @@
         <button type="button" class="tab" role="tab" aria-selected="false" data-tab="options">Options</button>
       </nav>
 
-      <!-- Identité en haut à droite -->
-      <span id="whoami-top" class="pill">visiteur</span>
+      <!-- Identité + plein écran -->
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="whoami-top" class="pill">visiteur</span>
+        <button type="button" class="btn small" id="btn-fullscreen" title="Plein écran (Esc pour quitter)">⛶ Plein écran</button>
+      </div>
     </div>
   </header>
 
@@ -165,7 +168,6 @@
               <button type="button" class="btn" id="btn-export">Exporter en JSON</button>
               <input type="file" id="file-import" accept="application/json" />
               <button type="button" class="btn" id="btn-import">Importer le fichier JSON</button>
-              <!-- (bouton "Créer un lien de partage" supprimé) -->
             </div>
           </div>
 
@@ -202,6 +204,6 @@
     </div>
   </main>
 
-  <script defer src="app.js?v=roles2c11"></script>
+  <script defer src="app.js?v=roles2c12"></script>
 </body>
 </html>

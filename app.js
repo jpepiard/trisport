@@ -1,4 +1,4 @@
-// JS OK roles2c11 — identité en haut à droite + bouton partage retiré
+// JS OK roles2c12 — bouton Plein écran (Esc pour quitter)
 (function () {
   window.onerror = function (msg, src, line, col) {
     var el = document.getElementById("storage-warning");
@@ -86,7 +86,7 @@
         setCloud("connecté ("+cloud.id+")");
       });
 
-      try{ history.replaceState(null,"", location.pathname+"?v=roles2c11&id="+encodeURIComponent(cloud.id)); }catch(_){}
+      try{ history.replaceState(null,"", location.pathname+"?v=roles2c12&id="+encodeURIComponent(cloud.id)); }catch(_){}
     }
     function leaveCloud(){ if(cloud.ref) cloud.ref.off(); cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloud("hors ligne"); loadSession(); }
     function pushCloud(immediate){ if(!cloud.enabled||!cloud.ref) return; var doPush=function(){ cloud.ref.set({ state:state, updatedAt:Date.now() }); }; if(immediate){ clearTimeout(cloud.pushTimer); doPush(); } else { clearTimeout(cloud.pushTimer); cloud.pushTimer=setTimeout(doPush,250); } }
@@ -95,7 +95,7 @@
 
     // ---------- Utils
     function uid(){ return Math.random().toString(36).slice(2,10); }
-    function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch])); }
+    function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, ch=>({"&":"&amp;","<":"&lt;","~":"&tilde;","\"":"&quot;","'":"&#39;"}[ch])); }
     function clampInt(v,min,max){ if(isNaN(v)) return null; if(v<min) return min; if(v>max) return max; return v; }
     function id(x){ return document.getElementById(x); }
     function qs(s){ return document.querySelector(s); }
@@ -157,6 +157,43 @@
       var addBtn=id("btn-add-team"); if(addBtn) addBtn.style.display = isAdmin()? "inline-block":"none";
     }
 
+    // ---------- Plein écran
+    function fsElement(){
+      return document.fullscreenElement || document.webkitFullscreenElement ||
+             document.mozFullScreenElement || document.msFullscreenElement;
+    }
+    function enterFS(el){
+      if (el.requestFullscreen) return el.requestFullscreen();
+      if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+      if (el.mozRequestFullScreen) return el.mozRequestFullScreen();
+      if (el.msRequestFullscreen) return el.msRequestFullscreen();
+    }
+    function exitFS(){
+      if (document.exitFullscreen) return document.exitFullscreen();
+      if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+      if (document.mozCancelFullScreen) return document.mozCancelFullScreen();
+      if (document.msExitFullscreen) return document.msExitFullscreen();
+    }
+    function fsSupported(){
+      var el=document.documentElement;
+      return !!(el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen);
+    }
+    function updateFSBtn(){
+      var btn=id("btn-fullscreen"); if(!btn) return;
+      btn.style.display = fsSupported()? "inline-block":"none";
+      btn.textContent = fsElement()? "Quitter plein écran" : "⛶ Plein écran";
+      btn.title = fsElement()? "Quitter le plein écran (Esc)" : "Plein écran (Esc pour quitter)";
+    }
+    onClick(id("btn-fullscreen"), function(){
+      if (fsElement()) exitFS();
+      else enterFS(document.documentElement);
+    });
+    document.addEventListener("fullscreenchange", updateFSBtn);
+    document.addEventListener("webkitfullscreenchange", updateFSBtn);
+    document.addEventListener("mozfullscreenchange", updateFSBtn);
+    document.addEventListener("MSFullscreenChange", updateFSBtn);
+    updateFSBtn();
+
     // ---------- Tabs
     qsa(".tab").forEach(btn=>{
       btn.addEventListener("click", ()=>{
@@ -172,7 +209,7 @@
     onClick(id("btn-cloud-leave"), ()=>leaveCloud());
     onClick(id("btn-cloud-copy"), ()=>{
       var code=id("cloud-id").value.trim(); if(!code){ alert("Renseigne d’abord le code tournoi."); return; }
-      var url=location.origin+location.pathname+"?v=roles2c11&id="+encodeURIComponent(code);
+      var url=location.origin+location.pathname+"?v=roles2c12&id="+encodeURIComponent(code);
       navigator.clipboard && navigator.clipboard.writeText(url);
       alert("Lien copié !\n"+url);
     });
@@ -491,6 +528,7 @@
       }
       return html;
     }
+
     function renderPing(m,can){
       var labels=["Simple 1","Simple 2","Double"], sets=getPingPts(m), html="";
       for(var i=0;i<3;i++){
@@ -502,6 +540,7 @@
       }
       return html;
     }
+
     function renderPalet(m,can){
       var a=m.palet.a, b=m.palet.b, note=(a==null||b==null)?'Saisissez les deux scores (l’un doit être 11).':((a===11&&b>=0&&b<=10)||(b===11&&a>=0&&a<=10)?'✔️ Score valide':'⚠️ Un score doit être 11, l’autre entre 0 et 10.');
       return '<div class="grid cols-4" style="align-items:end;margin-top:6px">'
@@ -581,7 +620,7 @@
     }
     function goToMatch(mid){ var tab=qs('.tab[data-tab="calendrier"]'); tab&&tab.click&&tab.click(); ui.open[mid]=true; setTimeout(()=>{ var card=qs('.match-card[data-id="'+mid+'"]'); if(card){ card.setAttribute("aria-expanded","true"); try{ card.scrollIntoView({behavior:"smooth",block:"start"}); }catch(_){ card.scrollIntoView(); } } },0); }
 
-    // ---------- Export/Import (partage supprimé)
+    // ---------- Export/Import
     onClick(id("btn-export"), ()=>{ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:"application/json"}); var url=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=url; a.download="tournoi-amis-"+new Date().toISOString().slice(0,10)+".json"; a.click(); URL.revokeObjectURL(url); });
     var importFile=null; id("file-import").addEventListener("change", e=>importFile=e.target.files[0]);
     onClick(id("btn-import"), ()=>{ if(!importFile){ alert("Sélectionnez un fichier JSON."); return; } importFile.text().then(text=>{ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error("format"); state=data; normalizeState(); saveState(); renderAll(); alert("Import réussi !"); }catch(e){ alert("Fichier invalide."); } }); });
@@ -608,5 +647,8 @@
     onClick(id("btn-refresh-standings"), renderLeaderboard);
     onClick(id("btn-refresh-standings-2"), renderLeaderboard);
     onClick(id("btn-collapse"), ()=>{ qsa(".match-card").forEach(c=>c.setAttribute("aria-expanded","false")); });
+
+    // maj texte du bouton plein écran au chargement
+    updateFSBtn();
   });
 })();
