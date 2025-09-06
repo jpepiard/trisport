@@ -39,7 +39,6 @@
     .match-body{display:none;border-top:1px solid var(--border);padding:12px}
     .match-card[aria-expanded=true] .match-body{display:block}
     .help{font-size:13px;color:var(--muted)}
-    /* H2H */
     .h2h-table th, .h2h-table td { white-space:nowrap; }
     .h2h-badge{display:inline-block;border:1px solid var(--border);border-radius:10px;padding:2px 6px;font-size:12px}
     .h2h-win{background:#0f2b1a;color:#9be7b0;border-color:#1e5f3a}
@@ -47,6 +46,24 @@
     .h2h-pend{background:#141a33;color:#b9c3ef}
     .h2h-clickable{cursor:pointer}
   </style>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+  <!-- ⚙️ Ta configuration Firebase -->
+  <script>
+    window.FIREBASE_CONFIG = {
+      apiKey: "AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",
+      authDomain: "trisport-9a7b2.firebaseapp.com",
+      databaseURL: "https://trisport-9a7b2-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "trisport-9a7b2",
+      storageBucket: "trisport-9a7b2.firebasestorage.app",
+      messagingSenderId: "132024051367",
+      appId: "1:132024051367:web:f9aa39785a3d4a43875d82"
+      // measurementId facultatif, non nécessaire ici
+    };
+  </script>
 </head>
 <body>
   <header>
@@ -63,9 +80,7 @@
 
   <main>
     <div class="container">
-      <div id="storage-warning" class="help" style="display:none;margin-bottom:12px;border:1px dashed var(--border);border-radius:12px;padding:10px 12px;background:#0f1331">
-        ⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.
-      </div>
+      <div id="storage-warning" class="help" style="display:none;margin-bottom:12px;border:1px dashed var(--border);border-radius:12px;padding:10px 12px;background:#0f1331"></div>
 
       <!-- Équipes -->
       <section id="equipes" class="active">
@@ -114,21 +129,16 @@
             </div>
           </div>
           <div class="bd" style="overflow:auto">
-            <!-- Vue 1 : Classement standard -->
             <div id="view-summary">
               <div class="help" style="margin-bottom:10px">
                 Règles — Fléchettes : 3 parties (2 simples + 1 double), <b>5 pts</b> par partie gagnée.
-                Ping-pong : 3 parties (2 simples + 1 double), victoire de manche = <b>5 pts</b> (score valide si <b>11+</b> et <b>écart ≥ 2</b>).
+                Ping-pong : 3 parties (2 simples + 1 double), victoire = <b>5 pts</b> (score valide si <b>11+</b> et <b>écart ≥ 2</b>).
                 Palet : 1 double à 11, les points marqués s’ajoutent au total.
               </div>
               <table id="table-classement"><thead><tr><th>#</th><th>Équipe</th><th>Points</th><th>Fléchettes (G)</th><th>Ping-pong (G)</th><th>Palet (PF–PA)</th><th>Matchs complets</th></tr></thead><tbody></tbody></table>
             </div>
-
-            <!-- Vue 2 : Face-à-face -->
             <div id="view-h2h" style="display:none">
-              <div class="help" style="margin-bottom:10px">
-                Face-à-face : cliquez sur une cellule pour ouvrir la rencontre correspondante.
-              </div>
+              <div class="help" style="margin-bottom:10px">Face-à-face : cliquez sur une cellule pour ouvrir la rencontre.</div>
               <table id="table-h2h" class="h2h-table"><thead></thead><tbody></tbody></table>
             </div>
           </div>
@@ -138,30 +148,46 @@
       <!-- Options -->
       <section id="options">
         <div class="grid cols-2">
-          <div class="card"><div class="hd"><strong>Exporter / Importer</strong></div>
+          <div class="card">
+            <div class="hd"><strong>Exporter / Importer</strong></div>
             <div class="bd grid" style="gap:10px">
               <button type="button" class="btn" id="btn-export">Exporter en JSON</button>
               <input type="file" id="file-import" accept="application/json" />
               <button type="button" class="btn" id="btn-import">Importer le fichier JSON</button>
               <hr style="border:none;border-top:1px dashed var(--border)">
-              <button type="button" class="btn primary" id="btn-share">Créer un lien de partage</button>
-              <input type="text" id="share-url" readonly placeholder="Le lien apparaîtra ici (copié automatiquement)" />
-              <div class="help">Ouvre le lien sur un autre téléphone pour consulter le tournoi. Si le lien est trop long, utilisez l’export JSON.</div>
+              <button type="button" class="btn" id="btn-share">Créer un lien de partage (offline)</button>
+              <input type="text" id="share-url" readonly placeholder="Le lien apparaîtra ici" />
             </div>
           </div>
-          <div class="card"><div class="hd"><strong>Réinitialisation</strong></div>
+
+          <div class="card">
+            <div class="hd"><strong>Cloud (live) — tout le monde peut saisir</strong></div>
             <div class="bd grid" style="gap:10px">
-              <button type="button" class="btn danger" id="btn-reset">Nouvelle compétition (tout effacer)</button>
-              <button type="button" class="btn" id="btn-unlock">🔓 Déverrouiller le calendrier</button>
+              <label>Code tournoi</label>
+              <input type="text" id="cloud-id" placeholder="ex: apero2025" />
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" class="btn primary" id="btn-cloud-join">Créer / Rejoindre</button>
+                <button type="button" class="btn" id="btn-cloud-copy">Copier lien ?id=code</button>
+                <button type="button" class="btn" id="btn-cloud-leave">Se déconnecter</button>
+              </div>
+              <div class="help">Statut : <span id="cloud-status">hors ligne</span></div>
             </div>
           </div>
         </div>
-        <div class="help" style="text-align:center;padding:18px">Fichier unique — fonctionne hors-ligne. Données stockées localement (localStorage).</div>
+
+        <div class="card" style="margin-top:12px">
+          <div class="hd"><strong>Réinitialisation</strong></div>
+          <div class="bd grid" style="gap:10px">
+            <button type="button" class="btn danger" id="btn-reset">Nouvelle compétition (tout effacer)</button>
+            <button type="button" class="btn" id="btn-unlock">🔓 Déverrouiller le calendrier</button>
+          </div>
+        </div>
+
+        <div class="help" style="text-align:center;padding:18px">Stockage local + option cloud. Sur cloud, toutes les modifications sont synchronisées en direct entre appareils.</div>
       </section>
     </div>
   </main>
 
-  <!-- JS externe -->
-  <script defer src="app.js?v=h2h4"></script>
+  <script defer src="app.js?v=live1"></script>
 </body>
 </html>

@@ -1,6 +1,5 @@
-// JS OK h2h4 — H2H cliquable + reset protégé + LIEN DE PARTAGE
+// JS OK live1 — Cloud Firebase + H2H cliquable + reset protégé
 (function(){
-  // Affiche les erreurs JS dans le bandeau
   window.onerror = function (msg, src, line, col) {
     var el = document.getElementById('storage-warning');
     if (!el) return;
@@ -9,25 +8,86 @@
   };
 
   document.addEventListener('DOMContentLoaded', function(){
-    var STORAGE_KEY='tournoi_amis_h2h4';
+    banner('JS OK live1');
+
+    // ---- Local storage
+    var STORAGE_KEY='tournoi_amis_live1';
     var MEMORY_ONLY=false;
-    var state = loadState() || { version:8, teams:[], matches:[], locked:false, createdAt:new Date().toISOString() };
+    var clientId = (localStorage.getItem('tournoi_client_id')) || (function(){ var x=Math.random().toString(36).slice(2,10); localStorage.setItem('tournoi_client_id',x); return x; })();
+
+    function saveStateLocalOnly(){ try{ if(!MEMORY_ONLY){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } }catch(e){ MEMORY_ONLY=true; updateStorageWarning(); } }
+    function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null; }catch(e){ MEMORY_ONLY=true; return null; } }
+    function updateStorageWarning(){ var el=id('storage-warning'); if(el){ el.style.display='block'; var m=MEMORY_ONLY?'⚠️ Pas de stockage persistant.':''; el.textContent=(m?m+' ':'')+'JS OK live1'; } }
+    function banner(msg){ var el=id('storage-warning'); if(!el) return; el.style.display='block'; el.textContent=msg; }
+
+    // ---- App state
+    var state = loadState() || { version:9, teams:[], matches:[], locked:false, createdAt:new Date().toISOString() };
     var ui = { open:{}, h2h:false };
 
-    banner('JS OK h2h4');
+    // ---- Firebase Cloud (Realtime Database)
+    var cloud = { enabled:false, db:null, id:null, ref:null, lastRemoteAt:0, pushTimer:null };
+    var hasFirebase = !!(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey);
 
-    // --- Utils
-    function banner(msg){
-      var el=document.getElementById('storage-warning');
-      if(!el) return; el.style.display='block';
-      el.textContent = msg;
+    function initFirebase(){
+      if(!hasFirebase) return null;
+      try{
+        if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(window.FIREBASE_CONFIG);
+        return firebase.database();
+      }catch(e){ console.warn('Firebase init error', e); return null; }
     }
-    function saveState(){ try{ if(!MEMORY_ONLY){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } }catch(e){ MEMORY_ONLY=true; updateStorageWarning(); } }
-    function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null; }catch(e){ MEMORY_ONLY=true; return null; } }
-    function updateStorageWarning(){
-      var el=document.getElementById('storage-warning');
-      if(el){ el.style.display='block'; var m=MEMORY_ONLY?'⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.':''; el.textContent=(m?m+' ':'')+'JS OK h2h4'; }
+    function setCloudStatus(txt){ var el=id('cloud-status'); if(el) el.textContent=txt; }
+
+    function joinCloud(tournamentId){
+      if(!hasFirebase){ alert('Firebase non configuré (voir index.html).'); return; }
+      if(!cloud.db){ cloud.db = initFirebase(); if(!cloud.db){ alert('Impossible d’initialiser Firebase.'); return; } }
+      cloud.id = (tournamentId||'').trim();
+      if(!cloud.id){ alert('Saisis un code tournoi.'); return; }
+      cloud.ref = cloud.db.ref('tournaments/'+cloud.id+'/payload');
+      cloud.enabled = true; setCloudStatus('connexion…');
+
+      // Subscribe realtime
+      cloud.ref.on('value', function(snap){
+        var val = snap.val();
+        if(!val){ pushStateToCloud(true); return; }
+        var remoteAt = +val.updatedAt || 0;
+        if(remoteAt <= cloud.lastRemoteAt) return;
+        cloud.lastRemoteAt = remoteAt;
+        state = val.state;
+        saveStateLocalOnly();
+        renderAll();
+        setCloudStatus('connecté ('+cloud.id+')');
+      });
+
+      // initial push (create node if needed)
+      pushStateToCloud(true);
+      setCloudStatus('connecté ('+cloud.id+')');
+      try{
+        var url = location.origin + location.pathname + '?v=live1&id=' + encodeURIComponent(cloud.id);
+        history.replaceState(null,'', url);
+      }catch(_){}
     }
+    function leaveCloud(){
+      if(cloud.ref){ cloud.ref.off(); }
+      cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloudStatus('hors ligne');
+    }
+    function pushStateToCloud(immediate){
+      if(!cloud.enabled || !cloud.ref) return;
+      var doPush = function(){
+        var payload = { state: state, updatedAt: Date.now(), by: clientId };
+        cloud.ref.set(payload);
+      };
+      if(immediate){ clearTimeout(cloud.pushTimer); doPush(); }
+      else{ clearTimeout(cloud.pushTimer); cloud.pushTimer = setTimeout(doPush, 250); }
+    }
+
+    // Auto-join from URL ?id=...
+    (function(){
+      var p = new URLSearchParams(location.search);
+      var idParam = p.get('id');
+      if(idParam){ id('cloud-id').value = idParam; joinCloud(idParam); }
+    })();
+
+    // ---- Utils
     function uid(){ return Math.random().toString(36).slice(2,10); }
     function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];}); }
     function clampInt(v,min,max){ if(isNaN(v)) return null; if(v<min) return min; if(v>max) return max; return v; }
@@ -39,37 +99,7 @@
     function onClick(el,fn){ if(el&&el.addEventListener) el.addEventListener('click',fn); }
     function teamName(idv){ var t=state.teams.find(function(tt){return tt.id===idv}); return t? t.name : '—'; }
 
-    // --- Partage (Base64 dans l'URL hash) ---
-    function encodeStateToURL(){
-      var json = JSON.stringify(state);
-      // UTF-8 -> base64, puis URL-encode
-      var b64 = btoa(unescape(encodeURIComponent(json)));
-      var enc = encodeURIComponent(b64);
-      var base = location.origin + location.pathname;
-      return base + '?v=h2h4#s=' + enc;
-    }
-    function tryImportFromHash(){
-      var m = location.hash.match(/^#s=([^&]+)$/);
-      if(!m) return false;
-      try{
-        var b64 = decodeURIComponent(m[1]);
-        var json = decodeURIComponent(escape(atob(b64)));
-        var data = JSON.parse(json);
-        if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error('format');
-        state = data; saveState();
-        // Nettoie l'URL (on garde ?v=… si présent)
-        history.replaceState(null,'',location.pathname + location.search);
-        return true;
-      }catch(e){
-        alert('Lien de partage invalide ou corrompu.');
-        return false;
-      }
-    }
-
-    // Si on arrive via un lien de partage, on importe d’abord
-    tryImportFromHash();
-
-    // --- Onglets
+    // ---- Tabs
     qsa('.tab').forEach(function(btn){
       btn.addEventListener('click', function(){
         qsa('.tab').forEach(function(b){ b.setAttribute('aria-selected','false'); });
@@ -79,7 +109,18 @@
       });
     });
 
-    // --- Équipes
+    // ---- Cloud UI
+    onClick(id('btn-cloud-join'), function(){ joinCloud(id('cloud-id').value.trim()); });
+    onClick(id('btn-cloud-leave'), function(){ leaveCloud(); });
+    onClick(id('btn-cloud-copy'), function(){
+      var code = id('cloud-id').value.trim();
+      if(!code){ alert('Renseigne d’abord le code tournoi.'); return; }
+      var url = location.origin + location.pathname + '?v=live1&id=' + encodeURIComponent(code);
+      navigator.clipboard && navigator.clipboard.writeText(url).catch(function(){});
+      alert('Lien copié !\n'+url);
+    });
+
+    // ---- Teams
     var teamListEl = id('team-list');
     onClick(id('btn-add-team'), function(){
       if(state.locked){ alert('Calendrier figé : déverrouillez dans Options pour modifier les équipes.'); return; }
@@ -134,7 +175,7 @@
       id('rounds-count').textContent = perTeam + ' ' + (perTeam>1?'matchs':'match') + ' par équipe';
     }
 
-    // --- Calendrier (round-robin homogène)
+    // ---- Schedule (round-robin)
     function generateSchedule(){
       var ids=state.teams.map(function(t){return t.id});
       if(ids.length<2){ state.matches=[]; saveState(); return; }
@@ -156,7 +197,7 @@
       state.matches=out; saveState();
     }
 
-    // --- Rencontres
+    // ---- Matches UI
     var matchListEl=id('match-list'), statsMatchesEl=id('stats-matches');
     function renderMatches(){
       matchListEl.innerHTML='';
@@ -235,7 +276,7 @@
         +'<div class="help">'+note+'</div><div></div></div>';
     }
 
-    // --- Classement
+    // ---- Standings
     function computeSetWins(m){
       var aw={darts:0,ping:0}, bw={darts:0,ping:0};
       m.darts.forEach(function(v){ if(v===0) aw.darts++; else if(v===1) bw.darts++; });
@@ -272,7 +313,7 @@
       });
     }
 
-    // --- H2H (cliquable)
+    // ---- H2H
     function pointsForTeamInMatch(m, teamId){
       var isA = (m.a===teamId), isB=(m.b===teamId);
       if(!isA && !isB) return 0;
@@ -327,7 +368,7 @@
       }, 0);
     }
 
-    // --- Toggle H2H
+    // ---- Toggle H2H
     function showH2H(on){
       ui.h2h=!!on;
       var a=id('view-summary'), b=id('view-h2h'), btn=id('btn-toggle-h2h');
@@ -339,44 +380,61 @@
     document.addEventListener('click', function(e){ var trg = e.target && e.target.closest ? e.target.closest('#btn-toggle-h2h') : null; if(trg){ e.preventDefault(); showH2H(!ui.h2h); } });
     window.__toggleH2H = function(){ showH2H(!ui.h2h); };
 
-    // --- Actions globales
-    onClick(id('btn-expand'), function(){ qsa('.match-card').forEach(function(n){ n.setAttribute('aria-expanded','true'); }); });
-    onClick(id('btn-collapse'), function(){ qsa('.match-card').forEach(function(n){ n.setAttribute('aria-expanded','false'); }); });
-    onClick(id('btn-refresh-standings'), function(){ renderMatches(); renderLeaderboard(); renderH2H(); });
-    onClick(id('btn-refresh-standings-2'), function(){ renderMatches(); renderLeaderboard(); renderH2H(); });
-
-    // --- Export / Import
+    // ---- Export / Import / Partage offline
     onClick(id('btn-export'), function(){ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='tournoi-amis-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url); });
     var importFile=null; id('file-import').addEventListener('change', function(e){ importFile=e.target.files[0]; });
-    onClick(id('btn-import'), function(){ if(!importFile){ alert('Sélectionnez un fichier JSON.'); return; } importFile.text().then(function(text){ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error('format'); state=data; if(typeof state.locked==='undefined') state.locked=false; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); alert('Import réussi !'); }catch(e){ alert('Fichier invalide.'); } }); });
-
-    // --- Lien de partage
+    onClick(id('btn-import'), function(){ if(!importFile){ alert('Sélectionnez un fichier JSON.'); return; } importFile.text().then(function(text){ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error('format'); state=data; if(typeof state.locked==='undefined') state.locked=false; saveState(); renderAll(); alert('Import réussi !'); }catch(e){ alert('Fichier invalide.'); } }); });
     onClick(id('btn-share'), function(){
-      var url = encodeStateToURL();
-      var inp = id('share-url'); if(inp){ inp.value = url; inp.select(); try{ document.execCommand('copy'); }catch(_){/* noop */} }
-      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url).catch(function(){}); }
-      alert('Lien de partage généré et copié !\n\nCollez-le sur l’autre téléphone pour consulter le tournoi.');
+      var json = JSON.stringify(state);
+      var b64 = btoa(unescape(encodeURIComponent(json)));
+      var enc = encodeURIComponent(b64);
+      var base = location.origin + location.pathname;
+      var url = base + '?v=live1#s=' + enc;
+      var inp = id('share-url'); if(inp){ inp.value=url; inp.select(); try{ document.execCommand('copy'); }catch(_){ } }
+      navigator.clipboard && navigator.clipboard.writeText(url).catch(function(){});
+      alert('Lien (offline) copié !');
     });
+    (function tryImportFromHash(){
+      var m = location.hash.match(/^#s=([^&]+)$/);
+      if(!m) return;
+      try{
+        var b64 = decodeURIComponent(m[1]);
+        var json = decodeURIComponent(escape(atob(b64)));
+        var data = JSON.parse(json);
+        if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error('format');
+        state = data; saveStateLocalOnly();
+        history.replaceState(null,'',location.pathname + location.search);
+      }catch(e){ alert('Lien de partage invalide.'); }
+    })();
 
-    // --- Reset protégé
+    // ---- Reset protégé
     onClick(id('btn-reset'), function(){
       var pwd = prompt('Mot de passe requis pour tout effacer :');
       if(pwd !== '30041991'){ alert('Mot de passe incorrect.'); return; }
       if(!confirm('Confirmer la ré-initialisation complète du tournoi ?')) return;
-      state={version:8,teams:[],matches:[],locked:false,createdAt:new Date().toISOString()};
-      saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI();
+      state={version:9,teams:[],matches:[],locked:false,createdAt:new Date().toISOString()};
+      saveState(); renderAll();
     });
 
-    // --- Unlock
+    // ---- Unlock
     onClick(id('btn-unlock'), function(){ if(!confirm('Déverrouiller le calendrier ?')) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
 
-    // --- Helpers
+    // ---- Helpers
     function findMatch(idv){ return state.matches.find(function(x){return x.id===idv}); }
     function clearMatch(idv){ var m=findMatch(idv); if(!m) return; if(!confirm('Effacer tous les scores de ce match ?')) return; m.darts=[null,null,null]; m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; m.palet={a:null,b:null}; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); }
     function updateLockUI(){ var pill=id('lock-pill'); if(pill) pill.style.display=state.locked?'inline-block':'none'; var add=id('btn-add-team'); if(add) add.disabled=!!state.locked; var gen=id('btn-generate'); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?'Calendrier figé':'Générer le calendrier'; } }
+    function renderLeaderboard(){ var tbody=qs('#table-classement tbody'); if(!tbody) return; tbody.innerHTML=''; computeLeaderboard().forEach(function(r){ var diff=r.palFor-r.palAg; var tr=document.createElement('tr'); tr.innerHTML='<td>'+r.rank+'</td><td>'+esc(r.name)+'</td><td><b>'+r.points+'</b></td><td>'+r.dartsW+'</td><td>'+r.pingW+'</td><td>'+r.palFor+'–'+r.palAg+' <span class="muted">('+(diff>=0?'+':'')+diff+')</span></td><td>'+r.matchesComplete+'</td>'; tbody.appendChild(tr); }); }
+    function renderAll(){ renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI(); }
 
-    // --- Init
-    renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI(); updateStorageWarning();
+    // ---- Save + push cloud
+    function saveState(){ saveStateLocalOnly(); renderLeaderboard(); if(cloud.enabled) pushStateToCloud(false); }
+
+    // ---- Init
+    renderAll(); updateStorageWarning();
     showH2H(ui.h2h);
+    setCloudStatus(cloud.enabled ? 'connecté' : 'hors ligne');
+
+    // Fallback toggle
+    window.__toggleH2H = function(){ showH2H(!ui.h2h); };
   });
 })();
