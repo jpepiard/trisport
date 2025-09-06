@@ -109,7 +109,6 @@
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="teams-count">0 équipes</span>
               <span class="pill" id="rounds-count">0 matchs par équipe</span>
-              <!-- Fallback inline en plus des listeners JS -->
               <button type="button" class="btn small" id="btn-toggle-h2h" onclick="window.__toggleH2H && window.__toggleH2H()">Vue face-à-face</button>
               <button type="button" class="btn small" id="btn-refresh-standings-2">Mettre à jour</button>
             </div>
@@ -144,7 +143,10 @@
               <button type="button" class="btn" id="btn-export">Exporter en JSON</button>
               <input type="file" id="file-import" accept="application/json" />
               <button type="button" class="btn" id="btn-import">Importer le fichier JSON</button>
-              <div class="help">Partagez le fichier d'export pour reprendre un tournoi ailleurs.</div>
+              <hr style="border:none;border-top:1px dashed var(--border)">
+              <button type="button" class="btn primary" id="btn-share">Créer un lien de partage</button>
+              <input type="text" id="share-url" readonly placeholder="Le lien apparaîtra ici (copié automatiquement)" />
+              <div class="help">Ouvre le lien sur un autre téléphone pour consulter le tournoi. Si le lien est trop long, utilisez l’export JSON.</div>
             </div>
           </div>
           <div class="card"><div class="hd"><strong>Réinitialisation</strong></div>
@@ -160,6 +162,6 @@
   </main>
 
   <!-- JS externe -->
-  <script defer src="app.js?v=h2h3"></script>
+  <script defer src="app.js?v=h2h4"></script>
 </body>
 </html>

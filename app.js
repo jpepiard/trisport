@@ -1,6 +1,6 @@
-// JS OK h2h3 — Bouton H2H inratable + H2H cliquable + reset protégé
+// JS OK h2h4 — H2H cliquable + reset protégé + LIEN DE PARTAGE
 (function(){
-  // Affiche les erreurs JS dans le bandeau (diagnostic)
+  // Affiche les erreurs JS dans le bandeau
   window.onerror = function (msg, src, line, col) {
     var el = document.getElementById('storage-warning');
     if (!el) return;
@@ -8,32 +8,26 @@
     el.textContent = 'Erreur JS : ' + msg + ' @' + (src||'') + ':' + (line||0) + ':' + (col||0);
   };
 
-  function banner(extra){
-    var el=document.getElementById('storage-warning');
-    if(!el) return; el.style.display='block';
-    var txt=el.textContent||''; if(txt.indexOf('JS OK')===-1){ el.textContent=(txt?txt+' ':'')+'JS OK h2h3'; }
-    if(extra){ el.textContent+=' '+extra; }
-  }
-
-  // Tout le code après DOM prêt (ultra-sûr même avec defer)
   document.addEventListener('DOMContentLoaded', function(){
-    banner();
-
-    // Storage
-    var STORAGE_KEY='tournoi_amis_h2h3';
+    var STORAGE_KEY='tournoi_amis_h2h4';
     var MEMORY_ONLY=false;
+    var state = loadState() || { version:8, teams:[], matches:[], locked:false, createdAt:new Date().toISOString() };
+    var ui = { open:{}, h2h:false };
+
+    banner('JS OK h2h4');
+
+    // --- Utils
+    function banner(msg){
+      var el=document.getElementById('storage-warning');
+      if(!el) return; el.style.display='block';
+      el.textContent = msg;
+    }
     function saveState(){ try{ if(!MEMORY_ONLY){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } }catch(e){ MEMORY_ONLY=true; updateStorageWarning(); } }
     function loadState(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null; }catch(e){ MEMORY_ONLY=true; return null; } }
     function updateStorageWarning(){
       var el=document.getElementById('storage-warning');
-      if(el){ el.style.display='block'; var m=MEMORY_ONLY?'⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.':''; el.textContent=(m?m+' ':'')+'JS OK h2h3'; }
+      if(el){ el.style.display='block'; var m=MEMORY_ONLY?'⚠️ Le stockage du navigateur est indisponible. Les données ne seront pas conservées.':''; el.textContent=(m?m+' ':'')+'JS OK h2h4'; }
     }
-
-    // State
-    var state = loadState() || { version:7, teams:[], matches:[], locked:false, createdAt:new Date().toISOString() };
-    var ui = { open:{}, h2h:false };
-
-    // Utils
     function uid(){ return Math.random().toString(36).slice(2,10); }
     function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];}); }
     function clampInt(v,min,max){ if(isNaN(v)) return null; if(v<min) return min; if(v>max) return max; return v; }
@@ -45,7 +39,37 @@
     function onClick(el,fn){ if(el&&el.addEventListener) el.addEventListener('click',fn); }
     function teamName(idv){ var t=state.teams.find(function(tt){return tt.id===idv}); return t? t.name : '—'; }
 
-    // Onglets
+    // --- Partage (Base64 dans l'URL hash) ---
+    function encodeStateToURL(){
+      var json = JSON.stringify(state);
+      // UTF-8 -> base64, puis URL-encode
+      var b64 = btoa(unescape(encodeURIComponent(json)));
+      var enc = encodeURIComponent(b64);
+      var base = location.origin + location.pathname;
+      return base + '?v=h2h4#s=' + enc;
+    }
+    function tryImportFromHash(){
+      var m = location.hash.match(/^#s=([^&]+)$/);
+      if(!m) return false;
+      try{
+        var b64 = decodeURIComponent(m[1]);
+        var json = decodeURIComponent(escape(atob(b64)));
+        var data = JSON.parse(json);
+        if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error('format');
+        state = data; saveState();
+        // Nettoie l'URL (on garde ?v=… si présent)
+        history.replaceState(null,'',location.pathname + location.search);
+        return true;
+      }catch(e){
+        alert('Lien de partage invalide ou corrompu.');
+        return false;
+      }
+    }
+
+    // Si on arrive via un lien de partage, on importe d’abord
+    tryImportFromHash();
+
+    // --- Onglets
     qsa('.tab').forEach(function(btn){
       btn.addEventListener('click', function(){
         qsa('.tab').forEach(function(b){ b.setAttribute('aria-selected','false'); });
@@ -55,7 +79,7 @@
       });
     });
 
-    // Équipes
+    // --- Équipes
     var teamListEl = id('team-list');
     onClick(id('btn-add-team'), function(){
       if(state.locked){ alert('Calendrier figé : déverrouillez dans Options pour modifier les équipes.'); return; }
@@ -110,7 +134,7 @@
       id('rounds-count').textContent = perTeam + ' ' + (perTeam>1?'matchs':'match') + ' par équipe';
     }
 
-    // Calendrier (round-robin homogène)
+    // --- Calendrier (round-robin homogène)
     function generateSchedule(){
       var ids=state.teams.map(function(t){return t.id});
       if(ids.length<2){ state.matches=[]; saveState(); return; }
@@ -132,7 +156,7 @@
       state.matches=out; saveState();
     }
 
-    // Rencontres
+    // --- Rencontres
     var matchListEl=id('match-list'), statsMatchesEl=id('stats-matches');
     function renderMatches(){
       matchListEl.innerHTML='';
@@ -211,7 +235,7 @@
         +'<div class="help">'+note+'</div><div></div></div>';
     }
 
-    // Classement
+    // --- Classement
     function computeSetWins(m){
       var aw={darts:0,ping:0}, bw={darts:0,ping:0};
       m.darts.forEach(function(v){ if(v===0) aw.darts++; else if(v===1) bw.darts++; });
@@ -248,36 +272,24 @@
       });
     }
 
-    // ---- Face-à-face (H2H) ----
+    // --- H2H (cliquable)
     function pointsForTeamInMatch(m, teamId){
       var isA = (m.a===teamId), isB=(m.b===teamId);
       if(!isA && !isB) return 0;
       var pts=0;
       m.darts.forEach(function(v){ if(v===0 && isA) pts+=5; else if(v===1 && isB) pts+=5; });
-      getPingPts(m).forEach(function(s){
-        if(isPingValid(s.a,s.b)){
-          if(s.a>s.b && isA) pts+=5;
-          else if(s.b>s.a && isB) pts+=5;
-        }
-      });
+      getPingPts(m).forEach(function(s){ if(isPingValid(s.a,s.b)){ if(s.a>s.b && isA) pts+=5; else if(s.b>s.a && isB) pts+=5; } });
       if(m.palet && m.palet.a!=null && m.palet.b!=null){ pts += isA? m.palet.a : m.palet.b; }
       return pts;
     }
-
     function renderH2H(){
       var thead=qs('#table-h2h thead'), tbody=qs('#table-h2h tbody'); if(!thead||!tbody) return;
       thead.innerHTML=''; tbody.innerHTML='';
       var teams=state.teams.slice(); if(teams.length===0){ tbody.appendChild(help('Ajoutez des équipes pour voir la matrice.')); return; }
-
-      // En-tête
       var trH=document.createElement('tr'); trH.appendChild(document.createElement('th')).textContent='Équipe';
       teams.forEach(function(t){ var th=document.createElement('th'); th.textContent=t.name; trH.appendChild(th); });
       thead.appendChild(trH);
-
-      // Index par paire
       var byPair={}; state.matches.forEach(function(m){ byPair[[m.a,m.b].sort().join('|')]=m; });
-
-      // Corps
       teams.forEach(function(ti){
         var tr=document.createElement('tr'); var th=document.createElement('th'); th.textContent=ti.name; tr.appendChild(th);
         teams.forEach(function(tj){
@@ -285,32 +297,24 @@
           if(ti.id===tj.id){ td.innerHTML='—'; tr.appendChild(td); return; }
           var key=[ti.id,tj.id].sort().join('|'); var m=byPair[key];
           if(!m){ td.innerHTML='<span class="h2h-badge h2h-pend">—</span>'; tr.appendChild(td); return; }
-          var pI = pointsForTeamInMatch(m, ti.id);
-          var pJ = pointsForTeamInMatch(m, tj.id);
-          if(pI===0 && pJ===0){
-            td.innerHTML='<span class="h2h-badge h2h-pend">•</span>';
-          }else{
-            var win = (pI>pJ), loss=(pI<pJ);
-            var cls = win? 'h2h-win' : (loss? 'h2h-loss' : 'h2h-pend');
-            var tag = win? 'W' : (loss? 'L' : '=');
+          var pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id);
+          if(pI===0 && pJ===0){ td.innerHTML='<span class="h2h-badge h2h-pend">•</span>'; }
+          else{
+            var cls=(pI>pJ)?'h2h-win':(pI<pJ)?'h2h-loss':'h2h-pend';
+            var tag=(pI>pJ)?'W':(pI<pJ)?'L':'=';
             td.innerHTML='<span class="h2h-badge '+cls+'">'+tag+' '+pI+'–'+pJ+'</span>';
           }
-          td.className='h2h-clickable';
-          td.setAttribute('data-match-id', m.id);
+          td.className='h2h-clickable'; td.setAttribute('data-match-id', m.id);
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
       });
-
-      // Délégation de clic : ouvrir le match
       tbody.addEventListener('click', function(e){
         var node=e.target; while(node && node!==tbody && !(node.tagName==='TD' && node.getAttribute('data-match-id'))) node=node.parentNode;
         if(!node || node===tbody) return;
         var mid=node.getAttribute('data-match-id'); if(mid) goToMatch(mid);
       });
     }
-
-    // Aller sur une rencontre (ouvre l’onglet Rencontres, déplie et scroll)
     function goToMatch(matchId){
       var tab=qs('.tab[data-tab="calendrier"]'); if(tab&&tab.click) tab.click();
       ui.open[matchId]=true;
@@ -323,54 +327,56 @@
       }, 0);
     }
 
-    // --- Toggle H2H : triple filet ---
+    // --- Toggle H2H
     function showH2H(on){
-      ui.h2h = !!on;
+      ui.h2h=!!on;
       var a=id('view-summary'), b=id('view-h2h'), btn=id('btn-toggle-h2h');
       if(a&&b){ a.style.display = on? 'none':'block'; b.style.display = on? 'block':'none'; }
       if(btn){ btn.textContent = on? 'Vue classement' : 'Vue face-à-face'; }
       if(on) renderH2H();
     }
-    // 1) Attache standard
     onClick(id('btn-toggle-h2h'), function(ev){ ev.preventDefault(); showH2H(!ui.h2h); });
-    // 2) Délégation globale
-    document.addEventListener('click', function(e){
-      var trg = e.target && e.target.closest ? e.target.closest('#btn-toggle-h2h') : null;
-      if(trg){ e.preventDefault(); showH2H(!ui.h2h); }
-    });
-    // 3) Fallback inline (exposé en global)
+    document.addEventListener('click', function(e){ var trg = e.target && e.target.closest ? e.target.closest('#btn-toggle-h2h') : null; if(trg){ e.preventDefault(); showH2H(!ui.h2h); } });
     window.__toggleH2H = function(){ showH2H(!ui.h2h); };
 
-    // Actions globales / utilitaires
+    // --- Actions globales
     onClick(id('btn-expand'), function(){ qsa('.match-card').forEach(function(n){ n.setAttribute('aria-expanded','true'); }); });
     onClick(id('btn-collapse'), function(){ qsa('.match-card').forEach(function(n){ n.setAttribute('aria-expanded','false'); }); });
     onClick(id('btn-refresh-standings'), function(){ renderMatches(); renderLeaderboard(); renderH2H(); });
     onClick(id('btn-refresh-standings-2'), function(){ renderMatches(); renderLeaderboard(); renderH2H(); });
-    onClick(id('btn-export'), function(){ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='tournoi-amis-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url); });
 
-    // Import
+    // --- Export / Import
+    onClick(id('btn-export'), function(){ var data=JSON.stringify(state,null,2); var blob=new Blob([data],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='tournoi-amis-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url); });
     var importFile=null; id('file-import').addEventListener('change', function(e){ importFile=e.target.files[0]; });
     onClick(id('btn-import'), function(){ if(!importFile){ alert('Sélectionnez un fichier JSON.'); return; } importFile.text().then(function(text){ try{ var data=JSON.parse(text); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw new Error('format'); state=data; if(typeof state.locked==='undefined') state.locked=false; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); alert('Import réussi !'); }catch(e){ alert('Fichier invalide.'); } }); });
 
-    // Reset protégé (mot de passe 30041991)
+    // --- Lien de partage
+    onClick(id('btn-share'), function(){
+      var url = encodeStateToURL();
+      var inp = id('share-url'); if(inp){ inp.value = url; inp.select(); try{ document.execCommand('copy'); }catch(_){/* noop */} }
+      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url).catch(function(){}); }
+      alert('Lien de partage généré et copié !\n\nCollez-le sur l’autre téléphone pour consulter le tournoi.');
+    });
+
+    // --- Reset protégé
     onClick(id('btn-reset'), function(){
       var pwd = prompt('Mot de passe requis pour tout effacer :');
       if(pwd !== '30041991'){ alert('Mot de passe incorrect.'); return; }
       if(!confirm('Confirmer la ré-initialisation complète du tournoi ?')) return;
-      state={version:7,teams:[],matches:[],locked:false,createdAt:new Date().toISOString()};
+      state={version:8,teams:[],matches:[],locked:false,createdAt:new Date().toISOString()};
       saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI();
     });
 
-    // Unlock
+    // --- Unlock
     onClick(id('btn-unlock'), function(){ if(!confirm('Déverrouiller le calendrier ?')) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
 
-    // Helpers
+    // --- Helpers
     function findMatch(idv){ return state.matches.find(function(x){return x.id===idv}); }
     function clearMatch(idv){ var m=findMatch(idv); if(!m) return; if(!confirm('Effacer tous les scores de ce match ?')) return; m.darts=[null,null,null]; m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; m.palet={a:null,b:null}; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); }
     function updateLockUI(){ var pill=id('lock-pill'); if(pill) pill.style.display=state.locked?'inline-block':'none'; var add=id('btn-add-team'); if(add) add.disabled=!!state.locked; var gen=id('btn-generate'); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?'Calendrier figé':'Générer le calendrier'; } }
 
-    // Init
+    // --- Init
     renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI(); updateStorageWarning();
-    showH2H(ui.h2h); // état initial
+    showH2H(ui.h2h);
   });
 })();
