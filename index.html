@@ -25,6 +25,7 @@ section{display:none} section.active{display:block}
 .btn.primary{background:linear-gradient(180deg,#2f3da2,#25337d);border-color:#3a4aa0}
 .btn.small{padding:6px 10px;border-radius:10px;font-size:13px}
 .btn.danger{background:linear-gradient(180deg,#7a2b2b,#5c2222);border-color:#8a2b2b}
+.btn.toggle[aria-pressed="true"]{background:linear-gradient(180deg,#2b3a99,#22307c);border-color:#3a4aa0}
 .grid{display:grid;gap:12px} .grid.cols-2{grid-template-columns:repeat(2,1fr)} .grid.cols-3{grid-template-columns:repeat(3,1fr)} .grid.cols-4{grid-template-columns:repeat(4,1fr)} .grid.responsive{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:var(--text)}
 label{font-size:13px;color:var(--muted)}
@@ -48,6 +49,9 @@ table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:
 .teams{display:flex;align-items:center;gap:12px}
 .teams .chip{margin-right:2px}
 .vs{color:var(--muted);margin:0 6px}
+
+/* Champ NOM D’ÉQUIPE plus grand */
+.team-name input[type=text]{width:320px;max-width:100%}
 
 /* H2H : pilules colorées */
 .h2h-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-weight:600}
@@ -92,7 +96,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
   <div class="container">
     <div id="storage-warning" class="help" style="display:none"></div>
 
-    <!-- Tournoi -->
+    <!-- Tournoi (cloud-only) -->
     <section id="setup" class="active">
       <div class="card">
         <div class="hd"><strong>Créer un tournoi (Cloud)</strong></div>
@@ -177,7 +181,8 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <span class="pill" id="teams-count">0 équipes</span>
             <span class="pill" id="rounds-count">0 matchs par équipe</span>
-            <button type="button" class="btn small" id="btn-toggle-h2h">Vue face-à-face</button>
+            <button type="button" class="btn small toggle" id="btn-show-summary" aria-pressed="true">Classement général</button>
+            <button type="button" class="btn small toggle" id="btn-show-h2h" aria-pressed="false">Face à face</button>
             <button type="button" class="btn small" id="btn-refresh-standings-2">Mettre à jour</button>
           </div>
         </div>
@@ -260,9 +265,8 @@ window.onerror=(msg,src,line,col)=>{const el=id("storage-warning"); if(el){el.st
 
 /* ===== Persistences (index local des codes cloud uniquement) ===== */
 const STORAGE_KEY="trisports_cloud_only_v1";
-const SNAP_PREFIX="trisports_state_";      // cache lecture seule
+const SNAP_PREFIX="trisports_state_";
 const IDX_KEY="trisports_cloud_index_v1";
-const CURR_KEY="trisports_current_id";
 function getIndex(){ try{ return JSON.parse(localStorage.getItem(IDX_KEY)||"[]"); }catch(_){ return []; } }
 function setIndex(arr){ try{ localStorage.setItem(IDX_KEY, JSON.stringify(arr||[])); }catch(_){} }
 function upsertIndex(entry){ const idx=getIndex(); const i=idx.findIndex(e=>e.id===entry.id); if(i>=0) idx[i]=Object.assign({},idx[i],entry); else idx.unshift(entry); setIndex(idx); }
@@ -279,7 +283,7 @@ function renderSetupRecent(){
   });
   wrap.appendChild(box);
 }
-function renderManageList(){ renderSetupRecent(); } // même liste
+function renderManageList(){ renderSetupRecent(); }
 
 /* ===== État ===== */
 let state={version:30,tid:uid(),cloudId:null,tournamentName:"",rules:{
@@ -340,19 +344,14 @@ function joinCloud(code){
     if(!val){ setCloudTxt("connecté (vide)"); return; }
     const remoteAt=+val.updatedAt||0; if(first){first=false;}
     cloud.lastRemoteAt=remoteAt; state=val.state||state; normalize(); state.cloudId=cloud.id;
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); // cache
-    upsertIndex({id:cloud.id,name:state.tournamentName||"Sans titre",updatedAt:Date.now()});
-    saveSnapshotCacheOnly();
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); upsertIndex({id:cloud.id,name:state.tournamentName||"Sans titre",updatedAt:Date.now()});
     renderAll(); setCloudTxt("connecté ("+cloud.id+")");
   });
   try{ history.replaceState(null,"",location.pathname+"?id="+encodeURIComponent(cloud.id)); }catch(_){}
 }
 function pushCloud(immediate){ if(!cloud.enabled||!cloud.ref) return; clearTimeout(cloud.timer); cloud.timer=setTimeout(()=>cloud.ref.set({state,updatedAt:Date.now()}), immediate?0:250); }
 function deleteCloud(code){ if(!cloud.db){cloud.db=initFB();} return cloud.db.ref("tournaments/"+code).remove(); }
-
-/* cache local minimal (aucun “tournoi local”) */
-function saveSnapshotCacheOnly(){ try{ if(!state.tid) state.tid=uid(); localStorage.setItem(SNAP_PREFIX+state.tid, JSON.stringify(state)); upsertIndex({id:cloud.id||state.cloudId||"?",name:state.tournamentName||"Sans titre",updatedAt:Date.now()}); }catch(_){} }
-function saveState(){ normalize(); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); saveSnapshotCacheOnly(); renderTitle(); renderSetupRecent(); renderManageList(); if(cloud.enabled) pushCloud(); }
+function saveState(){ normalize(); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); upsertIndex({id:state.cloudId||cloud.id||"?",name:state.tournamentName||"Sans titre",updatedAt:Date.now()}); renderTitle(); renderSetupRecent(); renderManageList(); if(cloud.enabled) pushCloud(); }
 
 /* ===== Plein écran ===== */
 const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement;
@@ -395,7 +394,7 @@ function renderTeams(){
     card.innerHTML=`
       <div class="hd" style="border:none;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
         <div class="teams" style="width:100%"><span class="chip">#${idx+1}</span>
-          <span class="team-name">${avatarHtml(t.id,'lg','data-click-avatar="'+t.id+'"')}<input type="text"${dis} value="${esc(t.name)}" data-field="name" data-id="${t.id}" style="min-width:0;flex:1"/></span></div>
+          <span class="team-name">${avatarHtml(t.id,'lg','data-click-avatar="'+t.id+'"')}<input type="text"${dis} value="${esc(t.name)}" data-field="name" data-id="${t.id}" style="min-width:0"/></span></div>
         <div>${delBtn}</div>
       </div>
       <div class="bd">
@@ -511,6 +510,7 @@ function renderMatches(){
         </div>`;
       list.appendChild(el);
 
+      // Fléchettes : re-render au changement (select)
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
         if(!can) sel.disabled=true;
         sel.addEventListener("change", ()=>{
@@ -519,23 +519,25 @@ function renderMatches(){
           const mm=findMatch(m.id); mm.darts[i]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H();
         });
       });
+      // Ping : PAS de re-render à chaque frappe -> seulement au blur/change
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
         if(!can) inp.disabled=true;
-        inp.addEventListener("input", ()=>{
-          const which=inp.getAttribute("data-ping"), i=parseInt(inp.getAttribute("data-index"),10);
-          const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);
-          const mm=findMatch(m.id); mm.pingPts[i][which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H();
-        });
+        const commit=()=>{ const which=inp.getAttribute("data-ping"), i=parseInt(inp.getAttribute("data-index"),10); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99); const mm=findMatch(m.id); mm.pingPts[i][which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); };
+        inp.addEventListener("input", ()=>{ const which=inp.getAttribute("data-ping"), i=parseInt(inp.getAttribute("data-index"),10); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99); const mm=findMatch(m.id); mm.pingPts[i][which]=v; saveState(); });
+        inp.addEventListener("change", commit);
+        inp.addEventListener("blur", commit);
         inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
       });
+      // Palet : idem (pas de re-render à chaque frappe)
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
         if(!can) inp.disabled=true;
-        inp.addEventListener("input", ()=>{
-          const which=inp.getAttribute("data-palet"); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);
-          const mm=findMatch(m.id); mm.palet[which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H();
-        });
+        const commit=()=>{ const which=inp.getAttribute("data-palet"); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11); const mm=findMatch(m.id); mm.palet[which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); };
+        inp.addEventListener("input", ()=>{ const which=inp.getAttribute("data-palet"); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11); const mm=findMatch(m.id); mm.palet[which]=v; saveState(); });
+        inp.addEventListener("change", commit);
+        inp.addEventListener("blur", commit);
         inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
       });
+
       const clr=qs('.match-card[data-id="'+m.id+'"] [data-clear]'); if(clr) clr.addEventListener("click", ()=>clearMatch(m.id));
       const head=qs('.match-card[data-id="'+m.id+'"] [data-expand]'); if(head) head.addEventListener("click", ()=>{ const open=el.getAttribute("aria-expanded")==="true"; el.setAttribute("aria-expanded", open?"false":"true"); ui.open[m.id]=!open; });
     });
@@ -676,7 +678,11 @@ document.addEventListener("click",(e)=>{
       case "btn-add-team":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(state.locked) return alert("Calendrier figé."); state.teams.push({id:uid(),name:"Équipe "+(state.teams.length+1),p1:"",p2:"",avatar:null}); saveState(); renderTeams(); break; }
       case "btn-generate":{ if(!isAdmin()) return alert("Seul l’admin peut générer."); if(state.locked) return; generateSchedule(); state.locked=true; saveState(); renderAll(); goto("calendrier"); break; }
       case "btn-refresh-standings": case "btn-refresh-standings-2":{ renderLeaderboard(); renderH2H(); if(btn.id==="btn-refresh-standings-2") goto("classement"); break; }
-      case "btn-toggle-h2h":{ const v1=id("view-summary"),v2=id("view-h2h"); const show=v2.style.display==="none"; v1.style.display=show?"none":"block"; v2.style.display=show?"block":"none"; break; }
+
+      /* deux boutons vue */
+      case "btn-show-summary":{ id("view-summary").style.display="block"; id("view-h2h").style.display="none"; id("btn-show-summary").setAttribute("aria-pressed","true"); id("btn-show-h2h").setAttribute("aria-pressed","false"); break; }
+      case "btn-show-h2h":{ id("view-summary").style.display="none"; id("view-h2h").style.display="block"; id("btn-show-summary").setAttribute("aria-pressed","false"); id("btn-show-h2h").setAttribute("aria-pressed","true"); break; }
+
       case "btn-collapse":{ qsa('#match-list .match-card').forEach(c=>c.setAttribute('aria-expanded','false')); ui.open={}; break; }
       case "btn-export":{ const data=JSON.stringify(state,null,2); const url=URL.createObjectURL(new Blob([data],{type:"application/json"})); const a=document.createElement("a"); a.href=url; a.download=("tournoi-"+(state.tournamentName||"TriSports")).replace(/\s+/g,'_')+".json"; a.click(); URL.revokeObjectURL(url); break; }
       case "btn-import":{ const f=id("file-import").files?.[0]; if(!f) return alert("Sélectionnez un fichier JSON."); f.text().then(t=>{ try{ const data=JSON.parse(t); state=data; normalize(); saveState(); renderAll(); alert("Import réussi !"); }catch(_){ alert("Fichier invalide."); } }); break; }
