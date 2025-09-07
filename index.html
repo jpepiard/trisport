@@ -43,7 +43,7 @@
     #storage-warning{position:fixed; right:12px; bottom:12px; display:none; background:#0f1331; border:1px solid var(--border); color:var(--muted); border-radius:10px; padding:8px 10px; z-index:99; box-shadow:0 6px 24px rgba(0,0,0,.35)}
   </style>
 
-  <!-- Firebase (live) -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script>
@@ -66,7 +66,7 @@
       </div>
 
       <nav class="tabs" role="tablist" aria-label="Sections" style="flex:1;justify-content:center;display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" class="tab" role="tab" aria-selected="true" data-tab="tournois">Tournoi</button>
+        <button type="button" class="tab" role="tab" aria-selected="true" data-tab="setup">Tournoi</button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-tab="equipes">Équipes</button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-tab="calendrier">Rencontres</button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-tab="classement">Classement</button>
@@ -85,58 +85,49 @@
     <div class="container">
       <div id="storage-warning" class="help" style="display:none"></div>
 
-      <!-- 1) Page Tournoi -->
-      <section id="tournois" class="active">
-        <div class="grid cols-3">
-          <!-- A. Nouveau tournoi -->
+      <!-- 1) Accueil Tournoi -->
+      <section id="setup" class="active">
+        <div class="grid cols-2">
+          <!-- Nouveau tournoi -->
           <div class="card">
             <div class="hd"><strong>Nouveau tournoi</strong></div>
-            <div class="bd">
-              <button type="button" class="btn primary" id="btn-new-toggle">+ Nouveau tournoi</button>
-              <div id="new-form" style="display:none; margin-top:12px" class="grid cols-2">
-                <div>
-                  <label>Nom du tournoi</label>
-                  <input type="text" id="tname-input" placeholder="ex : Tournoi de la plage" />
-                </div>
-                <div>
-                  <label>Nombre d'équipes</label>
-                  <input type="number" id="teams-count-input" min="2" max="64" step="1" value="4" />
-                </div>
-                <div style="grid-column:1 / -1;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                  <button type="button" class="btn primary" id="btn-create-tournament">Générer</button>
-                  <span class="help">Seul l’<b>administrateur</b> peut créer/écraser un tournoi (PIN : 30041991).</span>
-                </div>
+            <div class="bd grid cols-2">
+              <div>
+                <label>Nom du tournoi</label>
+                <input type="text" id="tname-input" placeholder="ex : Tournoi de la plage" />
+              </div>
+              <div>
+                <label>Nombre d'équipes</label>
+                <input type="number" id="teams-count-input" min="2" max="64" step="1" value="4" />
+              </div>
+              <div style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <button type="button" class="btn primary" id="btn-create-tournament">Créer</button>
+                <span class="help">Protégé admin (PIN : 30041991).</span>
               </div>
             </div>
           </div>
 
-          <!-- B. Mes tournois mémorisés -->
+          <!-- Rejoindre un tournoi (Cloud) -->
           <div class="card">
-            <div class="hd"><strong>Mes tournois (sur cet appareil)</strong></div>
-            <div class="bd">
-              <div id="lib-list" class="grid responsive"></div>
-              <div class="help" id="lib-empty" style="display:none">Aucun tournoi mémorisé pour l’instant.</div>
-            </div>
-          </div>
-
-          <!-- C. Rejoindre un tournoi existant (live) -->
-          <div class="card">
-            <div class="hd"><strong>Rejoindre un tournoi existant</strong></div>
-            <div class="bd grid" style="gap:10px">
-              <label>Code du tournoi</label>
-              <input type="text" id="cloud-id" placeholder="ex: apero2025" />
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button type="button" class="btn primary" id="btn-cloud-join">Rejoindre</button>
-                <button type="button" class="btn" id="btn-cloud-copy">Copier lien ?id=code</button>
-                <button type="button" class="btn" id="btn-cloud-leave">Se déconnecter</button>
+            <div class="hd"><strong>Rejoindre tournoi existant</strong></div>
+            <div class="bd grid">
+              <label>Code du tournoi (cloud)</label>
+              <input type="text" id="join-code" placeholder="ex : apero2025" />
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <button type="button" class="btn primary" id="btn-join-code">Rejoindre</button>
+                <button type="button" class="btn" id="btn-copy-link">Copier lien ?id=code</button>
+                <span class="help">Statut : <span id="cloud-status">hors ligne</span></span>
               </div>
-              <div class="help">Statut : <span id="cloud-status">hors ligne</span></div>
             </div>
           </div>
         </div>
 
-        <div class="help" style="margin-top:10px">
-          Astuce : une fois le tournoi créé ou rejoint, ouvrez l’onglet <b>Équipes</b> pour nommer les équipes et générer le calendrier.
+        <!-- Tournois enregistrés -->
+        <div class="card" style="margin-top:12px">
+          <div class="hd"><strong>Tournois enregistrés (ce navigateur)</strong></div>
+          <div class="bd" id="recent-list">
+            <div class="help">Aucun tournoi mémorisé pour l’instant.</div>
+          </div>
         </div>
       </section>
 
@@ -146,7 +137,7 @@
           <div class="hd">
             <div>
               <strong>Équipes</strong>
-              <div class="help">Les <b>administrateurs</b> créent et éditent les équipes. Les joueurs se <b>connectent</b> à leur équipe avec un mot de passe pour saisir <b>leurs scores uniquement</b>.</div>
+              <div class="help">L’<b>administrateur</b> crée et édite les équipes. Les joueurs se connectent à leur équipe pour saisir <b>leurs scores</b> uniquement.</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span class="pill" id="lock-pill" style="display:none">Calendrier figé 🔒</span>
@@ -189,7 +180,7 @@
             <div id="view-summary">
               <div class="help" style="margin-bottom:10px">
                 Règles — Fléchettes : 3 parties (2 simples + 1 double), <b>5 pts</b> par partie gagnée.
-                Ping-pong : 3 parties (2 simples + 1 double), victoire = <b>5 pts</b> (score valide si <b>11+</b> et <b>écart ≥ 2</b>).
+                Ping-pong : 3 parties (2 simples + 1 double), score valide si <b>11+</b> et <b>écart ≥ 2</b>, victoire = <b>5 pts</b>.
                 Palet : 1 double à 11, les points marqués s’ajoutent au total.
               </div>
               <table id="table-classement"><thead><tr><th>#</th><th>Équipe</th><th>Points</th><th>Fléchettes (G)</th><th>Ping-pong (G)</th><th>Palet (PF–PA)</th><th>Matchs complets</th></tr></thead><tbody></tbody></table>
@@ -214,12 +205,10 @@
             </div>
           </div>
 
-          <!-- Cloud (live) supprimé d'ici -->
-
           <div class="card">
-            <div class="hd"><strong>Administration</strong></div>
+            <div class="hd"><strong>Accès administrateur</strong></div>
             <div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <button type="button" class="btn" id="btn-admin-on">Activer mode administrateur</button>
+              <button type="button" class="btn" id="btn-admin-on">Activer admin</button>
               <button type="button" class="btn" id="btn-admin-off">Désactiver admin</button>
               <span class="pill" id="whoami">vous : visiteur (lecture seule)</span>
             </div>
