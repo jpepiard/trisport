@@ -51,11 +51,11 @@ table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:
 .teams .chip{margin-right:2px}
 .vs{color:var(--muted);margin:0 6px}
 
-/* Face-à-face coloré */
-.h2h-table td.h2h-win  { background: rgba(34,197,94,.14);  color:#86efac; }
-.h2h-table td.h2h-loss { background: rgba(239,68,68,.14);  color:#fca5a5; }
-.h2h-table td.h2h-draw { background: rgba(234,179,8,.16);  color:#fde68a; }
-.h2h-table td .chip{ background:transparent; border-color:transparent; color:inherit; }
+/* Face-à-face : pilules colorées (pas toute la cellule) */
+.h2h-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-weight:600}
+.h2h-win {border:1px solid #22c55e;color:#a7f3d0;background:rgba(34,197,94,.08)}
+.h2h-loss{border:1px solid #ef4444;color:#fecaca;background:rgba(239,68,68,.08)}
+.h2h-draw{border:1px solid #eab308;color:#fde68a;background:rgba(234,179,8,.08)}
 
 #storage-warning{position:fixed;right:12px;bottom:12px;display:none;background:#0f1331;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 10px;z-index:99;box-shadow:0 6px 24px rgba(0,0,0,.35)}
 #js-ok{position:fixed;right:12px;top:12px;background:#7a2525;color:#fff;padding:6px 10px;border-radius:10px;z-index:9999;font:600 12px system-ui,Segoe UI,Roboto}
@@ -251,13 +251,8 @@ const uid=()=>Math.random().toString(36).slice(2,10);
 const clampInt=(v,min,max)=>{v=parseInt(v,10); if(isNaN(v)) return null; return Math.max(min,Math.min(max,v));}
 const help=t=>{const d=document.createElement("div");d.className="help";d.textContent=t;return d;}
 function fmtDate(ts){try{const d=new Date(ts);return d.toLocaleString()}catch(_){return ""}}
-// Hash simple FNV-1a 32 bits (trim) pour les mots de passe d’équipe
-function hashPass(s){
-  s=(s||"").trim();
-  let h=0x811c9dc5>>>0;
-  for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; }
-  return ("00000000"+h.toString(16)).slice(-8);
-}
+// Hash FNV-1a 32 bits (trim)
+function hashPass(s){s=(s||"").trim();let h=0x811c9dc5>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return("00000000"+h.toString(16)).slice(-8)}
 
 /* ===== Erreurs visibles ===== */
 window.onerror=(msg,src,line,col)=>{const el=id("storage-warning"); if(el){el.style.display="block";el.textContent="Erreur JS : "+msg+" @"+(src||"")+":"+(line||0)+":"+(col||0)} const p=id("js-ok"); if(p){p.textContent='JS chargé avec erreurs ⚠️'; p.style.background='#8a2a2a'}};
@@ -662,12 +657,10 @@ function renderH2H(){
       const m=byPair[[ti.id,tj.id].sort().join("|")];
       if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; }
       const pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id);
-      let cls="", tag="=", txt=pI+"–"+pJ;
-      if(pI>pJ){ cls="h2h-win"; tag="W"; }
-      else if(pI<pJ){ cls="h2h-loss"; tag="L"; }
-      else { cls="h2h-draw"; tag="="; }
-      td.classList.add(cls);
-      td.innerHTML='<span class="chip">'+tag+' '+txt+'</span>';
+      let cls="", icon="≡", txt=pI+"–"+pJ;
+      if(pI>pJ){ cls="h2h-win";  icon="✔"; }
+      else if(pI<pJ){ cls="h2h-loss"; icon="✖"; }
+      td.innerHTML='<span class="h2h-pill '+cls+'">'+icon+' '+txt+'</span>';
       td.style.cursor="pointer"; td.dataset.matchId=m.id; tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -707,7 +700,25 @@ document.addEventListener("click",(e)=>{
       case "btn-import":{ const f=id("file-import").files?.[0]; if(!f) return alert("Sélectionnez un fichier JSON."); f.text().then(t=>{ try{ const data=JSON.parse(t); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw 0; state=data; normalize(); saveState(); renderAll(); alert("Import réussi !"); }catch(_){ alert("Fichier invalide."); } }); break; }
       case "btn-admin-on":{ const pin=prompt("PIN administrateur :"); if(pin==="30041991"){ session.admin=true; updateWho(); alert("Mode administrateur activé."); } else alert("PIN incorrect."); break; }
       case "btn-admin-off":{ session.admin=false; session.claims={}; updateWho(); break; }
-      case "btn-publish-cloud":{ if(!isAdmin()) return alert("Seul l’administrateur peut publier."); if(!hasFB) return alert("Firebase non configuré."); if(!cloud.db){ cloud.db=initFB(); if(!cloud.db) return alert("Init Firebase impossible."); } const code=prompt("Choisis un code (ex: apero2025)"); if(!code) return; cloud.id=code.trim(); cloud.ref=cloud.db.ref("tournaments/"+cloud.id+"/payload"); cloud.enabled=true; state.cloudId=cloud.id; pushCloud(true); setCloudTxt("connecté ("+cloud.id+")"); upsertIndex({id:"cloud:"+cloud.id,name:"Cloud · "+cloud.id,updatedAt:Date.now(),type:"cloud"}); renderSetupRecent(); renderManageList(); const url=location.origin+location.pathname+"?id="+encodeURIComponent(cloud.id); navigator.clipboard?.writeText(url); alert("Tournoi publié !\nLien copié :\n"+url); break; }
+      case "btn-publish-cloud":{ 
+        if(!isAdmin()) return alert("Seul l’administrateur peut publier.");
+        if(!hasFB) return alert("Firebase non configuré.");
+        if(!cloud.db){ cloud.db=initFB(); if(!cloud.db) return alert("Init Firebase impossible."); }
+        const code=prompt("Choisis un code (ex: apero2025)");
+        if(!code) return;
+        cloud.id=code.trim();
+        cloud.ref=cloud.db.ref("tournaments/"+cloud.id+"/payload");
+        cloud.enabled=true;
+        state.cloudId=cloud.id;              // 👉 le tournoi courant devient cloud
+        saveState();                          // met à jour l’entrée existante (pas de nouveau tournoi)
+        pushCloud(true);
+        setCloudTxt("connecté ("+cloud.id+")");
+        renderSetupRecent(); renderManageList();
+        const url=location.origin+location.pathname+"?id="+encodeURIComponent(cloud.id);
+        navigator.clipboard?.writeText(url);
+        alert("Tournoi publié !\nLien copié :\n"+url);
+        break;
+      }
       case "btn-cloud-copy":{ if(!cloud.id) return alert("Pas publié. Utilise « Publier & partager »."); const url=location.origin+location.pathname+"?id="+encodeURIComponent(cloud.id); navigator.clipboard?.writeText(url); alert("Lien copié !\n"+url); break; }
       case "btn-cloud-leave":{ if(!cloud.enabled) return alert("Pas connecté au cloud."); if(!confirm("Quitter le cloud pour ce tournoi ?")) return; leaveCloud(); state.cloudId=null; saveState(); alert("Tournoi maintenant local."); break; }
       case "btn-reset-scores":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(!confirm("Réinitialiser tous les SCORES (calendrier et équipes conservés) ?")) return; state.matches.forEach(m=>{m.darts=[null,null,null];m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}];m.palet={a:null,b:null};}); saveState(); renderAll(); goto("calendrier"); break; }
@@ -725,7 +736,7 @@ document.addEventListener("click",(e)=>{
     }
   }
 
-  // Clic direct sur une bulle d’avatar (Équipes) -> ouvrir file picker
+  // Clic avatar (Équipes) -> file picker
   const av=e.target.closest('.avatar[data-click-avatar]');
   if(av){
     const tid=av.getAttribute('data-click-avatar');
@@ -739,7 +750,7 @@ document.addEventListener("click",(e)=>{
   // Tabs
   const tab=e.target.closest(".tab"); if(tab){ qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false")); tab.setAttribute("aria-selected","true"); qsa("main section").forEach(s=>s.classList.remove("active")); id(tab.getAttribute("data-tab")).classList.add("active"); }
 
-  // Gestion liste récentes
+  // Liste tournois
   const openBtn=e.target.closest("[data-open-id]"); if(openBtn){
     const openId=openBtn.getAttribute("data-open-id");
     if(openId.startsWith("cloud:")){ const code=openId.slice(6); id("join-code").value=code; joinCloud(code); goto("equipes"); }
@@ -752,7 +763,7 @@ document.addEventListener("click",(e)=>{
     const curr=localStorage.getItem(CURR_KEY); if(curr===delId){ const idx=getIndex(); if(idx.length){ const first=idx[0]; if(first.id.startsWith("cloud:")) joinCloud(first.id.slice(6)); else loadSnapshot(first.id); renderAll(); } else { state={version:23,tid:uid(),cloudId:null,tournamentName:"",teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; saveState(); renderAll(); } }
   }
 
-  // Actions équipes
+  // Actions équipe
   const actBtn=e.target.closest("[data-act]");
   if(actBtn){
     const act=actBtn.getAttribute("data-act"); const tid=actBtn.getAttribute("data-id");
