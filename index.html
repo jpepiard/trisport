@@ -27,8 +27,7 @@
     .btn.small{padding:6px 10px;border-radius:10px;font-size:13px}
     .btn.danger{background:linear-gradient(180deg,#7a2b2b,#5c2222);border-color:#8a2b2b}
     .grid{display:grid;gap:12px} .grid.cols-2{grid-template-columns:repeat(2,1fr)} .grid.cols-3{grid-template-columns:repeat(3,1fr)} .grid.cols-4{grid-template-columns:repeat(4,1fr)} .grid.responsive{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-    input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:#0ff1}
-    input[type=text],input[type=number],select{color:var(--text)}
+    input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:var(--text)}
     label{font-size:13px;color:var(--muted)}
     table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left} th{color:var(--muted);font-weight:600}
     .match-card{border-radius:14px;border:1px solid var(--border);background:var(--card);overflow:hidden}
@@ -233,13 +232,13 @@
     </div>
   </main>
 
-  <!-- === JS INLINE (roles2c14-inline+badge) === -->
+  <!-- === JS INLINE (roles2c14-inline + création non destructrice) === -->
   <script>
-  /* Active tout de suite le badge si ce script s'exécute */
+  /* Active le badge si le JS s'exécute */
   (function(){ var p=document.getElementById('js-ok'); if(p){ p.textContent='JS chargé ✅'; p.style.background='#14532d'; } })();
 
   (function () {
-    // Affiche les erreurs runtime (utile si un bouton ne réagit pas)
+    // Affiche les erreurs runtime
     window.onerror = function (msg, src, line, col) {
       var el = document.getElementById("storage-warning");
       if (!el) return;
@@ -248,7 +247,6 @@
     };
 
     document.addEventListener("DOMContentLoaded", function () {
-      // ---- petite feuille d'avatar (sécurité si CSS change)
       addInlineStyle(`
         .avatar{width:40px;height:40px;font-size:14px}
         .avatar .avatar-initials{line-height:40px}
@@ -259,10 +257,10 @@
       `);
 
       // ---------- Local storage (runtime + multi-tournois)
-      const STORAGE_KEY = "tournoi_amis_roles2c6"; // état courant (compat)
-      const IDX_KEY     = "trisports_index_v1";    // liste des tournois locaux
-      const SNAP_PREFIX = "trisports_state_";      // snapshot par tournoi
-      const CURR_KEY    = "trisports_current_id";  // id courant
+      const STORAGE_KEY = "tournoi_amis_roles2c6";
+      const IDX_KEY     = "trisports_index_v1";
+      const SNAP_PREFIX = "trisports_state_";
+      const CURR_KEY    = "trisports_current_id";
 
       let MEMORY_ONLY = false;
       function saveRuntime(){ try{ if(!MEMORY_ONLY) localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ MEMORY_ONLY=true; warnStorage(); } }
@@ -456,16 +454,20 @@
       // ---------- HUB TOURNOI (Setup)
       function ensureAdmin(){ if(isAdmin()) return true; const pin=prompt("PIN administrateur :"); if(pin==="30041991"){ session.admin=true; saveSession(); return true; } return false; }
 
-      // Créer
+      // Créer — NON destructif : ajoute le nouveau tournoi, conserve l'actuel en "Récents"
       onClick(id("btn-create-tournament"), ()=>{
         if(!ensureAdmin()) return;
-        const name = (id("tname-input").value||"").trim() || "Tournoi entre amis";
-        let n = parseInt(id("teams-count-input").value,10); if(isNaN(n)) n=4; n=clampInt(n,2,64);
 
-        if(state.teams.length || state.matches.length){
-          if(!confirm("Cette action va EFFACER le tournoi actuel et en créer un nouveau. Continuer ?")) return;
-        }
-        state = {
+        const name = (id("tname-input").value||"").trim() || "Tournoi entre amis";
+        let n = parseInt(id("teams-count-input").value,10);
+        if(isNaN(n)) n = 4;
+        n = clampInt(n, 2, 64);
+
+        // 1) Sauvegarder le tournoi en cours dans la liste (snapshot)
+        saveSnapshot();
+
+        // 2) Créer un NOUVEAU tournoi local (nouvel id)
+        const newState = {
           version: 22,
           tid: uid(),
           cloudId: null,
@@ -476,8 +478,15 @@
           createdAt:new Date().toISOString(),
           protect:{ teamPassHash:{} }
         };
-        normalize(); saveState(); saveSnapshot();
-        renderAll(); goto("equipes");
+
+        // 3) Bascule vers le nouveau (sans pousser sur un cloud existant)
+        state = newState;
+        normalize();
+        leaveCloud();               // au cas où l'ancien était cloud
+        saveState({cloud:false});   // ne pas envoyer au cloud
+        saveSnapshot();             // ajoute le nouveau dans “Tournois enregistrés”
+        renderAll();
+        goto("equipes");
       });
 
       // Récents
@@ -568,13 +577,13 @@
           teamListEl.appendChild(card);
         });
 
-        // Édition live
+        // Édition live (sans re-render pendant la saisie)
         qsa('#team-list input[data-field]').forEach(inp=>{
           const tid=inp.getAttribute("data-id"), f=inp.getAttribute("data-field");
           inp.addEventListener("input", ()=>{
             if(!canEditTeam(tid)) return;
             const t=teamObj(tid); if(!t) return;
-            t[f]=inp.value; saveState({cloud:false});
+            t[f]=inp.value; saveState({cloud:false}); // pas de re-render ici
           });
           inp.addEventListener("blur", ()=>{
             if(!canEditTeam(tid)) return;
@@ -671,7 +680,8 @@
       }
 
       function updateCounts(){ id("teams-count").textContent = state.teams.length + " " + (state.teams.length>1?"équipes":"équipe"); const perTeam=Math.max(0,state.teams.length-1); id("rounds-count").textContent = perTeam + " " + (perTeam>1?"matchs":"match") + " par équipe"; }
-      function updateLockUI(){ const pill=id("lock-pill"); if(pill) pill.style.display=state.locked?"inline-block":"none"; const gen=id("btn-generate"); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"; } }
+      function updateLockUI(){ const pill=id("lock-pill"); if(pill) styleDisplay(pill, state.locked); const gen=id("btn-generate"); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"; } }
+      function styleDisplay(node, show){ node.style.display = show?"inline-block":"none"; }
 
       // ---------- Calendrier homogène
       function generateSchedule(){
@@ -859,7 +869,7 @@
         });
       }
 
-      // ---------- H2H
+      // ---------- H2H (Face-à-face)
       function pointsForTeamInMatch(m,teamId){
         const isA=m.a===teamId, isB=m.b===teamId; if(!isA&&!isB) return 0;
         let pts=0; (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0&&isA) pts+=5; else if(v===1&&isB) pts+=5; });
@@ -867,29 +877,6 @@
         if(m.palet && m.palet.a!=null && m.palet.b!=null) pts += isA? m.palet.a : m.palet.b;
         return pts;
       }
-      function renderH2H(){
-        const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); if(!thead||!tbody) return;
-        thead.innerHTML=""; tbody.innerHTML="";
-        const teams=state.teams.slice(); if(!teams.length){ tbody.appendChild(help("Ajoutez des équipes pour voir la matrice.")); return; }
-        const trH=document.createElement("tr"); trH.appendChild(document.createElement("th")).textContent="Équipe";
-        teams.forEach(t=>{ const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>'; trH.appendChild(th); });
-        thead.appendChild(trH);
-        const byPair={}; state.matches.forEach(m=>{ byPair[[m.a,m.b].sort().join("|")]=m; });
-        teams.forEach(ti=>{
-          const tr=document.createElement("tr"); const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>'; tr.appendChild(th);
-          teams.forEach(tj=>{
-            const td=document.createElement("td");
-            if(ti.id===tj.id){ td.textContent="—"; tr.appendChild(td); return; }
-            const m=byPair[[ti.id,tj.id].sort().join("|")];
-            if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; }
-            const pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id);
-            if(pI===0 && pJ===0){ td.innerHTML='<span class="chip">•</span>'; }
-            else{ const tag=(pI>pJ)?'W':(pI<pPj? 'L' : '='); }
-          });
-        });
-      }
-      // Oups, bug dans la ligne ci-dessus corrigé :
-      // (Je laisse la version correcte ci-dessous, celle affichée au rendu remplacera la mauvaise.)
       function renderH2H(){
         const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); if(!thead||!tbody) return;
         thead.innerHTML=""; tbody.innerHTML="";
@@ -934,6 +921,18 @@
         normalize(); session={admin:false,claims:{}}; saveSession(); saveState(); saveSnapshot(); renderAll(); goto("setup");
       });
       onClick(id("btn-unlock"), ()=>{ if(!isAdmin()){ alert("Réservé à l’admin."); return; } if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
+
+      // ---------- Boutons utilitaires
+      onClick(id("btn-refresh-standings"), ()=>{ renderLeaderboard(); renderH2H(); });
+      onClick(id("btn-refresh-standings-2"), ()=>{ renderLeaderboard(); renderH2H(); goto("classement"); });
+      onClick(id("btn-toggle-h2h"), ()=>{
+        const v1=id("view-summary"), v2=id("view-h2h");
+        if(!v1||!v2) return;
+        const showH2H = v2.style.display==="none";
+        v1.style.display = showH2H ? "none":"block";
+        v2.style.display = showH2H ? "block":"none";
+      });
+      onClick(id("btn-collapse"), ()=>{ qsa('#match-list .match-card').forEach(c=>c.setAttribute('aria-expanded','false')); ui.open={}; });
 
       // ---------- Helpers communs
       function onClick(el,fn){ if(el && el.addEventListener) el.addEventListener("click",fn); }
