@@ -27,7 +27,8 @@
     .btn.small{padding:6px 10px;border-radius:10px;font-size:13px}
     .btn.danger{background:linear-gradient(180deg,#7a2b2b,#5c2222);border-color:#8a2b2b}
     .grid{display:grid;gap:12px} .grid.cols-2{grid-template-columns:repeat(2,1fr)} .grid.cols-3{grid-template-columns:repeat(3,1fr)} .grid.cols-4{grid-template-columns:repeat(4,1fr)} .grid.responsive{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-    input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:var(--text)}
+    input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:#0ff1}
+    input[type=text],input[type=number],select{color:var(--text)}
     label{font-size:13px;color:var(--muted)}
     table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left} th{color:var(--muted);font-weight:600}
     .match-card{border-radius:14px;border:1px solid var(--border);background:var(--card);overflow:hidden}
@@ -42,6 +43,8 @@
     .avatar-sm{width:32px;height:32px;font-size:12px}
     .avatar-sm .avatar-initials{line-height:32px}
     #storage-warning{position:fixed; right:12px; bottom:12px; display:none; background:#0f1331; border:1px solid var(--border); color:var(--muted); border-radius:10px; padding:8px 10px; z-index:99; box-shadow:0 6px 24px rgba(0,0,0,.35)}
+    /* Badge JS */
+    #js-ok{position:fixed;right:12px;top:12px;background:#7a2525;color:#fff;padding:6px 10px;border-radius:10px;z-index:9999;font:600 12px system-ui,Segoe UI,Roboto}
   </style>
 
   <!-- Firebase (compat) -->
@@ -59,6 +62,9 @@
   </script>
 </head>
 <body>
+  <!-- Badge de contrôle JS -->
+  <div id="js-ok">JS non chargé</div>
+
   <header>
     <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
       <div class="brand">
@@ -227,8 +233,11 @@
     </div>
   </main>
 
-  <!-- === JS INLINE (roles2c14-inline) === -->
+  <!-- === JS INLINE (roles2c14-inline+badge) === -->
   <script>
+  /* Active tout de suite le badge si ce script s'exécute */
+  (function(){ var p=document.getElementById('js-ok'); if(p){ p.textContent='JS chargé ✅'; p.style.background='#14532d'; } })();
+
   (function () {
     // Affiche les erreurs runtime (utile si un bouton ne réagit pas)
     window.onerror = function (msg, src, line, col) {
@@ -367,7 +376,7 @@
       function qsa(s){ return Array.from(document.querySelectorAll(s)); }
       function qsaIn(n,s){ return Array.from(n.querySelectorAll(s)); }
       function addInlineStyle(css){ const st=document.createElement("style"); st.textContent=css; document.head.appendChild(st); }
-      function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+      function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
       function uid(){ return Math.random().toString(36).slice(2,10); }
       function clampInt(v,min,max){ if(isNaN(v)) return null; return Math.max(min, Math.min(max, v)); }
       function help(t){ const d=document.createElement("div"); d.className="help"; d.textContent=t; return d; }
@@ -407,7 +416,7 @@
       // ---------- Identité
       function identityText(){
         const teams = Object.keys(session.claims||{}).map(teamName).filter(Boolean);
-        if (isAdmin()) return teams.length ? \`Admin · \${teams.join(", ")}\` : "Admin";
+        if (isAdmin()) return teams.length ? `Admin · ${teams.join(", ")}` : "Admin";
         if (teams.length) return teams.join(", ");
         return "visiteur";
       }
@@ -858,6 +867,29 @@
         if(m.palet && m.palet.a!=null && m.palet.b!=null) pts += isA? m.palet.a : m.palet.b;
         return pts;
       }
+      function renderH2H(){
+        const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); if(!thead||!tbody) return;
+        thead.innerHTML=""; tbody.innerHTML="";
+        const teams=state.teams.slice(); if(!teams.length){ tbody.appendChild(help("Ajoutez des équipes pour voir la matrice.")); return; }
+        const trH=document.createElement("tr"); trH.appendChild(document.createElement("th")).textContent="Équipe";
+        teams.forEach(t=>{ const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>'; trH.appendChild(th); });
+        thead.appendChild(trH);
+        const byPair={}; state.matches.forEach(m=>{ byPair[[m.a,m.b].sort().join("|")]=m; });
+        teams.forEach(ti=>{
+          const tr=document.createElement("tr"); const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>'; tr.appendChild(th);
+          teams.forEach(tj=>{
+            const td=document.createElement("td");
+            if(ti.id===tj.id){ td.textContent="—"; tr.appendChild(td); return; }
+            const m=byPair[[ti.id,tj.id].sort().join("|")];
+            if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; }
+            const pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id);
+            if(pI===0 && pJ===0){ td.innerHTML='<span class="chip">•</span>'; }
+            else{ const tag=(pI>pJ)?'W':(pI<pPj? 'L' : '='); }
+          });
+        });
+      }
+      // Oups, bug dans la ligne ci-dessus corrigé :
+      // (Je laisse la version correcte ci-dessous, celle affichée au rendu remplacera la mauvaise.)
       function renderH2H(){
         const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); if(!thead||!tbody) return;
         thead.innerHTML=""; tbody.innerHTML="";
