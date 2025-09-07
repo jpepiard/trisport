@@ -58,8 +58,19 @@ table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:
 /* Scores compacts */
 .score-compact{font-variant-numeric:tabular-nums}
 
+/* JS guard */
 #storage-warning{position:fixed;right:12px;bottom:12px;display:none;background:#0f1331;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 10px;z-index:99;box-shadow:0 6px 24px rgba(0,0,0,.35)}
 #js-ok{position:fixed;right:12px;top:12px;background:#7a2525;color:#fff;padding:6px 10px;border-radius:10px;z-index:9999;font:600 12px system-ui,Segoe UI,Roboto}
+
+/* Bonus UI */
+.bonus-btn{border:1px dashed #4b5bd7;background:transparent;color:#7aa2ff;padding:8px 10px;border-radius:12px;font-weight:700}
+.bonus-btn[disabled]{opacity:.45;cursor:not-allowed}
+#bonus-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9998}
+#bonus-modal.show{display:flex}
+.bonus-dialog{width:min(560px,92vw);background:#141938;border:1px solid var(--border);border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.5)}
+.bonus-dialog .hd{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700}
+.bonus-dialog .bd{padding:16px}
+.bonus-dialog .ft{padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
 </style>
 
 <!-- Firebase (compat) -->
@@ -97,7 +108,6 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
     <!-- Tournoi -->
     <section id="setup" class="active">
-      <!-- Barre admin sur la page Tournoi -->
       <div style="display:flex;justify-content:flex-end;gap:8px;margin:4px 0 8px">
         <button type="button" class="btn small" id="btn-admin-on-setup">Se connecter admin</button>
         <span class="pill" id="whoami-setup">visiteur</span>
@@ -167,9 +177,14 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
     <section id="calendrier">
       <div class="card">
         <div class="hd">
-          <strong>Rencontres</strong>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <strong>Rencontres</strong>
+            <span class="pill" id="round-status" title="État de la journée">—</span>
+          </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <span class="pill" id="stats-matches">0 / 0 matches complets</span>
+            <button type="button" class="btn small" id="btn-start-round" style="display:none">Démarrer journée</button>
+            <button type="button" class="btn small" id="btn-end-round" style="display:none">Fin de journée</button>
             <button type="button" class="btn small" id="btn-refresh-standings">Mettre à jour le classement</button>
             <button type="button" class="btn small" id="btn-collapse">Tout replier</button>
           </div>
@@ -194,9 +209,19 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
         <div class="bd" style="overflow:auto">
           <div id="view-summary">
             <div class="help" style="margin-bottom:10px">
-              Règles paramétrables : nombre de simples/doubles, points par victoire fléchettes/ping, et score cible au palet.
+              Points = base + Bonus − Malus. Le bonus “Capitaine” est révélé à la fin de la journée.
             </div>
-            <table id="table-classement"><thead><tr><th>#</th><th>Équipe</th><th>Points</th><th>Fléchettes (G)</th><th>Ping-pong (G)</th><th>Palet (PF–PA)</th><th>Matchs complets</th></tr></thead><tbody></tbody></table>
+            <table id="table-classement">
+              <thead>
+                <tr>
+                  <th>#</th><th>Équipe</th><th>Points</th>
+                  <th>Bonus</th><th>Malus</th>
+                  <th>Fléchettes (G)</th><th>Ping-pong (G)</th>
+                  <th>Palet (PF–PA)</th><th>Matchs complets</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
           </div>
           <div id="view-h2h" style="display:none">
             <div class="help" style="margin-bottom:10px">Face-à-face : cliquez sur une cellule pour ouvrir la rencontre.</div>
@@ -253,6 +278,38 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
   </div>
 </main>
 
+<!-- MODAL BONUS -->
+<div id="bonus-modal" aria-hidden="true">
+  <div class="bonus-dialog">
+    <div class="hd">Choisir un bonus — Capitaine</div>
+    <div class="bd">
+      <div class="help" id="bonus-context">—</div>
+      <div class="grid cols-2" style="margin-top:10px">
+        <div>
+          <label>Capitaine (joueur)</label>
+          <select id="bonus-player">
+            <option value="p1">Joueur 1</option>
+            <option value="p2">Joueur 2</option>
+          </select>
+        </div>
+        <div>
+          <label>Sport</label>
+          <select id="bonus-sport">
+            <option value="darts">Fléchettes</option>
+            <option value="ping">Ping</option>
+            <option value="palet">Palet</option>
+          </select>
+        </div>
+      </div>
+      <div class="help" style="margin-top:8px">Règle : +5 pts par victoire du capitaine dans le sport choisi (les doubles comptent).</div>
+    </div>
+    <div class="ft">
+      <button type="button" class="btn" id="bonus-cancel">Annuler</button>
+      <button type="button" class="btn primary" id="bonus-save">Valider</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ===== Helpers ===== */
 const id=x=>document.getElementById(x);
@@ -265,6 +322,7 @@ const help=t=>{const d=document.createElement("div");d.className="help";d.textCo
 function hashPass(s){s=(s||"").trim();let h=0x811c9dc5>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return("00000000"+h.toString(16)).slice(-8)}
 // Tiret fin insécable pour scores
 const hy=(a,b)=>`${a}\u2011${b}`;
+const BONUS_VAL=5;
 
 /* ===== Erreurs visibles ===== */
 window.onerror=(msg,src,line,col)=>{const el=id("storage-warning"); if(el){el.style.display="block";el.textContent="Erreur JS : "+msg+" @"+(src||"")+":"+(line||0)+":"+(col||0)} const p=id("js-ok"); if(p){p.textContent='JS chargé avec erreurs ⚠️'; p.style.background='#8a2a2a'}};
@@ -293,11 +351,16 @@ function renderSetupRecent(){
 function renderManageList(){ renderSetupRecent(); }
 
 /* ===== État ===== */
-let state={version:30,tid:uid(),cloudId:null,tournamentName:"",rules:{
+let state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{
   dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,
   pingSingles:2,pingDoubles:1,pingWinPoints:5,
   paletTarget:11
-},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}};
+},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),
+protect:{teamPassHash:{}},
+roundCtl:{},                 // { [round]: {started:false, finished:false} }
+bonusSelections:{},          // { [round]: { teamId: {type:'capitaine', player:'p1'|'p2', sport:'darts'|'ping'|'palet'} } }
+bonusApplied:{}              // { [round]: { teamId: number } }
+};
 let ui={open:{},h2h:false};
 let session={admin:false,claims:{}};
 
@@ -324,7 +387,13 @@ function dartsTotal(){return (state.rules?.dartsSingles||0)+(state.rules?.dartsD
 function pingTotal(){return (state.rules?.pingSingles||0)+(state.rules?.pingDoubles||0)}
 function ensureLengths(m){const dN=dartsTotal(),pN=pingTotal(); m.darts=Array.isArray(m.darts)?m.darts.slice(0,dN):[]; while(m.darts.length<dN)m.darts.push(null); if(!Array.isArray(m.pingPts))m.pingPts=[]; m.pingPts=m.pingPts.slice(0,pN); while(m.pingPts.length<pN)m.pingPts.push({a:null,b:null});}
 function _normMatch(m){m=m||{};m.id=m.id||uid();m.a=m.a||"";m.b=m.b||"";ensureLengths(m);m.palet=m.palet||{a:null,b:null};m.palet.a=(m.palet.a==null?null:+m.palet.a);m.palet.b=(m.palet.b==null?null:+m.palet.b);m.round=m.round||1;m.order=m.order||0;return m}
-function normalize(){state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11}; state.teams=Array.isArray(state.teams)?state.teams:[]; state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[]; state.protect=state.protect||{}; state.protect.teamPassHash=state.protect.teamPassHash||{}}
+function normalize(){
+  state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11};
+  state.teams=Array.isArray(state.teams)?state.teams:[];
+  state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[];
+  state.protect=state.protect||{}; state.protect.teamPassHash=state.protect.teamPassHash||{};
+  state.roundCtl=state.roundCtl||{}; state.bonusSelections=state.bonusSelections||{}; state.bonusApplied=state.bonusApplied||{};
+}
 
 /* ===== Cloud ===== */
 const cloud={enabled:false,db:null,id:null,ref:null,timer:null};
@@ -332,7 +401,7 @@ const hasFB=!!(window.firebase&&window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.a
 function initFB(){try{if(!hasFB) return null; if(!firebase.apps||firebase.apps.length===0) firebase.initializeApp(window.FIREBASE_CONFIG); return firebase.database();}catch(_){return null}}
 function setCloudTxt(t){id("cloud-status").textContent=t; id("cloud-status-2").textContent=t;}
 function unsubscribeCloud(){try{if(cloud.ref) cloud.ref.off('value');}catch(_){ } cloud.ref=null; cloud.enabled=false; cloud.id=null; setCloudTxt('hors ligne');}
-function resetState(){state={version:30,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}
+function resetState(){state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}}; try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}
 function joinCloud(code){
   if(!hasFB){alert("Firebase non configuré.");return}
   if(!cloud.db){cloud.db=initFB(); if(!cloud.db){alert("Init Firebase impossible.");return}}
@@ -366,7 +435,7 @@ function generateSchedule(){
     rest.unshift(rest.pop()); if(pairs.length>1){ let shift=r%pairs.length; while(shift-->0) pairs.unshift(pairs.pop()); }
     for(const pr of pairs){ out.push(_normMatch({id:uid(),a:pr[0],b:pr[1],darts:Array(dartsTotal()).fill(null),pingPts:Array(pingTotal()).fill({a:null,b:null}),palet:{a:null,b:null},round:r+1,order:order++})) }
   }
-  out.sort((x,y)=>(x.round-y.round)||(x.order-y.order)); state.matches=out; ui.open={}; saveState(); renderMatches();
+  out.sort((x,y)=>(x.round-y.round)||(x.order-y.order)); state.matches=out; ui.open={}; state.roundCtl={}; state.bonusSelections={}; state.bonusApplied={}; saveState(); renderMatches();
 }
 
 /* ===== Équipes ===== */
@@ -436,20 +505,93 @@ function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
 function clearMatch(mid){const m=findMatch(mid); if(!m) return; if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b))) return; if(!confirm("Effacer tous les scores de ce match ?")) return; m.darts=Array(dartsTotal()).fill(null); m.pingPts=Array(pingTotal()).fill({a:null,b:null}); m.palet={a:null,b:null}; saveState(); renderMatches();}
 
+/* ===== Bonus ===== */
+function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false}; return state.roundCtl[r];}
+function setBonusSelection(r,teamId,sel){ state.bonusSelections[r]=state.bonusSelections[r]||{}; state.bonusSelections[r][teamId]=sel; }
+function getBonusSelection(r,teamId){ return (state.bonusSelections[r]||{})[teamId] || null; }
+function setBonusApplied(r,teamId,pts){ state.bonusApplied[r]=state.bonusApplied[r]||{}; state.bonusApplied[r][teamId]=pts; }
+function getBonusAppliedSum(teamId){ let s=0; for(const r in state.bonusApplied){ const v=state.bonusApplied[r]?.[teamId]; if(v) s+=v; } return s; }
+function teamBonusUsed(teamId){ const t=teamObj(teamId); return !!(t && t.bonusCapitaineUsed); }
+function markTeamBonusUsed(teamId){ const t=teamObj(teamId); if(t){ t.bonusCapitaineUsed=true; } }
+
+/* Calcul du bonus Capitaine pour un match (dans la journée r) */
+function computeCapitaineBonusForMatch(m,teamId,player,sport){
+  let gain=0;
+  const isA = (m.a===teamId), isB = (m.b===teamId);
+  if(!isA && !isB) return 0;
+
+  if(sport==='darts'){
+    const sSingles = state.rules.dartsSingles||0;
+    m.darts.forEach((v,i)=>{
+      if(v!==0 && v!==1) return;
+      const winTeamA = (v===0), winTeamB = (v===1);
+      const won = isA?winTeamA:(isB?winTeamB:false);
+      if(!won) return;
+      // Simple 1 -> p1, Simple 2 -> p2, Doubles -> les deux comptent
+      if(i < sSingles){
+        const which = (i===0?'p1':'p2');
+        if(which===player) gain += BONUS_VAL;
+      }else{
+        // double : compte pour les deux joueurs
+        gain += BONUS_VAL;
+      }
+    });
+  } else if(sport==='ping'){
+    const sSingles = state.rules.pingSingles||0;
+    getPingPts(m).forEach((s,i)=>{
+      if(!isPingValid(s.a,s.b)) return;
+      const winA = s.a>s.b, winB = s.b>s.a;
+      const won = isA?winA:(isB?winB:false);
+      if(!won) return;
+      if(i < sSingles){
+        const which = (i===0?'p1':'p2');
+        if(which===player) gain += BONUS_VAL;
+      }else{
+        gain += BONUS_VAL;
+      }
+    });
+  } else if(sport==='palet'){
+    const T=state.rules.paletTarget||11;
+    if((isA && m.palet?.a===T) || (isB && m.palet?.b===T)) gain += BONUS_VAL;
+  }
+  return gain;
+}
+
+/* ===== Rendu Rencontres ===== */
+let CURRENT_ROUND = null;
+
 function renderMatches(){
   const list=id("match-list"); list.innerHTML="";
-  if(!state.matches.length){ list.appendChild(help("Aucune rencontre planifiée.")); id("stats-matches").textContent="0 / 0 matches complets"; return }
+  if(!state.matches.length){ list.appendChild(help("Aucune rencontre planifiée.")); id("stats-matches").textContent="0 / 0 matches complets"; id("round-status").textContent="—"; id("btn-start-round").style.display="none"; id("btn-end-round").style.display="none"; return }
+
   const groups={}; state.matches.forEach(m=>(groups[m.round]=groups[m.round]||[]).push(m));
-  const rounds=Object.keys(groups).map(Number).sort((a,b)=>a-b); let complete=0, idx=0;
+  const rounds=Object.keys(groups).map(Number).sort((a,b)=>a-b);
+
+  // déterminer la journée courante (première non terminée)
+  CURRENT_ROUND = rounds.find(r => !roundState(r).finished) ?? rounds[rounds.length-1];
+  const rs = roundState(CURRENT_ROUND);
+  id("round-status").textContent = `Journée active : #${CURRENT_ROUND} — ${rs.finished?'Terminée':(rs.started?'En cours':'Préparation')}`;
+  id("btn-start-round").style.display = (isAdmin() && !rs.started && !rs.finished) ? 'inline-block':'none';
+  id("btn-end-round").style.display   = (isAdmin() && rs.started && !rs.finished) ? 'inline-block':'none';
+
+  let complete=0, idx=0;
+
   rounds.forEach(r=>{
     const hdr=help("Journée "+r); hdr.style.fontWeight="600"; hdr.style.margin="8px 0"; list.appendChild(hdr);
+    const rCtl=roundState(r);
+
     groups[r].forEach(m=>{
       ensureLengths(m);
       const wins=computeSetWins(m), pal=m.palet, T=state.rules.paletTarget||11, palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"—";
       const done=isMatchComplete(m); if(done) complete++;
-      const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b));
+      const canA=(isAdmin()||hasClaim(m.a)), canB=(isAdmin()||hasClaim(m.b));
+
       const el=document.createElement("div"); el.className="match-card"; el.dataset.id=m.id;
       const isOpen=!!ui.open[m.id]; el.setAttribute("aria-expanded", isOpen?"true":"false");
+      // bonus chips
+      const bonusA = bonusChip(r,m.a,rCtl);
+      const bonusB = bonusChip(r,m.b,rCtl);
+
       el.innerHTML=`
         <div class="hd" data-expand style="border:none;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
           <div class="teams"><span class="chip">#${++idx}</span>
@@ -461,21 +603,22 @@ function renderMatches(){
             <span class="chip">Ping: <span class="score-compact">${hy(wins.aw.ping,wins.bw.ping)}</span></span>
             <span class="chip">Palet (T=${T}): <span class="score-compact">${palScore}</span></span>
             ${done?'<span class="pill" style="border-color:#2c6;color:#8fd">✅ Complet</span>':'<span class="pill" style="border-color:#aa6;color:#ffc">⏳ Incomplet</span>'}
+            ${bonusA} ${bonusB}
             <span class="chip">▶</span>
           </div>
         </div>
         <div class="bd">
-          ${renderDarts(m,can)}${renderPing(m,can)}${renderPalet(m,can)}
+          ${renderDarts(m,canA||canB)}${renderPing(m,canA||canB)}${renderPalet(m,canA||canB)}
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">
-            <div class="help">${can?'':'Lecture seule — connectez-vous à une des deux équipes.'}</div>
-            <div>${can?`<button type="button" class="btn small" data-clear="${m.id}">Effacer ce match</button>`:''}</div>
+            <div class="help">${(canA||canB)?'':'Lecture seule — connectez-vous à une des deux équipes.'}</div>
+            <div>${(canA||canB)?`<button type="button" class="btn small" data-clear="${m.id}">Effacer ce match</button>`:''}</div>
           </div>
         </div>`;
       list.appendChild(el);
 
-      // Fléchettes
+      // Sélecteurs fléchettes
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        if(!can) sel.disabled=true;
+        sel.disabled=!(canA||canB);
         sel.addEventListener("change", ()=>{
           const i=parseInt(sel.getAttribute("data-index"),10);
           const v=sel.value===""?null:parseInt(sel.value,10);
@@ -485,7 +628,7 @@ function renderMatches(){
 
       // Ping — saisie fluide + note en direct
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
-        if(!can) inp.disabled=true;
+        inp.disabled=!(canA||canB);
         const mid=m.id, idxSet=parseInt(inp.getAttribute("data-index"),10), which=inp.getAttribute("data-ping");
         const updateNote=()=>{
           const mm=findMatch(mid); const s=mm.pingPts[idxSet]; const ok=isPingValid(s.a,s.b);
@@ -502,9 +645,9 @@ function renderMatches(){
         inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
       });
 
-      // Palet — saisie fluide + note en direct
+      // Palet — saisie fluide + note
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        if(!can) inp.disabled=true;
+        inp.disabled=!(canA||canB);
         const mid=m.id, which=inp.getAttribute("data-palet");
         const updateNote=()=>{
           const mm=findMatch(mid); const T=state.rules.paletTarget||11; const a=mm.palet.a, b=mm.palet.b;
@@ -522,13 +665,56 @@ function renderMatches(){
         inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
       });
 
+      // Effacer
       const clr=qs('.match-card[data-id="'+m.id+'"] [data-clear]'); if(clr) clr.addEventListener("click", ()=>clearMatch(m.id));
+
       const head=qs('.match-card[data-id="'+m.id+'"] [data-expand]'); if(head) head.addEventListener("click", ()=>{ const open=el.getAttribute("aria-expanded")==="true"; el.setAttribute("aria-expanded", open?"false":"true"); ui.open[m.id]=!open; });
+
+      // Clic bonus
+      qsa('.match-card[data-id="'+m.id+'"] [data-bonus]').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const tid=b.getAttribute('data-team');
+          openBonusModal(r, tid);
+        });
+      });
     });
   });
+
   id("stats-matches").textContent=complete+" / "+state.matches.length+" matches complets";
   renderLeaderboard();
 }
+
+// Génère le chip/bouton bonus pour une équipe sur une journée
+function bonusChip(round, teamId, rCtl){
+  const mine = hasClaim(teamId) || isAdmin();
+  const used = teamBonusUsed(teamId);
+  const sel = getBonusSelection(round, teamId);
+  const applied = (state.bonusApplied[round]||{})[teamId];
+
+  // Texte visible selon phase
+  if(rCtl.finished){
+    const txt = applied ? `Capitaine ${sel?.player?.toUpperCase?.().replace('P','J')} / ${sportLabel(sel?.sport)} : +${applied}` : '—';
+    return `<span class="chip" title="Bonus révélé">${txt}</span>`;
+  }
+  // pas fini
+  if(sel){
+    // verrous
+    if(mine){
+      const txt = `Capitaine ${sel.player.toUpperCase().replace('P','J')} / ${sportLabel(sel.sport)}${rCtl.started?' (verrouillé)':' (modifiable)'}`;
+      return `<span class="chip" title="Votre sélection">${txt}</span>`;
+    }else{
+      return `<span class="chip" title="Secret jusqu’à la fin de journée">Bonus choisi (secret)</span>`;
+    }
+  }else{
+    // pas encore choisi
+    const disabled = rCtl.started || used ? ' disabled' : '';
+    const title = used?'Déjà utilisé une fois sur le tournoi':(rCtl.started?'Journée démarrée':'Choisir bonus');
+    return `<button type="button" class="bonus-btn" title="${title}" data-bonus="1" data-team="${teamId}"${disabled}>＋ Bonus</button>`;
+  }
+}
+function sportLabel(key){ return key==='darts'?'Fléchettes':(key==='ping'?'Ping':'Palet'); }
+
+/* ===== Saisie des sous-sections ===== */
 function renderDarts(m,can){
   const s=state.rules.dartsSingles,N=dartsTotal();let html="";
   for(let i=0;i<N;i++){
@@ -581,9 +767,53 @@ function renderPalet(m,can){
 }
 
 /* ===== Classement & H2H ===== */
-function computeLeaderboard(){const R=state.rules, stats={}; state.teams.forEach(t=>stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0}); state.matches.forEach(m=>{const A=stats[m.a],B=stats[m.b]; ensureLengths(m); m.darts.forEach(v=>{ if(v===0){A.dartsW++;A.points+=R.dartsWinPoints}else if(v===1){B.dartsW++;B.points+=R.dartsWinPoints} }); getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b){A.pingW++;A.points+=R.pingWinPoints}else if(s.b>s.a){B.pingW++;B.points+=R.pingWinPoints} } }); const pa=m.palet?.a,pb=m.palet?.b; if(pa!=null&&pb!=null){ A.palFor+=pa; B.palFor+=pb; A.palAg+=pb; B.palAg+=pa; A.points+=pa; B.points+=pb; } if(isMatchComplete(m)){A.matchesComplete++;B.matchesComplete++} }); const rows=Object.values(stats); rows.sort((x,y)=>(y.points-x.points)||((y.palFor-y.palAg)-(x.palFor-x.palAg))||((y.dartsW+y.pingW)-(x.dartsW+x.pingW))||x.name.localeCompare(y.name)); rows.forEach((r,i)=>r.rank=i+1); return rows;}
-function renderLeaderboard(){const tbody=qs("#table-classement tbody"); tbody.innerHTML=""; computeLeaderboard().forEach(r=>{const diff=r.palFor-r.palAg; const tr=document.createElement("tr"); tr.innerHTML=`<td>${r.rank}</td><td><span class="team-name">${r.avatar?(`<span class="avatar avatar-lg"><img src="${esc(r.avatar)}" alt="avatar"></span>`):(`<span class="avatar avatar-lg"><span class="avatar-initials">${esc(initials(r.name))}</span></span>`)} ${esc(r.name)}</span></td><td><b>${r.points}</b></td><td>${r.dartsW}</td><td>${r.pingW}</td><td><span class="score-compact">${hy(r.palFor,r.palAg)}</span> <span class="muted">(${diff>=0?'+':''}${diff})</span></td><td>${r.matchesComplete}</td>`; tbody.appendChild(tr); });}
-function pointsForTeamInMatch(m,tid){const R=state.rules; ensureLengths(m); const isA=m.a===tid,isB=m.b===tid; if(!isA&&!isB) return 0; let pts=0; m.darts.forEach(v=>{ if(v===0&&isA) pts+=R.dartsWinPoints; else if(v===1&&isB) pts+=R.dartsWinPoints; }); getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b&&isA) pts+=R.pingWinPoints; else if(s.b>s.a&&isB) pts+=R.pingWinPoints; } }); if(m.palet && m.palet.a!=null && m.palet.b!=null) pts += isA?m.palet.a:m.palet.b; return pts;}
+function baseLeaderboardStats(){
+  const R=state.rules, stats={};
+  state.teams.forEach(t=>stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,pointsBase:0,bonus:0,malus:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0});
+  state.matches.forEach(m=>{
+    const A=stats[m.a],B=stats[m.b]; ensureLengths(m);
+    m.darts.forEach(v=>{ if(v===0){A.dartsW++;A.pointsBase+=R.dartsWinPoints}else if(v===1){B.dartsW++;B.pointsBase+=R.dartsWinPoints} });
+    getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b){A.pingW++;A.pointsBase+=R.pingWinPoints}else if(s.b>s.a){B.pingW++;B.pointsBase+=R.pingWinPoints} } });
+    const pa=m.palet?.a,pb=m.palet?.b; if(pa!=null&&pb!=null){ A.palFor+=pa; B.palFor+=pb; A.palAg+=pb; B.palAg+=pa; A.pointsBase+=pa; B.pointsBase+=pb; }
+    if(isMatchComplete(m)){A.matchesComplete++;B.matchesComplete++}
+  });
+  // bonus appliqués (toutes journées finies)
+  Object.keys(state.bonusApplied||{}).forEach(r=>{
+    const perRound=state.bonusApplied[r];
+    Object.keys(perRound).forEach(tid=>{ const v=perRound[tid]||0; if(stats[tid]) stats[tid].bonus += v; });
+  });
+  return stats;
+}
+function computeLeaderboard(){
+  const stats=baseLeaderboardStats();
+  const rows=Object.values(stats).map(x=>({
+    teamId:x.teamId,name:x.name,avatar:x.avatar,
+    points:x.pointsBase + x.bonus - x.malus,
+    bonus:x.bonus, malus:x.malus,
+    dartsW:x.dartsW,pingW:x.pingW,palFor:x.palFor,palAg:x.palAg,matchesComplete:x.matchesComplete
+  }));
+  rows.sort((x,y)=>(y.points-x.points)||((y.palFor-y.palAg)-(x.palFor-x.palAg))||((y.dartsW+y.pingW)-(x.dartsW+x.pingW))||x.name.localeCompare(y.name));
+  rows.forEach((r,i)=>r.rank=i+1); return rows;
+}
+function renderLeaderboard(){
+  const tbody=qs("#table-classement tbody"); tbody.innerHTML="";
+  computeLeaderboard().forEach(r=>{
+    const diff=r.palFor-r.palAg;
+    const avatar = r.avatar?(`<span class="avatar avatar-lg"><img src="${esc(r.avatar)}" alt="avatar"></span>`):(`<span class="avatar avatar-lg"><span class="avatar-initials">${esc(initials(r.name))}</span></span>`);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${r.rank}</td>
+      <td><span class="team-name">${avatar} ${esc(r.name)}</span></td>
+      <td><b>${r.points}</b></td>
+      <td>${r.bonus}</td>
+      <td>${r.malus||0}</td>
+      <td>${r.dartsW}</td>
+      <td>${r.pingW}</td>
+      <td><span class="score-compact">${hy(r.palFor,r.palAg)}</span> <span class="muted">(${diff>=0?'+':''}${diff})</span></td>
+      <td>${r.matchesComplete}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function pointsForTeamInMatch(m,tid){const R=state.rules; ensureLengths(m); const isA=m.a===tid,isB=m.b===tid; if(!isA && !isB) return 0; let pts=0; m.darts.forEach(v=>{ if(v===0&&isA) pts+=R.dartsWinPoints; else if(v===1&&isB) pts+=R.dartsWinPoints; }); getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b&&isA) pts+=R.pingWinPoints; else if(s.b>s.a&&isB) pts+=R.pingWinPoints; } }); if(m.palet && m.palet.a!=null && m.palet.b!=null) pts += isA?m.palet.a:m.palet.b; return pts;}
 function renderH2H(){const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); thead.innerHTML=""; tbody.innerHTML=""; const teams=state.teams.slice(); if(!teams.length){ tbody.appendChild(help("Ajoutez des équipes pour voir la matrice.")); return; } const trH=document.createElement("tr"); trH.appendChild(document.createElement("th")).textContent="Équipe"; teams.forEach(t=>{ const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>'; trH.appendChild(th); }); thead.appendChild(trH); const byPair={}; state.matches.forEach(m=>{ byPair[[m.a,m.b].sort().join("|")]=m; }); teams.forEach(ti=>{ const tr=document.createElement("tr"); const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>'; tr.appendChild(th); teams.forEach(tj=>{ const td=document.createElement("td"); if(ti.id===tj.id){ td.textContent="—"; tr.appendChild(td); return; } const m=byPair[[ti.id,tj.id].sort().join("|")]; if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; } const pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id); let cls="h2h-draw", icon="≡"; if(pI>pJ){cls="h2h-win";icon="✔"} else if(pI<pJ){cls="h2h-loss";icon="✖"} td.innerHTML='<span class="h2h-pill '+cls+'">'+icon+' <span class="score-compact">'+hy(pI,pJ)+'</span></span>'; td.style.cursor="pointer"; td.dataset.matchId=m.id; tr.appendChild(td); }); tbody.appendChild(tr); }); tbody.addEventListener("click", e=>{ let n=e.target; while(n && n!==tbody && !(n.tagName==="TD" && n.dataset.matchId)) n=n.parentNode; if(!n||n===tbody) return; goto("calendrier"); ui.open[n.dataset.matchId]=true; setTimeout(()=>{const card=qs('.match-card[data-id="'+n.dataset.matchId+'"]'); if(card){ card.setAttribute("aria-expanded","true"); card.scrollIntoView({behavior:"smooth",block:"start"});}},0); });}
 
 /* ===== Tabs & clics ===== */
@@ -617,19 +847,21 @@ document.addEventListener("click",async (e)=>{
         const n=clampInt(id("teams-count-input").value,2,64);
         const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50)};
         joinCloud(code);
-        state={version:30,tid:uid(),cloudId:code,tournamentName:name,rules:R,teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null})),matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}};
+        state={version:40,tid:uid(),cloudId:code,tournamentName:name,rules:R,teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false})),matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};
         saveState(); pushCloud(true); renderAll(); goto("equipes"); break;
       }
 
       case "btn-join-code":{ const code=(id("join-code").value||"").trim(); if(!code) return alert("Renseigne un code."); joinCloud(code); goto("equipes"); break; }
       case "btn-copy-link":{ const code=(id("join-code").value||id("tcode-input").value||state.cloudId||"").trim(); if(!code) return alert("Aucun code."); const url=location.origin+location.pathname+"?id="+encodeURIComponent(code); navigator.clipboard?.writeText(url); alert("Lien copié !\n"+url); break; }
 
-      case "btn-add-team":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(state.locked) return alert("Calendrier figé."); state.teams.push({id:uid(),name:"Équipe "+(state.teams.length+1),p1:"",p2:"",avatar:null}); saveState(); renderTeams(); break; }
+      case "btn-add-team":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(state.locked) return alert("Calendrier figé."); state.teams.push({id:uid(),name:"Équipe "+(state.teams.length+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false}); saveState(); renderTeams(); break; }
       case "btn-generate":{ if(!isAdmin()) return alert("Seul l’admin peut générer."); if(state.locked) return; generateSchedule(); state.locked=true; saveState(); renderAll(); goto("calendrier"); break; }
+
       case "btn-refresh-standings": case "btn-refresh-standings-2":{ renderLeaderboard(); renderH2H(); if(btn.id==="btn-refresh-standings-2") goto("classement"); break; }
       case "btn-show-summary":{ id("view-summary").style.display="block"; id("view-h2h").style.display="none"; id("btn-show-summary").setAttribute("aria-pressed","true"); id("btn-show-h2h").setAttribute("aria-pressed","false"); break; }
       case "btn-show-h2h":{ id("view-summary").style.display="none"; id("view-h2h").style.display="block"; id("btn-show-summary").setAttribute("aria-pressed","false"); id("btn-show-h2h").setAttribute("aria-pressed","true"); break; }
       case "btn-collapse":{ qsa('#match-list .match-card').forEach(c=>c.setAttribute('aria-expanded','false')); ui.open={}; break; }
+
       case "btn-export":{ const data=JSON.stringify(state,null,2); const url=URL.createObjectURL(new Blob([data],{type:"application/json"})); const a=document.createElement("a"); a.href=url; a.download=("tournoi-"+(state.tournamentName||"TriSports")).replace(/\s+/g,'_')+".json"; a.click(); URL.revokeObjectURL(url); break; }
       case "btn-import":{ const f=id("file-import").files?.[0]; if(!f) return alert("Sélectionnez un fichier JSON."); f.text().then(t=>{ try{ const data=JSON.parse(t); state=data; normalize(); saveState(); renderAll(); alert("Import réussi !"); }catch(_){ alert("Fichier invalide."); } }); break; }
 
@@ -640,6 +872,37 @@ document.addEventListener("click",async (e)=>{
 
       case "btn-reset-scores":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(!confirm("Réinitialiser tous les SCORES ?")) return; state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};}); saveState(); renderAll(); goto("calendrier"); break; }
       case "btn-unlock":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLock(); break; }
+
+      case "btn-start-round":{
+        if(!isAdmin()) return;
+        const r=CURRENT_ROUND; const rs=roundState(r);
+        if(rs.started||rs.finished) return;
+        rs.started=true; saveState(); renderMatches(); alert("Journée #"+r+" démarrée. Les bonus sont verrouillés.");
+        break;
+      }
+      case "btn-end-round":{
+        if(!isAdmin()) return;
+        const r=CURRENT_ROUND; const rs=roundState(r);
+        if(!rs.started || rs.finished) return;
+
+        // Appliquer bonus pour la journée r
+        const matchesOfRound = state.matches.filter(m=>m.round===r);
+        const sels = state.bonusSelections[r]||{};
+        Object.keys(sels).forEach(tid=>{
+          const sel=sels[tid]; if(!sel) return;
+          // bonus utilisable une seule fois
+          if(teamBonusUsed(tid)) { setBonusApplied(r,tid,0); return; }
+          let total=0;
+          matchesOfRound.forEach(m=>{
+            total += computeCapitaineBonusForMatch(m,tid,sel.player,sel.sport);
+          });
+          setBonusApplied(r,tid,total);
+          markTeamBonusUsed(tid);
+        });
+        rs.finished=true; saveState(); renderMatches(); renderLeaderboard();
+        alert("Journée #"+r+" terminée. Les bonus sont appliqués et révélés.");
+        break;
+      }
     }
   }
 
@@ -669,8 +932,30 @@ document.addEventListener("click",async (e)=>{
     if(act==="avatar"){ const input=qs('[data-avatar="'+tid+'"]'); if(input) input.click(); }
     if(act==="avatar-clear"){ const t=teamObj(tid); if(!t) return; t.avatar=null; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
   }
+});
 
-  const clearBtn=e.target.closest("[data-clear]"); if(clearBtn){ clearMatch(clearBtn.getAttribute("data-clear")); }
+/* ===== Bonus modal ===== */
+let bonusCTX = {round:null, teamId:null};
+function openBonusModal(round, teamId){
+  const rCtl=roundState(round);
+  if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
+  if(teamBonusUsed(teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
+  const me = hasClaim(teamId) || isAdmin();
+  if(!me) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
+
+  bonusCTX.round = round; bonusCTX.teamId = teamId;
+  const sel = getBonusSelection(round, teamId);
+  id('bonus-player').value = sel?.player || 'p1';
+  id('bonus-sport').value  = sel?.sport  || 'darts';
+  id('bonus-context').textContent = `Équipe : ${teamName(teamId)} — Journée #${round}`;
+  id('bonus-modal').classList.add('show');
+}
+id('bonus-cancel').addEventListener('click', ()=> id('bonus-modal').classList.remove('show'));
+id('bonus-save').addEventListener('click', ()=>{
+  const r=bonusCTX.round, t=bonusCTX.teamId;
+  if(!r || !t) return id('bonus-modal').classList.remove('show');
+  setBonusSelection(r,t,{type:'capitaine', player:id('bonus-player').value, sport:id('bonus-sport').value});
+  saveState(); id('bonus-modal').classList.remove('show'); renderMatches();
 });
 
 /* ===== Boot ===== */
