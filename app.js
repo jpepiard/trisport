@@ -1,5 +1,5 @@
-// JS OK roles2c13 — Page "Tournoi" pour créer nom + N équipes
-(function () {
+// JS OK roles2c14 — Page "Tournoi" refaite : nouveau, liste, rejoindre (cloud déplacé ici)
+(function(){
   window.onerror = function (msg, src, line, col) {
     var el = document.getElementById("storage-warning");
     if (!el) return;
@@ -7,10 +7,10 @@
     el.textContent = "Erreur JS : " + msg + " @" + (src || "") + ":" + (line || 0) + ":" + (col || 0);
   };
 
-  document.addEventListener("DOMContentLoaded", function () {
-    // ---------- styles avatars
-    const st = document.createElement("style");
-    st.textContent = `
+  document.addEventListener("DOMContentLoaded", function(){
+    // ---------- Styles avatars
+    const st=document.createElement("style");
+    st.textContent=`
       .avatar{width:40px;height:40px;font-size:14px}
       .avatar .avatar-initials{line-height:40px}
       .avatar-lg{width:48px;height:48px;font-size:15px}
@@ -20,17 +20,18 @@
     `;
     document.head.appendChild(st);
 
-    // ---------- Local storage
-    const STORAGE_KEY = "tournoi_amis_roles2c6";
-    let MEMORY_ONLY = false;
-    function saveLocal(){ try{ if(!MEMORY_ONLY) localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ MEMORY_ONLY=true; warnStorage(); } }
-    function loadLocal(){ try{ const raw=localStorage.getItem(STORAGE_KEY); return raw?JSON.parse(raw):null; }catch(e){ MEMORY_ONLY=true; return null; } }
-    function warnStorage(){ const el=id("storage-warning"); if(el){ el.style.display="block"; el.textContent="⚠️ Stockage local indisponible (navigation privée ?)"; } }
+    // ---------- Storage keys
+    const STORAGE_KEY_CURRENT = "tournoi_amis_roles2c6"; // compat: état courant (pour continuer à fonctionner)
+    const LIB_KEY = "trisports_library_v1";              // bibliothèque de tournois (liste)
+    const LIB_STATE_PREFIX = "trisports_state_";         // snapshot par tournoi
+
+    let MEMORY_ONLY=false;
 
     // ---------- State & session
     let state = loadLocal() || {
-      version: 21,
-      tournamentName: "",   // <= nouveau
+      version: 22,
+      tournamentId: null,
+      tournamentName: "",
       teams: [],
       matches: [],
       locked: false,
@@ -41,7 +42,10 @@
     let ui = { open:{}, h2h:false };
     let session = { admin:false, claims:{} };
 
-    function sessionKey(){ return "tournoi_session_"+(cloud.id||"local"); }
+    function sessionKey(){ 
+      const key = (cloud.id || state.tournamentId || "local");
+      return "tournoi_session_"+key;
+    }
     function loadSession(){ try{ const raw=localStorage.getItem(sessionKey()); if(raw){ const s=JSON.parse(raw); if(s) session=s; } }catch{} updateWho(); }
     function saveSession(){ try{ localStorage.setItem(sessionKey(), JSON.stringify(session)); }catch{} updateWho(); }
 
@@ -63,19 +67,39 @@
         const val=snap.val();
         if(first){
           first=false;
-          if(!val){ pushCloud(true); setCloud("connecté (créé)"); return; }
+          if(!val){
+            // crée un tournoi vide côté cloud avec l'état courant
+            pushCloud(true);
+            setCloud("connecté (créé)");
+            // ajoute à la bibliothèque comme "remote"
+            libraryUpsert({ id:"remote:"+cloud.id, name: state.tournamentName || cloud.id, isRemote:true, code: cloud.id });
+            renderLibrary();
+            return;
+          }
         }
         if(!val) return;
         const remoteAt=+val.updatedAt||0;
         if(remoteAt<=cloud.lastRemoteAt) return;
         cloud.lastRemoteAt=remoteAt;
-        state = val.state || state; normalize(); saveLocal(); renderAll(); setCloud("connecté ("+cloud.id+")");
+        state = val.state || state;
+        normalize();
+        // associe un id stable
+        if(!state.tournamentId) state.tournamentId = "remote:"+cloud.id;
+        saveLocal();
+        librarySaveCurrent(); // mémorise le snapshot local
+        renderAll();
+        setCloud("connecté ("+cloud.id+")");
       });
 
-      try{ history.replaceState(null,"", location.pathname+"?v=roles2c13&id="+encodeURIComponent(cloud.id)); }catch{}
+      try{ history.replaceState(null,"", location.pathname+"?v=roles2c14&id="+encodeURIComponent(cloud.id)); }catch{}
     }
     function leaveCloud(){ if(cloud.ref) cloud.ref.off(); cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloud("hors ligne"); loadSession(); }
-    function pushCloud(immediate){ if(!cloud.enabled||!cloud.ref) return; const doIt=()=>cloud.ref.set({ state:state, updatedAt:Date.now() }); clearTimeout(cloud.pushTimer); cloud.pushTimer=setTimeout(doIt, immediate?0:250); }
+    function pushCloud(immediate){
+      if(!cloud.enabled||!cloud.ref) return;
+      const doIt=()=>cloud.ref.set({ state:state, updatedAt:Date.now() });
+      clearTimeout(cloud.pushTimer);
+      cloud.pushTimer=setTimeout(doIt, immediate?0:250);
+    }
 
     // ---------- Utils
     function id(x){ return document.getElementById(x); }
@@ -87,7 +111,72 @@
     function clampInt(v,min,max){ if(isNaN(v)) return null; return Math.max(min, Math.min(max, v)); }
     function help(t){ const d=document.createElement("div"); d.className="help"; d.textContent=t; return d; }
     async function sha256(str){ try{ if(crypto?.subtle){ const enc=new TextEncoder().encode(str); const buf=await crypto.subtle.digest("SHA-256",enc); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join(""); } }catch{} let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return ("00000000"+h.toString(16)).slice(-8).repeat(8); }
-    function salt(){ return cloud.id || "local"; }
+    function salt(){ return cloud.id || (state.tournamentId||"local"); }
+
+    // ---------- Local storage helpers
+    function saveLocal(){
+      try{
+        if(!MEMORY_ONLY) localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(state));
+      }catch(e){ MEMORY_ONLY=true; warnStorage(); }
+    }
+    function loadLocal(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY_CURRENT);
+        return raw ? JSON.parse(raw) : null;
+      }catch(e){ MEMORY_ONLY=true; return null; }
+    }
+    function warnStorage(){
+      const el=id("storage-warning");
+      if(el){ el.style.display="block"; el.textContent="⚠️ Stockage local indisponible (navigation privée ?)"; }
+    }
+
+    // ---------- Library (multi-tournois)
+    function libraryLoad(){
+      try{
+        const raw = localStorage.getItem(LIB_KEY);
+        const data = raw ? JSON.parse(raw) : { items:[] };
+        data.items = Array.isArray(data.items) ? data.items : [];
+        return data;
+      }catch(e){ return { items:[] }; }
+    }
+    function librarySave(lib){
+      try{ localStorage.setItem(LIB_KEY, JSON.stringify(lib)); }catch(e){}
+    }
+    function libraryStateKey(id){ return LIB_STATE_PREFIX + id; }
+    function librarySaveState(id, obj){
+      try{ localStorage.setItem(libraryStateKey(id), JSON.stringify(obj)); }catch(e){}
+    }
+    function libraryLoadState(id){
+      try{ const raw = localStorage.getItem(libraryStateKey(id)); return raw?JSON.parse(raw):null; }catch(e){ return null; }
+    }
+    function libraryUpsert(meta){
+      const lib = libraryLoad();
+      const idx = lib.items.findIndex(x=>x.id===meta.id);
+      const now = Date.now();
+      const item = Object.assign({ id:uid(), name:"Sans nom", updatedAt:now, isRemote:false }, meta, { updatedAt: now });
+      if(idx>=0) lib.items[idx]=item; else lib.items.unshift(item);
+      librarySave(lib);
+      return item;
+    }
+    function libraryRemove(id){
+      const lib = libraryLoad();
+      lib.items = lib.items.filter(x=>x.id!==id);
+      librarySave(lib);
+      try{ localStorage.removeItem(libraryStateKey(id)); }catch{}
+    }
+    function librarySaveCurrent(){
+      // crée un id si absent
+      if(!state.tournamentId){
+        state.tournamentId = "local:"+uid();
+      }
+      const name = (state.tournamentName||"").trim() || "Sans nom";
+      const isRemote = !!cloud.enabled;
+      const code = cloud.enabled ? cloud.id : null;
+      const idv = isRemote ? ("remote:"+code) : state.tournamentId;
+
+      libraryUpsert({ id:idv, name:name, isRemote:isRemote, code:code });
+      librarySaveState(idv, state);
+    }
 
     // ---------- Normalisation
     function _arr(x){ return Array.isArray(x)?x:[]; }
@@ -96,13 +185,19 @@
       m.id=m.id||uid(); m.a=m.a||""; m.b=m.b||"";
       m.darts=Array.isArray(m.darts)?m.darts.slice(0,3):[null,null,null]; while(m.darts.length<3) m.darts.push(null);
       if(!Array.isArray(m.pingPts)) m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}];
-      for(let i=0;i<3;i++){ m.pingPts[i]=m.pingPts[i]||{a:null,b:null}; m.pingPts[i].a = (m.pingPts[i].a==null?null:+m.pingPts[i].a); m.pingPts[i].b = (m.pingPts[i].b==null?null:+m.pingPts[i].b); }
+      for(let i=0;i<3;i++){ m.pingPts[i]=m.pingPts[i]||{a:null,b:null}; m.pingPts[i].a=(m.pingPts[i].a==null?null:+m.pingPts[i].a); m.pingPts[i].b=(m.pingPts[i].b==null?null:+m.pingPts[i].b); }
       m.palet=m.palet||{a:null,b:null}; m.palet.a=(m.palet.a==null?null:+m.palet.a); m.palet.b=(m.palet.b==null?null:+m.palet.b);
       m.round=m.round||1; m.order=m.order||0; return m;
     }
-    function normalize(){ if(!state) state={}; if(!state.protect) state.protect={teamPassHash:{}}; state.teams=_arr(state.teams); state.matches=_arr(state.matches).map(_normMatch); renderTitle(); }
+    function normalize(){
+      if(!state) state={};
+      if(!state.protect) state.protect={teamPassHash:{}};
+      state.teams=_arr(state.teams);
+      state.matches=_arr(state.matches).map(_normMatch);
+      renderTitle();
+    }
 
-    // ---------- Rôles
+    // ---------- Identité & droits
     function isAdmin(){ return !!session.admin; }
     function hasClaim(tid){ return !!session.claims[tid]; }
     function canEditTeam(){ return isAdmin(); }
@@ -110,11 +205,9 @@
     function canEditMatch(m){ return isAdmin() || hasClaim(m.a) || hasClaim(m.b); }
     function teamObj(tid){ return state.teams.find(t=>t.id===tid)||null; }
     function teamName(tid){ const t=teamObj(tid); return t?t.name:"—"; }
-
     function initials(name){ const s=(name||"").trim(); if(!s) return "?"; const p=s.split(/\s+/); return (p[0][0]+(p[1]?.[0]||"")).toUpperCase(); }
     function avatarHtml(tid,size){ const t=teamObj(tid)||{name:"?"}; const url=t.avatar; const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':''); const content=url?('<img src="'+esc(url)+'" alt="avatar">'):'<span class="avatar-initials">'+esc(initials(t.name))+'</span>'; return '<span class="avatar '+cls+'" title="'+esc(t.name)+'">'+content+'</span>'; }
 
-    // ---------- Identité
     function identityText(){
       const teams = Object.keys(session.claims||{}).map(teamName).filter(Boolean);
       if (isAdmin()) return teams.length ? `Admin · ${teams.join(", ")}` : "Admin";
@@ -143,7 +236,7 @@
     ["fullscreenchange","webkitfullscreenchange","mozfullscreenchange","MSFullscreenChange"].forEach(e=>document.addEventListener(e,updateFSBtn));
     updateFSBtn();
 
-    // ---------- Tabs
+    // ---------- Onglets
     qsa(".tab").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false"));
@@ -154,24 +247,14 @@
     });
     function goto(tabId){ const b=qs('.tab[data-tab="'+tabId+'"]'); if(!b) return; b.click(); }
 
-    // ---------- Cloud UI
-    onClick(id("btn-cloud-join"), ()=>joinCloud(id("cloud-id").value.trim()));
-    onClick(id("btn-cloud-leave"), ()=>leaveCloud());
-    onClick(id("btn-cloud-copy"), ()=>{
-      const code=id("cloud-id").value.trim(); if(!code){ alert("Renseigne d’abord le code tournoi."); return; }
-      const url=location.origin+location.pathname+"?v=roles2c13&id="+encodeURIComponent(code);
-      navigator.clipboard?.writeText(url); alert("Lien copié !\n"+url);
+    // ---------- Page Tournoi
+    // A) toggle formulaire "Nouveau tournoi"
+    onClick(id("btn-new-toggle"), ()=>{
+      const f=id("new-form");
+      if(!f) return;
+      f.style.display = (f.style.display==="none"||!f.style.display) ? "grid" : "none";
     });
 
-    // ---------- Admin ON/OFF
-    onClick(id("btn-admin-on"), ()=>{
-      const pin=prompt("PIN administrateur :");
-      if(pin==="30041991"){ session.admin=true; saveSession(); renderAll(); alert("Mode administrateur activé."); }
-      else alert("PIN incorrect.");
-    });
-    onClick(id("btn-admin-off"), ()=>{ session.admin=false; saveSession(); renderAll(); });
-
-    // ---------- Création du tournoi
     function ensureAdmin(){ if(isAdmin()) return true; const pin=prompt("PIN administrateur :"); if(pin==="30041991"){ session.admin=true; saveSession(); return true; } return false; }
     onClick(id("btn-create-tournament"), ()=>{
       if(!ensureAdmin()) return;
@@ -181,20 +264,81 @@
       if(state.teams.length || state.matches.length){
         if(!confirm("Cette action va EFFACER le tournoi actuel et en créer un nouveau. Continuer ?")) return;
       }
-      // reset state avec N équipes
-      state.tournamentName = name;
-      state.teams = Array.from({length:n}, (_,i)=>({ id:uid(), name:"Équipe "+(i+1), p1:"", p2:"", avatar:null }));
-      state.matches = [];
-      state.locked = false;
-      state.createdAt = new Date().toISOString();
-      state.protect = { teamPassHash:{} };
-
+      leaveCloud(); // on est en local
+      state={
+        version:22,
+        tournamentId: "local:"+uid(),
+        tournamentName: name,
+        teams: Array.from({length:n}, (_,i)=>({ id:uid(), name:"Équipe "+(i+1), p1:"", p2:"", avatar:null })),
+        matches: [],
+        locked: false,
+        createdAt: new Date().toISOString(),
+        protect: { teamPassHash:{} }
+      };
+      normalize();
       saveState();
-      renderAll();
+      librarySaveCurrent(); // enregistre dans la bibliothèque
+      renderLibrary();      // rafraîchit la liste
       goto("equipes");
     });
 
-    // ---------- Teams
+    // B) Liste bibliothèque
+    function renderLibrary(){
+      const wrap = id("lib-list"), empty=id("lib-empty");
+      if(!wrap) return;
+      wrap.innerHTML="";
+      const lib = libraryLoad();
+      if(!lib.items.length){
+        empty && (empty.style.display="block");
+        return;
+      }
+      empty && (empty.style.display="none");
+      lib.items.forEach(item=>{
+        const btn=document.createElement("button");
+        btn.type="button";
+        btn.className="btn";
+        btn.style.display="flex";
+        btn.style.justifyContent="space-between";
+        btn.style.alignItems="center";
+        btn.style.gap="8px";
+        btn.innerHTML = '<span>'+esc(item.name)+(item.isRemote?' <span class="chip" title="tournoi live">live</span>':'')+'</span>'
+                      + '<span class="muted" style="font-size:12px">'+new Date(item.updatedAt||Date.now()).toLocaleString()+'</span>';
+        btn.addEventListener("click", ()=>{
+          if(item.isRemote){
+            // ouvre le live
+            id("cloud-id").value = item.code || "";
+            joinCloud(item.code||"");
+            goto("equipes");
+          }else{
+            leaveCloud();
+            const snap = libraryLoadState(item.id);
+            if(!snap){ alert("Impossible d’ouvrir ce tournoi (aucune sauvegarde trouvée)."); return; }
+            state = snap; normalize(); saveLocal(); saveSession(); renderAll(); goto("equipes");
+          }
+        });
+        wrap.appendChild(btn);
+      });
+    }
+
+    // C) Rejoindre un code live (déplacé ici)
+    onClick(id("btn-cloud-join"), ()=>joinCloud(id("cloud-id").value.trim()));
+    onClick(id("btn-cloud-leave"), ()=>leaveCloud());
+    onClick(id("btn-cloud-copy"), ()=>{
+      const code=id("cloud-id").value.trim(); if(!code){ alert("Renseigne d’abord le code tournoi."); return; }
+      const url=location.origin+location.pathname+"?v=roles2c14&id="+encodeURIComponent(code);
+      navigator.clipboard?.writeText(url);
+      alert("Lien copié !\n"+url);
+    });
+
+    // ---------- Admin ON/OFF (Options)
+    onClick(id("btn-admin-on"), ()=>{
+      const pin=prompt("PIN administrateur :");
+      if(pin==="30041991"){ session.admin=true; saveSession(); renderAll(); alert("Mode administrateur activé."); }
+      else{ alert("PIN incorrect."); }
+    });
+    onClick(id("btn-admin-off"), ()=>{ session.admin=false; saveSession(); renderAll(); });
+
+    // ---------- Équipes
     const teamListEl=id("team-list");
     onClick(id("btn-add-team"), ()=>{
       if(!isAdmin()){ alert("Réservé à l’admin."); return; }
@@ -202,7 +346,6 @@
       state.teams.push({ id:uid(), name:"Équipe "+(state.teams.length+1), p1:"", p2:"", avatar:null });
       saveState(); renderTeams(); updateCounts(); updateLockUI();
     });
-
     onClick(id("btn-generate"), ()=>{
       if(!isAdmin()){ alert("Seul l’admin peut générer."); return; }
       if(state.locked) return;
@@ -212,7 +355,7 @@
     function renderTeams(){
       teamListEl.innerHTML="";
       if(!Array.isArray(state.teams) || state.teams.length===0){
-        teamListEl.appendChild(help("Aucune équipe. Rendez-vous dans l’onglet « Tournoi » pour créer un tournoi."));
+        teamListEl.appendChild(help("Aucune équipe. Créez ou rejoignez un tournoi depuis l’onglet « Tournoi »."));
         updateCounts(); updateLockUI(); return;
       }
 
@@ -253,7 +396,8 @@
         inp.addEventListener("input", ()=>{
           if(!canEditTeam(tid)) return;
           const t=teamObj(tid); if(!t) return;
-          t[f]=inp.value; saveState({cloud:false});
+          t[f]=inp.value;
+          saveState({cloud:false});
         });
         inp.addEventListener("blur", ()=>{
           if(!canEditTeam(tid)) return;
@@ -275,16 +419,16 @@
           saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts();
         });
       });
-
       qsa('#team-list [data-act="setpass"]').forEach(btn=>{
         btn.addEventListener("click", async ()=>{
           if(!isAdmin()) { alert("Réservé à l’admin."); return; }
           const tid=btn.getAttribute("data-id");
           const pass=prompt("Mot de passe pour l’équipe « "+teamName(tid)+" » :"); if(!pass) return;
-          const hash=await sha256(salt()+"|"+pass); state.protect=state.protect||{teamPassHash:{}}; state.protect.teamPassHash[tid]=hash; saveState(); renderTeams(); alert("Mot de passe défini.");
+          const hash=await sha256(salt()+"|"+pass);
+          state.protect=state.protect||{teamPassHash:{}}; state.protect.teamPassHash[tid]=hash;
+          saveState(); renderTeams(); alert("Mot de passe défini.");
         });
       });
-
       qsa('#team-list [data-act="login"]').forEach(btn=>{
         btn.addEventListener("click", async ()=>{
           const tid=btn.getAttribute("data-id");
@@ -352,7 +496,7 @@
     function updateCounts(){ id("teams-count").textContent = state.teams.length + " " + (state.teams.length>1?"équipes":"équipe"); const perTeam=Math.max(0,state.teams.length-1); id("rounds-count").textContent = perTeam + " " + (perTeam>1?"matchs":"match") + " par équipe"; }
     function updateLockUI(){ const pill=id("lock-pill"); if(pill) pill.style.display=state.locked?"inline-block":"none"; const gen=id("btn-generate"); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"; } }
 
-    // ---------- Calendrier
+    // ---------- Calendrier (round-robin homogène)
     function generateSchedule(){
       const ids=state.teams.map(t=>t.id);
       if(ids.length<2){ state.matches=[]; saveState(); renderMatches(); return; }
@@ -364,244 +508,4 @@
         const arr=[fixed].concat(rest), half=n/2, pairs=[];
         for(let k=0;k<half;k++){ const a=arr[k], b=arr[n-1-k]; if(a!==BYE&&b!==BYE) pairs.push((r%2===0)?[a,b]:[b,a]); }
         rest.unshift(rest.pop());
-        if(pairs.length>1){ let shift=r%pairs.length; while(shift-->0) pairs.unshift(pairs.pop()); }
-        for(const pr of pairs){ out.push({ id:uid(), a:pr[0], b:pr[1], darts:[null,null,null], pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}], palet:{a:null,b:null}, round:r+1, order:order++ }); }
-      }
-      out.sort((x,y)=>(x.round-y.round)||(x.order-y.order)); state.matches=out; saveState(); renderMatches();
-    }
-
-    // helpers scores
-    function getPingPts(m){ return Array.isArray(m.pingPts)?m.pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; }
-    function isPingValid(a,b){ if(a==null||b==null) return false; if(isNaN(a)||isNaN(b)) return false; const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
-    function computeSetWins(m){
-      const darts=Array.isArray(m.darts)?m.darts:[null,null,null];
-      const sets=getPingPts(m);
-      const aw={darts:0,ping:0}, bw={darts:0,ping:0};
-      darts.forEach(v=>{ if(v===0) aw.darts++; else if(v===1) bw.darts++; });
-      sets.forEach(s=>{ const a=(typeof s.a==='number')?s.a:null, b=(typeof s.b==='number')?s.b:null; if(isPingValid(a,b)){ if(a>b) aw.ping++; else if(b>a) bw.ping++; } });
-      return {aw, bw};
-    }
-    function isMatchComplete(m){
-      const okD=(Array.isArray(m.darts)?m.darts:[null,null,null]).every(v=>v===0||v===1);
-      const okP=getPingPts(m).every(s=>isPingValid(s.a,s.b));
-      const pa=m.palet.a, pb=m.palet.b;
-      const okL=(pa!=null&&pb!=null)&&((pa===11&&pb>=0&&pb<=10)||(pb===11&&pa>=0&&pa<=10));
-      return okD&&okP&&okL;
-    }
-
-    // ---------- Rencontres
-    const matchListEl=id("match-list"), statsMatchesEl=id("stats-matches");
-    function renderMatches(){
-      matchListEl.innerHTML="";
-      if(!Array.isArray(state.matches) || state.matches.length===0){ matchListEl.appendChild(help("Aucune rencontre planifiée.")); statsMatchesEl.textContent="0 / 0 matches complets"; return; }
-      const groups={}; state.matches.forEach(m=>{ (groups[m.round]=groups[m.round]||[]).push(m); });
-      const rounds=Object.keys(groups).map(k=>+k).sort((a,b)=>a-b);
-      let complete=0, idx=0;
-      rounds.forEach(r=>{
-        const hdr=help("Journée "+r); hdr.style.fontWeight="600"; hdr.style.margin="8px 0"; matchListEl.appendChild(hdr);
-        groups[r].forEach(m=>{
-          const wins=computeSetWins(m), pal=m.palet, palScore=(pal.a!=null&&pal.b!=null)?(pal.a+"–"+pal.b):"—";
-          const done=isMatchComplete(m); if(done) complete++;
-          const can=canEditMatch(m);
-          const el=document.createElement("div"); el.className="match-card"; el.dataset.id=m.id;
-          const isOpen=(typeof ui.open[m.id]==="boolean")?ui.open[m.id]:false;
-          el.setAttribute("aria-expanded", isOpen?"true":"false");
-
-          el.innerHTML=''
-            +'<div class="hd" data-expand style="border:none;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">'
-            +'<div class="teams"><span class="chip">#'+(++idx)+'</span> '
-            +'<span class="team-name">'+avatarHtml(m.a,'sm')+esc(teamName(m.a))+'</span> <span class="muted">vs</span> '
-            +'<span class="team-name">'+avatarHtml(m.b,'sm')+esc(teamName(m.b))+'</span></div>'
-            +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
-            +'<span class="chip">Journée '+(m.round||"?")+'</span>'
-            +'<span class="chip">Fléchettes G: '+wins.aw.darts+'-'+wins.bw.darts+'</span>'
-            +'<span class="chip">Ping G: '+wins.aw.ping+'-'+wins.bw.ping+'</span>'
-            +'<span class="chip">Palet: '+palScore+'</span>'
-            +(done?'<span class="pill" style="border-color:#2c6;color:#8fd">✅ Complet</span>':'<span class="pill" style="border-color:#aa6;color:#ffc">⏳ Incomplet</span>')
-            +'<span class="chip">▶</span></div></div>'
-            +'<div class="bd">'+renderDarts(m,can)+renderPing(m,can)+renderPalet(m,can)
-            +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">'
-            +'<div class="help">'+(can?'':'Lecture seule — connectez-vous à une des deux équipes.')+'</div>'
-            +'<div>'+(can?'<button type="button" class="btn small" data-clear="'+m.id+'">Effacer ce match</button>':'')+'</div></div></div>';
-
-          el.querySelector("[data-expand]").addEventListener("click", ()=>{
-            const open=el.getAttribute("aria-expanded")==="true";
-            el.setAttribute("aria-expanded", open?"false":"true");
-            ui.open[m.id]=!open;
-          });
-
-          // fléchettes
-          qsaIn(el,'select[data-match][data-kind]').forEach(sel=>{
-            if(!can) sel.disabled=true;
-            sel.addEventListener("change", ()=>{
-              if(!can) return;
-              const k=sel.getAttribute("data-kind"), ii=parseInt(sel.getAttribute("data-index"),10);
-              const v=sel.value===""?null:parseInt(sel.value,10);
-              const mm=findMatch(m.id); mm[k][ii]=v; saveState(); renderLeaderboard(); renderH2H();
-            });
-          });
-
-          // ping
-          qsaIn(el,'input[data-ping]').forEach(inp=>{
-            if(!can) inp.disabled=true;
-            inp.addEventListener("input", ()=>{
-              if(!can) return;
-              const w=inp.getAttribute("data-ping"), ii=parseInt(inp.getAttribute("data-index"),10);
-              const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);
-              const mm=findMatch(m.id); mm.pingPts[ii][w]=v; saveState(); renderLeaderboard(); renderH2H();
-            });
-            inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
-          });
-
-          // palet
-          qsaIn(el,'input[data-palet]').forEach(inp=>{
-            if(!can) inp.disabled=true;
-            inp.addEventListener("input", ()=>{
-              if(!can) return;
-              const w=inp.getAttribute("data-palet");
-              const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,11);
-              const mm=findMatch(m.id); mm.palet[w]=v; saveState(); renderLeaderboard(); renderH2H();
-            });
-            inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
-          });
-
-          const clr=el.querySelector("[data-clear]"); if(clr) clr.addEventListener("click", ()=>{ if(!can) return; clearMatch(m.id); renderLeaderboard(); renderH2H(); });
-
-          matchListEl.appendChild(el);
-        });
-      });
-      statsMatchesEl.textContent=complete+" / "+state.matches.length+" matches complets";
-      renderLeaderboard();
-    }
-
-    function renderDarts(m,can){
-      const subs=["Simple 1","Simple 2","Double"], names=[teamName(m.a),teamName(m.b)];
-      let html="";
-      for(let i=0;i<3;i++){
-        const v=m.darts[i];
-        html+='<div class="grid cols-3" style="align-items:end"><div>'
-          +'<label>Fléchettes — '+subs[i]+'</label>'
-          +'<select '+(can?'':'disabled ')+'data-match="'+m.id+'" data-kind="darts" data-index="'+i+'">'
-          +'<option value="" '+(v===null?'selected':'')+'>Non joué</option>'
-          +'<option value="0" '+(v===0?'selected':'')+'>Victoire '+esc(names[0])+'</option>'
-          +'<option value="1" '+(v===1?'selected':'')+'>Victoire '+esc(names[1])+'</option>'
-          +'</select></div><div></div><div></div></div>';
-      }
-      return html;
-    }
-    function renderPing(m,can){
-      const labels=["Simple 1","Simple 2","Double"], sets=getPingPts(m); let html="";
-      for(let i=0;i<3;i++){
-        const s=sets[i]||{a:null,b:null}, note=(s.a==null||s.b==null)?'Saisissez deux scores (11+ et écart ≥ 2).':(isPingValid(s.a,s.b)?'✔️ Score valide':'⚠️ Vainqueur à 11+ et écart de 2 (11–9, 12–10…).');
-        html+='<div class="grid cols-4" style="align-items:end;margin-top:6px">'
-          +'<div><label>Ping — '+labels[i]+' — '+esc(teamName(m.a))+'</label><input '+(can?'':'disabled ')+'type="number" min="0" max="99" step="1" value="'+(s.a==null?'':s.a)+'" data-ping="a" data-index="'+i+'"/></div>'
-          +'<div><label>Ping — '+labels[i]+' — '+esc(teamName(m.b))+'</label><input '+(can?'':'disabled ')+'type="number" min="0" max="99" step="1" value="'+(s.b==null?'':s.b)+'" data-ping="b" data-index="'+i+'"/></div>'
-          +'<div class="help">'+note+'</div><div></div></div>';
-      }
-      return html;
-    }
-    function renderPalet(m,can){
-      const a=m.palet.a, b=m.palet.b, note=(a==null||b==null)?'Saisissez les deux scores (l’un doit être 11).':((a===11&&b>=0&&b<=10)||(b===11&&a>=0&&a<=10)?'✔️ Score valide':'⚠️ Un score doit être 11, l’autre entre 0 et 10.');
-      return '<div class="grid cols-4" style="align-items:end;margin-top:6px">'
-        +'<div><label>Palet — '+esc(teamName(m.a))+'</label><input '+(can?'':'disabled ')+'type="number" min="0" max="11" step="1" value="'+(a==null?'':a)+'" data-palet="a"/></div>'
-        +'<div><label>Palet — '+esc(teamName(m.b))+'</label><input '+(can?'':'disabled ')+'type="number" min="0" max="11" step="1" value="'+(b==null?'':b)+'" data-palet="b"/></div>'
-        +'<div class="help">'+note+'</div><div></div></div>';
-    }
-
-    function findMatch(idv){ return state.matches.find(x=>x.id===idv); }
-    function clearMatch(idv){ const m=findMatch(idv); if(!m||!canEditMatch(m)) return; if(!confirm("Effacer tous les scores de ce match ?")) return; m.darts=[null,null,null]; m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; m.palet={a:null,b:null}; saveState(); renderMatches(); }
-
-    // ---------- Classement
-    function computeLeaderboard(){
-      const stats={}; state.teams.forEach(t=>{ stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0}; });
-      state.matches.forEach(m=>{
-        const A=stats[m.a], B=stats[m.b];
-        (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0){A.dartsW++;A.points+=5;} else if(v===1){B.dartsW++;B.points+=5;} });
-        getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b){A.pingW++;A.points+=5;} else if(s.b>s.a){B.pingW++;B.points+=5;} } });
-        const pa=m.palet.a, pb=m.palet.b; if(pa!=null&&pb!=null){ A.palFor+=pa; B.palFor+=pb; A.palAg+=pb; B.palAg+=pa; A.points+=pa; B.points+=pb; }
-        if(isMatchComplete(m)){ A.matchesComplete++; B.matchesComplete++; }
-      });
-      const rows=Object.values(stats);
-      rows.sort((x,y)=> (y.points-x.points) || ((y.palFor-y.palAg)-(x.palFor-x.palAg)) || ((y.dartsW+y.pingW)-(x.dartsW+x.pingW)) || x.name.localeCompare(y.name) );
-      rows.forEach((r,i)=>r.rank=i+1); return rows;
-    }
-    function renderLeaderboard(){
-      const tbody=qs("#table-classement tbody"); if(!tbody) return; tbody.innerHTML="";
-      computeLeaderboard().forEach(r=>{
-        const diff=r.palFor-r.palAg; const tr=document.createElement("tr");
-        tr.innerHTML='<td>'+r.rank+'</td>'
-          +'<td><span class="team-name">'+(r.avatar?('<span class="avatar avatar-lg"><img src="'+esc(r.avatar)+'" alt="avatar"></span>'):( '<span class="avatar avatar-lg"><span class="avatar-initials">'+esc(initials(r.name))+'</span></span>' ))+' '+esc(r.name)+'</span></td>'
-          +'<td><b>'+r.points+'</b></td><td>'+r.dartsW+'</td><td>'+r.pingW+'</td>'
-          +'<td>'+r.palFor+'–'+r.palAg+' <span class="muted">('+(diff>=0?'+':'')+diff+')</span></td>'
-          +'<td>'+r.matchesComplete+'</td>';
-        tbody.appendChild(tr);
-      });
-    }
-
-    // ---------- H2H
-    function pointsForTeamInMatch(m,teamId){
-      const isA=m.a===teamId, isB=m.b===teamId; if(!isA&&!isB) return 0;
-      let pts=0; (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0&&isA) pts+=5; else if(v===1&&isB) pts+=5; });
-      getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b&&isA) pts+=5; else if(s.b>s.a&&isB) pts+=5; } });
-      if(m.palet && m.palet.a!=null && m.palet.b!=null) pts += isA? m.palet.a : m.palet.b;
-      return pts;
-    }
-    function renderH2H(){
-      const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); if(!thead||!tbody) return;
-      thead.innerHTML=""; tbody.innerHTML="";
-      const teams=state.teams.slice(); if(!teams.length){ tbody.appendChild(help("Ajoutez des équipes pour voir la matrice.")); return; }
-      const trH=document.createElement("tr"); trH.appendChild(document.createElement("th")).textContent="Équipe";
-      teams.forEach(t=>{ const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>'; trH.appendChild(th); });
-      thead.appendChild(trH);
-      const byPair={}; state.matches.forEach(m=>{ byPair[[m.a,m.b].sort().join("|")]=m; });
-      teams.forEach(ti=>{
-        const tr=document.createElement("tr"); const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>'; tr.appendChild(th);
-        teams.forEach(tj=>{
-          const td=document.createElement("td");
-          if(ti.id===tj.id){ td.textContent="—"; tr.appendChild(td); return; }
-          const m=byPair[[ti.id,tj.id].sort().join("|")];
-          if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; }
-          const pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id);
-          if(pI===0 && pJ===0){ td.innerHTML='<span class="chip">•</span>'; }
-          else{ const tag=(pI>pJ)?'W':(pI<pJ)?'L':'='; td.innerHTML='<span class="chip">'+tag+' '+pI+'–'+pJ+'</span>'; }
-          td.style.cursor="pointer"; td.dataset.matchId=m.id; tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-      tbody.addEventListener("click", e=>{
-        let n=e.target; while(n && n!==tbody && !(n.tagName==="TD" && n.dataset.matchId)) n=n.parentNode;
-        if(!n||n===tbody) return; goToMatch(n.dataset.matchId);
-      });
-    }
-    function goToMatch(mid){ goto("calendrier"); ui.open[mid]=true; setTimeout(()=>{ const card=qs('.match-card[data-id="'+mid+'"]'); if(card){ card.setAttribute("aria-expanded","true"); card.scrollIntoView({behavior:"smooth",block:"start"}); } },0); }
-
-    // ---------- Export / Import / Reset
-    onClick(id("btn-export"), ()=>{ const data=JSON.stringify(state,null,2); const url=URL.createObjectURL(new Blob([data],{type:"application/json"})); const a=document.createElement("a"); a.href=url; a.download="tournoi-"+(state.tournamentName||"TriSports").replace(/\s+/g,'_')+".json"; a.click(); URL.revokeObjectURL(url); });
-    let importFile=null; id("file-import").addEventListener("change", e=>importFile=e.target.files[0]);
-    onClick(id("btn-import"), ()=>{ if(!importFile){ alert("Sélectionnez un fichier JSON."); return; } importFile.text().then(t=>{ try{ const data=JSON.parse(t); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw 0; state=data; normalize(); saveState(); renderAll(); alert("Import réussi !"); }catch{ alert("Fichier invalide."); } }); });
-
-    onClick(id("btn-reset"), ()=>{
-      const pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; }
-      if(!confirm("Ré-initialiser totalement ?")) return;
-      state={version:21,tournamentName:"",teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}};
-      normalize(); session={admin:false,claims:{}}; saveSession(); saveState(); renderAll(); goto("setup");
-    });
-    onClick(id("btn-unlock"), ()=>{ if(!isAdmin()){ alert("Réservé à l’admin."); return; } if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
-
-    // ---------- helpers
-    function onClick(el,fn){ if(el&&el.addEventListener) el.addEventListener("click",fn); }
-    function saveState(opts){ saveLocal(); renderTitle(); renderLeaderboard(); renderH2H(); if(cloud.enabled && !(opts && opts.cloud===false)) pushCloud(false); }
-
-    // ---------- Init
-    loadSession(); renderAll(); setCloud(cloud.enabled?"connecté":"hors ligne");
-    function renderAll(){
-      renderTitle();
-      // si pas d’équipes encore, ouvrir l’onglet "Tournoi" automatiquement
-      if(!state.teams.length) goto("setup");
-      renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI(); updateWho();
-    }
-
-    // param id= pour joindre le cloud direct
-    (function(){ const p=new URLSearchParams(location.search); const idp=p.get("id"); if(idp){ id("cloud-id").value=idp; joinCloud(idp); } })();
-  });
-})();
+        if(pairs.length>1){ let shift=r%pairs.length; while
