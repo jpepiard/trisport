@@ -51,6 +51,12 @@ table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:
 .teams .chip{margin-right:2px}
 .vs{color:var(--muted);margin:0 6px}
 
+/* Face-à-face coloré */
+.h2h-table td.h2h-win  { background: rgba(34,197,94,.14);  color:#86efac; }
+.h2h-table td.h2h-loss { background: rgba(239,68,68,.14);  color:#fca5a5; }
+.h2h-table td.h2h-draw { background: rgba(234,179,8,.16);  color:#fde68a; }
+.h2h-table td .chip{ background:transparent; border-color:transparent; color:inherit; }
+
 #storage-warning{position:fixed;right:12px;bottom:12px;display:none;background:#0f1331;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 10px;z-index:99;box-shadow:0 6px 24px rgba(0,0,0,.35)}
 #js-ok{position:fixed;right:12px;top:12px;background:#7a2525;color:#fff;padding:6px 10px;border-radius:10px;z-index:9999;font:600 12px system-ui,Segoe UI,Roboto}
 </style>
@@ -245,6 +251,13 @@ const uid=()=>Math.random().toString(36).slice(2,10);
 const clampInt=(v,min,max)=>{v=parseInt(v,10); if(isNaN(v)) return null; return Math.max(min,Math.min(max,v));}
 const help=t=>{const d=document.createElement("div");d.className="help";d.textContent=t;return d;}
 function fmtDate(ts){try{const d=new Date(ts);return d.toLocaleString()}catch(_){return ""}}
+// Hash simple FNV-1a 32 bits (trim) pour les mots de passe d’équipe
+function hashPass(s){
+  s=(s||"").trim();
+  let h=0x811c9dc5>>>0;
+  for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; }
+  return ("00000000"+h.toString(16)).slice(-8);
+}
 
 /* ===== Erreurs visibles ===== */
 window.onerror=(msg,src,line,col)=>{const el=id("storage-warning"); if(el){el.style.display="block";el.textContent="Erreur JS : "+msg+" @"+(src||"")+":"+(line||0)+":"+(col||0)} const p=id("js-ok"); if(p){p.textContent='JS chargé avec erreurs ⚠️'; p.style.background='#8a2a2a'}};
@@ -307,7 +320,12 @@ function renderTitle(){const name=(state.tournamentName||"").trim(); document.ti
 
 /* ===== Normalisation ===== */
 function _normMatch(m){m=m||{};m.id=m.id||uid();m.a=m.a||"";m.b=m.b||"";m.darts=Array.isArray(m.darts)?m.darts.slice(0,3):[null,null,null];while(m.darts.length<3)m.darts.push(null);if(!Array.isArray(m.pingPts))m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}];for(let i=0;i<3;i++){m.pingPts[i]=m.pingPts[i]||{a:null,b:null};m.pingPts[i].a=(m.pingPts[i].a==null?null:+m.pingPts[i].a);m.pingPts[i].b=(m.pingPts[i].b==null?null:+m.pingPts[i].b)}m.palet=m.palet||{a:null,b:null};m.palet.a=(m.palet.a==null?null:+m.palet.a);m.palet.b=(m.palet.b==null?null:+m.palet.b);m.round=m.round||1;m.order=m.order||0;return m}
-function normalize(){state.teams=Array.isArray(state.teams)?state.teams:[]; state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[]}
+function normalize(){
+  state.teams = Array.isArray(state.teams)?state.teams:[];
+  state.matches = Array.isArray(state.matches)?state.matches.map(_normMatch):[];
+  state.protect = state.protect || {};
+  state.protect.teamPassHash = state.protect.teamPassHash || {};
+}
 
 /* ===== Cloud ===== */
 const cloud={enabled:false,db:null,id:null,ref:null,lastRemoteAt:0,timer:null};
@@ -644,8 +662,12 @@ function renderH2H(){
       const m=byPair[[ti.id,tj.id].sort().join("|")];
       if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; }
       const pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id);
-      if(pI===0&&pJ===0){ td.innerHTML='<span class="chip">•</span>'; }
-      else{ const tag=(pI>pJ)?'W':(pI<pJ)?'L':'='; td.innerHTML='<span class="chip">'+tag+' '+pI+'–'+pJ+'</span>'; }
+      let cls="", tag="=", txt=pI+"–"+pJ;
+      if(pI>pJ){ cls="h2h-win"; tag="W"; }
+      else if(pI<pJ){ cls="h2h-loss"; tag="L"; }
+      else { cls="h2h-draw"; tag="="; }
+      td.classList.add(cls);
+      td.innerHTML='<span class="chip">'+tag+' '+txt+'</span>';
       td.style.cursor="pointer"; td.dataset.matchId=m.id; tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -735,12 +757,31 @@ document.addEventListener("click",(e)=>{
   if(actBtn){
     const act=actBtn.getAttribute("data-act"); const tid=actBtn.getAttribute("data-id");
     if(act==="del"){ if(!isAdmin()||state.locked) return; if(!confirm("Supprimer cette équipe ?")) return; state.teams=state.teams.filter(tt=>tt.id!==tid); state.matches=state.matches.filter(m=>m.a!==tid&&m.b!==tid); if(state.protect?.teamPassHash) delete state.protect.teamPassHash[tid]; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
-    if(act==="setpass"){ if(!isAdmin()) return alert("Réservé à l’admin."); const pass=prompt("Mot de passe pour l’équipe « "+teamName(tid)+" » :"); if(!pass) return;
-      let h=2166136261>>>0; for(let i=0;i<pass.length;i++){h^=pass.charCodeAt(i); h=(h*16777619)>>>0;} const hash=("00000000"+h.toString(16)).slice(-8);
-      state.protect=state.protect||{teamPassHash:{}}; state.protect.teamPassHash[tid]=hash; saveState(); renderTeams(); alert("Mot de passe défini."); }
-    if(act==="login"){ const has=!!(state.protect?.teamPassHash?.[tid]); if(!has) return alert("Cette équipe n’a pas encore de mot de passe."); const pass=prompt("Mot de passe de l’équipe « "+teamName(tid)+" » :"); if(!pass) return;
-      let h=2166136261>>>0; for(let i=0;i<pass.length;i++){h^=pass.charCodeAt(i); h=(h*16777619)>>>0;} const hash=("00000000"+h.toString(16)).slice(-8);
-      if(hash===state.protect.teamPassHash[tid]){ session.claims[tid]=true; updateWho(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); alert("Connexion réussie."); } else alert("Mot de passe incorrect."); }
+    if(act==="setpass"){
+      if(!isAdmin()) return alert("Réservé à l’admin.");
+      let pass=prompt("Mot de passe pour l’équipe « "+teamName(tid)+" » :");
+      if(pass==null) return;
+      pass=pass.trim();
+      if(!pass) return alert("Mot de passe vide.");
+      state.protect=state.protect||{}; state.protect.teamPassHash=state.protect.teamPassHash||{};
+      state.protect.teamPassHash[tid]=hashPass(pass);
+      saveState(); renderTeams(); alert("Mot de passe défini.");
+    }
+    if(act==="login"){
+      const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null;
+      if(!hashes || !hashes[tid]) return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin).");
+      let pass=prompt("Mot de passe de l’équipe « "+teamName(tid)+" » :");
+      if(pass==null) return;
+      pass=pass.trim();
+      if(!pass) return alert("Mot de passe vide.");
+      if(hashPass(pass)===hashes[tid]){
+        session.claims[tid]=true;
+        updateWho(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H();
+        alert("Connexion réussie.");
+      }else{
+        alert("Mot de passe incorrect.");
+      }
+    }
     if(act==="logout"){ delete session.claims[tid]; updateWho(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
     if(act==="avatar"){ const input=qs('[data-avatar="'+tid+'"]'); if(input) input.click(); }
     if(act==="avatar-clear"){ const t=teamObj(tid); if(!t) return; t.avatar=null; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
