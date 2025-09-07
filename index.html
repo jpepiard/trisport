@@ -46,7 +46,7 @@ table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:
 .avatar-lg{width:48px;height:48px;font-size:15px}.avatar-lg .avatar-initials{line-height:48px}
 .avatar-sm{width:32px;height:32px;font-size:12px}.avatar-sm .avatar-initials{line-height:32px}
 
-/* Nouveaux réglages d’alignement / espacement */
+/* Alignements récents */
 .teams{display:flex;align-items:center;gap:12px}
 .teams .chip{margin-right:2px}
 .vs{color:var(--muted);margin:0 6px}
@@ -293,8 +293,6 @@ function hasClaim(tid){return !!session.claims[tid]}
 function teamObj(tid){return state.teams.find(t=>t.id===tid)||null}
 function teamName(tid){const t=teamObj(tid);return t?t.name:"—"}
 function initials(name){const s=(name||"").trim(); if(!s) return "?"; const p=s.split(/\s+/); return (p[0][0]+(p[1]?.[0]||"")).toUpperCase()}
-
-/* >>> avatarHtml accepte des attributs additionnels (pour le clic) */
 function avatarHtml(tid, size, attrs){
   const t=teamObj(tid)||{name:"?"};
   const url=t.avatar;
@@ -304,7 +302,6 @@ function avatarHtml(tid, size, attrs){
                       : ('<span class="avatar-initials">'+esc(initials(t.name))+'</span>');
   return '<span class="avatar '+cls+'" title="'+esc(t.name)+'"'+extra+'>'+content+'</span>';
 }
-
 function updateWho(){const names=Object.keys(session.claims||{}).map(teamName).filter(Boolean); const who=isAdmin()? (names.length?("Admin · "+names.join(", ")):"Admin") : (names[0]||"visiteur"); const w1=id("whoami"); if(w1) w1.textContent="vous : "+who; const w2=id("whoami-top"); if(w2) w2.textContent=who; const add=id("btn-add-team"); if(add) add.style.display=isAdmin()?"inline-block":"none";}
 function renderTitle(){const name=(state.tournamentName||"").trim(); document.title=(name?name+" — ":"")+"TriSports — Fléchettes • Ping-pong • Palet"; const pill=id("tname-top"); if(pill){ if(name){pill.style.display="inline-block";pill.textContent=name}else{pill.style.display="none";pill.textContent=""} }}
 
@@ -533,13 +530,13 @@ function renderMatches(){
         </div>`;
       list.appendChild(el);
 
-      // Selects fléchettes
+      // Fléchettes
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
         if(!can) sel.disabled=true;
         sel.addEventListener("change", ()=>{
           const i=parseInt(sel.getAttribute("data-index"),10);
           const v=sel.value===""?null:parseInt(sel.value,10);
-          const mm=findMatch(m.id); mm.darts[i]=v; saveState(); renderLeaderboard(); renderH2H();
+          const mm=findMatch(m.id); mm.darts[i]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H();
         });
       });
       // Ping
@@ -548,7 +545,7 @@ function renderMatches(){
         inp.addEventListener("input", ()=>{
           const which=inp.getAttribute("data-ping"), i=parseInt(inp.getAttribute("data-index"),10);
           const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);
-          const mm=findMatch(m.id); mm.pingPts[i][which]=v; saveState(); renderLeaderboard(); renderH2H();
+          const mm=findMatch(m.id); mm.pingPts[i][which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H();
         });
         inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
       });
@@ -557,7 +554,7 @@ function renderMatches(){
         if(!can) inp.disabled=true;
         inp.addEventListener("input", ()=>{
           const which=inp.getAttribute("data-palet"); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,11);
-          const mm=findMatch(m.id); mm.palet[which]=v; saveState(); renderLeaderboard(); renderH2H();
+          const mm=findMatch(m.id); mm.palet[which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H();
         });
         inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
       });
@@ -692,14 +689,21 @@ document.addEventListener("click",(e)=>{
       case "btn-cloud-copy":{ if(!cloud.id) return alert("Pas publié. Utilise « Publier & partager »."); const url=location.origin+location.pathname+"?id="+encodeURIComponent(cloud.id); navigator.clipboard?.writeText(url); alert("Lien copié !\n"+url); break; }
       case "btn-cloud-leave":{ if(!cloud.enabled) return alert("Pas connecté au cloud."); if(!confirm("Quitter le cloud pour ce tournoi ?")) return; leaveCloud(); state.cloudId=null; saveState(); alert("Tournoi maintenant local."); break; }
       case "btn-reset-scores":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(!confirm("Réinitialiser tous les SCORES (calendrier et équipes conservés) ?")) return; state.matches.forEach(m=>{m.darts=[null,null,null];m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}];m.palet={a:null,b:null};}); saveState(); renderAll(); goto("calendrier"); break; }
-      case "btn-delete-current":{ if(!confirm("Supprimer ce tournoi de ce navigateur ? (Cloud inchangé)")) return; const tid=state.tid; deleteSnapshot(tid); const idx=getIndex(); if(idx.length){ const first=idx[0]; if(first.id.startsWith("cloud:")){ const code=first.id.slice(6); joinCloud(code); goto("equipes"); }else{ if(!loadSnapshot(first.id)){ state={version:23,tid:uid(),cloudId:null,tournamentName:"",teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; } } }else{ state={version:23,tid:uid(),cloudId:null,tournamentName:"",teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; } saveState(); renderAll(); goto("setup"); break; }
+      case "btn-delete-current":{ 
+        if(!isAdmin()) return alert("Réservé à l’administrateur.");
+        if(!confirm("Supprimer ce tournoi de ce navigateur ? (Cloud inchangé)")) return;
+        const tid=state.tid; deleteSnapshot(tid);
+        const idx=getIndex(); if(idx.length){ const first=idx[0]; if(first.id.startsWith("cloud:")){ const code=first.id.slice(6); joinCloud(code); goto("equipes"); }else{ if(!loadSnapshot(first.id)){ state={version:23,tid:uid(),cloudId:null,tournamentName:"",teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; } }
+        }else{ state={version:23,tid:uid(),cloudId:null,tournamentName:"",teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; }
+        saveState(); renderAll(); goto("setup"); break; 
+      }
       case "btn-reset":{ const pin=prompt("PIN administrateur :"); if(pin!=="30041991") return alert("PIN incorrect."); if(!confirm("Ré-initialiser totalement ?")) return;
         state={version:23,tid:uid(),cloudId:null,tournamentName:"",teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; session={admin:false,claims:{}}; saveState(); renderAll(); goto("setup"); break; }
       case "btn-unlock":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLock(); break; }
     }
   }
 
-  // >>> Clic direct sur une bulle d’avatar (Équipes) pour ouvrir le sélecteur de fichier
+  // Clic direct sur une bulle d’avatar (Équipes) -> ouvrir file picker
   const av=e.target.closest('.avatar[data-click-avatar]');
   if(av){
     const tid=av.getAttribute('data-click-avatar');
@@ -720,12 +724,13 @@ document.addEventListener("click",(e)=>{
     else{ if(!loadSnapshot(openId)){ alert("Impossible d’ouvrir ce tournoi (données manquantes)."); return; } renderAll(); goto("equipes"); }
   }
   const delBtn=e.target.closest("[data-del-id]"); if(delBtn){
+    if(!isAdmin()) return alert("Suppression réservée à l’administrateur.");
     const delId=delBtn.getAttribute("data-del-id"); if(!confirm("Supprimer ce tournoi local ?")) return;
     deleteSnapshot(delId); renderSetupRecent(); renderManageList();
     const curr=localStorage.getItem(CURR_KEY); if(curr===delId){ const idx=getIndex(); if(idx.length){ const first=idx[0]; if(first.id.startsWith("cloud:")) joinCloud(first.id.slice(6)); else loadSnapshot(first.id); renderAll(); } else { state={version:23,tid:uid(),cloudId:null,tournamentName:"",teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; saveState(); renderAll(); } }
   }
 
-  // Actions équipes (del/login/logout/avatar…)
+  // Actions équipes
   const actBtn=e.target.closest("[data-act]");
   if(actBtn){
     const act=actBtn.getAttribute("data-act"); const tid=actBtn.getAttribute("data-id");
