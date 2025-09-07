@@ -40,7 +40,7 @@
     .avatar-lg .avatar-initials{line-height:48px}
     .avatar-sm{width:32px;height:32px;font-size:12px}
     .avatar-sm .avatar-initials{line-height:32px}
-    #storage-warning{position:fixed; right:12px; bottom:12px; display:none; background:#0f1331; border:1px solid var(--border); color:var(--muted); border-radius:10px; padding:8px 10px; z-index:99; box-shadow:0 6px 24px rgba(0,0,0,.35)}
+    #storage-warning{position:fixed; right:12px; bottom:12px; display:none; background:#0f1331; border:1px solid var(--border); color:#muted; border-radius:10px; padding:8px 10px; z-index:99; box-shadow:0 6px 24px rgba(0,0,0,.35)}
   </style>
 
   <!-- Firebase -->
@@ -76,6 +76,7 @@
       <div style="display:flex;align-items:center;gap:8px">
         <span id="tname-top" class="pill" title="Nom du tournoi" style="display:none"></span>
         <span id="whoami-top" class="pill">visiteur</span>
+        <span id="js-ok" class="pill" style="display:none"></span>
         <button type="button" class="btn small" id="btn-fullscreen" title="Plein écran (Esc pour quitter)">⛶ Plein écran</button>
       </div>
     </div>
@@ -107,7 +108,7 @@
             </div>
           </div>
 
-          <!-- Rejoindre un tournoi (Cloud) -->
+          <!-- Rejoindre -->
           <div class="card">
             <div class="hd"><strong>Rejoindre tournoi existant</strong></div>
             <div class="bd grid">
@@ -226,6 +227,6 @@
     </div>
   </main>
 
-  <script defer src="app.js?v=roles2c14"></script>
+  <script defer src="app.js?v=roles2c15"></script>
 </body>
 </html>
