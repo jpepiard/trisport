@@ -1,1032 +1,653 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TriSports — Fléchettes • Ping-pong • Palet</title>
-  <style>
-    :root { --bg:#0f1220; --border:#2b315f; --text:#e7e9f7; --muted:#8b94b8; --chip:#242b55; --card:#1b2242; }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;background:radial-gradient(1200px 800px at 20% -10%, #1c2040, transparent),radial-gradient(1000px 600px at 120% 0%, #1b2550, transparent),var(--bg);color:var(--text)}
-    header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(130%) blur(8px);background:linear-gradient(180deg, rgba(15,18,32,.9), rgba(15,18,32,.6));border-bottom:1px solid var(--border)}
-    .container{max-width:1100px;margin:0 auto;padding:18px 16px}
-    .brand{display:flex;gap:12px;align-items:center}
-    .logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(from 210deg, #6ee7b7, #7aa2ff);display:grid;place-items:center;font-weight:900;color:#0a0d1c}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap}
-    .tab{background:var(--chip);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:999px;cursor:pointer}
-    .tab[aria-selected="true"]{background:linear-gradient(180deg,#1d2a57,#1a2450);border-color:#3a4aa0}
-    main .container{padding-top:22px}
-    section{display:none} section.active{display:block}
-    .card{background:linear-gradient(180deg,#171d3a,#121632);border:1px solid var(--border);border-radius:16px}
-    .card .hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .card .bd{padding:16px}
-    .help{font-size:13px;color:var(--muted)}
-    .muted{color:var(--muted)}
-    .btn{appearance:none;border:1px solid var(--border);background:var(--chip);color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
-    .btn.primary{background:linear-gradient(180deg,#2f3da2,#25337d);border-color:#3a4aa0}
-    .btn.small{padding:6px 10px;border-radius:10px;font-size:13px}
-    .btn.danger{background:linear-gradient(180deg,#7a2b2b,#5c2222);border-color:#8a2b2b}
-    .grid{display:grid;gap:12px} .grid.cols-2{grid-template-columns:repeat(2,1fr)} .grid.cols-3{grid-template-columns:repeat(3,1fr)} .grid.cols-4{grid-template-columns:repeat(4,1fr)} .grid.responsive{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-    input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:var(--text)}
-    label{font-size:13px;color:var(--muted)}
-    table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left} th{color:var(--muted);font-weight:600}
-    .match-card{border-radius:14px;border:1px solid var(--border);background:var(--card);overflow:hidden}
-    .chip{font-size:12px;padding:4px 8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;color:var(--muted)}
-    .pill{padding:4px 8px;border-radius:999px;background:#0f1331;border:1px solid var(--border);color:var(--muted);font-size:12px}
-    .h2h-table th, .h2h-table td { white-space:nowrap; }
-    .team-name{display:inline-flex;align-items:center;gap:8px}
-    .avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:#0f1331;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;color:#cbd5ff;font-weight:700;font-size:14px;flex:0 0 auto}
-    .avatar img{width:100%;height:100%;object-fit:cover}
-    .avatar .avatar-initials{display:inline-block;line-height:40px}
-    .avatar-lg{width:48px;height:48px;font-size:15px}
-    .avatar-lg .avatar-initials{line-height:48px}
-    .avatar-sm{width:32px;height:32px;font-size:12px}
-    .avatar-sm .avatar-initials{line-height:32px}
-    #storage-warning{position:fixed; right:12px; bottom:12px; display:none; background:#0f1331; border:1px solid var(--border); color:var(--muted); border-radius:10px; padding:8px 10px; z-index:99; box-shadow:0 6px 24px rgba(0,0,0,.35)}
-    #js-ok{position:fixed;right:12px;top:12px;background:#7a2525;color:#fff;padding:6px 10px;border-radius:10px;z-index:9999;font:600 12px system-ui,Segoe UI,Roboto}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TriSports — Fléchettes • Ping-pong • Palet</title>
+<style>
+:root{--bg:#0f1220;--border:#2b315f;--text:#e7e9f7;--muted:#8b94b8;--chip:#242b55;--card:#1b2242}
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;background:radial-gradient(1200px 800px at 20% -10%,#1c2040,transparent),radial-gradient(1000px 600px at 120% 0%,#1b2550,transparent),var(--bg);color:var(--text)}
+header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(130%) blur(8px);background:linear-gradient(180deg,rgba(15,18,32,.9),rgba(15,18,32,.6));border-bottom:1px solid var(--border)}
+.container{max-width:1100px;margin:0 auto;padding:18px 16px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(from 210deg,#6ee7b7,#7aa2ff);display:grid;place-items:center;font-weight:900;color:#0a0d1c}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{background:var(--chip);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:999px;cursor:pointer}
+.tab[aria-selected="true"]{background:linear-gradient(180deg,#1d2a57,#1a2450);border-color:#3a4aa0}
+main .container{padding-top:22px}
+section{display:none} section.active{display:block}
+.card{background:linear-gradient(180deg,#171d3a,#121632);border:1px solid var(--border);border-radius:16px}
+.card .hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.card .bd{padding:16px}
+.help{font-size:13px;color:var(--muted)} .muted{color:var(--muted)}
+.btn{appearance:none;border:1px solid var(--border);background:var(--chip);color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
+.btn.primary{background:linear-gradient(180deg,#2f3da2,#25337d);border-color:#3a4aa0}
+.btn.small{padding:6px 10px;border-radius:10px;font-size:13px}
+.btn.danger{background:linear-gradient(180deg,#7a2b2b,#5c2222);border-color:#8a2b2b}
+.grid{display:grid;gap:12px} .grid.cols-2{grid-template-columns:repeat(2,1fr)} .grid.cols-3{grid-template-columns:repeat(3,1fr)} .grid.cols-4{grid-template-columns:repeat(4,1fr)} .grid.responsive{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:var(--text)}
+label{font-size:13px;color:var(--muted)}
+table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left} th{color:var(--muted);font-weight:600}
+.match-card{border-radius:14px;border:1px solid var(--border);background:var(--card);overflow:hidden}
+.chip{font-size:12px;padding:4px 8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;color:var(--muted)}
+.pill{padding:4px 8px;border-radius:999px;background:#0f1331;border:1px solid var(--border);color:var(--muted);font-size:12px}
+.h2h-table th,.h2h-table td{white-space:nowrap}
+.team-name{display:inline-flex;align-items:center;gap:8px}
+.avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:#0f1331;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;color:#cbd5ff;font-weight:700;font-size:14px;flex:0 0 auto}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar .avatar-initials{display:inline-block;line-height:40px}
+.avatar-lg{width:48px;height:48px;font-size:15px}.avatar-lg .avatar-initials{line-height:48px}
+.avatar-sm{width:32px;height:32px;font-size:12px}.avatar-sm .avatar-initials{line-height:32px}
+#storage-warning{position:fixed;right:12px;bottom:12px;display:none;background:#0f1331;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 10px;z-index:99;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+#js-ok{position:fixed;right:12px;top:12px;background:#7a2525;color:#fff;padding:6px 10px;border-radius:10px;z-index:9999;font:600 12px system-ui,Segoe UI,Roboto}
+</style>
 
-  <!-- Firebase (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script>
-    window.FIREBASE_CONFIG = {
-      apiKey: "AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",
-      authDomain: "trisport-9a7b2.firebaseapp.com",
-      databaseURL: "https://trisport-9a7b2-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "trisport-9a7b2",
-      messagingSenderId: "132024051367",
-      appId: "1:132024051367:web:f9aa39785a3d4a43875d82"
-    };
-  </script>
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDomain:"trisport-9a7b2.firebaseapp.com",databaseURL:"https://trisport-9a7b2-default-rtdb.europe-west1.firebasedatabase.app",projectId:"trisport-9a7b2",messagingSenderId:"132024051367",appId:"1:132024051367:web:f9aa39785a3d4a43875d82"};
+</script>
 </head>
 <body>
-  <!-- Badge de contrôle JS -->
-  <div id="js-ok"><noscript>JavaScript est désactivé.</noscript>JS non chargé</div>
-  <script>
-    // Ping ultra-tôt : si ceci s’exécute, le JS est ok.
-    (function(){
-      var p=document.getElementById('js-ok');
-      if(p){ p.textContent='JS chargé ✅'; p.style.background='#14532d'; }
-    })();
-  </script>
+<!-- Badge JS -->
+<div id="js-ok">JS non chargé</div>
+<script>
+(function(){var p=document.getElementById('js-ok');if(p){p.textContent='JS chargé ✅';p.style.background='#14532d';}})();
+</script>
 
-  <header>
-    <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
-      <div class="brand">
-        <div class="logo">T</div>
-        <h1 style="font-size:18px;margin:0">TriSports</h1>
-      </div>
-
-      <nav class="tabs" role="tablist" aria-label="Sections" style="flex:1;justify-content:center;display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" class="tab" role="tab" aria-selected="true" data-tab="setup">Tournoi</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="equipes">Équipes</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="calendrier">Rencontres</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="classement">Classement</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="options">Options</button>
-      </nav>
-
-      <div style="display:flex;align-items:center;gap:8px">
-        <span id="tname-top" class="pill" title="Nom du tournoi" style="display:none"></span>
-        <span id="whoami-top" class="pill">visiteur</span>
-        <button type="button" class="btn small" id="btn-fullscreen" title="Plein écran (Esc pour quitter)">⛶ Plein écran</button>
-      </div>
+<header>
+  <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
+    <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
+    <nav class="tabs" role="tablist" aria-label="Sections" id="tabs">
+      <button type="button" class="tab" role="tab" aria-selected="true" data-tab="setup">Tournoi</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="equipes">Équipes</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="calendrier">Rencontres</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="classement">Classement</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="options">Options</button>
+    </nav>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="tname-top" class="pill" style="display:none"></span>
+      <span id="whoami-top" class="pill">visiteur</span>
+      <button type="button" class="btn small" id="btn-fullscreen">⛶ Plein écran</button>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main>
-    <div class="container">
-      <div id="storage-warning" class="help" style="display:none"></div>
+<main>
+  <div class="container">
+    <div id="storage-warning" class="help" style="display:none"></div>
 
-      <!-- 1) Accueil Tournoi -->
-      <section id="setup" class="active">
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="hd"><strong>Nouveau tournoi</strong></div>
-            <div class="bd grid cols-2">
-              <div>
-                <label>Nom du tournoi</label>
-                <input type="text" id="tname-input" placeholder="ex : Tournoi de la plage" />
-              </div>
-              <div>
-                <label>Nombre d'équipes</label>
-                <input type="number" id="teams-count-input" min="2" max="64" step="1" value="4" />
-              </div>
-              <div style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <button type="button" class="btn primary" id="btn-create-tournament">Créer</button>
-                <span class="help">Action réservée à l’administrateur.</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="hd"><strong>Rejoindre tournoi existant</strong></div>
-            <div class="bd grid">
-              <label>Code du tournoi (cloud)</label>
-              <input type="text" id="join-code" placeholder="ex : apero2025" />
-              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                <button type="button" class="btn primary" id="btn-join-code">Rejoindre</button>
-                <button type="button" class="btn" id="btn-copy-link">Copier lien ?id=code</button>
-                <span class="help">Statut : <span id="cloud-status">hors ligne</span></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="margin-top:12px">
-          <div class="hd"><strong>Tournois enregistrés (ce navigateur)</strong></div>
-          <div class="bd" id="recent-list"><div class="help">Aucun tournoi mémorisé pour l’instant.</div></div>
-        </div>
-      </section>
-
-      <!-- 2) Équipes -->
-      <section id="equipes">
+    <!-- 1) Tournoi -->
+    <section id="setup" class="active">
+      <div class="grid cols-2">
         <div class="card">
-          <div class="hd">
-            <div>
-              <strong>Équipes</strong>
-              <div class="help">L’<b>administrateur</b> crée et édite les équipes. Les joueurs se connectent à leur équipe pour saisir <b>leurs scores</b> uniquement.</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <span class="pill" id="lock-pill" style="display:none">Calendrier figé 🔒</span>
-              <button type="button" class="btn" id="btn-add-team" style="display:none">+ Ajouter équipe (admin)</button>
-              <button type="button" class="btn primary" id="btn-generate">Générer le calendrier</button>
+          <div class="hd"><strong>Nouveau tournoi</strong></div>
+          <div class="bd grid cols-2">
+            <div><label>Nom du tournoi</label><input type="text" id="tname-input" placeholder="ex : Tournoi de la plage"/></div>
+            <div><label>Nombre d'équipes</label><input type="number" id="teams-count-input" min="2" max="64" step="1" value="4"/></div>
+            <div style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button type="button" class="btn primary" id="btn-create-tournament">Créer</button>
+              <span class="help">Action réservée à l’administrateur.</span>
             </div>
           </div>
-          <div class="bd"><div id="team-list" class="grid responsive"></div></div>
         </div>
-      </section>
 
-      <!-- 3) Rencontres -->
-      <section id="calendrier">
         <div class="card">
-          <div class="hd">
-            <strong>Rencontres</strong>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <span class="pill" id="stats-matches">0 / 0 matches complets</span>
-              <button type="button" class="btn small" id="btn-refresh-standings">Mettre à jour le classement</button>
-              <button type="button" class="btn small" id="btn-collapse">Tout replier</button>
+          <div class="hd"><strong>Rejoindre tournoi existant</strong></div>
+          <div class="bd grid">
+            <label>Code du tournoi (cloud)</label>
+            <input type="text" id="join-code" placeholder="ex : apero2025"/>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button type="button" class="btn primary" id="btn-join-code">Rejoindre</button>
+              <button type="button" class="btn" id="btn-copy-link">Copier lien ?id=code</button>
+              <span class="help">Statut : <span id="cloud-status">hors ligne</span></span>
             </div>
           </div>
-          <div class="bd"><div id="match-list" class="grid"></div></div>
         </div>
-      </section>
+      </div>
 
-      <!-- 4) Classement -->
-      <section id="classement">
+      <div class="card" style="margin-top:12px">
+        <div class="hd"><strong>Tournois enregistrés (ce navigateur)</strong></div>
+        <div class="bd" id="recent-list"><div class="help">Aucun tournoi mémorisé pour l’instant.</div></div>
+      </div>
+    </section>
+
+    <!-- 2) Équipes -->
+    <section id="equipes">
+      <div class="card">
+        <div class="hd">
+          <div>
+            <strong>Équipes</strong>
+            <div class="help">L’<b>administrateur</b> crée et édite les équipes. Les joueurs se connectent à leur équipe pour saisir <b>leurs scores</b> uniquement.</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="pill" id="lock-pill" style="display:none">Calendrier figé 🔒</span>
+            <button type="button" class="btn" id="btn-add-team" style="display:none">+ Ajouter équipe (admin)</button>
+            <button type="button" class="btn primary" id="btn-generate">Générer le calendrier</button>
+          </div>
+        </div>
+        <div class="bd"><div id="team-list" class="grid responsive"></div></div>
+      </div>
+    </section>
+
+    <!-- 3) Rencontres -->
+    <section id="calendrier">
+      <div class="card">
+        <div class="hd">
+          <strong>Rencontres</strong>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="pill" id="stats-matches">0 / 0 matches complets</span>
+            <button type="button" class="btn small" id="btn-refresh-standings">Mettre à jour le classement</button>
+            <button type="button" class="btn small" id="btn-collapse">Tout replier</button>
+          </div>
+        </div>
+        <div class="bd"><div id="match-list" class="grid"></div></div>
+      </div>
+    </section>
+
+    <!-- 4) Classement -->
+    <section id="classement">
+      <div class="card">
+        <div class="hd">
+          <strong>Classement</strong>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="pill" id="teams-count">0 équipes</span>
+            <span class="pill" id="rounds-count">0 matchs par équipe</span>
+            <button type="button" class="btn small" id="btn-toggle-h2h">Vue face-à-face</button>
+            <button type="button" class="btn small" id="btn-refresh-standings-2">Mettre à jour</button>
+          </div>
+        </div>
+        <div class="bd" style="overflow:auto">
+          <div id="view-summary">
+            <div class="help" style="margin-bottom:10px">
+              Règles — Fléchettes : 3 parties (2 simples + 1 double), <b>5 pts</b> par partie gagnée.
+              Ping-pong : 3 parties (2 simples + 1 double), score valide si <b>11+</b> et <b>écart ≥ 2</b>, victoire = <b>5 pts</b>.
+              Palet : 1 double à 11, les points marqués s’ajoutent au total.
+            </div>
+            <table id="table-classement"><thead><tr><th>#</th><th>Équipe</th><th>Points</th><th>Fléchettes (G)</th><th>Ping-pong (G)</th><th>Palet (PF–PA)</th><th>Matchs complets</th></tr></thead><tbody></tbody></table>
+          </div>
+          <div id="view-h2h" style="display:none">
+            <div class="help" style="margin-bottom:10px">Face-à-face : cliquez sur une cellule pour ouvrir la rencontre.</div>
+            <table id="table-h2h" class="h2h-table"><thead></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5) Options -->
+    <section id="options">
+      <div class="grid cols-2">
         <div class="card">
-          <div class="hd">
-            <strong>Classement</strong>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <span class="pill" id="teams-count">0 équipes</span>
-              <span class="pill" id="rounds-count">0 matchs par équipe</span>
-              <button type="button" class="btn small" id="btn-toggle-h2h">Vue face-à-face</button>
-              <button type="button" class="btn small" id="btn-refresh-standings-2">Mettre à jour</button>
-            </div>
-          </div>
-          <div class="bd" style="overflow:auto">
-            <div id="view-summary">
-              <div class="help" style="margin-bottom:10px">
-                Règles — Fléchettes : 3 parties (2 simples + 1 double), <b>5 pts</b> par partie gagnée.
-                Ping-pong : 3 parties (2 simples + 1 double), score valide si <b>11+</b> et <b>écart ≥ 2</b>, victoire = <b>5 pts</b>.
-                Palet : 1 double à 11, les points marqués s’ajoutent au total.
-              </div>
-              <table id="table-classement"><thead><tr><th>#</th><th>Équipe</th><th>Points</th><th>Fléchettes (G)</th><th>Ping-pong (G)</th><th>Palet (PF–PA)</th><th>Matchs complets</th></tr></thead><tbody></tbody></table>
-            </div>
-            <div id="view-h2h" style="display:none">
-              <div class="help" style="margin-bottom:10px">Face-à-face : cliquez sur une cellule pour ouvrir la rencontre.</div>
-              <table id="table-h2h" class="h2h-table"><thead></thead><tbody></tbody></table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 5) Options -->
-      <section id="options">
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="hd"><strong>Exporter / Importer</strong></div>
-            <div class="bd grid" style="gap:10px">
-              <button type="button" class="btn" id="btn-export">Exporter en JSON</button>
-              <input type="file" id="file-import" accept="application/json" />
-              <button type="button" class="btn" id="btn-import">Importer le fichier JSON</button>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="hd"><strong>Accès administrateur</strong></div>
-            <div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <button type="button" class="btn" id="btn-admin-on">Activer admin</button>
-              <button type="button" class="btn" id="btn-admin-off">Désactiver admin</button>
-              <span class="pill" id="whoami">vous : visiteur (lecture seule)</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="margin-top:12px">
-          <div class="hd"><strong>Cloud (partage)</strong></div>
-          <div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <span class="pill">Statut : <span id="cloud-status-2">hors ligne</span></span>
-            <button type="button" class="btn primary" id="btn-publish-cloud">Publier & partager ce tournoi</button>
-            <button type="button" class="btn" id="btn-cloud-copy">Copier le lien de partage</button>
-            <button type="button" class="btn" id="btn-cloud-leave">Quitter le cloud (rester en local)</button>
-          </div>
-        </div>
-
-        <div class="card" style="margin-top:12px">
-          <div class="hd"><strong>Réinitialisation</strong></div>
+          <div class="hd"><strong>Exporter / Importer</strong></div>
           <div class="bd grid" style="gap:10px">
-            <button type="button" class="btn danger" id="btn-reset">Nouvelle compétition (tout effacer)</button>
-            <button type="button" class="btn" id="btn-unlock">🔓 Déverrouiller le calendrier</button>
+            <button type="button" class="btn" id="btn-export">Exporter en JSON</button>
+            <input type="file" id="file-import" accept="application/json"/>
+            <button type="button" class="btn" id="btn-import">Importer le fichier JSON</button>
           </div>
         </div>
-      </section>
-    </div>
-  </main>
 
-  <!-- === JS INLINE (défensif + messages d’erreur visibles) === -->
-  <script>
-  (function () {
-    // Si une erreur survient, on l’affiche clairement
-    window.onerror = function (msg, src, line, col) {
-      try {
-        var el = document.getElementById("storage-warning");
-        if (el) {
-          el.style.display = "block";
-          el.textContent = "Erreur JS : " + msg + " @" + (src || "") + ":" + (line || 0) + ":" + (col || 0);
-        }
-        var p=document.getElementById('js-ok');
-        if(p){ p.textContent='JS chargé avec erreurs ⚠️'; p.style.background='#8a2a2a'; }
-      } catch(e) {}
-    };
+        <div class="card">
+          <div class="hd"><strong>Accès administrateur</strong></div>
+          <div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button type="button" class="btn" id="btn-admin-on">Activer admin</button>
+            <button type="button" class="btn" id="btn-admin-off">Désactiver admin</button>
+            <span class="pill" id="whoami">vous : visiteur (lecture seule)</span>
+          </div>
+        </div>
+      </div>
 
-    document.addEventListener("DOMContentLoaded", function () {
-      // Styles avatars (au cas où le CSS initial ne passe pas)
-      addInlineStyle(".avatar{width:40px;height:40px;font-size:14px}.avatar .avatar-initials{line-height:40px}.avatar-lg{width:48px;height:48px;font-size:15px}.avatar-lg .avatar-initials{line-height:48px}.avatar-sm{width:32px;height:32px;font-size:12px}.avatar-sm .avatar-initials{line-height:32px}");
+      <div class="card" style="margin-top:12px">
+        <div class="hd"><strong>Cloud (partage)</strong></div>
+        <div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span class="pill">Statut : <span id="cloud-status-2">hors ligne</span></span>
+          <button type="button" class="btn primary" id="btn-publish-cloud">Publier & partager ce tournoi</button>
+          <button type="button" class="btn" id="btn-cloud-copy">Copier le lien de partage</button>
+          <button type="button" class="btn" id="btn-cloud-leave">Quitter le cloud (rester en local)</button>
+        </div>
+      </div>
 
-      /* ---------- Stockage local ---------- */
-      var STORAGE_KEY="tournoi_amis_roles2c6";
-      var IDX_KEY="trisports_index_v1";
-      var SNAP_PREFIX="trisports_state_";
-      var CURR_KEY="trisports_current_id";
-      var MEMORY_ONLY=false;
+      <div class="card" style="margin-top:12px">
+        <div class="hd"><strong>Réinitialisation</strong></div>
+        <div class="bd grid" style="gap:10px">
+          <button type="button" class="btn danger" id="btn-reset">Nouvelle compétition (tout effacer)</button>
+          <button type="button" class="btn" id="btn-unlock">🔓 Déverrouiller le calendrier</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
 
-      function saveRuntime(){ try{ if(!MEMORY_ONLY) localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ MEMORY_ONLY=true; warnStorage(); } }
-      function loadRuntime(){ try{ var raw=localStorage.getItem(STORAGE_KEY); return raw?JSON.parse(raw):null; }catch(e){ MEMORY_ONLY=true; return null; } }
-      function warnStorage(){ var el=id("storage-warning"); if(el){ el.style.display="block"; el.textContent="⚠️ Stockage local indisponible (navigation privée ?)."; } }
+<script>
+/* ===== Helpers basiques ===== */
+function id(x){return document.getElementById(x)}
+function qs(s){return document.querySelector(s)}
+function qsa(s){return Array.from(document.querySelectorAll(s))}
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;","\"":"&quot;","'":"&#39;"}[c]))}
+function uid(){return Math.random().toString(36).slice(2,10)}
+function clampInt(v,min,max){v=parseInt(v,10);if(isNaN(v))return null;return Math.max(min,Math.min(max,v))}
+function addInlineStyle(css){const st=document.createElement("style");st.textContent=css;document.head.appendChild(st)}
+function help(t){const d=document.createElement("div");d.className="help";d.textContent=t;return d}
 
-      function getIndex(){ try{ return JSON.parse(localStorage.getItem(IDX_KEY)||"[]"); }catch(e){ return []; } }
-      function setIndex(arr){ try{ localStorage.setItem(IDX_KEY, JSON.stringify(arr||[])); }catch(e){} }
-      function upsertIndex(entry){
-        var idx=getIndex(); var i=-1; for(var k=0;k<idx.length;k++){ if(idx[k].id===entry.id){ i=k; break; } }
-        if(i>=0) idx[i]=Object.assign({}, idx[i], entry); else idx.unshift(entry);
-        setIndex(idx);
-      }
-      function saveSnapshot(){
-        if(!state.tid) state.tid=uid();
-        try{ localStorage.setItem(SNAP_PREFIX+state.tid, JSON.stringify(state)); }catch(e){}
-        upsertIndex({ id:state.tid, name:state.tournamentName||"Sans titre", updatedAt:Date.now(), type: state.cloudId? "cloud":"local" });
-        try{ localStorage.setItem(CURR_KEY, state.tid); }catch(e){}
-      }
-      function loadSnapshot(tid){
-        try{
-          var raw=localStorage.getItem(SNAP_PREFIX+tid);
-          if(!raw) return false;
-          state = JSON.parse(raw);
-          normalize(); saveRuntime();
-          try{ localStorage.setItem(CURR_KEY, tid); }catch(e){}
-          return true;
-        }catch(e){ return false; }
-      }
+/* ===== Badge erreurs visibles ===== */
+window.onerror=function(msg,src,line,col){
+  const el=id("storage-warning"); if(el){el.style.display="block";el.textContent="Erreur JS : "+msg+" @"+(src||"")+":"+(line||0)+":"+(col||0)}
+  const p=id('js-ok'); if(p){p.textContent='JS chargé avec erreurs ⚠️'; p.style.background='#8a2a2a'}
+};
 
-      /* ---------- État & session ---------- */
-      var state = loadRuntime() || {
-        version: 22,
-        tid: uid(),
-        cloudId: null,
-        tournamentName: "",
-        teams: [],
-        matches: [],
-        locked: false,
-        createdAt: new Date().toISOString(),
-        protect: { teamPassHash:{} }
-      };
-      normalize();
+/* ===== État app ===== */
+let state=JSON.parse(localStorage.getItem("tournoi_amis_roles2c6")||"null")||{
+  version:22, tid:uid(), cloudId:null, tournamentName:"",
+  teams:[], matches:[], locked:false, createdAt:new Date().toISOString(),
+  protect:{teamPassHash:{}}
+};
+let ui={open:{},h2h:false};
+let session={admin:false,claims:{}};
 
-      var ui = { open:{}, h2h:false };
-      var session = { admin:false, claims:{} };
+function save(){ try{ localStorage.setItem("tournoi_amis_roles2c6",JSON.stringify(state)); }catch(e){} renderTitle(); if(cloud.enabled) pushCloud(); }
+function renderTitle(){
+  const name=(state.tournamentName||"").trim();
+  document.title=(name?name+" — ":"")+"TriSports — Fléchettes • Ping-pong • Palet";
+  const pill=id("tname-top"); if(pill){ if(name){pill.style.display="inline-block";pill.textContent=name}else{pill.style.display="none";pill.textContent=""} }
+}
+function updateWho(){
+  const names=Object.keys(session.claims||{}).map(tid=>teamName(tid)).filter(Boolean);
+  const who=isAdmin()? (names.length?("Admin · "+names.join(", ")):"Admin") : (names[0]||"visiteur");
+  const w1=id("whoami"); if(w1) w1.textContent="vous : "+who;
+  const w2=id("whoami-top"); if(w2) w2.textContent=who;
+  const add=id("btn-add-team"); if(add) add.style.display=isAdmin()?"inline-block":"none";
+}
+function isAdmin(){return !!session.admin}
+function hasClaim(tid){return !!session.claims[tid]}
+function teamObj(tid){return state.teams.find(t=>t.id===tid)||null}
+function teamName(tid){const t=teamObj(tid);return t?t.name:"—"}
+function initials(name){const s=(name||"").trim(); if(!s) return "?"; const p=s.split(/\s+/); return (p[0][0]+(p[1]?.[0]||"")).toUpperCase()}
+function avatarHtml(tid,size){const t=teamObj(tid)||{name:"?"};const url=t.avatar;const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':'');const content=url?('<img src="'+esc(url)+'" alt="avatar">'):'<span class="avatar-initials">'+esc(initials(t.name))+'</span>';return '<span class="avatar '+cls+'" title="'+esc(t.name)+'">'+content+'</span>'}
 
-      function sessionKey(){ return "tournoi_session_"+(cloud.id||"local"); }
-      function loadSession(){ try{ var raw=localStorage.getItem(sessionKey()); if(raw){ var s=JSON.parse(raw); if(s) session=s; } }catch(e){} updateWho(); }
-      function saveSession(){ try{ localStorage.setItem(sessionKey(), JSON.stringify(session)); }catch(e){} updateWho(); }
+/* ===== Cloud (Firebase) ===== */
+const cloud={enabled:false,db:null,id:null,ref:null,lastRemoteAt:0,timer:null};
+const hasFB=!!(window.firebase&&window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey);
+function initFB(){try{if(!hasFB) return null; if(!firebase.apps||firebase.apps.length===0) firebase.initializeApp(window.FIREBASE_CONFIG); return firebase.database();}catch(e){return null}}
+function setCloudTxt(t){const a=id("cloud-status"); if(a) a.textContent=t; const b=id("cloud-status-2"); if(b) b.textContent=t;}
+function joinCloud(code){
+  if(!hasFB){alert("Firebase non configuré.");return}
+  if(!cloud.db){cloud.db=initFB(); if(!cloud.db){alert("Init Firebase impossible.");return}}
+  cloud.id=(code||"").trim(); if(!cloud.id){alert("Saisis un code tournoi.");return}
+  cloud.ref=cloud.db.ref("tournaments/"+cloud.id+"/payload"); cloud.enabled=true; cloud.lastRemoteAt=0; setCloudTxt("connexion…");
+  let first=true;
+  cloud.ref.on("value",snap=>{
+    const val=snap.val();
+    if(first){first=false; if(!val){state.cloudId=cloud.id; pushCloud(true); setCloudTxt("connecté (créé)"); return;}}
+    if(!val) return; const remoteAt=+val.updatedAt||0; if(remoteAt<=cloud.lastRemoteAt) return;
+    cloud.lastRemoteAt=remoteAt; state=val.state||state; state.cloudId=cloud.id; save(); renderAll(); setCloudTxt("connecté ("+cloud.id+")");
+  });
+  try{ history.replaceState(null,"",location.pathname+"?id="+encodeURIComponent(cloud.id)); }catch(e){}
+}
+function leaveCloud(){ if(cloud.ref) cloud.ref.off(); cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloudTxt("hors ligne"); }
+function pushCloud(immediate){
+  if(!cloud.enabled||!cloud.ref) return;
+  clearTimeout(cloud.timer);
+  cloud.timer=setTimeout(()=>cloud.ref.set({state,updatedAt:Date.now()}), immediate?0:250);
+}
+(function() { const p=new URLSearchParams(location.search); const idp=p.get("id"); if(idp){ const el=id("join-code"); if(el) el.value=idp; joinCloud(idp); } })();
 
-      /* ---------- Firebase (Cloud) ---------- */
-      var cloud = { enabled:false, db:null, id:null, ref:null, lastRemoteAt:0, pushTimer:null };
-      var hasFB = !!(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey);
-      function initFB(){
-        if(!hasFB) return null;
-        try{
-          var apps = firebase.apps;
-          if(!apps || apps.length===0) firebase.initializeApp(window.FIREBASE_CONFIG);
-          return firebase.database();
-        }catch(e){ console.warn("Firebase init error",e); return null; }
-      }
-      function setCloud(txt){
-        var a=id("cloud-status"); if(a) a.textContent=txt;
-        var b=id("cloud-status-2"); if(b) b.textContent=txt;
-      }
+/* ===== Plein écran ===== */
+function fsEl(){return document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement}
+function enterFS(el){return el.requestFullscreen?.()||el.webkitRequestFullscreen?.()||el.mozRequestFullScreen?.()||el.msRequestFullscreen?.()}
+function exitFS(){return document.exitFullscreen?.()||document.webkitExitFullscreen?.()||document.mozCancelFullScreen?.()||document.msExitFullscreen?.()}
+function fsSupported(){const el=document.documentElement;return !!(el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen)}
+function updateFSBtn(){const b=id("btn-fullscreen"); if(!b) return; b.style.display=fsSupported()?"inline-block":"none"; b.textContent=fsEl()?"Quitter plein écran":"⛶ Plein écran";}
 
-      function joinCloud(code){
-        if(!hasFB){ alert("Firebase non configuré."); return; }
-        if(!cloud.db){ cloud.db=initFB(); if(!cloud.db){ alert("Initialisation Firebase impossible."); return; } }
-        cloud.id=(code||"").trim(); if(!cloud.id){ alert("Saisis un code tournoi."); return; }
-        cloud.ref = cloud.db.ref("tournaments/"+cloud.id+"/payload");
-        cloud.enabled=true; cloud.lastRemoteAt=0; setCloud("connexion…"); loadSession();
+/* ===== Génération calendrier (round-robin homogène) ===== */
+function generateSchedule(){
+  const ids=state.teams.map(t=>t.id); if(ids.length<2){state.matches=[];save();renderMatches();return}
+  const BYE="__BYE__"; if(ids.length%2===1) ids.push(BYE);
+  const fixed=ids[0], rest=ids.slice(1);
+  for(let i=rest.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [rest[i],rest[j]]=[rest[j],rest[i]]}
+  const n=ids.length, rounds=n-1; const out=[]; let order=0;
+  for(let r=0;r<rounds;r++){
+    const arr=[fixed].concat(rest), half=n/2, pairs=[];
+    for(let k=0;k<half;k++){const a=arr[k],b=arr[n-1-k]; if(a!==BYE&&b!==BYE) pairs.push((r%2===0)?[a,b]:[b,a])}
+    rest.unshift(rest.pop()); if(pairs.length>1){ let shift=r%pairs.length; while(shift-->0) pairs.unshift(pairs.pop()); }
+    for(const pr of pairs){ out.push({id:uid(),a:pr[0],b:pr[1],darts:[null,null,null],pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}],palet:{a:null,b:null},round:r+1,order:order++}) }
+  }
+  out.sort((x,y)=>(x.round-y.round)||(x.order-y.order)); state.matches=out; save(); renderMatches();
+}
 
-        var first=true;
-        cloud.ref.on("value", function(snap){
-          var val=snap.val();
-          if(first){
-            first=false;
-            if(!val){
-              state.cloudId = cloud.id;
-              pushCloud(true);
-              setCloud("connecté (créé)");
-              upsertIndex({ id:"cloud:"+cloud.id, name:"Cloud · "+cloud.id, updatedAt:Date.now(), type:"cloud" });
-              renderSetupRecent();
-              return;
-            }
-          }
-          if(!val) return;
-          var remoteAt=+val.updatedAt||0;
-          if(remoteAt<=cloud.lastRemoteAt) return;
-          cloud.lastRemoteAt=remoteAt;
-          state = val.state || state;
-          state.cloudId = cloud.id;
-          normalize();
-          saveRuntime(); saveSnapshot();
-          renderAll();
-          setCloud("connecté ("+cloud.id+")");
-        });
+/* ===== Rendu équipes ===== */
+function renderTeams(){
+  const el=id("team-list"); el.innerHTML="";
+  if(!state.teams.length){ el.appendChild(help("Aucune équipe. Utilisez « Tournoi » > Nouveau tournoi.")); updateCounts(); updateLock(); return }
+  state.teams.forEach((t,idx)=>{
+    const iOwn=hasClaim(t.id), admin=isAdmin(), hasHash=!!(state.protect?.teamPassHash?.[t.id]);
+    const dis = admin? '' : ' disabled';
+    const delBtn = (admin && !state.locked)? `<button type="button" class="btn small danger" data-act="del" data-id="${t.id}">Supprimer</button>` : '';
+    const protectInfo = hasHash ? (iOwn? '🔒 vous êtes connecté à cette équipe' : '🔒 protégée par mot de passe') : '🔓 non protégée — demandez à l’admin de définir un mot de passe';
+    const protectBtns = (admin ? `<button type="button" class="btn small" data-act="setpass" data-id="${t.id}">Définir / changer mot de passe</button>` : '')
+                       + (!iOwn ? `<button type="button" class="btn small" data-act="login" data-id="${t.id}">Se connecter à cette équipe</button>`
+                                : `<button type="button" class="btn small" data-act="logout" data-id="${t.id}">Se déconnecter</button>`);
+    const avatarBtn = (admin||iOwn) ? `<button type="button" class="btn small" data-act="avatar" data-id="${t.id}">Changer avatar</button>` : '';
+    const avatarClr = ((admin||iOwn) && t.avatar) ? `<button type="button" class="btn small" data-act="avatar-clear" data-id="${t.id}">Retirer avatar</button>` : '';
+    const card=document.createElement("div"); card.className="match-card";
+    card.innerHTML=`
+      <div class="hd" style="border:none;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div class="teams" style="width:100%"><span class="chip">#${idx+1}</span>
+          <span class="team-name">${avatarHtml(t.id,'lg')}<input type="text"${dis} value="${esc(t.name)}" data-field="name" data-id="${t.id}" style="min-width:0;flex:1"/></span></div>
+        <div>${delBtn}</div>
+      </div>
+      <div class="bd">
+        <input type="file" accept="image/*" data-avatar="${t.id}" style="display:none"/>
+        <div class="grid cols-2">
+          <div><label>Joueur·se 1</label><input type="text"${dis} value="${esc(t.p1)}" data-field="p1" data-id="${t.id}"/></div>
+          <div><label>Joueur·se 2</label><input type="text"${dis} value="${esc(t.p2)}" data-field="p2" data-id="${t.id}"/></div>
+        </div>
+        <div class="help" style="margin-top:6px">${protectInfo}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${avatarBtn}${avatarClr}${protectBtns}</div>
+      </div>`;
+    el.appendChild(card);
+  });
 
-        try{ history.replaceState(null,"", location.pathname+"?id="+encodeURIComponent(cloud.id)); }catch(e){}
-      }
-      function leaveCloud(){
-        if(cloud.ref) cloud.ref.off();
-        cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloud("hors ligne");
-        loadSession();
-      }
-      function pushCloud(immediate){
-        if(!cloud.enabled||!cloud.ref) return;
-        var doPush=function(){ cloud.ref.set({ state:state, updatedAt:Date.now() }); };
-        clearTimeout(cloud.pushTimer);
-        cloud.pushTimer=setTimeout(doPush, immediate?0:250);
-      }
-      function publishCurrentToCloud(){
-        if(!isAdmin()){ alert("Seul l’administrateur peut publier."); return; }
-        if(!hasFB){ alert("Firebase non configuré."); return; }
-        if(!cloud.db){ cloud.db=initFB(); if(!cloud.db){ alert("Initialisation Firebase impossible."); return; } }
-        var code = prompt("Choisis un code de tournoi (ex: apero2025). Tes amis rejoindront avec ce code :");
-        if(!code) return;
-        cloud.id = code.trim();
-        cloud.ref = cloud.db.ref("tournaments/"+cloud.id+"/payload");
-        cloud.enabled = true; cloud.lastRemoteAt = 0;
-        state.cloudId = cloud.id;
-        pushCloud(true);
-        setCloud("connecté ("+cloud.id+")");
-        upsertIndex({ id:"cloud:"+cloud.id, name:"Cloud · "+cloud.id, updatedAt:Date.now(), type:"cloud" });
-        renderSetupRecent();
-        try{ history.replaceState(null,"", location.pathname+"?id="+encodeURIComponent(cloud.id)); }catch(e){}
-        var url = location.origin+location.pathname+"?id="+encodeURIComponent(cloud.id);
-        if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url);
-        alert("Tournoi publié !\nLien copié :\n"+url);
-      }
+  // inputs teams (édition sans re-render en cours de saisie)
+  qsa('#team-list input[data-field]').forEach(inp=>{
+    const tid=inp.getAttribute("data-id"), f=inp.getAttribute("data-field");
+    inp.addEventListener("input", ()=>{ if(!isAdmin()) return; const t=teamObj(tid); if(!t) return; t[f]=inp.value; localStorage.setItem("tournoi_amis_roles2c6",JSON.stringify(state)); });
+    inp.addEventListener("blur",  ()=>{ if(!isAdmin()) return; const t=teamObj(tid); if(!t) return; t[f]=inp.value; save(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); });
+  });
 
-      // Auto-join via ?id=
-      (function(){ try{ var p=new URLSearchParams(location.search); var idp=p.get("id"); if(idp){ var el=id("join-code"); if(el) el.value=idp; joinCloud(idp); } }catch(e){} })();
-
-      /* ---------- Utils ---------- */
-      function id(x){ return document.getElementById(x); }
-      function qs(s){ return document.querySelector(s); }
-      function qsa(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); }
-      function qsaIn(n,s){ return Array.prototype.slice.call(n.querySelectorAll(s)); }
-      function addInlineStyle(css){ var st=document.createElement("style"); st.textContent=css; document.head.appendChild(st); }
-      function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
-      function uid(){ return Math.random().toString(36).slice(2,10); }
-      function clampInt(v,min,max){ v=parseInt(v,10); if(isNaN(v)) return null; return Math.max(min, Math.min(max, v)); }
-      function help(t){ var d=document.createElement("div"); d.className="help"; d.textContent=t; return d; }
-      function sha256(str){
-        try{
-          if(window.crypto && window.crypto.subtle){
-            var enc=new TextEncoder().encode(str);
-            return window.crypto.subtle.digest("SHA-256",enc).then(function(buf){
-              var a=Array.from(new Uint8Array(buf)); return a.map(function(b){return b.toString(16).padStart(2,"0");}).join("");
-            });
-          }
-        }catch(e){}
-        // fallback simple hash
-        var h=2166136261>>>0; for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; }
-        var stub=("00000000"+h.toString(16)).slice(-8); return Promise.resolve(stub+stub+stub+stub+stub+stub+stub+stub);
-      }
-      function salt(){ return cloud.id || "local"; }
-
-      /* ---------- Normalisation ---------- */
-      function _arr(x){ return Array.isArray(x)?x:[]; }
-      function _normMatch(m){
-        m=m||{};
-        m.id=m.id||uid(); m.a=m.a||""; m.b=m.b||"";
-        m.darts=Array.isArray(m.darts)?m.darts.slice(0,3):[null,null,null]; while(m.darts.length<3) m.darts.push(null);
-        if(!Array.isArray(m.pingPts)) m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}];
-        for(var i=0;i<3;i++){ m.pingPts[i]=m.pingPts[i]||{a:null,b:null}; m.pingPts[i].a=(m.pingPts[i].a==null?null:+m.pingPts[i].a); m.pingPts[i].b=(m.pingPts[i].b==null?null:+m.pingPts[i].b); }
-        m.palet=m.palet||{a:null,b:null}; m.palet.a=(m.palet.a==null?null:+m.palet.a); m.palet.b=(m.palet.b==null?null:+m.palet.b);
-        m.round=m.round||1; m.order=m.order||0; return m;
-      }
-      function normalize(){
-        if(!state) state={};
-        if(!state.protect) state.protect={teamPassHash:{}};
-        state.teams=_arr(state.teams);
-        state.matches=_arr(state.matches).map(_normMatch);
-        renderTitle();
-      }
-
-      /* ---------- Rôles & identité ---------- */
-      function isAdmin(){ return !!session.admin; }
-      function hasClaim(tid){ return !!session.claims[tid]; }
-      function canEditTeam(){ return isAdmin(); }
-      function canEditAvatar(tid){ return isAdmin() || hasClaim(tid); }
-      function canEditMatch(m){ return isAdmin() || hasClaim(m.a) || hasClaim(m.b); }
-      function teamObj(tid){ for(var i=0;i<state.teams.length;i++){ if(state.teams[i].id===tid) return state.teams[i]; } return null; }
-      function teamName(tid){ var t=teamObj(tid); return t?t.name:"—"; }
-      function initials(name){ var s=(name||"").trim(); if(!s) return "?"; var p=s.split(/\s+/); return (p[0][0]+(p[1]?(p[1][0]:""))).toUpperCase(); }
-      function avatarHtml(tid,size){ var t=teamObj(tid)||{name:"?"}; var url=t.avatar; var cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':''); var content=url?('<img src="'+esc(url)+'" alt="avatar">'):'<span class="avatar-initials">'+esc(initials(t.name))+'</span>'; return '<span class="avatar '+cls+'" title="'+esc(t.name)+'">'+content+'</span>'; }
-
-      function identityText(){
-        var ids = Object.keys(session.claims||{}); var names=[]; for(var i=0;i<ids.length;i++){ var nm=teamName(ids[i]); if(nm) names.push(nm); }
-        if (isAdmin()) return names.length ? ("Admin · "+names.join(", ")) : "Admin";
-        if (names.length) return names.join(", ");
-        return "visiteur";
-      }
-      function updateWho(){
-        var who=id("whoami"); if(who) who.textContent="vous : "+identityText();
-        var whoTop=id("whoami-top"); if(whoTop) whoTop.textContent=identityText();
-        var addBtn=id("btn-add-team"); if(addBtn) addBtn.style.display=isAdmin()?"inline-block":"none";
-      }
-      function renderTitle(){
-        var name = state.tournamentName && state.tournamentName.trim();
-        document.title = (name?name+" — ":"") + "TriSports — Fléchettes • Ping-pong • Palet";
-        var pill=id("tname-top");
-        if(pill){ if(name){ pill.style.display="inline-block"; pill.textContent=name; } else { pill.style.display="none"; pill.textContent=""; } }
-      }
-
-      /* ---------- Plein écran ---------- */
-      function fsElement(){ return document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement; }
-      function enterFS(el){ if(el.requestFullscreen) return el.requestFullscreen(); if(el.webkitRequestFullscreen) return el.webkitRequestFullscreen(); if(el.mozRequestFullScreen) return el.mozRequestFullScreen(); if(el.msRequestFullscreen) return el.msRequestFullscreen(); }
-      function exitFS(){ if(document.exitFullscreen) return document.exitFullscreen(); if(document.webkitExitFullscreen) return document.webkitExitFullscreen(); if(document.mozCancelFullScreen) return document.mozCancelFullScreen(); if(document.msExitFullscreen) return document.msExitFullscreen(); }
-      function fsSupported(){ var el=document.documentElement; return !!(el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen); }
-      function updateFSBtn(){ var b=id("btn-fullscreen"); if(!b) return; b.style.display=fsSupported()?"inline-block":"none"; b.textContent=fsElement()?"Quitter plein écran":"⛶ Plein écran"; b.title=fsElement()?"Quitter le plein écran (Esc)":"Plein écran (Esc pour quitter)"; }
-      onClick(id("btn-fullscreen"), function(){ fsElement()?exitFS():enterFS(document.documentElement); });
-      ["fullscreenchange","webkitfullscreenchange","mozfullscreenchange","MSFullscreenChange"].forEach(function(e){ document.addEventListener(e,updateFSBtn); });
-      updateFSBtn();
-
-      /* ---------- Tabs ---------- */
-      qsa(".tab").forEach(function(btn){
-        btn.addEventListener("click", function(){
-          qsa(".tab").forEach(function(b){ b.setAttribute("aria-selected","false"); });
-          btn.setAttribute("aria-selected","true");
-          qsa("main section").forEach(function(s){ s.classList.remove("active"); });
-          id(btn.getAttribute("data-tab")).classList.add("active");
-        });
-      });
-      function goto(tabId){ var b=qs('.tab[data-tab="'+tabId+'"]'); if(b && b.click) b.click(); }
-
-      /* ---------- Admin ---------- */
-      function ensureAdmin(){ if(isAdmin()) return true; var pin=prompt("PIN administrateur :"); if(pin==="30041991"){ session.admin=true; saveSession(); return true; } return false; }
-
-      /* ---------- Créer tournoi (non destructif) ---------- */
-      onClick(id("btn-create-tournament"), function(){
-        if(!ensureAdmin()) return;
-
-        var name = (id("tname-input").value||"").trim() || "Tournoi entre amis";
-        var n = parseInt(id("teams-count-input").value,10); if(isNaN(n)) n = 4; n = clampInt(n, 2, 64);
-
-        saveSnapshot(); // garder l’actuel
-
-        var newState = {
-          version: 22,
-          tid: uid(),
-          cloudId: null,
-          tournamentName: name,
-          teams: Array.from({length:n}, function(_,i){ return { id:uid(), name:"Équipe "+(i+1), p1:"", p2:"", avatar:null }; }),
-          matches: [],
-          locked:false,
-          createdAt:new Date().toISOString(),
-          protect:{ teamPassHash:{} }
-        };
-
-        state = newState;
-        normalize();
-        leaveCloud();
-        saveState({cloud:false});
-        saveSnapshot();
-        renderAll();
-        goto("equipes");
-      });
-
-      function renderSetupRecent(){
-        var wrap=id("recent-list"); if(!wrap) return;
-        wrap.innerHTML="";
-        var idx=getIndex().sort(function(a,b){return (b.updatedAt||0)-(a.updatedAt||0);});
-        if(!idx.length){ wrap.appendChild(help("Aucun tournoi mémorisé pour l’instant.")); return; }
-        var box=document.createElement("div"); box.style.display="flex"; box.style.flexWrap="wrap"; box.style.gap="8px";
-        idx.forEach(function(e){
-          var btn=document.createElement("button"); btn.className="btn"; btn.type="button";
-          btn.textContent = (e.type==="cloud"?"☁ ":"") + e.name;
-          btn.addEventListener("click", function(){
-            if(e.type==="cloud" && e.id.indexOf("cloud:")===0){
-              var code=e.id.slice(6);
-              id("join-code").value=code;
-              joinCloud(code);
-              goto("equipes");
-              return;
-            }
-            var ok=loadSnapshot(e.id);
-            if(!ok){ alert("Impossible d’ouvrir ce tournoi (données manquantes)."); return; }
-            session.claims={}; saveSession();
-            renderAll(); goto("equipes");
-          });
-          box.appendChild(btn);
-        });
-        wrap.appendChild(box);
-      }
-
-      /* ---------- Cloud – Rejoindre / Publier ---------- */
-      onClick(id("btn-join-code"), function(){ var code=(id("join-code").value||"").trim(); if(!code){ alert("Renseigne un code."); return; } joinCloud(code); goto("equipes"); });
-      onClick(id("btn-copy-link"), function(){
-        var code=(id("join-code").value||"").trim(); if(!code){ alert("Renseigne un code."); return; }
-        var url=location.origin+location.pathname+"?id="+encodeURIComponent(code);
-        if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url);
-        alert("Lien copié !\n"+url);
-      });
-
-      /* ---------- Équipes ---------- */
-      var teamListEl=id("team-list");
-      onClick(id("btn-add-team"), function(){
-        if(!isAdmin()){ alert("Réservé à l’admin."); return; }
-        if(state.locked){ alert("Calendrier figé."); return; }
-        state.teams.push({ id:uid(), name:"Équipe "+(state.teams.length+1), p1:"", p2:"", avatar:null });
-        saveState(); renderTeams(); updateCounts(); updateLockUI();
-      });
-
-      onClick(id("btn-generate"), function(){
-        if(!isAdmin()){ alert("Seul l’admin peut générer."); return; }
-        if(state.locked) return;
-        generateSchedule(); state.locked=true; saveState(); renderAll(); goto("calendrier");
-      });
-
-      function renderTeams(){
-        teamListEl.innerHTML="";
-        if(!Array.isArray(state.teams) || state.teams.length===0){
-          teamListEl.appendChild(help("Aucune équipe. Utilisez « Tournoi » > Nouveau tournoi."));
-          updateCounts(); updateLockUI(); return;
-        }
-        state.teams.forEach(function(t,idx){
-          var iOwn=hasClaim(t.id), admin=isAdmin();
-          var hasHash=!!(state.protect && state.protect.teamPassHash && state.protect.teamPassHash[t.id]);
-          var dis = (!canEditTeam(t.id))?' disabled':'';
-          var delBtn = (admin && !state.locked)? '<button type="button" class="btn small danger" data-act="del" data-id="'+t.id+'">Supprimer</button>' : '';
-          var protectInfo = hasHash ? (iOwn? '🔒 vous êtes connecté à cette équipe' : '🔒 protégée par mot de passe') : '🔓 non protégée — demandez à l’admin de définir un mot de passe';
-          var protectBtns = (admin ? '<button type="button" class="btn small" data-act="setpass" data-id="'+t.id+'">Définir / changer mot de passe</button>' : '')
-                           + (!iOwn ? '<button type="button" class="btn small" data-act="login" data-id="'+t.id+'">Se connecter à cette équipe</button>'
-                                    : '<button type="button" class="btn small" data-act="logout" data-id="'+t.id+'">Se déconnecter</button>');
-          var canAvatar = canEditAvatar(t.id);
-          var avatarBtn = canAvatar ? '<button type="button" class="btn small" data-act="avatar" data-id="'+t.id+'">Changer avatar</button>' : '';
-          var avatarClr = (canAvatar && t.avatar) ? '<button type="button" class="btn small" data-act="avatar-clear" data-id="'+t.id+'">Retirer avatar</button>' : '';
-
-          var card=document.createElement("div"); card.className="match-card";
-          card.innerHTML=''
-            +'<div class="hd" style="border:none;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">'
-            +'<div class="teams" style="width:100%"><span class="chip">#'+(idx+1)+'</span> '
-            +'<span class="team-name">'+avatarHtml(t.id,'lg')+'<input type="text"'+dis+' value="'+esc(t.name)+'" data-field="name" data-id="'+t.id+'" style="min-width:0;flex:1"/></span></div>'
-            +'<div>'+delBtn+'</div></div>'
-            +'<div class="bd">'
-            +'<input type="file" accept="image/*" data-avatar="'+t.id+'" style="display:none" />'
-            +'<div class="grid cols-2">'
-            +'<div><label>Joueur·se 1</label><input type="text"'+dis+' value="'+esc(t.p1)+'" data-field="p1" data-id="'+t.id+'"/></div>'
-            +'<div><label>Joueur·se 2</label><input type="text"'+dis+' value="'+esc(t.p2)+'" data-field="p2" data-id="'+t.id+'"/></div>'
-            +'</div>'
-            +'<div class="help" style="margin-top:6px">'+protectInfo+'</div>'
-            +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+avatarBtn+avatarClr+protectBtns+'</div>'
-            +'</div>';
-          teamListEl.appendChild(card);
-        });
-
-        // Édition non bloquante
-        qsa('#team-list input[data-field]').forEach(function(inp){
-          var tid=inp.getAttribute("data-id"), f=inp.getAttribute("data-field");
-          inp.addEventListener("input", function(){
-            if(!canEditTeam(tid)) return;
-            var t=teamObj(tid); if(!t) return;
-            t[f]=inp.value; saveState({cloud:false});
-          });
-          inp.addEventListener("blur", function(){
-            if(!canEditTeam(tid)) return;
-            var t=teamObj(tid); if(!t) return;
-            t[f]=inp.value; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H();
-          });
-        });
-
-        // actions
-        qsa('#team-list [data-act="del"]').forEach(function(btn){
-          btn.addEventListener("click", function(){
-            if(!isAdmin()||state.locked) return;
-            var tid=btn.getAttribute("data-id");
-            if(!confirm("Supprimer cette équipe ?")) return;
-            state.teams=state.teams.filter(function(tt){return tt.id!==tid;});
-            state.matches=state.matches.filter(function(m){return m.a!==tid&&m.b!==tid;});
-            if(state.protect && state.protect.teamPassHash) delete state.protect.teamPassHash[tid];
-            if(session.claims && session.claims[tid]){ delete session.claims[tid]; saveSession(); }
-            saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts();
-          });
-        });
-
-        qsa('#team-list [data-act="setpass"]').forEach(function(btn){
-          btn.addEventListener("click", function(){
-            if(!isAdmin()) { alert("Réservé à l’admin."); return; }
-            var tid=btn.getAttribute("data-id");
-            var pass=prompt("Mot de passe pour l’équipe « "+teamName(tid)+" » :"); if(!pass) return;
-            sha256(salt()+"|"+pass).then(function(hash){
-              state.protect=state.protect||{teamPassHash:{}};
-              state.protect.teamPassHash[tid]=hash; saveState(); renderTeams(); alert("Mot de passe défini.");
-            });
-          });
-        });
-
-        qsa('#team-list [data-act="login"]').forEach(function(btn){
-          btn.addEventListener("click", function(){
-            var tid=btn.getAttribute("data-id");
-            var hasHash=!!(state.protect && state.protect.teamPassHash && state.protect.teamPassHash[tid]);
-            if(!hasHash){ alert("Cette équipe n’a pas encore de mot de passe."); return; }
-            var pass=prompt("Mot de passe de l’équipe « "+teamName(tid)+" » :"); if(!pass) return;
-            sha256(salt()+"|"+pass).then(function(h){
-              var ok=(h===state.protect.teamPassHash[tid]);
-              if(ok){ session.claims[tid]=true; saveSession(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); alert("Connexion réussie."); }
-              else alert("Mot de passe incorrect.");
-            });
-          });
-        });
-        qsa('#team-list [data-act="logout"]').forEach(function(btn){
-          btn.addEventListener("click", function(){ var tid=btn.getAttribute("data-id"); delete session.claims[tid]; saveSession(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); });
-        });
-
-        // avatar
-        qsa('#team-list [data-act="avatar"]').forEach(function(btn){
-          btn.addEventListener("click", function(){
-            var tid=btn.getAttribute("data-id"); if(!canEditAvatar(tid)){ alert("Accès refusé."); return; }
-            var input = qs('[data-avatar="'+tid+'"]'); if(input && input.click) input.click();
-          });
-        });
-        qsa('#team-list [data-act="avatar-clear"]').forEach(function(btn){
-          btn.addEventListener("click", function(){
-            var tid=btn.getAttribute("data-id"); if(!canEditAvatar(tid)) return;
-            var t=teamObj(tid); if(!t) return; t.avatar=null; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H();
-          });
-        });
-        qsa('#team-list input[type="file"][data-avatar]').forEach(function(inp){
-          inp.addEventListener("change", function(){
-            var tid=inp.getAttribute("data-avatar"); if(!canEditAvatar(tid)) return;
-            var file=inp.files && inp.files[0]; if(!file) return;
-            fileToSquareDataURL(file,160).then(function(url){
-              var t=teamObj(tid); if(!t) return; t.avatar=url; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H();
-            }).catch(function(){ alert("Échec du chargement de l’avatar."); }).finally(function(){ inp.value=""; });
-          });
-        });
-
-        updateCounts(); updateLockUI();
-      }
-
-      function fileToSquareDataURL(file, size){
-        return new Promise(function(resolve,reject){
-          var reader=new FileReader();
-          reader.onerror=function(){ reject(new Error("read")); };
-          reader.onload=function(){
-            var img=new Image();
-            img.onload=function(){
-              try{
-                var min=Math.min(img.width,img.height), sx=(img.width-min)/2, sy=(img.height-min)/2;
-                var c=document.createElement("canvas"); c.width=size; c.height=size;
-                c.getContext('2d').drawImage(img, sx, sy, min, min, 0, 0, size, size);
-                resolve(c.toDataURL('image/jpeg',0.9));
-              }catch(e){ reject(e); }
-            };
-            img.onerror=function(){ reject(new Error("img")); };
-            img.src=reader.result;
-          };
-          reader.readAsDataURL(file);
-        });
-      }
-
-      function updateCounts(){
-        var el1=id("teams-count"); if(el1) el1.textContent = state.teams.length + " " + (state.teams.length>1?"équipes":"équipe");
-        var perTeam=Math.max(0,state.teams.length-1); var el2=id("rounds-count"); if(el2) el2.textContent = perTeam + " " + (perTeam>1?"matchs":"match") + " par équipe";
-      }
-      function updateLockUI(){
-        var pill=id("lock-pill"); if(pill) pill.style.display=state.locked?"inline-block":"none";
-        var gen=id("btn-generate"); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"; }
-      }
-
-      /* ---------- Calendrier homogène ---------- */
-      function generateSchedule(){
-        var ids=state.teams.map(function(t){return t.id;});
-        if(ids.length<2){ state.matches=[]; saveState(); renderMatches(); return; }
-        var BYE="__BYE__"; if(ids.length%2===1) ids.push(BYE);
-        var fixed=ids[0], rest=ids.slice(1);
-        for(var i=rest.length-1;i>0;i++){ var j=Math.floor(Math.random()*(i+1)); var tmp=rest[i]; rest[i]=rest[j]; rest[j]=tmp; }
-        var n=ids.length, rounds=n-1; var out=[]; var order=0;
-        for(var r=0;r<rounds;r++){
-          var arr=[fixed].concat(rest), half=n/2, pairs=[];
-          for(var k=0;k<half;k++){ var a=arr[k], b=arr[n-1-k]; if(a!==BYE&&b!==BYE) pairs.push((r%2===0)?[a,b]:[b,a]); }
-          rest.unshift(rest.pop());
-          if(pairs.length>1){ var shift=r%pairs.length; while(shift-->0){ pairs.unshift(pairs.pop()); } }
-          for(var pi=0;pi<pairs.length;pi++){ var pr=pairs[pi];
-            out.push({ id:uid(), a:pr[0], b:pr[1], darts:[null,null,null], pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}], palet:{a:null,b:null}, round:r+1, order:order++ });
-          }
-        }
-        out.sort(function(x,y){ return (x.round-y.round)||(x.order-y.order); });
-        state.matches=out; saveState(); renderMatches();
-      }
-
-      function getPingPts(m){ return Array.isArray(m.pingPts)?m.pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; }
-      function isPingValid(a,b){ if(a==null||b==null) return false; if(isNaN(a)||isNaN(b)) return false; var max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
-      function computeSetWins(m){
-        var darts=Array.isArray(m.darts)?m.darts:[null,null,null];
-        var sets=getPingPts(m);
-        var aw={darts:0,ping:0}, bw={darts:0,ping:0};
-        darts.forEach(function(v){ if(v===0) aw.darts++; else if(v===1) bw.darts++; });
-        sets.forEach(function(s){ var a=(typeof s.a==='number')?s.a:null, b=(typeof s.b==='number')?s.b:null; if(isPingValid(a,b)){ if(a>b) aw.ping++; else if(b>a) bw.ping++; } });
-        return {aw:aw, bw:bw};
-      }
-      function isMatchComplete(m){
-        var okD=(Array.isArray(m.darts)?m.darts:[null,null,null]).every(function(v){return v===0||v===1;});
-        var okP=getPingPts(m).every(function(s){return isPingValid(s.a,s.b);});
-        var pa=m.palet.a, pb=m.palet.b;
-        var okL=(pa!=null&&pb!=null)&&((pa===11&&pb>=0&&pb<=10)||(pb===11&&pa>=0&&pa<=10));
-        return okD&&okP&&okL;
-      }
-
-      /* ---------- Rencontres ---------- */
-      var matchListEl=id("match-list"), statsMatchesEl=id("stats-matches");
-      function renderMatches(){
-        matchListEl.innerHTML="";
-        if(!Array.isArray(state.matches) || state.matches.length===0){ matchListEl.appendChild(help("Aucune rencontre planifiée.")); statsMatchesEl.textContent="0 / 0 matches complets"; return; }
-        var groups={}; state.matches.forEach(function(m){ (groups[m.round]=groups[m.round]||[]).push(m); });
-        var rounds=Object.keys(groups).map(function(k){return +k;}).sort(function(a,b){return a-b;});
-        var complete=0, idx=0;
-        rounds.forEach(function(r){
-          var hdr=help("Journée "+r); hdr.style.fontWeight="600"; hdr.style.margin="8px 0"; matchListEl.appendChild(hdr);
-          groups[r].forEach(function(m){
-            var wins=computeSetWins(m), pal=m.palet, palScore=(pal.a!=null&&pal.b!=null)?(pal.a+"–"+pal.b):"—";
-            var done=isMatchComplete(m); if(done) complete++;
-            var can=canEditMatch(m);
-            var el=document.createElement("div"); el.className="match-card"; el.dataset.id=m.id;
-            var isOpen=(typeof ui.open[m.id]==="boolean")?ui.open[m.id]:false;
-            el.setAttribute("aria-expanded", isOpen?"true":"false");
-
-            el.innerHTML=''
-              +'<div class="hd" data-expand style="border:none;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">'
-              +'<div class="teams"><span class="chip">#'+(++idx)+'</span> '
-              +'<span class="team-name">'+avatarHtml(m.a,'sm')+esc(teamName(m.a))+'</span> <span class="muted">vs</span> '
-              +'<span class="team-name">'+avatarHtml(m.b,'sm')+esc(teamName(m.b))+'</span></div>'
-              +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
-              +'<span class="chip">Journée '+(m.round||"?")+'</span>'
-              +'<span class="chip">Fléchettes G: '+wins.aw.darts+'-'+wins.bw.darts+'</span>'
-              +'<span class="chip">Ping G: '+wins.aw.ping+'-'+wins.bw.ping+'</span>'
-              +'<span class="chip">Palet: '+palScore+'</span>'
-              +(done?'<span class="pill" style="border-color:#2c6;color:#8fd">✅ Complet</span>':'<span class="pill" style="border-color:#aa6;color:#ffc">⏳ Incomplet</span>')
-              +'<span class="chip">▶</span></div></div>'
-              +'<div class="bd">'+renderDarts(m,can)+renderPing(m,can)+renderPalet(m,can)
-              +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">'
-              +'<div class="help">'+(can?'':'Lecture seule — connectez-vous à une des deux équipes.')+'</div>'
-              +'<div>'+(can?'<button type="button" class="btn small" data-clear="'+m.id+'">Effacer ce match</button>':'')+'</div></div></div>';
-
-            var head=el.querySelector("[data-expand]"); if(head) head.addEventListener("click", function(){
-              var open=el.getAttribute("aria-expanded")==="true";
-              el.setAttribute("aria-expanded", open?"false":"true");
-              ui.open[m.id]=!open;
-            });
-
-            // fléchettes
-            qsaIn(el,'select[data-match][data-kind]').forEach(function(sel){
-              if(!can) sel.disabled=true;
-              sel.addEventListener("change", function(){
-                if(!can) return;
-                var k=sel.getAttribute("data-kind"), ii=parseInt(sel.getAttribute("data-index"),10);
-                var v=sel.value===""?null:parseInt(sel.value,10);
-                var mm=findMatch(m.id); mm[k][ii]=v; saveState(); renderLeaderboard(); renderH2H();
-              });
-            });
-
-            // ping
-            qsaIn(el,'input[data-ping]').forEach(function(inp){
-              if(!can) inp.disabled=true;
-              inp.addEventListener("input", function(){
-                if(!can) return;
-                var w=inp.getAttribute("data-ping"), ii=parseInt(inp.getAttribute("data-index"),10);
-                var v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);
-                var mm=findMatch(m.id); mm.pingPts[ii][w]=v; saveState(); renderLeaderboard(); renderH2H();
-              });
-              inp.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
-            });
-
-            // palet
-            qsaIn(el,'input[data-palet]').forEach(function(inp){
-              if(!can) inp.disabled=true;
-              inp.addEventListener("input", function(){
-                if(!can) return;
-                var w=inp.getAttribute("data-palet");
-                var v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,11);
-                var mm=findMatch(m.id); mm.palet[w]=v; saveState(); renderLeaderboard(); renderH2H();
-              });
-              inp.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
-            });
-
-            var clr=el.querySelector("[data-clear]"); if(clr) clr.addEventListener("click", function(){ if(!can) return; clearMatch(m.id); renderLeaderboard(); renderH2H(); });
-
-            matchListEl.appendChild(el);
-          });
-        });
-        statsMatchesEl.textContent=complete+" / "+state.matches.length+" matches complets";
-        renderLeaderboard();
-      }
-
-      function renderDarts(m,can){
-        var subs=["Simple 1","Simple 2","Double"], names=[teamName(m.a),teamName(m.b)];
-        var html=""; for(var i=0;i<3;i++){
-          var v=m.darts[i];
-          html+='<div class="grid cols-3" style="align-items:end"><div>'
-            +'<label>Fléchettes — '+subs[i]+'</label>'
-            +'<select '+(can?'':'disabled ')+'data-match="'+m.id+'" data-kind="darts" data-index="'+i+'">'
-            +'<option value="" '+(v===null?'selected':'')+'>Non joué</option>'
-            +'<option value="0" '+(v===0?'selected':'')+'>Victoire '+esc(names[0])+'</option>'
-            +'<option value="1" '+(v===1?'selected':'')+'>Victoire '+esc(names[1])+'</option>'
-            +'</select></div><div></div><div></div></div>';
-        }
-        return html;
-      }
-      function renderPing(m,can){
-        var labels=["Simple 1","Simple 2","Double"], sets=getPingPts(m); var html="";
-        for(var i=0;i<3;i++){
-          var s=sets[i]||{a:null,b:null}, note=(s.a==null||s.b==null)?'Saisissez deux scores (11+ et écart ≥ 2).':(isPingValid(s.a,s.b)?'✔️ Score valide':'⚠️ 11+ et écart ≥ 2 (11–9, 12–10…).');
-          html+='<div class="grid cols-4" style="align-items:end;margin-top:6px">'
-            +'<div><label>Ping — '+labels[i]+' — '+esc(teamName(m.a))+'</label><input '+(can?'':'disabled ')+'type="number" min="0" max="99" step="1" value="'+(s.a==null?'':s.a)+'" data-ping="a" data-index="'+i+'"/></div>'
-            +'<div><label>Ping — '+labels[i]+' — '+esc(teamName(m.b))+'</label><input '+(can?'':'disabled ')+'type="number" min="0" max="99" step="1" value="'+(s.b==null?'':s.b)+'" data-ping="b" data-index="'+i+'"/></div>'
-            +'<div class="help">'+note+'</div><div></div></div>';
-        }
-        return html;
-      }
-      function renderPalet(m,can){
-        var a=m.palet.a, b=m.palet.b, note=(a==null||b==null)?'Saisissez les deux scores (l’un doit être 11).':((a===11&&b>=0&&b<=10)||(b===11&&a>=0&&a<=10)?'✔️ Score valide':'⚠️ Un score doit être 11, l’autre entre 0 et 10.');
-        return '<div class="grid cols-4" style="align-items:end;margin-top:6px">'
-          +'<div><label>Palet — '+esc(teamName(m.a))+'</label><input '+(can?'':'disabled ')+'type="number" min="0" max="11" step="1" value="'+(a==null?'':a)+'" data-palet="a"/></div>'
-          +'<div><label>Palet — '+esc(teamName(m.b))+'</label><input '+(can?'':'disabled ')+'type="number" min="0" max="11" step="1" value="'+(b==null?'':b)+'" data-palet="b"/></div>'
-          +'<div class="help">'+note+'</div><div></div></div>';
-      }
-
-      function findMatch(idv){ for(var i=0;i<state.matches.length;i++){ if(state.matches[i].id===idv) return state.matches[i]; } return null; }
-      function clearMatch(idv){ var m=findMatch(idv); if(!m||!canEditMatch(m)) return; if(!confirm("Effacer tous les scores de ce match ?")) return; m.darts=[null,null,null]; m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; m.palet={a:null,b:null}; saveState(); renderMatches(); }
-
-      /* ---------- Classement ---------- */
-      function computeLeaderboard(){
-        var stats={}; state.teams.forEach(function(t){ stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0}; });
-        state.matches.forEach(function(m){
-          var A=stats[m.a], B=stats[m.b];
-          (Array.isArray(m.darts)?m.darts:[]).forEach(function(v){ if(v===0){A.dartsW++;A.points+=5;} else if(v===1){B.dartsW++;B.points+=5;} });
-          getPingPts(m).forEach(function(s){ if(isPingValid(s.a,s.b)){ if(s.a>s.b){A.pingW++;A.points+=5;} else if(s.b>s.a){B.pingW++;B.points+=5;} } });
-          var pa=m.palet.a, pb=m.palet.b; if(pa!=null&&pb!=null){ A.palFor+=pa; B.palFor+=pb; A.palAg+=pb; B.palAg+=pa; A.points+=pa; B.points+=pb; }
-          if(isMatchComplete(m)){ A.matchesComplete++; B.matchesComplete++; }
-        });
-        var rows=Object.keys(stats).map(function(k){return stats[k];});
-        rows.sort(function(x,y){
-          var d=y.points-x.points;
-          if(d) return d;
-          d=(y.palFor-y.palAg)-(x.palFor-x.palAg); if(d) return d;
-          d=(y.dartsW+y.pingW)-(x.dartsW+x.pingW); if(d) return d;
-          return x.name.localeCompare(y.name);
-        });
-        rows.forEach(function(r,i){ r.rank=i+1; });
-        return rows;
-      }
-      function renderLeaderboard(){
-        var tbody=qs("#table-classement tbody"); if(!tbody) return; tbody.innerHTML="";
-        computeLeaderboard().forEach(function(r){
-          var diff=r.palFor-r.palAg; var tr=document.createElement("tr");
-          tr.innerHTML='<td>'+r.rank+'</td>'
-            +'<td><span class="team-name">'+(r.avatar?('<span class="avatar avatar-lg"><img src="'+esc(r.avatar)+'" alt="avatar"></span>'):( '<span class="avatar avatar-lg"><span class="avatar-initials">'+esc(initials(r.name))+'</span></span>' ))+' '+esc(r.name)+'</span></td>'
-            +'<td><b>'+r.points+'</b></td><td>'+r.dartsW+'</td><td>'+r.pingW+'</td>'
-            +'<td>'+r.palFor+'–'+r.palAg+' <span class="muted">('+(diff>=0?'+':'')+diff+')</span></td>'
-            +'<td>'+r.matchesComplete+'</td>';
-          tbody.appendChild(tr);
-        });
-      }
-
-      /* ---------- H2H ---------- */
-      function pointsForTeamInMatch(m,teamId){
-        var isA=m.a===teamId, isB=m.b===teamId; if(!isA&&!isB) return 0;
-        var pts=0; (Array.isArray(m.darts)?m.darts:[]).forEach(function(v){ if(v===0&&isA) pts+=5; else if(v===1&&isB) pts+=5; });
-        getPingPts(m).forEach(function(s){ if(isPingValid(s.a,s.b)){ if(s.a>s.b&&isA) pts+=5; else if(s.b>s.a&&isB) pts+=5; } });
-        if(m.palet && m.palet.a!=null && m.palet.b!=null) pts += isA? m.palet.a : m.palet.b;
-        return pts;
-      }
-      function renderH2H(){
-        var thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); if(!thead||!tbody) return;
-        thead.innerHTML=""; tbody.innerHTML="";
-        var teams=state.teams.slice(); if(!teams.length){ tbody.appendChild(help("Ajoutez des équipes pour voir la matrice.")); return; }
-        var trH=document.createElement("tr"); trH.appendChild(document.createElement("th")).textContent="Équipe";
-        teams.forEach(function(t){ var th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>'; trH.appendChild(th); });
-        thead.appendChild(trH);
-        var byPair={}; state.matches.forEach(function(m){ byPair[[m.a,m.b].sort().join("|")]=m; });
-        teams.forEach(function(ti){
-          var tr=document.createElement("tr"); var th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>'; tr.appendChild(th);
-          teams.forEach(function(tj){
-            var td=document.createElement("td");
-            if(ti.id===tj.id){ td.textContent="—"; tr.appendChild(td); return; }
-            var m=byPair[[ti.id,tj.id].sort().join("|")];
-            if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; }
-            var pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id);
-            if(pI===0 && pJ===0){ td.innerHTML='<span class="chip">•</span>'; }
-            else{ var tag=(pI>pJ)?'W':(pI<pJ)?'L':'='; td.innerHTML='<span class="chip">'+tag+' '+pI+'–'+pJ+'</span>'; }
-            td.style.cursor="pointer"; td.dataset.matchId=m.id; tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
-        tbody.addEventListener("click", function(e){
-          var n=e.target; while(n && n!==tbody && !(n.tagName==="TD" && n.dataset.matchId)) n=n.parentNode;
-          if(!n||n===tbody) return; goToMatch(n.dataset.matchId);
-        });
-      }
-      function goToMatch(mid){ goto("calendrier"); ui.open[mid]=true; setTimeout(function(){ var card=qs('.match-card[data-id="'+mid+'"]'); if(card){ card.setAttribute("aria-expanded","true"); try{ card.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ card.scrollIntoView(); } } },0); }
-
-      /* ---------- Export / Import / Reset / Admin / Cloud ---------- */
-      onClick(id("btn-export"), function(){ var data=JSON.stringify(state,null,2); var url=URL.createObjectURL(new Blob([data],{type:"application/json"})); var a=document.createElement("a"); a.href=url; a.download="tournoi-"+(state.tournamentName||"TriSports").replace(/\s+/g,'_')+".json"; a.click(); URL.revokeObjectURL(url); });
-      var importFile=null; var fileImport=id("file-import"); if(fileImport) fileImport.addEventListener("change", function(e){ importFile=e.target.files[0]; });
-      onClick(id("btn-import"), function(){ if(!importFile){ alert("Sélectionnez un fichier JSON."); return; } importFile.text().then(function(t){ try{ var data=JSON.parse(t); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw 0; state=data; normalize(); saveState(); saveSnapshot(); renderAll(); alert("Import réussi !"); }catch(e){ alert("Fichier invalide."); } }); });
-
-      onClick(id("btn-admin-on"), function(){ var pin=prompt("PIN administrateur :"); if(pin==="30041991"){ session.admin=true; saveSession(); renderAll(); alert("Mode administrateur activé."); } else alert("PIN incorrect."); });
-      onClick(id("btn-admin-off"), function(){ session.admin=false; saveSession(); renderAll(); });
-
-      onClick(id("btn-publish-cloud"), publishCurrentToCloud);
-      onClick(id("btn-cloud-copy"), function(){
-        if(!cloud.id){ alert("Ce tournoi n’est pas publié. Utilise « Publier & partager » d’abord."); return; }
-        var url=location.origin+location.pathname+"?id="+encodeURIComponent(cloud.id);
-        if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url);
-        alert("Lien copié !\n"+url);
-      });
-      onClick(id("btn-cloud-leave"), function(){
-        if(!cloud.enabled){ alert("Pas connecté au cloud."); return; }
-        if(!confirm("Quitter le cloud pour ce tournoi ? Les données restent en local.")) return;
-        leaveCloud(); state.cloudId=null; saveState(); alert("Ce tournoi reste local. Vous pourrez le republier plus tard.");
-      });
-
-      onClick(id("btn-reset"), function(){
-        var pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; }
-        if(!confirm("Ré-initialiser totalement ?")) return;
-        state={version:22,tid:uid(),cloudId:null,tournamentName:"",teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}};
-        normalize(); session={admin:false,claims:{}}; saveSession(); saveState(); saveSnapshot(); renderAll(); goto("setup");
-      });
-      onClick(id("btn-unlock"), function(){ if(!isAdmin()){ alert("Réservé à l’admin."); return; } if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
-
-      /* ---------- Boutons utilitaires ---------- */
-      onClick(id("btn-refresh-standings"), function(){ renderLeaderboard(); renderH2H(); });
-      onClick(id("btn-refresh-standings-2"), function(){ renderLeaderboard(); renderH2H(); goto("classement"); });
-      onClick(id("btn-toggle-h2h"), function(){
-        var v1=id("view-summary"), v2=id("view-h2h");
-        if(!v1||!v2) return;
-        var showH2H = v2.style.display==="none";
-        v1.style.display = showH2H ? "none":"block";
-        v2.style.display = showH2H ? "block":"none";
-      });
-      onClick(id("btn-collapse"), function(){ qsa('#match-list .match-card').forEach(function(c){ c.setAttribute('aria-expanded','false'); }); ui.open={}; });
-
-      /* ---------- Helpers ---------- */
-      function onClick(el,fn){ if(el && el.addEventListener) el.addEventListener("click",fn); }
-      function saveState(opts){
-        saveRuntime();
-        saveSnapshot();
-        renderTitle(); renderLeaderboard(); renderH2H();
-        if(cloud.enabled && !(opts && opts.cloud===false)) pushCloud(false);
-        renderSetupRecent();
-      }
-
-      /* ---------- Init ---------- */
-      loadSession();
-      renderAll();
-      function renderAll(){
-        renderTitle(); renderSetupRecent();
-        if(!state.teams.length) goto("setup");
-        renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI(); updateWho();
-        setCloud(cloud.enabled?("connecté"+(cloud.id?(" ("+cloud.id+")"):"")):"hors ligne");
-      }
+  // file inputs
+  qsa('#team-list input[type="file"][data-avatar]').forEach(inp=>{
+    inp.addEventListener("change", async ()=>{
+      const tid=inp.getAttribute("data-avatar"); if(!(isAdmin()||hasClaim(tid))) return;
+      const file=inp.files?.[0]; if(!file) return;
+      try{
+        const url=await fileToSquareDataURL(file,160);
+        const t=teamObj(tid); if(!t) return; t.avatar=url; save(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H();
+      }catch{ alert("Échec du chargement de l’avatar."); }
+      finally{ inp.value=""; }
     });
-  })();
-  </script>
+  });
+
+  updateCounts(); updateLock();
+}
+function fileToSquareDataURL(file,size){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error("read"));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const min=Math.min(img.width,img.height), sx=(img.width-min)/2, sy=(img.height-min)/2;
+          const c=document.createElement("canvas"); c.width=size; c.height=size;
+          c.getContext('2d').drawImage(img,sx,sy,min,min,0,0,size,size);
+          resolve(c.toDataURL('image/jpeg',0.9));
+        }catch(e){reject(e)}
+      };
+      img.onerror=()=>reject(new Error("img"));
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function updateCounts(){ id("teams-count").textContent=state.teams.length+" "+(state.teams.length>1?"équipes":"équipe"); const per=Math.max(0,state.teams.length-1); id("rounds-count").textContent=per+" "+(per>1?"matchs":"match")+" par équipe" }
+function updateLock(){ const pill=id("lock-pill"); if(pill) pill.style.display=state.locked?"inline-block":"none"; const gen=id("btn-generate"); if(gen){gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"} }
+
+/* ===== Rencontres / Scores ===== */
+function getPingPts(m){return Array.isArray(m.pingPts)?m.pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}]}
+function isPingValid(a,b){ if(a==null||b==null) return false; if(isNaN(a)||isNaN(b)) return false; const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
+function computeSetWins(m){
+  const darts=Array.isArray(m.darts)?m.darts:[null,null,null];
+  const sets=getPingPts(m);
+  const aw={darts:0,ping:0}, bw={darts:0,ping:0};
+  darts.forEach(v=>{if(v===0)aw.darts++; else if(v===1)bw.darts++;});
+  sets.forEach(s=>{const a=(typeof s.a==='number')?s.a:null,b=(typeof s.b==='number')?s.b:null; if(isPingValid(a,b)){if(a>b)aw.ping++; else if(b>a)bw.ping++;}});
+  return {aw,bw};
+}
+function isMatchComplete(m){
+  const okD=(Array.isArray(m.darts)?m.darts:[null,null,null]).every(v=>v===0||v===1);
+  const okP=getPingPts(m).every(s=>isPingValid(s.a,s.b));
+  const pa=m.palet?.a, pb=m.palet?.b;
+  const okL=(pa!=null&&pb!=null)&&((pa===11&&pb>=0&&pb<=10)||(pb===11&&pa>=0&&pa<=10));
+  return okD&&okP&&okL;
+}
+function findMatch(mid){return state.matches.find(x=>x.id===mid)}
+function clearMatch(mid){const m=findMatch(mid); if(!m) return; if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b))) return; if(!confirm("Effacer tous les scores de ce match ?")) return; m.darts=[null,null,null]; m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; m.palet={a:null,b:null}; save(); renderMatches();}
+
+function renderMatches(){
+  const list=id("match-list"); list.innerHTML="";
+  if(!state.matches.length){ list.appendChild(help("Aucune rencontre planifiée.")); id("stats-matches").textContent="0 / 0 matches complets"; return }
+  const groups={}; state.matches.forEach(m=>(groups[m.round]=groups[m.round]||[]).push(m));
+  const rounds=Object.keys(groups).map(Number).sort((a,b)=>a-b); let complete=0, idx=0;
+  rounds.forEach(r=>{
+    const hdr=help("Journée "+r); hdr.style.fontWeight="600"; hdr.style.margin="8px 0"; list.appendChild(hdr);
+    groups[r].forEach(m=>{
+      const wins=computeSetWins(m), pal=m.palet, palScore=(pal.a!=null&&pal.b!=null)?(pal.a+"–"+pal.b):"—";
+      const done=isMatchComplete(m); if(done) complete++;
+      const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b));
+      const el=document.createElement("div"); el.className="match-card"; el.dataset.id=m.id;
+      el.setAttribute("aria-expanded", ui.open[m.id]?"true":"false");
+      el.innerHTML=`
+        <div class="hd" data-expand style="border:none;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <div class="teams"><span class="chip">#${++idx}</span>
+            <span class="team-name">${avatarHtml(m.a,'sm')}${esc(teamName(m.a))}</span> <span class="muted">vs</span>
+            <span class="team-name">${avatarHtml(m.b,'sm')}${esc(teamName(m.b))}</span></div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <span class="chip">Journée ${m.round||"?"}</span>
+            <span class="chip">Fléchettes G: ${wins.aw.darts}-${wins.bw.darts}</span>
+            <span class="chip">Ping G: ${wins.aw.ping}-${wins.bw.ping}</span>
+            <span class="chip">Palet: ${palScore}</span>
+            ${done?'<span class="pill" style="border-color:#2c6;color:#8fd">✅ Complet</span>':'<span class="pill" style="border-color:#aa6;color:#ffc">⏳ Incomplet</span>'}
+            <span class="chip">▶</span>
+          </div>
+        </div>
+        <div class="bd">
+          ${renderDarts(m,can)}${renderPing(m,can)}${renderPalet(m,can)}
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">
+            <div class="help">${can?'':'Lecture seule — connectez-vous à une des deux équipes.'}</div>
+            <div>${can?`<button type="button" class="btn small" data-clear="${m.id}">Effacer ce match</button>`:''}</div>
+          </div>
+        </div>`;
+      list.appendChild(el);
+
+      // hook inputs/selects de ce match
+      qsa('[data-match="'+m.id+'"]').forEach(sel=>{
+        if(!can) sel.disabled=true;
+        sel.addEventListener("change", ()=>{
+          const kind=sel.getAttribute("data-kind"), index=parseInt(sel.getAttribute("data-index"),10);
+          const v=sel.value===""?null:parseInt(sel.value,10);
+          const mm=findMatch(m.id); mm[kind][index]=v; save(); renderLeaderboard(); renderH2H();
+        });
+      });
+      qsa(`[data-ping][data-index][data-match-id="${m.id}"]`); // (placeholder si besoin)
+
+      qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
+        if(!can) inp.disabled=true;
+        inp.addEventListener("input", ()=>{
+          const which=inp.getAttribute("data-ping"), index=parseInt(inp.getAttribute("data-index"),10);
+          const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);
+          const mm=findMatch(m.id); mm.pingPts[index][which]=v; save(); renderLeaderboard(); renderH2H();
+        });
+        inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
+      });
+      qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
+        if(!can) inp.disabled=true;
+        inp.addEventListener("input", ()=>{
+          const which=inp.getAttribute("data-palet"); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,11);
+          const mm=findMatch(m.id); mm.palet[which]=v; save(); renderLeaderboard(); renderH2H();
+        });
+        inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
+      });
+      const clr=qs('.match-card[data-id="'+m.id+'"] [data-clear]'); if(clr) clr.addEventListener("click", ()=>clearMatch(m.id));
+      const head=qs('.match-card[data-id="'+m.id+'"] [data-expand]'); if(head) head.addEventListener("click", ()=>{
+        const open=el.getAttribute("aria-expanded")==="true"; el.setAttribute("aria-expanded", open?"false":"true"); ui.open[m.id]=!open;
+      });
+    });
+  });
+  id("stats-matches").textContent=complete+" / "+state.matches.length+" matches complets";
+  renderLeaderboard();
+}
+function renderDarts(m,can){
+  const subs=["Simple 1","Simple 2","Double"]; const names=[teamName(m.a),teamName(m.b)];
+  let html=""; for(let i=0;i<3;i++){const v=m.darts[i];
+    html+=`<div class="grid cols-3" style="align-items:end"><div>
+      <label>Fléchettes — ${subs[i]}</label>
+      <select ${(can?'':'disabled ')}data-match="${m.id}" data-kind="darts" data-index="${i}">
+        <option value="" ${v===null?'selected':''}>Non joué</option>
+        <option value="0" ${v===0?'selected':''}>Victoire ${esc(names[0])}</option>
+        <option value="1" ${v===1?'selected':''}>Victoire ${esc(names[1])}</option>
+      </select></div><div></div><div></div></div>`;
+  } return html;
+}
+function renderPing(m,can){
+  const labels=["Simple 1","Simple 2","Double"], sets=getPingPts(m); let html="";
+  for(let i=0;i<3;i++){const s=sets[i]||{a:null,b:null}; const note=(s.a==null||s.b==null)?'Saisissez deux scores (11+ et écart ≥ 2).':(isPingValid(s.a,s.b)?'✔️ Score valide':'⚠️ 11+ et écart ≥ 2 (11–9, 12–10…).');
+    html+=`<div class="grid cols-4" style="align-items:end;margin-top:6px">
+      <div><label>Ping — ${labels[i]} — ${esc(teamName(m.a))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="99" step="1" value="${s.a==null?'':s.a}" data-ping="a" data-index="${i}"/></div>
+      <div><label>Ping — ${labels[i]} — ${esc(teamName(m.b))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="99" step="1" value="${s.b==null?'':s.b}" data-ping="b" data-index="${i}"/></div>
+      <div class="help">${note}</div><div></div></div>`;
+  } return html;
+}
+function renderPalet(m,can){
+  const a=m.palet?.a, b=m.palet?.b, note=(a==null||b==null)?'Saisissez les deux scores (l’un doit être 11).':((a===11&&b>=0&&b<=10)||(b===11&&a>=0&&a<=10)?'✔️ Score valide':'⚠️ Un score doit être 11, l’autre entre 0 et 10.');
+  return `<div class="grid cols-4" style="align-items:end;margin-top:6px">
+    <div><label>Palet — ${esc(teamName(m.a))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="11" step="1" value="${a==null?'':a}" data-palet="a"/></div>
+    <div><label>Palet — ${esc(teamName(m.b))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="11" step="1" value="${b==null?'':b}" data-palet="b"/></div>
+    <div class="help">${note}</div><div></div></div>`;
+}
+
+/* ===== Classement & H2H ===== */
+function computeLeaderboard(){
+  const stats={}; state.teams.forEach(t=>stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0});
+  state.matches.forEach(m=>{
+    const A=stats[m.a], B=stats[m.b];
+    (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0){A.dartsW++;A.points+=5}else if(v===1){B.dartsW++;B.points+=5} });
+    getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b){A.pingW++;A.points+=5}else if(s.b>s.a){B.pingW++;B.points+=5} } });
+    const pa=m.palet?.a, pb=m.palet?.b; if(pa!=null&&pb!=null){ A.palFor+=pa; B.palFor+=pb; A.palAg+=pb; B.palAg+=pa; A.points+=pa; B.points+=pb; }
+    if(isMatchComplete(m)){A.matchesComplete++;B.matchesComplete++}
+  });
+  const rows=Object.values(stats);
+  rows.sort((x,y)=>(y.points-x.points)||((y.palFor-y.palAg)-(x.palFor-x.palAg))||((y.dartsW+y.pingW)-(x.dartsW+x.pingW))||x.name.localeCompare(y.name));
+  rows.forEach((r,i)=>r.rank=i+1); return rows;
+}
+function renderLeaderboard(){
+  const tbody=qs("#table-classement tbody"); if(!tbody) return; tbody.innerHTML="";
+  computeLeaderboard().forEach(r=>{
+    const diff=r.palFor-r.palAg; const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${r.rank}</td>
+      <td><span class="team-name">${r.avatar?(`<span class="avatar avatar-lg"><img src="${esc(r.avatar)}" alt="avatar"></span>`):(`<span class="avatar avatar-lg"><span class="avatar-initials">${esc(initials(r.name))}</span></span>`)} ${esc(r.name)}</span></td>
+      <td><b>${r.points}</b></td><td>${r.dartsW}</td><td>${r.pingW}</td>
+      <td>${r.palFor}–${r.palAg} <span class="muted">(${diff>=0?'+':''}${diff})</span></td>
+      <td>${r.matchesComplete}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function pointsForTeamInMatch(m,tid){
+  const isA=m.a===tid, isB=m.b===tid; if(!isA&&!isB) return 0;
+  let pts=0; (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0&&isA) pts+=5; else if(v===1&&isB) pts+=5; });
+  getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b&&isA) pts+=5; else if(s.b>s.a&&isB) pts+=5; } });
+  if(m.palet && m.palet.a!=null && m.palet.b!=null) pts += isA?m.palet.a:m.palet.b;
+  return pts;
+}
+function renderH2H(){
+  const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); if(!thead||!tbody) return;
+  thead.innerHTML=""; tbody.innerHTML="";
+  const teams=state.teams.slice(); if(!teams.length){ tbody.appendChild(help("Ajoutez des équipes pour voir la matrice.")); return; }
+  const trH=document.createElement("tr"); trH.appendChild(document.createElement("th")).textContent="Équipe";
+  teams.forEach(t=>{ const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>'; trH.appendChild(th); });
+  thead.appendChild(trH);
+  const byPair={}; state.matches.forEach(m=>{ byPair[[m.a,m.b].sort().join("|")]=m; });
+  teams.forEach(ti=>{
+    const tr=document.createElement("tr"); const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>'; tr.appendChild(th);
+    teams.forEach(tj=>{
+      const td=document.createElement("td");
+      if(ti.id===tj.id){ td.textContent="—"; tr.appendChild(td); return; }
+      const m=byPair[[ti.id,tj.id].sort().join("|")];
+      if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; }
+      const pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id);
+      if(pI===0&&pJ===0){ td.innerHTML='<span class="chip">•</span>'; }
+      else{ const tag=(pI>pJ)?'W':(pI<pJ)?'L':'='; td.innerHTML='<span class="chip">'+tag+' '+pI+'–'+pJ+'</span>'; }
+      td.style.cursor="pointer"; td.dataset.matchId=m.id; tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  tbody.addEventListener("click", e=>{
+    let n=e.target; while(n && n!==tbody && !(n.tagName==="TD" && n.dataset.matchId)) n=n.parentNode;
+    if(!n||n===tbody) return; goto("calendrier"); ui.open[n.dataset.matchId]=true; setTimeout(()=>{const card=qs('.match-card[data-id="'+n.dataset.matchId+'"]'); if(card){ card.setAttribute("aria-expanded","true"); card.scrollIntoView({behavior:"smooth",block:"start"});}},0);
+  });
+}
+
+/* ===== Tabs + délégation globale ===== */
+function goto(tabId){
+  qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false"));
+  const b=qs('.tab[data-tab="'+tabId+'"]'); if(b) b.setAttribute("aria-selected","true");
+  qsa("main section").forEach(s=>s.classList.remove("active"));
+  const sec=id(tabId); if(sec) sec.classList.add("active");
+}
+document.addEventListener("click", (e)=>{
+  const btn=e.target.closest("button"); if(btn){
+    switch(btn.id){
+      case "btn-fullscreen": fsEl()?exitFS():enterFS(document.documentElement); break;
+      case "btn-create-tournament":{
+        if(!isAdmin()){ const pin=prompt("PIN administrateur :"); if(pin!=="30041991") return alert("PIN incorrect."); session.admin=true; }
+        const name=(id("tname-input").value||"").trim()||"Tournoi entre amis";
+        let n=parseInt(id("teams-count-input").value,10); if(isNaN(n)) n=4; n=clampInt(n,2,64);
+        state={version:22,tid:uid(),cloudId:null,tournamentName:name,teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null})),matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}};
+        leaveCloud(); save(); renderAll(); goto("equipes"); break;
+      }
+      case "btn-join-code":{ const code=(id("join-code").value||"").trim(); if(!code) return alert("Renseigne un code."); joinCloud(code); goto("equipes"); break; }
+      case "btn-copy-link":{ const code=(id("join-code").value||"").trim(); if(!code) return alert("Renseigne un code."); const url=location.origin+location.pathname+"?id="+encodeURIComponent(code); navigator.clipboard?.writeText(url); alert("Lien copié !\n"+url); break; }
+      case "btn-add-team":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(state.locked) return alert("Calendrier figé."); state.teams.push({id:uid(),name:"Équipe "+(state.teams.length+1),p1:"",p2:"",avatar:null}); save(); renderTeams(); updateCounts(); updateLock(); break; }
+      case "btn-generate":{ if(!isAdmin()) return alert("Seul l’admin peut générer."); if(state.locked) return; generateSchedule(); state.locked=true; save(); renderAll(); goto("calendrier"); break; }
+      case "btn-refresh-standings": case "btn-refresh-standings-2":{ renderLeaderboard(); renderH2H(); if(btn.id==="btn-refresh-standings-2") goto("classement"); break; }
+      case "btn-toggle-h2h":{ const v1=id("view-summary"),v2=id("view-h2h"); if(!v1||!v2) return; const show=v2.style.display==="none"; v1.style.display=show?"none":"block"; v2.style.display=show?"block":"none"; break; }
+      case "btn-collapse":{ qsa('#match-list .match-card').forEach(c=>c.setAttribute('aria-expanded','false')); ui.open={}; break; }
+      case "btn-export":{ const data=JSON.stringify(state,null,2); const url=URL.createObjectURL(new Blob([data],{type:"application/json"})); const a=document.createElement("a"); a.href=url; a.download=("tournoi-"+(state.tournamentName||"TriSports")).replace(/\s+/g,'_')+".json"; a.click(); URL.revokeObjectURL(url); break; }
+      case "btn-import":{ const f=id("file-import").files?.[0]; if(!f) return alert("Sélectionnez un fichier JSON."); f.text().then(t=>{ try{ const data=JSON.parse(t); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw 0; state=data; save(); renderAll(); alert("Import réussi !"); }catch(_){ alert("Fichier invalide."); } }); break; }
+      case "btn-admin-on":{ const pin=prompt("PIN administrateur :"); if(pin==="30041991"){ session.admin=true; updateWho(); alert("Mode administrateur activé."); } else alert("PIN incorrect."); break; }
+      case "btn-admin-off":{ session.admin=false; session.claims={}; updateWho(); break; }
+      case "btn-publish-cloud":{ if(!isAdmin()) return alert("Seul l’administrateur peut publier."); if(!hasFB) return alert("Firebase non configuré."); if(!cloud.db){ cloud.db=initFB(); if(!cloud.db) return alert("Init Firebase impossible."); } const code=prompt("Choisis un code (ex: apero2025)"); if(!code) return; cloud.id=code.trim(); cloud.ref=cloud.db.ref("tournaments/"+cloud.id+"/payload"); cloud.enabled=true; state.cloudId=cloud.id; pushCloud(true); setCloudTxt("connecté ("+cloud.id+")"); const url=location.origin+location.pathname+"?id="+encodeURIComponent(cloud.id); navigator.clipboard?.writeText(url); alert("Tournoi publié !\nLien copié :\n"+url); break; }
+      case "btn-cloud-copy":{ if(!cloud.id) return alert("Pas publié. Utilise « Publier & partager »."); const url=location.origin+location.pathname+"?id="+encodeURIComponent(cloud.id); navigator.clipboard?.writeText(url); alert("Lien copié !\n"+url); break; }
+      case "btn-cloud-leave":{ if(!cloud.enabled) return alert("Pas connecté au cloud."); if(!confirm("Quitter le cloud pour ce tournoi ?")) return; leaveCloud(); state.cloudId=null; save(); alert("Tournoi maintenant local."); break; }
+      case "btn-reset":{ const pin=prompt("PIN administrateur :"); if(pin!=="30041991") return alert("PIN incorrect."); if(!confirm("Ré-initialiser totalement ?")) return; state={version:22,tid:uid(),cloudId:null,tournamentName:"",teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; session={admin:false,claims:{}}; save(); renderAll(); goto("setup"); break; }
+      case "btn-unlock":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; save(); renderTeams(); renderMatches(); updateLock(); break; }
+    }
+  }
+
+  // Tabs (délégation)
+  const tab=e.target.closest(".tab"); if(tab){ qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false")); tab.setAttribute("aria-selected","true"); qsa("main section").forEach(s=>s.classList.remove("active")); id(tab.getAttribute("data-tab")).classList.add("active"); }
+
+  // Boutons contextuels data-act (supprimer, login, etc.)
+  const actBtn=e.target.closest("[data-act]");
+  if(actBtn){
+    const act=actBtn.getAttribute("data-act"); const tid=actBtn.getAttribute("data-id");
+    if(act==="del"){ if(!isAdmin()||state.locked) return; if(!confirm("Supprimer cette équipe ?")) return; state.teams=state.teams.filter(tt=>tt.id!==tid); state.matches=state.matches.filter(m=>m.a!==tid&&m.b!==tid); if(state.protect?.teamPassHash) delete state.protect.teamPassHash[tid]; save(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
+    if(act==="setpass"){ if(!isAdmin()) return alert("Réservé à l’admin."); const pass=prompt("Mot de passe pour l’équipe « "+teamName(tid)+" » :"); if(!pass) return; // hash simplifié côté client
+      // petit hash rapide
+      let h=2166136261>>>0; for(let i=0;i<pass.length;i++){h^=pass.charCodeAt(i); h=(h*16777619)>>>0;}
+      const hash=("00000000"+h.toString(16)).slice(-8);
+      state.protect=state.protect||{teamPassHash:{}}; state.protect.teamPassHash[tid]=hash; save(); renderTeams(); alert("Mot de passe défini."); }
+    if(act==="login"){ const has=!!(state.protect?.teamPassHash?.[tid]); if(!has) return alert("Cette équipe n’a pas encore de mot de passe."); const pass=prompt("Mot de passe de l’équipe « "+teamName(tid)+" » :"); if(!pass) return;
+      let h=2166136261>>>0; for(let i=0;i<pass.length;i++){h^=pass.charCodeAt(i); h=(h*16777619)>>>0;} const hash=("00000000"+h.toString(16)).slice(-8);
+      if(hash===state.protect.teamPassHash[tid]){ session.claims[tid]=true; updateWho(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); alert("Connexion réussie."); } else alert("Mot de passe incorrect."); }
+    if(act==="logout"){ delete session.claims[tid]; updateWho(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
+    if(act==="avatar"){ const input=qs('[data-avatar="'+tid+'"]'); if(input) input.click(); }
+    if(act==="avatar-clear"){ const t=teamObj(tid); if(!t) return; t.avatar=null; save(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
+  }
+
+  // Effacer match
+  const clearBtn=e.target.closest("[data-clear]"); if(clearBtn){ clearMatch(clearBtn.getAttribute("data-clear")); }
+});
+
+/* ===== Boot ===== */
+function renderSetupRecent(){ /* (optionnel) – laissé vide pour alléger */ }
+function renderAll(){ renderTitle(); updateWho(); updateFSBtn(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
+function leaveCloud(){ if(cloud.ref) cloud.ref.off(); cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloudTxt("hors ligne"); }
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  addInlineStyle(".avatar{width:40px;height:40px;font-size:14px}.avatar .avatar-initials{line-height:40px}.avatar-lg{width:48px;height:48px;font-size:15px}.avatar-lg .avatar-initials{line-height:48px}.avatar-sm{width:32px;height:32px;font-size:12px}.avatar-sm .avatar-initials{line-height:32px}");
+  renderAll();
+  const p=id('js-ok'); if(p){ p.textContent='JS chargé ✅ · handlers OK'; p.style.background='#14532d'; }
+});
+</script>
 </body>
 </html>
