@@ -34,6 +34,7 @@
     .chip{font-size:12px;padding:4px 8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;color:var(--muted)}
     .pill{padding:4px 8px;border-radius:999px;background:#0f1331;border:1px solid var(--border);color:var(--muted);font-size:12px}
     .h2h-table th, .h2h-table td { white-space:nowrap; }
+    .team-name{display:inline-flex;align-items:center;gap:8px}
     .avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:#0f1331;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;color:#cbd5ff;font-weight:700;font-size:14px;flex:0 0 auto}
     .avatar img{width:100%;height:100%;object-fit:cover}
     .avatar .avatar-initials{display:inline-block;line-height:40px}
@@ -108,24 +109,22 @@
               </div>
               <div style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                 <button type="button" class="btn primary" id="btn-create-tournament">Créer</button>
-                <span class="help">Protégé admin.</span>
+                <span class="help">Action réservée à l’administrateur.</span>
               </div>
             </div>
           </div>
 
-          <!-- Rejoindre / Publier (Cloud) -->
+          <!-- Rejoindre un tournoi (Cloud) -->
           <div class="card">
-            <div class="hd"><strong>Rejoindre / Partager un tournoi (Cloud)</strong></div>
+            <div class="hd"><strong>Rejoindre tournoi existant</strong></div>
             <div class="bd grid">
               <label>Code du tournoi (cloud)</label>
               <input type="text" id="join-code" placeholder="ex : apero2025" />
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
                 <button type="button" class="btn primary" id="btn-join-code">Rejoindre</button>
-                <button type="button" class="btn" id="btn-publish">Publier (cloud)</button>
                 <button type="button" class="btn" id="btn-copy-link">Copier lien ?id=code</button>
                 <span class="help">Statut : <span id="cloud-status">hors ligne</span></span>
               </div>
-              <div class="help">“Publier” enverra <b>le tournoi actuel</b> vers ce code cloud (si le code existe déjà, une confirmation te sera demandée).</div>
             </div>
           </div>
         </div>
@@ -224,6 +223,16 @@
         </div>
 
         <div class="card" style="margin-top:12px">
+          <div class="hd"><strong>Cloud (partage)</strong></div>
+          <div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <span class="pill">Statut : <span id="cloud-status-2">hors ligne</span></span>
+            <button type="button" class="btn primary" id="btn-publish-cloud">Publier & partager ce tournoi</button>
+            <button type="button" class="btn" id="btn-cloud-copy">Copier le lien de partage</button>
+            <button type="button" class="btn" id="btn-cloud-leave">Quitter le cloud (rester en local)</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
           <div class="hd"><strong>Réinitialisation</strong></div>
           <div class="bd grid" style="gap:10px">
             <button type="button" class="btn danger" id="btn-reset">Nouvelle compétition (tout effacer)</button>
@@ -240,6 +249,7 @@
   (function(){ var p=document.getElementById('js-ok'); if(p){ p.textContent='JS chargé ✅'; p.style.background='#14532d'; } })();
 
   (function () {
+    // Affiche les erreurs runtime
     window.onerror = function (msg, src, line, col) {
       var el = document.getElementById("storage-warning");
       if (!el) return;
@@ -257,6 +267,7 @@
         .avatar-sm .avatar-initials{line-height:32px}
       `);
 
+      // ---------- Local storage (runtime + multi-tournois)
       const STORAGE_KEY = "tournoi_amis_roles2c6";
       const IDX_KEY     = "trisports_index_v1";
       const SNAP_PREFIX = "trisports_state_";
@@ -291,6 +302,7 @@
         }catch{ return false; }
       }
 
+      // ---------- État + session
       let state = loadRuntime() || {
         version: 22,
         tid: uid(),
@@ -311,11 +323,14 @@
       function loadSession(){ try{ const raw=localStorage.getItem(sessionKey()); if(raw){ const s=JSON.parse(raw); if(s) session=s; } }catch{} updateWho(); }
       function saveSession(){ try{ localStorage.setItem(sessionKey(), JSON.stringify(session)); }catch{} updateWho(); }
 
-      // Firebase
+      // ---------- Firebase (Cloud)
       const cloud = { enabled:false, db:null, id:null, ref:null, lastRemoteAt:0, pushTimer:null };
       const hasFB = !!(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey);
       function initFB(){ if(!hasFB) return null; try{ const apps=firebase.apps; if(!apps || apps.length===0) firebase.initializeApp(window.FIREBASE_CONFIG); return firebase.database(); }catch(e){ console.warn("Firebase init error",e); return null; } }
-      function setCloud(txt){ const el=id("cloud-status"); if(el) el.textContent=txt; }
+      function setCloud(txt){
+        const a=id("cloud-status"); if(a) a.textContent=txt;
+        const b=id("cloud-status-2"); if(b) b.textContent=txt;
+      }
 
       function joinCloud(code){
         if(!hasFB){ alert("Firebase non configuré."); return; }
@@ -331,7 +346,7 @@
             first=false;
             if(!val){
               state.cloudId = cloud.id;
-              pushCloud(true); // crée le tournoi distant à partir de l'état local
+              pushCloud(true);
               setCloud("connecté (créé)");
               upsertIndex({ id:"cloud:"+cloud.id, name:"Cloud · "+cloud.id, updatedAt:Date.now(), type:"cloud" });
               renderSetupRecent();
@@ -352,37 +367,6 @@
 
         try{ history.replaceState(null,"", location.pathname+"?id="+encodeURIComponent(cloud.id)); }catch{}
       }
-
-      // Publication explicite (publier un tournoi local vers un code cloud)
-      function publishToCloud(code){
-        if(!hasFB){ alert("Firebase non configuré."); return; }
-        if(!cloud.db){ cloud.db=initFB(); if(!cloud.db){ alert("Initialisation Firebase impossible."); return; } }
-        code=(code||"").trim(); if(!code){ alert("Renseigne un code."); return; }
-
-        const ref = cloud.db.ref("tournaments/"+code+"/payload");
-        setCloud("publication…");
-        ref.once("value").then(snap=>{
-          const exists = !!snap.val();
-          if(exists){
-            if(!confirm("Ce code existe déjà.\nRemplacer le contenu distant par votre tournoi local ?")){ setCloud("annulé"); return; }
-          }
-          // Écrit l'état courant
-          return ref.set({ state: state, updatedAt: Date.now() }).then(()=>{
-            state.cloudId = code; saveSnapshot();
-            // Active la synchro live en rejoignant après publication
-            cloud.enabled=true; cloud.id=code; cloud.ref=ref; cloud.lastRemoteAt=0;
-            // (ré-attache l'écouteur)
-            ref.off(); // au cas où
-            joinCloud(code);
-            setCloud("publié & connecté ("+code+")");
-            try{ history.replaceState(null,"", location.pathname+"?id="+encodeURIComponent(code)); }catch{}
-            const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);
-            navigator.clipboard?.writeText(url);
-            alert("Tournoi publié !\nLien copié :\n"+url);
-          });
-        }).catch(()=>setCloud("erreur publication"));
-      }
-
       function leaveCloud(){
         if(cloud.ref) cloud.ref.off();
         cloud.enabled=false; cloud.id=null; cloud.ref=null; setCloud("hors ligne");
@@ -395,10 +379,31 @@
         cloud.pushTimer=setTimeout(doPush, immediate?0:250);
       }
 
-      // auto-join ?id=
+      // Publier le tournoi courant (local -> cloud) et donner le lien
+      function publishCurrentToCloud(){
+        if(!isAdmin()){ alert("Seul l’administrateur peut publier."); return; }
+        if(!hasFB){ alert("Firebase non configuré."); return; }
+        if(!cloud.db){ cloud.db=initFB(); if(!cloud.db){ alert("Initialisation Firebase impossible."); return; } }
+        const code = prompt("Choisis un code de tournoi (ex: apero2025). Tes amis rejoindront avec ce code :");
+        if(!code) return;
+        cloud.id = code.trim();
+        cloud.ref = cloud.db.ref("tournaments/"+cloud.id+"/payload");
+        cloud.enabled = true; cloud.lastRemoteAt = 0;
+        state.cloudId = cloud.id;
+        pushCloud(true);                          // envoie immédiatement l'état
+        setCloud("connecté ("+cloud.id+")");
+        upsertIndex({ id:"cloud:"+cloud.id, name:"Cloud · "+cloud.id, updatedAt:Date.now(), type:"cloud" });
+        renderSetupRecent();
+        try{ history.replaceState(null,"", location.pathname+"?id="+encodeURIComponent(cloud.id)); }catch{}
+        const url = location.origin+location.pathname+"?id="+encodeURIComponent(cloud.id);
+        navigator.clipboard?.writeText(url);
+        alert("Tournoi publié !\nLien copié dans le presse-papiers :\n"+url);
+      }
+
+      // Auto-join si ?id=
       (function(){ const p=new URLSearchParams(location.search); const idp=p.get("id"); if(idp){ const el=id("join-code"); if(el) el.value=idp; joinCloud(idp); } })();
 
-      // Utils
+      // ---------- Utils
       function id(x){ return document.getElementById(x); }
       function qs(s){ return document.querySelector(s); }
       function qsa(s){ return Array.from(document.querySelectorAll(s)); }
@@ -411,7 +416,7 @@
       async function sha256(str){ try{ if(crypto?.subtle){ const enc=new TextEncoder().encode(str); const buf=await crypto.subtle.digest("SHA-256",enc); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join(""); } }catch{} let h=2166136261>>>0; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return ("00000000"+h.toString(16)).slice(-8).repeat(8); }
       function salt(){ return cloud.id || "local"; }
 
-      // Normalisation
+      // ---------- Normalisation
       function _arr(x){ return Array.isArray(x)?x:[]; }
       function _normMatch(m){
         m=m||{};
@@ -430,7 +435,7 @@
         renderTitle();
       }
 
-      // Rôles
+      // ---------- Rôles
       function isAdmin(){ return !!session.admin; }
       function hasClaim(tid){ return !!session.claims[tid]; }
       function canEditTeam(){ return isAdmin(); }
@@ -441,7 +446,7 @@
       function initials(name){ const s=(name||"").trim(); if(!s) return "?"; const p=s.split(/\s+/); return (p[0][0]+(p[1]?.[0]||"")).toUpperCase(); }
       function avatarHtml(tid,size){ const t=teamObj(tid)||{name:"?"}; const url=t.avatar; const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':''); const content=url?('<img src="'+esc(url)+'" alt="avatar">'):'<span class="avatar-initials">'+esc(initials(t.name))+'</span>'; return '<span class="avatar '+cls+'" title="'+esc(t.name)+'">'+content+'</span>'; }
 
-      // Identité
+      // ---------- Identité
       function identityText(){
         const teams = Object.keys(session.claims||{}).map(teamName).filter(Boolean);
         if (isAdmin()) return teams.length ? `Admin · ${teams.join(", ")}` : "Admin";
@@ -460,7 +465,7 @@
         if(pill){ if(name){ pill.style.display="inline-block"; pill.textContent=name; } else { pill.style.display="none"; pill.textContent=""; } }
       }
 
-      // Plein écran
+      // ---------- Plein écran
       function fsElement(){ return document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement; }
       function enterFS(el){ return el.requestFullscreen?.()||el.webkitRequestFullscreen?.()||el.mozRequestFullScreen?.()||el.msRequestFullscreen?.(); }
       function exitFS(){ return document.exitFullscreen?.()||document.webkitExitFullscreen?.()||document.mozCancelFullScreen?.()||document.msExitFullscreen?.(); }
@@ -470,7 +475,7 @@
       ["fullscreenchange","webkitfullscreenchange","mozfullscreenchange","MSFullscreenChange"].forEach(e=>document.addEventListener(e,updateFSBtn));
       updateFSBtn();
 
-      // Tabs
+      // ---------- Tabs
       qsa(".tab").forEach(btn=>{
         btn.addEventListener("click", ()=>{
           qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false"));
@@ -481,10 +486,10 @@
       });
       function goto(tabId){ const b=qs('.tab[data-tab="'+tabId+'"]'); if(b && b.click) b.click(); }
 
-      // Admin PIN (non affiché)
+      // ---------- HUB TOURNOI (Setup)
       function ensureAdmin(){ if(isAdmin()) return true; const pin=prompt("PIN administrateur :"); if(pin==="30041991"){ session.admin=true; saveSession(); return true; } return false; }
 
-      // Créer — non destructif
+      // Créer — NON destructif : ajoute le nouveau tournoi, conserve l'actuel en "Récents"
       onClick(id("btn-create-tournament"), ()=>{
         if(!ensureAdmin()) return;
 
@@ -493,10 +498,10 @@
         if(isNaN(n)) n = 4;
         n = clampInt(n, 2, 64);
 
-        // Sauvegarde du tournoi actuel dans la liste
+        // 1) Sauvegarder le tournoi en cours dans la liste (snapshot)
         saveSnapshot();
 
-        // Nouveau tournoi local
+        // 2) Créer un NOUVEAU tournoi local (nouvel id)
         const newState = {
           version: 22,
           tid: uid(),
@@ -509,16 +514,17 @@
           protect:{ teamPassHash:{} }
         };
 
+        // 3) Bascule vers le nouveau (sans pousser sur un cloud existant)
         state = newState;
         normalize();
-        leaveCloud();
-        saveState({cloud:false});
-        saveSnapshot();
+        leaveCloud();               // au cas où l'ancien était cloud
+        saveState({cloud:false});   // ne pas envoyer au cloud
+        saveSnapshot();             // ajoute le nouveau dans “Tournois enregistrés”
         renderAll();
         goto("equipes");
       });
 
-      // Récents (liste)
+      // Récents
       function renderSetupRecent(){
         const wrap=id("recent-list"); if(!wrap) return;
         wrap.innerHTML="";
@@ -546,16 +552,15 @@
         wrap.appendChild(box);
       }
 
-      // Cloud: rejoindre / publier / copier lien
+      // Rejoindre (Cloud)
       onClick(id("btn-join-code"), ()=>{ const code=(id("join-code").value||"").trim(); if(!code){ alert("Renseigne un code."); return; } joinCloud(code); goto("equipes"); });
-      onClick(id("btn-publish"), ()=>{ const code=(id("join-code").value||"").trim(); if(!code){ alert("Renseigne un code."); return; } publishToCloud(code); });
       onClick(id("btn-copy-link"), ()=>{
         const code=(id("join-code").value||"").trim(); if(!code){ alert("Renseigne un code."); return; }
         const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);
         navigator.clipboard?.writeText(url); alert("Lien copié !\n"+url);
       });
 
-      // TEAMS
+      // ---------- TEAMS
       const teamListEl=id("team-list");
       onClick(id("btn-add-team"), ()=>{
         if(!isAdmin()){ alert("Réservé à l’admin."); return; }
@@ -607,12 +612,13 @@
           teamListEl.appendChild(card);
         });
 
+        // Édition live (sans re-render pendant la saisie)
         qsa('#team-list input[data-field]').forEach(inp=>{
           const tid=inp.getAttribute("data-id"), f=inp.getAttribute("data-field");
           inp.addEventListener("input", ()=>{
             if(!canEditTeam(tid)) return;
             const t=teamObj(tid); if(!t) return;
-            t[f]=inp.value; saveState({cloud:false});
+            t[f]=inp.value; saveState({cloud:false}); // pas de re-render ici
           });
           inp.addEventListener("blur", ()=>{
             if(!canEditTeam(tid)) return;
@@ -621,6 +627,7 @@
           });
         });
 
+        // actions
         qsa('#team-list [data-act="del"]').forEach(btn=>{
           btn.addEventListener("click", ()=>{
             if(!isAdmin()||state.locked) return;
@@ -685,6 +692,7 @@
         updateCounts(); updateLockUI();
       }
 
+      // image -> DataURL carré
       function fileToSquareDataURL(file, size){
         return new Promise((resolve,reject)=>{
           const reader=new FileReader();
@@ -707,10 +715,12 @@
       }
 
       function updateCounts(){ id("teams-count").textContent = state.teams.length + " " + (state.teams.length>1?"équipes":"équipe"); const perTeam=Math.max(0,state.teams.length-1); id("rounds-count").textContent = perTeam + " " + (perTeam>1?"matchs":"match") + " par équipe"; }
-      function styleDisplay(node, show){ node.style.display = show?"inline-block":"none"; }
-      function updateLockUI(){ const pill=id("lock-pill"); if(pill) styleDisplay(pill, state.locked); const gen=id("btn-generate"); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"; } }
+      function updateLockUI(){
+        const pill=id("lock-pill"); if(pill) pill.style.display=state.locked?"inline-block":"none";
+        const gen=id("btn-generate"); if(gen){ gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"; }
+      }
 
-      // Calendrier
+      // ---------- Calendrier homogène
       function generateSchedule(){
         const ids=state.teams.map(t=>t.id);
         if(ids.length<2){ state.matches=[]; saveState(); renderMatches(); return; }
@@ -728,7 +738,7 @@
         out.sort((x,y)=>(x.round-y.round)||(x.order-y.order)); state.matches=out; saveState(); renderMatches();
       }
 
-      // Scores
+      // helpers scores
       function getPingPts(m){ return Array.isArray(m.pingPts)?m.pingPts:[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; }
       function isPingValid(a,b){ if(a==null||b==null) return false; if(isNaN(a)||isNaN(b)) return false; const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
       function computeSetWins(m){
@@ -747,7 +757,7 @@
         return okD&&okP&&okL;
       }
 
-      // Rencontres
+      // ---------- Rencontres
       const matchListEl=id("match-list"), statsMatchesEl=id("stats-matches");
       function renderMatches(){
         matchListEl.innerHTML="";
@@ -788,6 +798,7 @@
               ui.open[m.id]=!open;
             });
 
+            // fléchettes
             qsaIn(el,'select[data-match][data-kind]').forEach(sel=>{
               if(!can) sel.disabled=true;
               sel.addEventListener("change", ()=>{
@@ -798,6 +809,7 @@
               });
             });
 
+            // ping
             qsaIn(el,'input[data-ping]').forEach(inp=>{
               if(!can) inp.disabled=true;
               inp.addEventListener("input", ()=>{
@@ -809,6 +821,7 @@
               inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
             });
 
+            // palet
             qsaIn(el,'input[data-palet]').forEach(inp=>{
               if(!can) inp.disabled=true;
               inp.addEventListener("input", ()=>{
@@ -866,7 +879,7 @@
       function findMatch(idv){ return state.matches.find(x=>x.id===idv); }
       function clearMatch(idv){ const m=findMatch(idv); if(!m||!canEditMatch(m)) return; if(!confirm("Effacer tous les scores de ce match ?")) return; m.darts=[null,null,null]; m.pingPts=[{a:null,b:null},{a:null,b:null},{a:null,b:null}]; m.palet={a:null,b:null}; saveState(); renderMatches(); }
 
-      // Classement
+      // ---------- Classement
       function computeLeaderboard(){
         const stats={}; state.teams.forEach(t=>{ stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0}; });
         state.matches.forEach(m=>{
@@ -893,7 +906,7 @@
         });
       }
 
-      // H2H
+      // ---------- H2H (Face-à-face)
       function pointsForTeamInMatch(m,teamId){
         const isA=m.a===teamId, isB=m.b===teamId; if(!isA&&!isB) return 0;
         let pts=0; (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0&&isA) pts+=5; else if(v===1&&isB) pts+=5; });
@@ -930,13 +943,26 @@
       }
       function goToMatch(mid){ goto("calendrier"); ui.open[mid]=true; setTimeout(()=>{ const card=qs('.match-card[data-id="'+mid+'"]'); if(card){ card.setAttribute("aria-expanded","true"); try{ card.scrollIntoView({behavior:"smooth",block:"start"}); }catch{ card.scrollIntoView(); } } },0); }
 
-      // Export / Import / Reset / Admin
+      // ---------- Export / Import / Reset / Admin / Cloud
       onClick(id("btn-export"), ()=>{ const data=JSON.stringify(state,null,2); const url=URL.createObjectURL(new Blob([data],{type:"application/json"})); const a=document.createElement("a"); a.href=url; a.download="tournoi-"+(state.tournamentName||"TriSports").replace(/\s+/g,'_')+".json"; a.click(); URL.revokeObjectURL(url); });
       let importFile=null; const fileImport=id("file-import"); if(fileImport) fileImport.addEventListener("change", e=>importFile=e.target.files[0]);
       onClick(id("btn-import"), ()=>{ if(!importFile){ alert("Sélectionnez un fichier JSON."); return; } importFile.text().then(t=>{ try{ const data=JSON.parse(t); if(!(data && Array.isArray(data.teams) && Array.isArray(data.matches))) throw 0; state=data; normalize(); saveState(); saveSnapshot(); renderAll(); alert("Import réussi !"); }catch{ alert("Fichier invalide."); } }); });
 
       onClick(id("btn-admin-on"), ()=>{ const pin=prompt("PIN administrateur :"); if(pin==="30041991"){ session.admin=true; saveSession(); renderAll(); alert("Mode administrateur activé."); } else alert("PIN incorrect."); });
       onClick(id("btn-admin-off"), ()=>{ session.admin=false; saveSession(); renderAll(); });
+
+      // Cloud (Options)
+      onClick(id("btn-publish-cloud"), publishCurrentToCloud);
+      onClick(id("btn-cloud-copy"), ()=>{
+        if(!cloud.id){ alert("Ce tournoi n’est pas publié. Utilise « Publier & partager » d’abord."); return; }
+        const url=location.origin+location.pathname+"?id="+encodeURIComponent(cloud.id);
+        navigator.clipboard?.writeText(url); alert("Lien copié !\n"+url);
+      });
+      onClick(id("btn-cloud-leave"), ()=>{
+        if(!cloud.enabled){ alert("Pas connecté au cloud."); return; }
+        if(!confirm("Quitter le cloud pour ce tournoi ? Les données restent en local.")) return;
+        leaveCloud(); state.cloudId=null; saveState(); alert("Ce tournoi reste local. Vous pourrez le republier plus tard.");
+      });
 
       onClick(id("btn-reset"), ()=>{
         const pin=prompt("PIN administrateur :"); if(pin!=="30041991"){ alert("PIN incorrect."); return; }
@@ -946,7 +972,7 @@
       });
       onClick(id("btn-unlock"), ()=>{ if(!isAdmin()){ alert("Réservé à l’admin."); return; } if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLockUI(); });
 
-      // Utilitaires
+      // ---------- Boutons utilitaires
       onClick(id("btn-refresh-standings"), ()=>{ renderLeaderboard(); renderH2H(); });
       onClick(id("btn-refresh-standings-2"), ()=>{ renderLeaderboard(); renderH2H(); goto("classement"); });
       onClick(id("btn-toggle-h2h"), ()=>{
@@ -958,4 +984,27 @@
       });
       onClick(id("btn-collapse"), ()=>{ qsa('#match-list .match-card').forEach(c=>c.setAttribute('aria-expanded','false')); ui.open={}; });
 
-      // Commun
+      // ---------- Helpers communs
+      function onClick(el,fn){ if(el && el.addEventListener) el.addEventListener("click",fn); }
+      function saveState(opts){
+        saveRuntime();
+        saveSnapshot();
+        renderTitle(); renderLeaderboard(); renderH2H();
+        if(cloud.enabled && !(opts && opts.cloud===false)) pushCloud(false);
+        renderSetupRecent();
+      }
+
+      // ---------- Init
+      loadSession();
+      renderAll();
+      function renderAll(){
+        renderTitle(); renderSetupRecent();
+        if(!state.teams.length) goto("setup");
+        renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); updateCounts(); updateLockUI(); updateWho();
+        setCloud(cloud.enabled?"connecté"+(cloud.id?(" ("+cloud.id+")"):""):"hors ligne");
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
