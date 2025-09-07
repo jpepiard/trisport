@@ -36,7 +36,6 @@ table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:
 .chip{font-size:12px;padding:4px 8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;color:var(--muted)}
 .pill{padding:4px 8px;border-radius:999px;background:#0f1331;border:1px solid var(--border);color:var(--muted);font-size:12px}
 .h2h-table th,.h2h-table td{white-space:nowrap}
-.team-name{display:inline-flex;align-items:center;gap:8px}
 
 /* Avatars */
 .avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:#0f1331;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;color:#cbd5ff;font-weight:700;font-size:14px;flex:0 0 auto}
@@ -45,13 +44,10 @@ table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:
 .avatar-lg{width:48px;height:48px;font-size:15px}.avatar-lg .avatar-initials{line-height:48px}
 .avatar-sm{width:32px;height:32px;font-size:12px}.avatar-sm .avatar-initials{line-height:32px}
 
-/* Alignements récents */
-.teams{display:flex;align-items:center;gap:12px}
-.teams .chip{margin-right:2px}
-.vs{color:var(--muted);margin:0 6px}
-
-/* Champ NOM D’ÉQUIPE plus grand */
-.team-name input[type=text]{width:320px;max-width:100%}
+/* Lignes équipes */
+.teams{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.team-name{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.team-name input[type=text]{flex:1;min-width:220px;max-width:100%} /* grand mais n’écrase plus le bouton */
 
 /* H2H : pilules colorées */
 .h2h-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-weight:600}
@@ -96,7 +92,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
   <div class="container">
     <div id="storage-warning" class="help" style="display:none"></div>
 
-    <!-- Tournoi (cloud-only) -->
+    <!-- Tournoi -->
     <section id="setup" class="active">
       <div class="card">
         <div class="hd"><strong>Créer un tournoi (Cloud)</strong></div>
@@ -257,15 +253,13 @@ const esc=s=>(s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt
 const uid=()=>Math.random().toString(36).slice(2,10);
 const clampInt=(v,min,max)=>{v=parseInt(v,10); if(isNaN(v)) return null; return Math.max(min,Math.min(max,v));}
 const help=t=>{const d=document.createElement("div");d.className="help";d.textContent=t;return d;}
-function fmtDate(ts){try{const d=new Date(ts);return d.toLocaleString()}catch(_){return ""}}
 function hashPass(s){s=(s||"").trim();let h=0x811c9dc5>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return("00000000"+h.toString(16)).slice(-8)}
 
 /* ===== Erreurs visibles ===== */
 window.onerror=(msg,src,line,col)=>{const el=id("storage-warning"); if(el){el.style.display="block";el.textContent="Erreur JS : "+msg+" @"+(src||"")+":"+(line||0)+":"+(col||0)} const p=id("js-ok"); if(p){p.textContent='JS chargé avec erreurs ⚠️'; p.style.background='#8a2a2a'}};
 
-/* ===== Persistences (index local des codes cloud uniquement) ===== */
+/* ===== Persistences (index cloud) ===== */
 const STORAGE_KEY="trisports_cloud_only_v1";
-const SNAP_PREFIX="trisports_state_";
 const IDX_KEY="trisports_cloud_index_v1";
 function getIndex(){ try{ return JSON.parse(localStorage.getItem(IDX_KEY)||"[]"); }catch(_){ return []; } }
 function setIndex(arr){ try{ localStorage.setItem(IDX_KEY, JSON.stringify(arr||[])); }catch(_){} }
@@ -300,52 +294,34 @@ function hasClaim(tid){return !!session.claims[tid]}
 function teamObj(tid){return state.teams.find(t=>t.id===tid)||null}
 function teamName(tid){const t=teamObj(tid);return t?t.name:"—"}
 function initials(name){const s=(name||"").trim(); if(!s) return "?"; const p=s.split(/\s+/); return (p[0][0]+(p[1]?.[0]||"")).toUpperCase()}
-function avatarHtml(tid, size, attrs){
-  const t=teamObj(tid)||{name:"?"}; const url=t.avatar;
-  const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':''); const extra=attrs?(' '+attrs):'';
-  const content=url?('<img src="'+esc(url)+'" alt="avatar">'):('<span class="avatar-initials">'+esc(initials(t.name))+'</span>');
-  return '<span class="avatar '+cls+'" title="'+esc(t.name)+'"'+extra+'>'+content+'</span>';
-}
+function avatarHtml(tid,size,attrs){const t=teamObj(tid)||{name:"?"};const url=t.avatar;const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':'');const extra=attrs?(' '+attrs):'';const content=url?('<img src="'+esc(url)+'" alt="avatar">'):('<span class="avatar-initials">'+esc(initials(t.name))+'</span>');return '<span class="avatar '+cls+'" title="'+esc(t.name)+'"'+extra+'>'+content+'</span>'}
 function updateWho(){const names=Object.keys(session.claims||{}).map(teamName).filter(Boolean); const who=isAdmin()? (names.length?("Admin · "+names.join(", ")):"Admin") : (names[0]||"visiteur"); id("whoami").textContent="vous : "+who; id("whoami-top").textContent=who; id("btn-add-team").style.display=isAdmin()?"inline-block":"none";}
 function renderTitle(){const name=(state.tournamentName||"").trim(); document.title=(name?name+" — ":"")+"TriSports — Fléchettes • Ping-pong • Palet"; const pill=id("tname-top"); if(name){pill.style.display="inline-block";pill.textContent=name}else{pill.style.display="none";pill.textContent=""}}
 
 /* ===== Normalisation ===== */
 function dartsTotal(){return (state.rules?.dartsSingles||0)+(state.rules?.dartsDoubles||0)}
 function pingTotal(){return (state.rules?.pingSingles||0)+(state.rules?.pingDoubles||0)}
-function ensureLengths(m){
-  const dN=dartsTotal(), pN=pingTotal();
-  m.darts=Array.isArray(m.darts)?m.darts.slice(0,dN):[];
-  while(m.darts.length<dN) m.darts.push(null);
-  if(!Array.isArray(m.pingPts)) m.pingPts=[];
-  m.pingPts=m.pingPts.slice(0,pN);
-  while(m.pingPts.length<pN) m.pingPts.push({a:null,b:null});
-}
+function ensureLengths(m){const dN=dartsTotal(),pN=pingTotal(); m.darts=Array.isArray(m.darts)?m.darts.slice(0,dN):[]; while(m.darts.length<dN)m.darts.push(null); if(!Array.isArray(m.pingPts))m.pingPts=[]; m.pingPts=m.pingPts.slice(0,pN); while(m.pingPts.length<pN)m.pingPts.push({a:null,b:null});}
 function _normMatch(m){m=m||{};m.id=m.id||uid();m.a=m.a||"";m.b=m.b||"";ensureLengths(m);m.palet=m.palet||{a:null,b:null};m.palet.a=(m.palet.a==null?null:+m.palet.a);m.palet.b=(m.palet.b==null?null:+m.palet.b);m.round=m.round||1;m.order=m.order||0;return m}
-function normalize(){
-  state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11};
-  state.teams=Array.isArray(state.teams)?state.teams:[];
-  state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[];
-  state.protect=state.protect||{}; state.protect.teamPassHash=state.protect.teamPassHash||{};
-}
+function normalize(){state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11}; state.teams=Array.isArray(state.teams)?state.teams:[]; state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[]; state.protect=state.protect||{}; state.protect.teamPassHash=state.protect.teamPassHash||{}}
 
-/* ===== Cloud ===== */
-const cloud={enabled:false,db:null,id:null,ref:null,lastRemoteAt:0,timer:null};
+/* ===== Cloud (with unsubscribe) ===== */
+const cloud={enabled:false,db:null,id:null,ref:null,timer:null};
 const hasFB=!!(window.firebase&&window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey);
 function initFB(){try{if(!hasFB) return null; if(!firebase.apps||firebase.apps.length===0) firebase.initializeApp(window.FIREBASE_CONFIG); return firebase.database();}catch(_){return null}}
 function setCloudTxt(t){id("cloud-status").textContent=t; id("cloud-status-2").textContent=t;}
+function unsubscribeCloud(){try{if(cloud.ref) cloud.ref.off('value');}catch(_){ } cloud.ref=null; cloud.enabled=false; cloud.id=null; setCloudTxt('hors ligne');}
+function resetState(){state={version:30,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}}; try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}
 function joinCloud(code){
   if(!hasFB){alert("Firebase non configuré.");return}
   if(!cloud.db){cloud.db=initFB(); if(!cloud.db){alert("Init Firebase impossible.");return}}
+  unsubscribeCloud();
   cloud.id=(code||"").trim(); if(!cloud.id){alert("Saisis un code tournoi.");return}
-  cloud.ref=cloud.db.ref("tournaments/"+cloud.id+"/payload"); cloud.enabled=true; cloud.lastRemoteAt=0; setCloudTxt("connexion…");
-  let first=true;
+  cloud.ref=cloud.db.ref("tournaments/"+cloud.id+"/payload"); cloud.enabled=true; setCloudTxt("connexion…");
   cloud.ref.on("value",snap=>{
-    const val=snap.val();
-    if(!val){ setCloudTxt("connecté (vide)"); return; }
-    const remoteAt=+val.updatedAt||0; if(first){first=false;}
-    cloud.lastRemoteAt=remoteAt; state=val.state||state; normalize(); state.cloudId=cloud.id;
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); upsertIndex({id:cloud.id,name:state.tournamentName||"Sans titre",updatedAt:Date.now()});
-    renderAll(); setCloudTxt("connecté ("+cloud.id+")");
+    const val=snap.val(); if(!val){ setCloudTxt("connecté (vide)"); return; }
+    state=val.state||state; normalize(); state.cloudId=cloud.id; localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    upsertIndex({id:cloud.id,name:state.tournamentName||"Sans titre",updatedAt:Date.now()}); renderAll(); setCloudTxt("connecté ("+cloud.id+")");
   });
   try{ history.replaceState(null,"",location.pathname+"?id="+encodeURIComponent(cloud.id)); }catch(_){}
 }
@@ -379,7 +355,7 @@ function generateSchedule(){
 /* ===== Équipes ===== */
 function renderTeams(){
   const el=id("team-list"); el.innerHTML="";
-  if(!state.teams.length){ el.appendChild(help("Aucune équipe. Utilisez « Tournoi » > Créer ou Rejoindre (Cloud).")); updateCounts(); updateLock(); return }
+  if(!state.teams.length){ el.appendChild(help("Aucune équipe. Utilisez l’onglet « Tournoi » pour créer/rejoindre un tournoi cloud.")); updateCounts(); updateLock(); return }
   state.teams.forEach((t,idx)=>{
     const iOwn=hasClaim(t.id), admin=isAdmin(), hasHash=!!(state.protect?.teamPassHash?.[t.id]);
     const dis = admin? '' : ' disabled';
@@ -392,10 +368,10 @@ function renderTeams(){
     const avatarClr = ((admin||iOwn) && t.avatar) ? `<button type="button" class="btn small" data-act="avatar-clear" data-id="${t.id}">Retirer avatar</button>` : '';
     const card=document.createElement("div"); card.className="match-card"; card.setAttribute("aria-expanded","true");
     card.innerHTML=`
-      <div class="hd" style="border:none;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-        <div class="teams" style="width:100%"><span class="chip">#${idx+1}</span>
-          <span class="team-name">${avatarHtml(t.id,'lg','data-click-avatar="'+t.id+'"')}<input type="text"${dis} value="${esc(t.name)}" data-field="name" data-id="${t.id}" style="min-width:0"/></span></div>
-        <div>${delBtn}</div>
+      <div class="hd" style="border:none;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center">
+        <div class="teams"><span class="chip">#${idx+1}</span>
+          <span class="team-name">${avatarHtml(t.id,'lg','data-click-avatar="'+t.id+'"')}<input type="text"${dis} value="${esc(t.name)}" data-field="name" data-id="${t.id}"/></span></div>
+        <div style="flex:0 0 auto">${delBtn}</div>
       </div>
       <div class="bd">
         <input type="file" accept="image/*" data-avatar="${t.id}" style="display:none"/>
@@ -429,47 +405,15 @@ function renderTeams(){
 
   updateCounts(); updateLock();
 }
-function fileToSquareDataURL(file,size){
-  return new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onerror=()=>reject(new Error("read"));
-    reader.onload=()=>{
-      const img=new Image();
-      img.onload=()=>{
-        try{
-          const min=Math.min(img.width,img.height), sx=(img.width-min)/2, sy=(img.height-min)/2;
-          const c=document.createElement("canvas"); c.width=size; c.height=size;
-          c.getContext('2d').drawImage(img,sx,sy,min,min,0,0,size,size);
-          resolve(c.toDataURL('image/jpeg',0.9));
-        }catch(e){reject(e)}
-      };
-      img.onerror=()=>reject(new Error("img"));
-      img.src=reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
+function fileToSquareDataURL(file,size){return new Promise((resolve,reject)=>{const r=new FileReader();r.onerror=()=>reject(new Error("read"));r.onload=()=>{const img=new Image();img.onload=()=>{try{const m=Math.min(img.width,img.height),sx=(img.width-m)/2,sy=(img.height-m)/2;const c=document.createElement("canvas");c.width=size;c.height=size;c.getContext('2d').drawImage(img,sx,sy,m,m,0,0,size,size);resolve(c.toDataURL('image/jpeg',0.9));}catch(e){reject(e)}};img.onerror=()=>reject(new Error("img"));img.src=r.result;};r.readAsDataURL(file);});}
 function updateCounts(){ id("teams-count").textContent=state.teams.length+" "+(state.teams.length>1?"équipes":"équipe"); const per=Math.max(0,state.teams.length-1); id("rounds-count").textContent=per+" "+(per>1?"matchs":"match")+" par équipe" }
 function updateLock(){ const pill=id("lock-pill"); if(pill) pill.style.display=state.locked?"inline-block":"none"; const gen=id("btn-generate"); if(gen){gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"} }
 
-/* ===== Rencontres & Scores ===== */
+/* ===== Rencontres & Scores (saisie fluide) ===== */
 const getPingPts=m=>Array.isArray(m.pingPts)?m.pingPts:Array(pingTotal()).fill({a:null,b:null});
 const isPingValid=(a,b)=>{ if(a==null||b==null) return false; if(isNaN(a)||isNaN(b)) return false; const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
-function computeSetWins(m){
-  ensureLengths(m);
-  const aw={darts:0,ping:0}, bw={darts:0,ping:0};
-  m.darts.forEach(v=>{if(v===0)aw.darts++; else if(v===1)bw.darts++;});
-  getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b)aw.ping++; else if(s.b>s.a)bw.ping++; }});
-  return {aw,bw};
-}
-function isMatchComplete(m){
-  ensureLengths(m);
-  const okD=m.darts.every(v=>v===0||v===1);
-  const okP=getPingPts(m).every(s=>isPingValid(s.a,s.b));
-  const T=state.rules.paletTarget||11, pa=m.palet?.a, pb=m.palet?.b;
-  const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1));
-  return okD&&okP&&okL;
-}
+function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:0,ping:0}; m.darts.forEach(v=>{if(v===0)aw.darts++; else if(v===1)bw.darts++;}); getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b)aw.ping++; else if(s.b>s.a)bw.ping++; }}); return {aw,bw};}
+function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v===1); const okP=getPingPts(m).every(s=>isPingValid(s.a,s.b)); const T=state.rules.paletTarget||11, pa=m.palet?.a, pb=m.palet?.b; const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1)); return okD&&okP&&okL;}
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
 function clearMatch(mid){const m=findMatch(mid); if(!m) return; if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b))) return; if(!confirm("Effacer tous les scores de ce match ?")) return; m.darts=Array(dartsTotal()).fill(null); m.pingPts=Array(pingTotal()).fill({a:null,b:null}); m.palet={a:null,b:null}; saveState(); renderMatches();}
 
@@ -519,22 +463,19 @@ function renderMatches(){
           const mm=findMatch(m.id); mm.darts[i]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H();
         });
       });
-      // Ping : PAS de re-render à chaque frappe -> seulement au blur/change
+      // Ping & Palet : pas de re-render à chaque frappe (saisie fluide)
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
         if(!can) inp.disabled=true;
         const commit=()=>{ const which=inp.getAttribute("data-ping"), i=parseInt(inp.getAttribute("data-index"),10); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99); const mm=findMatch(m.id); mm.pingPts[i][which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); };
         inp.addEventListener("input", ()=>{ const which=inp.getAttribute("data-ping"), i=parseInt(inp.getAttribute("data-index"),10); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99); const mm=findMatch(m.id); mm.pingPts[i][which]=v; saveState(); });
-        inp.addEventListener("change", commit);
-        inp.addEventListener("blur", commit);
+        inp.addEventListener("change", commit); inp.addEventListener("blur", commit);
         inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
       });
-      // Palet : idem (pas de re-render à chaque frappe)
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
         if(!can) inp.disabled=true;
         const commit=()=>{ const which=inp.getAttribute("data-palet"); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11); const mm=findMatch(m.id); mm.palet[which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); };
         inp.addEventListener("input", ()=>{ const which=inp.getAttribute("data-palet"); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11); const mm=findMatch(m.id); mm.palet[which]=v; saveState(); });
-        inp.addEventListener("change", commit);
-        inp.addEventListener("blur", commit);
+        inp.addEventListener("change", commit); inp.addEventListener("blur", commit);
         inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
       });
 
@@ -545,130 +486,32 @@ function renderMatches(){
   id("stats-matches").textContent=complete+" / "+state.matches.length+" matches complets";
   renderLeaderboard();
 }
-function renderDarts(m,can){
-  const s=state.rules.dartsSingles, d=state.rules.dartsDoubles, N=dartsTotal();
-  let html=""; for(let i=0;i<N;i++){const v=m.darts[i]; const lab=(i<s?`Simple ${i+1}`:`Double ${i-s+1}`); const nm=[teamName(m.a),teamName(m.b)];
-    html+=`<div class="grid cols-3" style="align-items:end"><div>
-      <label>Fléchettes — ${lab}</label>
-      <select ${(can?'':'disabled ')}data-kind="darts" data-index="${i}">
-        <option value="" ${v===null?'selected':''}>Non joué</option>
-        <option value="0" ${v===0?'selected':''}>Victoire ${esc(nm[0])}</option>
-        <option value="1" ${v===1?'selected':''}>Victoire ${esc(nm[1])}</option>
-      </select></div><div></div><div></div></div>`;
-  } return html;
-}
-function renderPing(m,can){
-  const s=state.rules.pingSingles, d=state.rules.pingDoubles, N=pingTotal();
-  let html=""; for(let i=0;i<N;i++){const set=m.pingPts[i]||{a:null,b:null}; const lab=(i<s?`Simple ${i+1}`:`Double ${i-s+1}`);
-    const note=(set.a==null||set.b==null)?'Saisissez deux scores (11+ et écart ≥ 2).':(isPingValid(set.a,set.b)?'✔️ Score valide':'⚠️ 11+ et écart ≥ 2.');
-    html+=`<div class="grid cols-4" style="align-items:end;margin-top:6px">
-      <div><label>Ping — ${lab} — ${esc(teamName(m.a))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="99" step="1" value="${set.a==null?'':set.a}" data-ping="a" data-index="${i}"/></div>
-      <div><label>Ping — ${lab} — ${esc(teamName(m.b))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="99" step="1" value="${set.b==null?'':set.b}" data-ping="b" data-index="${i}"/></div>
-      <div class="help">${note}</div><div></div></div>`;
-  } return html;
-}
-function renderPalet(m,can){
-  const T=state.rules.paletTarget||11; const a=m.palet?.a, b=m.palet?.b;
-  const ok=(a==null||b==null)?false:((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));
-  const note=(a==null||b==null)?`Saisissez les deux scores (l’un doit être ${T}).`:(ok?'✔️ Score valide':`⚠️ Un score doit être ${T}, l’autre entre 0 et ${T-1}.`);
-  return `<div class="grid cols-4" style="align-items:end;margin-top:6px">
-    <div><label>Palet — ${esc(teamName(m.a))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="${T}" step="1" value="${a==null?'':a}" data-palet="a"/></div>
-    <div><label>Palet — ${esc(teamName(m.b))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="${T}" step="1" value="${b==null?'':b}" data-palet="b"/></div>
-    <div class="help">${note}</div><div></div></div>`;
-}
+function renderDarts(m,can){const s=state.rules.dartsSingles,N=dartsTotal();let html=""; for(let i=0;i<N;i++){const v=m.darts[i];const lab=(i<s?`Simple ${i+1}`:`Double ${i-s+1}`); const nm=[teamName(m.a),teamName(m.b)]; html+=`<div class="grid cols-3" style="align-items:end"><div><label>Fléchettes — ${lab}</label><select ${(can?'':'disabled ')}data-kind="darts" data-index="${i}"><option value="" ${v===null?'selected':''}>Non joué</option><option value="0" ${v===0?'selected':''}>Victoire ${esc(nm[0])}</option><option value="1" ${v===1?'selected':''}>Victoire ${esc(nm[1])}</option></select></div><div></div><div></div></div>`;} return html;}
+function renderPing(m,can){const s=state.rules.pingSingles,N=pingTotal();let html=""; for(let i=0;i<N;i++){const set=m.pingPts[i]||{a:null,b:null}; const lab=(i<s?`Simple ${i+1}`:`Double ${i-s+1}`); const note=(set.a==null||set.b==null)?'Saisissez deux scores (11+ et écart ≥ 2).':(isPingValid(set.a,set.b)?'✔️ Score valide':'⚠️ 11+ et écart ≥ 2.'); html+=`<div class="grid cols-4" style="align-items:end;margin-top:6px"><div><label>Ping — ${lab} — ${esc(teamName(m.a))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="99" step="1" value="${set.a==null?'':set.a}" data-ping="a" data-index="${i}"/></div><div><label>Ping — ${lab} — ${esc(teamName(m.b))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="99" step="1" value="${set.b==null?'':set.b}" data-ping="b" data-index="${i}"/></div><div class="help">${note}</div><div></div></div>`;} return html;}
+function renderPalet(m,can){const T=state.rules.paletTarget||11; const a=m.palet?.a,b=m.palet?.b; const ok=(a==null||b==null)?false:((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1)); const note=(a==null||b==null)?`Saisissez les deux scores (l’un doit être ${T}).`:(ok?'✔️ Score valide':`⚠️ Un score doit être ${T}, l’autre entre 0 et ${T-1}.`); return `<div class="grid cols-4" style="align-items:end;margin-top:6px"><div><label>Palet — ${esc(teamName(m.a))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="${T}" step="1" value="${a==null?'':a}" data-palet="a"/></div><div><label>Palet — ${esc(teamName(m.b))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="${T}" step="1" value="${b==null?'':b}" data-palet="b"/></div><div class="help">${note}</div><div></div></div>`}
 
 /* ===== Classement & H2H ===== */
-function computeLeaderboard(){
-  const R=state.rules, stats={}; state.teams.forEach(t=>stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0});
-  state.matches.forEach(m=>{
-    const A=stats[m.a], B=stats[m.b]; ensureLengths(m);
-    m.darts.forEach(v=>{ if(v===0){A.dartsW++;A.points+=R.dartsWinPoints}else if(v===1){B.dartsW++;B.points+=R.dartsWinPoints} });
-    getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b){A.pingW++;A.points+=R.pingWinPoints}else if(s.b>s.a){B.pingW++;B.points+=R.pingWinPoints} } });
-    const pa=m.palet?.a, pb=m.palet?.b; if(pa!=null&&pb!=null){ A.palFor+=pa; B.palFor+=pb; A.palAg+=pb; B.palAg+=pa; A.points+=pa; B.points+=pb; }
-    if(isMatchComplete(m)){A.matchesComplete++;B.matchesComplete++}
-  });
-  const rows=Object.values(stats);
-  rows.sort((x,y)=>(y.points-x.points)||((y.palFor-y.palAg)-(x.palFor-x.palAg))||((y.dartsW+y.pingW)-(x.dartsW+x.pingW))||x.name.localeCompare(y.name));
-  rows.forEach((r,i)=>r.rank=i+1); return rows;
-}
-function renderLeaderboard(){
-  const tbody=qs("#table-classement tbody"); tbody.innerHTML="";
-  computeLeaderboard().forEach(r=>{
-    const diff=r.palFor-r.palAg; const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${r.rank}</td>
-      <td><span class="team-name">${r.avatar?(`<span class="avatar avatar-lg"><img src="${esc(r.avatar)}" alt="avatar"></span>`):(`<span class="avatar avatar-lg"><span class="avatar-initials">${esc(initials(r.name))}</span></span>`)} ${esc(r.name)}</span></td>
-      <td><b>${r.points}</b></td><td>${r.dartsW}</td><td>${r.pingW}</td>
-      <td>${r.palFor}–${r.palAg} <span class="muted">(${diff>=0?'+':''}${diff})</span></td>
-      <td>${r.matchesComplete}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-function pointsForTeamInMatch(m,tid){
-  const R=state.rules; ensureLengths(m);
-  const isA=m.a===tid, isB=m.b===tid; if(!isA&&!isB) return 0;
-  let pts=0; m.darts.forEach(v=>{ if(v===0&&isA) pts+=R.dartsWinPoints; else if(v===1&&isB) pts+=R.dartsWinPoints; });
-  getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b&&isA) pts+=R.pingWinPoints; else if(s.b>s.a&&isB) pts+=R.pingWinPoints; } });
-  if(m.palet && m.palet.a!=null && m.palet.b!=null) pts += isA?m.palet.a:m.palet.b;
-  return pts;
-}
-function renderH2H(){
-  const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); thead.innerHTML=""; tbody.innerHTML="";
-  const teams=state.teams.slice(); if(!teams.length){ tbody.appendChild(help("Ajoutez des équipes pour voir la matrice.")); return; }
-  const trH=document.createElement("tr"); trH.appendChild(document.createElement("th")).textContent="Équipe";
-  teams.forEach(t=>{ const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>'; trH.appendChild(th); });
-  thead.appendChild(trH);
-  const byPair={}; state.matches.forEach(m=>{ byPair[[m.a,m.b].sort().join("|")]=m; });
-  teams.forEach(ti=>{
-    const tr=document.createElement("tr"); const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>'; tr.appendChild(th);
-    teams.forEach(tj=>{
-      const td=document.createElement("td");
-      if(ti.id===tj.id){ td.textContent="—"; tr.appendChild(td); return; }
-      const m=byPair[[ti.id,tj.id].sort().join("|")];
-      if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; }
-      const pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id);
-      let cls="h2h-draw", icon="≡"; if(pI>pJ){cls="h2h-win";icon="✔"} else if(pI<pJ){cls="h2h-loss";icon="✖"}
-      td.innerHTML='<span class="h2h-pill '+cls+'">'+icon+' '+pI+'–'+pJ+'</span>';
-      td.style.cursor="pointer"; td.dataset.matchId=m.id; tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
-  });
-  tbody.addEventListener("click", e=>{
-    let n=e.target; while(n && n!==tbody && !(n.tagName==="TD" && n.dataset.matchId)) n=n.parentNode;
-    if(!n||n===tbody) return; goto("calendrier"); ui.open[n.dataset.matchId]=true; setTimeout(()=>{const card=qs('.match-card[data-id="'+n.dataset.matchId+'"]'); if(card){ card.setAttribute("aria-expanded","true"); card.scrollIntoView({behavior:"smooth",block:"start"});}},0);
-  });
-}
+function computeLeaderboard(){const R=state.rules, stats={}; state.teams.forEach(t=>stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0}); state.matches.forEach(m=>{const A=stats[m.a],B=stats[m.b]; ensureLengths(m); m.darts.forEach(v=>{ if(v===0){A.dartsW++;A.points+=R.dartsWinPoints}else if(v===1){B.dartsW++;B.points+=R.dartsWinPoints} }); getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b){A.pingW++;A.points+=R.pingWinPoints}else if(s.b>s.a){B.pingW++;B.points+=R.pingWinPoints} } }); const pa=m.palet?.a,pb=m.palet?.b; if(pa!=null&&pb!=null){ A.palFor+=pa; B.palFor+=pb; A.palAg+=pb; B.palAg+=pa; A.points+=pa; B.points+=pb; } if(isMatchComplete(m)){A.matchesComplete++;B.matchesComplete++} }); const rows=Object.values(stats); rows.sort((x,y)=>(y.points-x.points)||((y.palFor-y.palAg)-(x.palFor-x.palAg))||((y.dartsW+y.pingW)-(x.dartsW+x.pingW))||x.name.localeCompare(y.name)); rows.forEach((r,i)=>r.rank=i+1); return rows;}
+function renderLeaderboard(){const tbody=qs("#table-classement tbody"); tbody.innerHTML=""; computeLeaderboard().forEach(r=>{const diff=r.palFor-r.palAg; const tr=document.createElement("tr"); tr.innerHTML=`<td>${r.rank}</td><td><span class="team-name">${r.avatar?(`<span class="avatar avatar-lg"><img src="${esc(r.avatar)}" alt="avatar"></span>`):(`<span class="avatar avatar-lg"><span class="avatar-initials">${esc(initials(r.name))}</span></span>`)} ${esc(r.name)}</span></td><td><b>${r.points}</b></td><td>${r.dartsW}</td><td>${r.pingW}</td><td>${r.palFor}–${r.palAg} <span class="muted">(${diff>=0?'+':''}${diff})</span></td><td>${r.matchesComplete}</td>`; tbody.appendChild(tr); });}
+function pointsForTeamInMatch(m,tid){const R=state.rules; ensureLengths(m); const isA=m.a===tid,isB=m.b===tid; if(!isA&&!isB) return 0; let pts=0; m.darts.forEach(v=>{ if(v===0&&isA) pts+=R.dartsWinPoints; else if(v===1&&isB) pts+=R.dartsWinPoints; }); getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b&&isA) pts+=R.pingWinPoints; else if(s.b>s.a&&isB) pts+=R.pingWinPoints; } }); if(m.palet && m.palet.a!=null && m.palet.b!=null) pts += isA?m.palet.a:m.palet.b; return pts;}
+function renderH2H(){const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); thead.innerHTML=""; tbody.innerHTML=""; const teams=state.teams.slice(); if(!teams.length){ tbody.appendChild(help("Ajoutez des équipes pour voir la matrice.")); return; } const trH=document.createElement("tr"); trH.appendChild(document.createElement("th")).textContent="Équipe"; teams.forEach(t=>{ const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>'; trH.appendChild(th); }); thead.appendChild(trH); const byPair={}; state.matches.forEach(m=>{ byPair[[m.a,m.b].sort().join("|")]=m; }); teams.forEach(ti=>{ const tr=document.createElement("tr"); const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>'; tr.appendChild(th); teams.forEach(tj=>{ const td=document.createElement("td"); if(ti.id===tj.id){ td.textContent="—"; tr.appendChild(td); return; } const m=byPair[[ti.id,tj.id].sort().join("|")]; if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; } const pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id); let cls="h2h-draw", icon="≡"; if(pI>pJ){cls="h2h-win";icon="✔"} else if(pI<pJ){cls="h2h-loss";icon="✖"} td.innerHTML='<span class="h2h-pill '+cls+'">'+icon+' '+pI+'–'+pJ+'</span>'; td.style.cursor="pointer"; td.dataset.matchId=m.id; tr.appendChild(td); }); tbody.appendChild(tr); }); tbody.addEventListener("click", e=>{ let n=e.target; while(n && n!==tbody && !(n.tagName==="TD" && n.dataset.matchId)) n=n.parentNode; if(!n||n===tbody) return; goto("calendrier"); ui.open[n.dataset.matchId]=true; setTimeout(()=>{const card=qs('.match-card[data-id="'+n.dataset.matchId+'"]'); if(card){ card.setAttribute("aria-expanded","true"); card.scrollIntoView({behavior:"smooth",block:"start"});}},0); });}
 
 /* ===== Tabs & clics ===== */
-function goto(tabId){
-  qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false"));
-  const b=qs('.tab[data-tab="'+tabId+'"]'); if(b) b.setAttribute("aria-selected","true");
-  qsa("main section").forEach(s=>s.classList.remove("active"));
-  id(tabId).classList.add("active");
-}
+function guardTab(t){const no = (!cloud.enabled && !state.cloudId); return (t==='equipes'||t==='calendrier'||t==='classement'||t==='options') && (no && state.teams.length===0);}
+function goto(tabId){ if(guardTab(tabId)){ alert("Aucun tournoi ouvert. Créez ou rejoignez un code Cloud."); tabId='setup'; } qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false")); const b=qs('.tab[data-tab="'+tabId+'"]'); if(b) b.setAttribute("aria-selected","true"); qsa("main section").forEach(s=>s.classList.remove("active")); id(tabId).classList.add("active"); }
 document.addEventListener("click",(e)=>{
   const btn=e.target.closest("button"); if(btn){
     switch(btn.id){
-      case "btn-fullscreen": fsEl()?exitFS():enterFS(document.documentElement); break;
+      case "btn-fullscreen": (document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen())?.catch?.(()=>{}); break;
 
       case "btn-create-tournament":{
         if(!isAdmin()){ const pin=prompt("PIN administrateur :"); if(pin!=="30041991") return alert("PIN incorrect."); session.admin=true; updateWho(); }
         const code=(id("tcode-input").value||"").trim(); if(!code) return alert("Code cloud obligatoire.");
         const name=(id("tname-input").value||"").trim()||"Tournoi";
         let n=clampInt(id("teams-count-input").value,2,64);
-
-        const R={
-          dartsSingles: clampInt(id("rule-d-s").value,0,9),
-          dartsDoubles: clampInt(id("rule-d-d").value,0,9),
-          dartsWinPoints: clampInt(id("rule-d-p").value,1,50),
-          pingSingles:  clampInt(id("rule-p-s").value,0,9),
-          pingDoubles:  clampInt(id("rule-p-d").value,0,9),
-          pingWinPoints: clampInt(id("rule-p-p").value,1,50),
-          paletTarget:  clampInt(id("rule-l-target").value,1,50)
-        };
-        joinCloud(code); // connecte
-        state={version:30,tid:uid(),cloudId:code,tournamentName:name,rules:R,
-          teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null})),
-          matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}};
+        const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50)};
+        joinCloud(code);
+        state={version:30,tid:uid(),cloudId:code,tournamentName:name,rules:R,teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null})),matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}};
         saveState(); pushCloud(true); renderAll(); goto("equipes"); break;
       }
 
@@ -678,11 +521,8 @@ document.addEventListener("click",(e)=>{
       case "btn-add-team":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(state.locked) return alert("Calendrier figé."); state.teams.push({id:uid(),name:"Équipe "+(state.teams.length+1),p1:"",p2:"",avatar:null}); saveState(); renderTeams(); break; }
       case "btn-generate":{ if(!isAdmin()) return alert("Seul l’admin peut générer."); if(state.locked) return; generateSchedule(); state.locked=true; saveState(); renderAll(); goto("calendrier"); break; }
       case "btn-refresh-standings": case "btn-refresh-standings-2":{ renderLeaderboard(); renderH2H(); if(btn.id==="btn-refresh-standings-2") goto("classement"); break; }
-
-      /* deux boutons vue */
       case "btn-show-summary":{ id("view-summary").style.display="block"; id("view-h2h").style.display="none"; id("btn-show-summary").setAttribute("aria-pressed","true"); id("btn-show-h2h").setAttribute("aria-pressed","false"); break; }
       case "btn-show-h2h":{ id("view-summary").style.display="none"; id("view-h2h").style.display="block"; id("btn-show-summary").setAttribute("aria-pressed","false"); id("btn-show-h2h").setAttribute("aria-pressed","true"); break; }
-
       case "btn-collapse":{ qsa('#match-list .match-card').forEach(c=>c.setAttribute('aria-expanded','false')); ui.open={}; break; }
       case "btn-export":{ const data=JSON.stringify(state,null,2); const url=URL.createObjectURL(new Blob([data],{type:"application/json"})); const a=document.createElement("a"); a.href=url; a.download=("tournoi-"+(state.tournamentName||"TriSports")).replace(/\s+/g,'_')+".json"; a.click(); URL.revokeObjectURL(url); break; }
       case "btn-import":{ const f=id("file-import").files?.[0]; if(!f) return alert("Sélectionnez un fichier JSON."); f.text().then(t=>{ try{ const data=JSON.parse(t); state=data; normalize(); saveState(); renderAll(); alert("Import réussi !"); }catch(_){ alert("Fichier invalide."); } }); break; }
@@ -691,42 +531,37 @@ document.addEventListener("click",(e)=>{
       case "btn-admin-off":{ session.admin=false; session.claims={}; updateWho(); break; }
 
       case "btn-cloud-copy":{ const code=state.cloudId||cloud.id; if(!code) return alert("Pas de code cloud."); const url=location.origin+location.pathname+"?id="+encodeURIComponent(code); navigator.clipboard?.writeText(url); alert("Lien copié !\n"+url); break; }
-      case "btn-cloud-delete":{ if(!isAdmin()) return alert("Réservé à l’admin."); const code=state.cloudId||cloud.id; if(!code) return alert("Aucun code actif."); if(!confirm("Supprimer définitivement ce tournoi du cloud ?")) return; deleteCloud(code).then(()=>{ alert("Tournoi supprimé du cloud."); setIndex(getIndex().filter(e=>e.id!==code)); renderSetupRecent(); location.href=location.pathname; }); break; }
+      case "btn-cloud-delete":{ if(!isAdmin()) return alert("Réservé à l’admin."); const code=state.cloudId||cloud.id; if(!code) return alert("Aucun code actif."); if(!confirm("Supprimer définitivement ce tournoi du cloud ?")) return;
+        deleteCloud(code).then(()=>{ setIndex(getIndex().filter(e=>e.id!==code)); unsubscribeCloud(); resetState(); renderSetupRecent(); renderAll(); history.replaceState(null,"",location.pathname); alert("Tournoi supprimé."); goto('setup'); });
+        break; }
 
       case "btn-reset-scores":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(!confirm("Réinitialiser tous les SCORES ?")) return; state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};}); saveState(); renderAll(); goto("calendrier"); break; }
       case "btn-unlock":{ if(!isAdmin()) return alert("Réservé à l’admin."); if(!confirm("Déverrouiller le calendrier ?")) return; state.locked=false; saveState(); renderTeams(); renderMatches(); updateLock(); break; }
     }
   }
 
-  // Ouvrir / Supprimer depuis la liste récentes
+  /* Liste récente : ouvrir/supprimer */
   const openBtn=e.target.closest("[data-open-id]"); if(openBtn){ const code=openBtn.getAttribute("data-open-id").replace(/^cloud:/,""); id("join-code").value=code; joinCloud(code); goto("equipes"); }
-  const delBtn=e.target.closest("[data-delete-id]"); if(delBtn){ if(!isAdmin()) return alert("Suppression cloud réservée à l’admin."); const code=delBtn.getAttribute("data-delete-id"); if(!confirm("Supprimer le tournoi '"+code+"' du cloud ?")) return; deleteCloud(code).then(()=>{ setIndex(getIndex().filter(e=>e.id!==code)); renderSetupRecent(); alert("Supprimé."); }); }
+  const delBtn=e.target.closest("[data-delete-id]"); if(delBtn){
+    if(!isAdmin()) return alert("Suppression cloud réservée à l’admin.");
+    const code=delBtn.getAttribute("data-delete-id");
+    if(!confirm("Supprimer le tournoi '"+code+"' du cloud ?")) return;
+    deleteCloud(code).then(()=>{ setIndex(getIndex().filter(e=>e.id!==code)); if(state.cloudId===code||cloud.id===code){ unsubscribeCloud(); resetState(); renderAll(); history.replaceState(null,"",location.pathname); goto('setup'); } alert("Supprimé."); renderSetupRecent(); });
+  }
 
-  // Clic avatar -> file picker
+  /* Clic avatar -> file picker */
   const av=e.target.closest('.avatar[data-click-avatar]'); if(av){ const tid=av.getAttribute('data-click-avatar'); if(isAdmin()||hasClaim(tid)){ const input=document.querySelector('input[type="file"][data-avatar="'+tid+'"]'); if(input) input.click(); } return; }
 
-  // Tabs
-  const tab=e.target.closest(".tab"); if(tab){ qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false")); tab.setAttribute("aria-selected","true"); qsa("main section").forEach(s=>s.classList.remove("active")); id(tab.getAttribute("data-tab")).classList.add("active"); }
+  /* Tabs */
+  const tab=e.target.closest(".tab"); if(tab){ let t=tab.getAttribute("data-tab"); if(guardTab(t)) t='setup'; qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false")); qs('.tab[data-tab="'+t+'"]').setAttribute("aria-selected","true"); qsa("main section").forEach(s=>s.classList.remove("active")); id(t).classList.add("active"); }
 
-  // Actions équipes
+  /* Actions équipes */
   const actBtn=e.target.closest("[data-act]");
   if(actBtn){
     const act=actBtn.getAttribute("data-act"); const tid=actBtn.getAttribute("data-id");
     if(act==="del"){ if(!isAdmin()||state.locked) return; if(!confirm("Supprimer cette équipe ?")) return; state.teams=state.teams.filter(tt=>tt.id!==tid); state.matches=state.matches.filter(m=>m.a!==tid&&m.b!==tid); if(state.protect?.teamPassHash) delete state.protect.teamPassHash[tid]; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
-    if(act==="setpass"){
-      if(!isAdmin()) return alert("Réservé à l’admin.");
-      let pass=prompt("Mot de passe pour l’équipe « "+teamName(tid)+" » :");
-      if(pass==null) return; pass=pass.trim(); if(!pass) return alert("Mot de passe vide.");
-      state.protect=state.protect||{}; state.protect.teamPassHash=state.protect.teamPassHash||{};
-      state.protect.teamPassHash[tid]=hashPass(pass); saveState(); renderTeams(); alert("Mot de passe défini.");
-    }
-    if(act==="login"){
-      const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null;
-      if(!hashes || !hashes[tid]) return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin).");
-      let pass=prompt("Mot de passe de l’équipe « "+teamName(tid)+" » :"); if(pass==null) return; pass=pass.trim(); if(!pass) return alert("Mot de passe vide.");
-      if(hashPass(pass)===hashes[tid]){ session.claims[tid]=true; updateWho(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); alert("Connexion réussie."); }
-      else alert("Mot de passe incorrect.");
-    }
+    if(act==="setpass"){ if(!isAdmin()) return alert("Réservé à l’admin."); let pass=prompt("Mot de passe pour l’équipe « "+teamName(tid)+" » :"); if(pass==null) return; pass=pass.trim(); if(!pass) return alert("Mot de passe vide."); state.protect=state.protect||{}; state.protect.teamPassHash=state.protect.teamPassHash||{}; state.protect.teamPassHash[tid]=hashPass(pass); saveState(); renderTeams(); alert("Mot de passe défini."); }
+    if(act==="login"){ const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null; if(!hashes || !hashes[tid]) return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin)."); let pass=prompt("Mot de passe de l’équipe « "+teamName(tid)+" » :"); if(pass==null) return; pass=pass.trim(); if(!pass) return alert("Mot de passe vide."); if(hashPass(pass)===hashes[tid]){ session.claims[tid]=true; updateWho(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); alert("Connexion réussie."); } else alert("Mot de passe incorrect."); }
     if(act==="logout"){ delete session.claims[tid]; updateWho(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
     if(act==="avatar"){ const input=qs('[data-avatar="'+tid+'"]'); if(input) input.click(); }
     if(act==="avatar-clear"){ const t=teamObj(tid); if(!t) return; t.avatar=null; saveState(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
@@ -742,7 +577,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const p=id('js-ok'); if(p){ p.textContent='JS chargé ✅ · handlers OK'; p.style.background='#14532d'; }
   const params=new URLSearchParams(location.search); const idp=params.get("id"); if(idp){ id("join-code").value=idp; joinCloud(idp); }
 });
-["fullscreenchange","webkitfullscreenchange","mozfullscreenchange","MSFullscreenChange"].forEach(e=>document.addEventListener(e,updateFSBtn));
+["fullscreenchange","webkitfullscreenchange","mozfullscreenchange","MSFullscreenChange"].forEach(e=>document.addEventListener(e,()=>{const b=id("btn-fullscreen"); if(!b) return; b.textContent=document.fullscreenElement?"Quitter plein écran":"⛶ Plein écran";}));
 </script>
 </body>
 </html>
