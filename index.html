@@ -44,13 +44,11 @@ table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:
 .avatar-lg{width:48px;height:48px;font-size:15px}.avatar-lg .avatar-initials{line-height:48px}
 .avatar-sm{width:32px;height:32px;font-size:12px}.avatar-sm .avatar-initials{line-height:32px}
 
-/* ====== NOUVEAU : en-tête d’équipe solide (plus d’empiètement) ====== */
+/* En-tête d’équipe (pas de chevauchement) */
 .team-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .team-header .teams{flex:1;min-width:0;display:flex;align-items:center;gap:12px}
 .team-header .team-name{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
 .team-header .team-name input[type=text]{flex:1;min-width:160px;max-width:100%}
-.team-header .actions{flex:0 0 auto}
-@media (max-width:640px){.team-header .actions{width:100%}}
 
 /* H2H : pilules colorées */
 .h2h-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-weight:600}
@@ -95,7 +93,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
   <div class="container">
     <div id="storage-warning" class="help" style="display:none"></div>
 
-    <!-- Tournoi (Cloud) -->
+    <!-- Tournoi -->
     <section id="setup" class="active">
       <div class="card">
         <div class="hd"><strong>Créer un tournoi (Cloud)</strong></div>
@@ -310,7 +308,7 @@ function ensureLengths(m){const dN=dartsTotal(),pN=pingTotal(); m.darts=Array.is
 function _normMatch(m){m=m||{};m.id=m.id||uid();m.a=m.a||"";m.b=m.b||"";ensureLengths(m);m.palet=m.palet||{a:null,b:null};m.palet.a=(m.palet.a==null?null:+m.palet.a);m.palet.b=(m.palet.b==null?null:+m.palet.b);m.round=m.round||1;m.order=m.order||0;return m}
 function normalize(){state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11}; state.teams=Array.isArray(state.teams)?state.teams:[]; state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[]; state.protect=state.protect||{}; state.protect.teamPassHash=state.protect.teamPassHash||{}}
 
-/* ===== Cloud (avec unsubscribe) ===== */
+/* ===== Cloud ===== */
 const cloud={enabled:false,db:null,id:null,ref:null,timer:null};
 const hasFB=!!(window.firebase&&window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey);
 function initFB(){try{if(!hasFB) return null; if(!firebase.apps||firebase.apps.length===0) firebase.initializeApp(window.FIREBASE_CONFIG); return firebase.database();}catch(_){return null}}
@@ -333,16 +331,6 @@ function joinCloud(code){
 function pushCloud(immediate){ if(!cloud.enabled||!cloud.ref) return; clearTimeout(cloud.timer); cloud.timer=setTimeout(()=>cloud.ref.set({state,updatedAt:Date.now()}), immediate?0:250); }
 function deleteCloud(code){ if(!cloud.db){cloud.db=initFB();} return cloud.db.ref("tournaments/"+code).remove(); }
 function saveState(){ normalize(); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); upsertIndex({id:state.cloudId||cloud.id||"?",name:state.tournamentName||"Sans titre",updatedAt:Date.now()}); renderTitle(); renderSetupRecent(); renderManageList(); if(cloud.enabled) pushCloud(); }
-
-/* Vérifs doublons */
-async function cloudCodeExists(code){
-  try{
-    const db=cloud.db||initFB(); if(!db) return false;
-    const ref=db.ref("tournaments/"+code+"/payload");
-    const snap=await ref.get?.() ?? await new Promise(res=>ref.once('value',res));
-    return !!(snap && snap.exists && snap.exists());
-  }catch(_){ return false; }
-}
 
 /* ===== Plein écran ===== */
 document.addEventListener("fullscreenchange",()=>{const b=id("btn-fullscreen"); if(!b) return; b.textContent=document.fullscreenElement?"Quitter plein écran":"⛶ Plein écran"});
@@ -384,7 +372,6 @@ function renderTeams(){
           <span class="chip">#${idx+1}</span>
           <span class="team-name">${avatarHtml(t.id,'lg','data-click-avatar="'+t.id+'"')}<input type="text"${dis} value="${esc(t.name)}" data-field="name" data-id="${t.id}"/></span>
         </div>
-        <div class="actions">${delBtn}</div>
       </div>
       <div class="bd">
         <input type="file" accept="image/*" data-avatar="${t.id}" style="display:none"/>
@@ -394,6 +381,7 @@ function renderTeams(){
         </div>
         <div class="help" style="margin-top:6px">${protectInfo}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${avatarBtn}${avatarClr}${protectBtns}</div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px">${delBtn}</div>
       </div>`;
     el.appendChild(card);
   });
@@ -422,7 +410,7 @@ function fileToSquareDataURL(file,size){return new Promise((resolve,reject)=>{co
 function updateCounts(){ id("teams-count").textContent=state.teams.length+" "+(state.teams.length>1?"équipes":"équipe"); const per=Math.max(0,state.teams.length-1); id("rounds-count").textContent=per+" "+(per>1?"matchs":"match")+" par équipe" }
 function updateLock(){ const pill=id("lock-pill"); if(pill) pill.style.display=state.locked?"inline-block":"none"; const gen=id("btn-generate"); if(gen){gen.disabled=!!state.locked; gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"} }
 
-/* ===== Rencontres & Scores (saisie fluide) ===== */
+/* ===== Rencontres & Scores ===== */
 const getPingPts=m=>Array.isArray(m.pingPts)?m.pingPts:Array(pingTotal()).fill({a:null,b:null});
 const isPingValid=(a,b)=>{ if(a==null||b==null) return false; if(isNaN(a)||isNaN(b)) return false; const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
 function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:0,ping:0}; m.darts.forEach(v=>{if(v===0)aw.darts++; else if(v===1)bw.darts++;}); getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b)aw.ping++; else if(s.b>s.a)bw.ping++; }}); return {aw,bw};}
@@ -467,6 +455,7 @@ function renderMatches(){
         </div>`;
       list.appendChild(el);
 
+      // Fléchettes
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
         if(!can) sel.disabled=true;
         sel.addEventListener("change", ()=>{
@@ -475,18 +464,43 @@ function renderMatches(){
           const mm=findMatch(m.id); mm.darts[i]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H();
         });
       });
+
+      // Ping — saisie fluide + note en direct
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
         if(!can) inp.disabled=true;
-        const commit=()=>{ const which=inp.getAttribute("data-ping"), i=parseInt(inp.getAttribute("data-index"),10); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99); const mm=findMatch(m.id); mm.pingPts[i][which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); };
-        inp.addEventListener("input", ()=>{ const which=inp.getAttribute("data-ping"), i=parseInt(inp.getAttribute("data-index"),10); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99); const mm=findMatch(m.id); mm.pingPts[i][which]=v; saveState(); });
-        inp.addEventListener("change", commit); inp.addEventListener("blur", commit);
+        const mid=m.id, idxSet=parseInt(inp.getAttribute("data-index"),10), which=inp.getAttribute("data-ping");
+        const updateNote=()=>{
+          const mm=findMatch(mid); const s=mm.pingPts[idxSet]; const ok=isPingValid(s.a,s.b);
+          const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');
+          if(note) note.textContent = ok ? '✔️ Score valide' : 'Saisissez deux scores (11+ et écart ≥ 2).';
+        };
+        inp.addEventListener("input", ()=>{
+          const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);
+          const mm=findMatch(mid); mm.pingPts[idxSet][which]=v; saveState(); updateNote();
+        });
+        const commit=()=>{ const mm=findMatch(mid); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99); mm.pingPts[idxSet][which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); };
+        inp.addEventListener("change", commit);
+        inp.addEventListener("blur", commit);
         inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
       });
+
+      // Palet — saisie fluide + note en direct
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
         if(!can) inp.disabled=true;
-        const commit=()=>{ const which=inp.getAttribute("data-palet"); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11); const mm=findMatch(m.id); mm.palet[which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); };
-        inp.addEventListener("input", ()=>{ const which=inp.getAttribute("data-palet"); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11); const mm=findMatch(m.id); mm.palet[which]=v; saveState(); });
-        inp.addEventListener("change", commit); inp.addEventListener("blur", commit);
+        const mid=m.id, which=inp.getAttribute("data-palet");
+        const updateNote=()=>{
+          const mm=findMatch(mid); const T=state.rules.paletTarget||11; const a=mm.palet.a, b=mm.palet.b;
+          const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));
+          const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');
+          if(note) note.textContent = ok ? '✔️ Score valide' : `Saisissez les deux scores (l’un doit être ${T}).`;
+        };
+        inp.addEventListener("input", ()=>{
+          const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);
+          const mm=findMatch(mid); mm.palet[which]=v; saveState(); updateNote();
+        });
+        const commit=()=>{ const mm=findMatch(mid); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11); mm.palet[which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); };
+        inp.addEventListener("change", commit);
+        inp.addEventListener("blur", commit);
         inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
       });
 
@@ -497,9 +511,56 @@ function renderMatches(){
   id("stats-matches").textContent=complete+" / "+state.matches.length+" matches complets";
   renderLeaderboard();
 }
-function renderDarts(m,can){const s=state.rules.dartsSingles,N=dartsTotal();let html=""; for(let i=0;i<N;i++){const v=m.darts[i];const lab=(i<s?`Simple ${i+1}`:`Double ${i-s+1}`); const nm=[teamName(m.a),teamName(m.b)]; html+=`<div class="grid cols-3" style="align-items:end"><div><label>Fléchettes — ${lab}</label><select ${(can?'':'disabled ')}data-kind="darts" data-index="${i}"><option value="" ${v===null?'selected':''}>Non joué</option><option value="0" ${v===0?'selected':''}>Victoire ${esc(nm[0])}</option><option value="1" ${v===1?'selected':''}>Victoire ${esc(nm[1])}</option></select></div><div></div><div></div></div>`;} return html;}
-function renderPing(m,can){const s=state.rules.pingSingles,N=pingTotal();let html=""; for(let i=0;i<N;i++){const set=m.pingPts[i]||{a:null,b:null}; const lab=(i<s?`Simple ${i+1}`:`Double ${i-s+1}`); const note=(set.a==null||set.b==null)?'Saisissez deux scores (11+ et écart ≥ 2).':(isPingValid(set.a,set.b)?'✔️ Score valide':'⚠️ 11+ et écart ≥ 2.'); html+=`<div class="grid cols-4" style="align-items:end;margin-top:6px"><div><label>Ping — ${lab} — ${esc(teamName(m.a))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="99" step="1" value="${set.a==null?'':set.a}" data-ping="a" data-index="${i}"/></div><div><label>Ping — ${lab} — ${esc(teamName(m.b))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="99" step="1" value="${set.b==null?'':set.b}" data-ping="b" data-index="${i}"/></div><div class="help">${note}</div><div></div></div>`;} return html;}
-function renderPalet(m,can){const T=state.rules.paletTarget||11; const a=m.palet?.a,b=m.palet?.b; const ok=(a==null||b==null)?false:((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1)); const note=(a==null||b==null)?`Saisissez les deux scores (l’un doit être ${T}).`:(ok?'✔️ Score valide':`⚠️ Un score doit être ${T}, l’autre entre 0 et ${T-1}.`); return `<div class="grid cols-4" style="align-items:end;margin-top:6px"><div><label>Palet — ${esc(teamName(m.a))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="${T}" step="1" value="${a==null?'':a}" data-palet="a"/></div><div><label>Palet — ${esc(teamName(m.b))}</label><input ${(can?'':'disabled ')}type="number" min="0" max="${T}" step="1" value="${b==null?'':b}" data-palet="b"/></div><div class="help">${note}</div><div></div></div>`}
+function renderDarts(m,can){
+  const s=state.rules.dartsSingles,N=dartsTotal();let html="";
+  for(let i=0;i<N;i++){
+    const v=m.darts[i];const lab=(i<s?`Simple ${i+1}`:`Double ${i-s+1}`); const nm=[teamName(m.a),teamName(m.b)];
+    html+=`<div class="grid cols-3" style="align-items:end">
+      <div><label>Fléchettes — ${lab}</label>
+        <select ${(can?'':'disabled ')}data-kind="darts" data-index="${i}">
+          <option value="" ${v===null?'selected':''}>Non joué</option>
+          <option value="0" ${v===0?'selected':''}>Victoire ${esc(nm[0])}</option>
+          <option value="1" ${v===1?'selected':''}>Victoire ${esc(nm[1])}</option>
+        </select>
+      </div><div></div><div></div></div>`;
+  }
+  return html;
+}
+function renderPing(m,can){
+  const s=state.rules.pingSingles,N=pingTotal();let html="";
+  for(let i=0;i<N;i++){
+    const set=m.pingPts[i]||{a:null,b:null};
+    const lab=(i<s?`Simple ${i+1}`:`Double ${i-s+1}`);
+    const ok=isPingValid(set.a,set.b);
+    const note= ok ? '✔️ Score valide' : 'Saisissez deux scores (11+ et écart ≥ 2).';
+    html+=`<div class="grid cols-4" style="align-items:end;margin-top:6px">
+      <div><label>Ping — ${lab} — ${esc(teamName(m.a))}</label>
+        <input ${(can?'':'disabled ')}type="number" min="0" max="99" step="1" value="${set.a==null?'':set.a}" data-ping="a" data-index="${i}"/>
+      </div>
+      <div><label>Ping — ${lab} — ${esc(teamName(m.b))}</label>
+        <input ${(can?'':'disabled ')}type="number" min="0" max="99" step="1" value="${set.b==null?'':set.b}" data-ping="b" data-index="${i}"/>
+      </div>
+      <div class="help" data-note="ping-${m.id}-${i}">${note}</div>
+      <div></div>
+    </div>`;
+  }
+  return html;
+}
+function renderPalet(m,can){
+  const T=state.rules.paletTarget||11; const a=m.palet?.a,b=m.palet?.b;
+  const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));
+  const note= ok ? '✔️ Score valide' : `Saisissez les deux scores (l’un doit être ${T}).`;
+  return `<div class="grid cols-4" style="align-items:end;margin-top:6px">
+    <div><label>Palet — ${esc(teamName(m.a))}</label>
+      <input ${(can?'':'disabled ')}type="number" min="0" max="${T}" step="1" value="${a==null?'':a}" data-palet="a"/>
+    </div>
+    <div><label>Palet — ${esc(teamName(m.b))}</label>
+      <input ${(can?'':'disabled ')}type="number" min="0" max="${T}" step="1" value="${b==null?'':b}" data-palet="b"/>
+    </div>
+    <div class="help" data-note="pal-${m.id}">${note}</div>
+    <div></div>
+  </div>`;
+}
 
 /* ===== Classement & H2H ===== */
 function computeLeaderboard(){const R=state.rules, stats={}; state.teams.forEach(t=>stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0}); state.matches.forEach(m=>{const A=stats[m.a],B=stats[m.b]; ensureLengths(m); m.darts.forEach(v=>{ if(v===0){A.dartsW++;A.points+=R.dartsWinPoints}else if(v===1){B.dartsW++;B.points+=R.dartsWinPoints} }); getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b){A.pingW++;A.points+=R.pingWinPoints}else if(s.b>s.a){B.pingW++;B.points+=R.pingWinPoints} } }); const pa=m.palet?.a,pb=m.palet?.b; if(pa!=null&&pb!=null){ A.palFor+=pa; B.palFor+=pb; A.palAg+=pb; B.palAg+=pa; A.points+=pa; B.points+=pb; } if(isMatchComplete(m)){A.matchesComplete++;B.matchesComplete++} }); const rows=Object.values(stats); rows.sort((x,y)=>(y.points-x.points)||((y.palFor-y.palAg)-(x.palFor-x.palAg))||((y.dartsW+y.pingW)-(x.dartsW+x.pingW))||x.name.localeCompare(y.name)); rows.forEach((r,i)=>r.rank=i+1); return rows;}
@@ -523,7 +584,8 @@ document.addEventListener("click",async (e)=>{
         const name=(id("tname-input").value||"").trim()||"Tournoi";
         if(nameExistsLocally(name)) return alert("Un tournoi portant ce nom existe déjà dans cette liste.");
         if(codeExistsLocally(code)) return alert("Ce code cloud existe déjà dans votre liste.");
-        if(await cloudCodeExists(code)) return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");
+        const exists = await (async ()=>{try{const db=cloud.db||initFB(); if(!db) return false; const ref=db.ref("tournaments/"+code+"/payload"); const snap=await ref.get?.() ?? await new Promise(res=>ref.once('value',res)); return !!(snap && snap.exists && snap.exists());}catch(_){return false}})();
+        if(exists) return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");
 
         const n=clampInt(id("teams-count-input").value,2,64);
         const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50)};
