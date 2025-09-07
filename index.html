@@ -44,10 +44,13 @@ table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:
 .avatar-lg{width:48px;height:48px;font-size:15px}.avatar-lg .avatar-initials{line-height:48px}
 .avatar-sm{width:32px;height:32px;font-size:12px}.avatar-sm .avatar-initials{line-height:32px}
 
-/* Lignes équipes */
-.teams{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
-.team-name{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
-.team-name input[type=text]{flex:1;min-width:220px;max-width:100%} /* grand mais n’écrase plus le bouton */
+/* ====== NOUVEAU : en-tête d’équipe solide (plus d’empiètement) ====== */
+.team-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.team-header .teams{flex:1;min-width:0;display:flex;align-items:center;gap:12px}
+.team-header .team-name{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.team-header .team-name input[type=text]{flex:1;min-width:160px;max-width:100%}
+.team-header .actions{flex:0 0 auto}
+@media (max-width:640px){.team-header .actions{width:100%}}
 
 /* H2H : pilules colorées */
 .h2h-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-weight:600}
@@ -92,7 +95,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
   <div class="container">
     <div id="storage-warning" class="help" style="display:none"></div>
 
-    <!-- Tournoi -->
+    <!-- Tournoi (Cloud) -->
     <section id="setup" class="active">
       <div class="card">
         <div class="hd"><strong>Créer un tournoi (Cloud)</strong></div>
@@ -264,6 +267,8 @@ const IDX_KEY="trisports_cloud_index_v1";
 function getIndex(){ try{ return JSON.parse(localStorage.getItem(IDX_KEY)||"[]"); }catch(_){ return []; } }
 function setIndex(arr){ try{ localStorage.setItem(IDX_KEY, JSON.stringify(arr||[])); }catch(_){} }
 function upsertIndex(entry){ const idx=getIndex(); const i=idx.findIndex(e=>e.id===entry.id); if(i>=0) idx[i]=Object.assign({},idx[i],entry); else idx.unshift(entry); setIndex(idx); }
+function nameExistsLocally(name){ const n=(name||"").trim().toLowerCase(); if(!n) return false; return getIndex().some(e=> (e.name||"").trim().toLowerCase()===n ); }
+function codeExistsLocally(code){ return getIndex().some(e=> e.id===code ); }
 function renderSetupRecent(){
   const wrap=id("recent-list"); wrap.innerHTML="";
   const idx=getIndex().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
@@ -305,7 +310,7 @@ function ensureLengths(m){const dN=dartsTotal(),pN=pingTotal(); m.darts=Array.is
 function _normMatch(m){m=m||{};m.id=m.id||uid();m.a=m.a||"";m.b=m.b||"";ensureLengths(m);m.palet=m.palet||{a:null,b:null};m.palet.a=(m.palet.a==null?null:+m.palet.a);m.palet.b=(m.palet.b==null?null:+m.palet.b);m.round=m.round||1;m.order=m.order||0;return m}
 function normalize(){state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11}; state.teams=Array.isArray(state.teams)?state.teams:[]; state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[]; state.protect=state.protect||{}; state.protect.teamPassHash=state.protect.teamPassHash||{}}
 
-/* ===== Cloud (with unsubscribe) ===== */
+/* ===== Cloud (avec unsubscribe) ===== */
 const cloud={enabled:false,db:null,id:null,ref:null,timer:null};
 const hasFB=!!(window.firebase&&window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey);
 function initFB(){try{if(!hasFB) return null; if(!firebase.apps||firebase.apps.length===0) firebase.initializeApp(window.FIREBASE_CONFIG); return firebase.database();}catch(_){return null}}
@@ -329,12 +334,18 @@ function pushCloud(immediate){ if(!cloud.enabled||!cloud.ref) return; clearTimeo
 function deleteCloud(code){ if(!cloud.db){cloud.db=initFB();} return cloud.db.ref("tournaments/"+code).remove(); }
 function saveState(){ normalize(); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); upsertIndex({id:state.cloudId||cloud.id||"?",name:state.tournamentName||"Sans titre",updatedAt:Date.now()}); renderTitle(); renderSetupRecent(); renderManageList(); if(cloud.enabled) pushCloud(); }
 
+/* Vérifs doublons */
+async function cloudCodeExists(code){
+  try{
+    const db=cloud.db||initFB(); if(!db) return false;
+    const ref=db.ref("tournaments/"+code+"/payload");
+    const snap=await ref.get?.() ?? await new Promise(res=>ref.once('value',res));
+    return !!(snap && snap.exists && snap.exists());
+  }catch(_){ return false; }
+}
+
 /* ===== Plein écran ===== */
-const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement;
-const enterFS=el=>el.requestFullscreen?.()||el.webkitRequestFullscreen?.()||el.mozRequestFullScreen?.()||el.msRequestFullscreen?.();
-const exitFS=()=>document.exitFullscreen?.()||document.webkitExitFullscreen?.()||document.mozCancelFullScreen?.()||document.msExitFullscreen?.();
-function fsSupported(){const el=document.documentElement;return !!(el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen)}
-function updateFSBtn(){const b=id("btn-fullscreen"); if(!b) return; b.style.display=fsSupported()?"inline-block":"none"; b.textContent=fsEl()?"Quitter plein écran":"⛶ Plein écran"}
+document.addEventListener("fullscreenchange",()=>{const b=id("btn-fullscreen"); if(!b) return; b.textContent=document.fullscreenElement?"Quitter plein écran":"⛶ Plein écran"});
 
 /* ===== Génération calendrier ===== */
 function generateSchedule(){
@@ -368,10 +379,12 @@ function renderTeams(){
     const avatarClr = ((admin||iOwn) && t.avatar) ? `<button type="button" class="btn small" data-act="avatar-clear" data-id="${t.id}">Retirer avatar</button>` : '';
     const card=document.createElement("div"); card.className="match-card"; card.setAttribute("aria-expanded","true");
     card.innerHTML=`
-      <div class="hd" style="border:none;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center">
-        <div class="teams"><span class="chip">#${idx+1}</span>
-          <span class="team-name">${avatarHtml(t.id,'lg','data-click-avatar="'+t.id+'"')}<input type="text"${dis} value="${esc(t.name)}" data-field="name" data-id="${t.id}"/></span></div>
-        <div style="flex:0 0 auto">${delBtn}</div>
+      <div class="hd team-header" style="border:none;border-bottom:1px solid var(--border)">
+        <div class="teams">
+          <span class="chip">#${idx+1}</span>
+          <span class="team-name">${avatarHtml(t.id,'lg','data-click-avatar="'+t.id+'"')}<input type="text"${dis} value="${esc(t.name)}" data-field="name" data-id="${t.id}"/></span>
+        </div>
+        <div class="actions">${delBtn}</div>
       </div>
       <div class="bd">
         <input type="file" accept="image/*" data-avatar="${t.id}" style="display:none"/>
@@ -454,7 +467,6 @@ function renderMatches(){
         </div>`;
       list.appendChild(el);
 
-      // Fléchettes : re-render au changement (select)
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
         if(!can) sel.disabled=true;
         sel.addEventListener("change", ()=>{
@@ -463,7 +475,6 @@ function renderMatches(){
           const mm=findMatch(m.id); mm.darts[i]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H();
         });
       });
-      // Ping & Palet : pas de re-render à chaque frappe (saisie fluide)
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
         if(!can) inp.disabled=true;
         const commit=()=>{ const which=inp.getAttribute("data-ping"), i=parseInt(inp.getAttribute("data-index"),10); const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99); const mm=findMatch(m.id); mm.pingPts[i][which]=v; saveState(); renderMatches(); renderLeaderboard(); renderH2H(); };
@@ -499,7 +510,9 @@ function renderH2H(){const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tb
 /* ===== Tabs & clics ===== */
 function guardTab(t){const no = (!cloud.enabled && !state.cloudId); return (t==='equipes'||t==='calendrier'||t==='classement'||t==='options') && (no && state.teams.length===0);}
 function goto(tabId){ if(guardTab(tabId)){ alert("Aucun tournoi ouvert. Créez ou rejoignez un code Cloud."); tabId='setup'; } qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false")); const b=qs('.tab[data-tab="'+tabId+'"]'); if(b) b.setAttribute("aria-selected","true"); qsa("main section").forEach(s=>s.classList.remove("active")); id(tabId).classList.add("active"); }
-document.addEventListener("click",(e)=>{
+
+/* ===== Écoute clics ===== */
+document.addEventListener("click",async (e)=>{
   const btn=e.target.closest("button"); if(btn){
     switch(btn.id){
       case "btn-fullscreen": (document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen())?.catch?.(()=>{}); break;
@@ -508,7 +521,11 @@ document.addEventListener("click",(e)=>{
         if(!isAdmin()){ const pin=prompt("PIN administrateur :"); if(pin!=="30041991") return alert("PIN incorrect."); session.admin=true; updateWho(); }
         const code=(id("tcode-input").value||"").trim(); if(!code) return alert("Code cloud obligatoire.");
         const name=(id("tname-input").value||"").trim()||"Tournoi";
-        let n=clampInt(id("teams-count-input").value,2,64);
+        if(nameExistsLocally(name)) return alert("Un tournoi portant ce nom existe déjà dans cette liste.");
+        if(codeExistsLocally(code)) return alert("Ce code cloud existe déjà dans votre liste.");
+        if(await cloudCodeExists(code)) return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");
+
+        const n=clampInt(id("teams-count-input").value,2,64);
         const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50)};
         joinCloud(code);
         state={version:30,tid:uid(),cloudId:code,tournamentName:name,rules:R,teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null})),matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}}};
@@ -571,13 +588,12 @@ document.addEventListener("click",(e)=>{
 });
 
 /* ===== Boot ===== */
-function renderAll(){ renderTitle(); updateWho(); updateFSBtn(); renderSetupRecent(); renderManageList(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
+function renderAll(){ renderTitle(); updateWho(); renderSetupRecent(); renderManageList(); renderTeams(); renderMatches(); renderLeaderboard(); renderH2H(); }
 document.addEventListener("DOMContentLoaded", ()=>{
   normalize(); renderAll();
   const p=id('js-ok'); if(p){ p.textContent='JS chargé ✅ · handlers OK'; p.style.background='#14532d'; }
   const params=new URLSearchParams(location.search); const idp=params.get("id"); if(idp){ id("join-code").value=idp; joinCloud(idp); }
 });
-["fullscreenchange","webkitfullscreenchange","mozfullscreenchange","MSFullscreenChange"].forEach(e=>document.addEventListener(e,()=>{const b=id("btn-fullscreen"); if(!b) return; b.textContent=document.fullscreenElement?"Quitter plein écran":"⛶ Plein écran";}));
 </script>
 </body>
 </html>
