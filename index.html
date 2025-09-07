@@ -37,6 +37,11 @@ table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:
 .pill{padding:4px 8px;border-radius:999px;background:#0f1331;border:1px solid var(--border);color:var(--muted);font-size:12px}
 .h2h-table th,.h2h-table td{white-space:nowrap}
 
+/* Avatars + noms bien alignés */
+.team-name{display:inline-flex;align-items:center;gap:8px;line-height:1.25;vertical-align:middle}
+.match-card .hd .teams{display:flex;align-items:center;gap:10px}
+.avatar,.avatar img,.avatar-lg,.avatar-sm{vertical-align:middle}
+
 /* Avatars */
 .avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:#0f1331;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;color:#cbd5ff;font-weight:700;font-size:14px;flex:0 0 auto}
 .avatar img{width:100%;height:100%;object-fit:cover}
@@ -44,17 +49,14 @@ table{width:100%;border-collapse:collapse} th,td{padding:10px 8px;border-bottom:
 .avatar-lg{width:48px;height:48px;font-size:15px}.avatar-lg .avatar-initials{line-height:48px}
 .avatar-sm{width:32px;height:32px;font-size:12px}.avatar-sm .avatar-initials{line-height:32px}
 
-/* En-tête d’équipe (pas de chevauchement) */
-.team-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.team-header .teams{flex:1;min-width:0;display:flex;align-items:center;gap:12px}
-.team-header .team-name{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
-.team-header .team-name input[type=text]{flex:1;min-width:160px;max-width:100%}
-
 /* H2H : pilules colorées */
 .h2h-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-weight:600}
 .h2h-win {border:1px solid #22c55e;color:#a7f3d0;background:rgba(34,197,94,.08)}
 .h2h-loss{border:1px solid #ef4444;color:#fecaca;background:rgba(239,68,68,.08)}
 .h2h-draw{border:1px solid #eab308;color:#fde68a;background:rgba(234,179,8,.08)}
+
+/* Scores compacts */
+.score-compact{font-variant-numeric:tabular-nums}
 
 #storage-warning{position:fixed;right:12px;bottom:12px;display:none;background:#0f1331;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 10px;z-index:99;box-shadow:0 6px 24px rgba(0,0,0,.35)}
 #js-ok{position:fixed;right:12px;top:12px;background:#7a2525;color:#fff;padding:6px 10px;border-radius:10px;z-index:9999;font:600 12px system-ui,Segoe UI,Roboto}
@@ -95,6 +97,12 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
     <!-- Tournoi -->
     <section id="setup" class="active">
+      <!-- Barre admin sur la page Tournoi -->
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin:4px 0 8px">
+        <button type="button" class="btn small" id="btn-admin-on-setup">Se connecter admin</button>
+        <span class="pill" id="whoami-setup">visiteur</span>
+      </div>
+
       <div class="card">
         <div class="hd"><strong>Créer un tournoi (Cloud)</strong></div>
         <div class="bd grid cols-4">
@@ -255,6 +263,8 @@ const uid=()=>Math.random().toString(36).slice(2,10);
 const clampInt=(v,min,max)=>{v=parseInt(v,10); if(isNaN(v)) return null; return Math.max(min,Math.min(max,v));}
 const help=t=>{const d=document.createElement("div");d.className="help";d.textContent=t;return d;}
 function hashPass(s){s=(s||"").trim();let h=0x811c9dc5>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return("00000000"+h.toString(16)).slice(-8)}
+// Tiret fin insécable pour scores
+const hy=(a,b)=>`${a}\u2011${b}`;
 
 /* ===== Erreurs visibles ===== */
 window.onerror=(msg,src,line,col)=>{const el=id("storage-warning"); if(el){el.style.display="block";el.textContent="Erreur JS : "+msg+" @"+(src||"")+":"+(line||0)+":"+(col||0)} const p=id("js-ok"); if(p){p.textContent='JS chargé avec erreurs ⚠️'; p.style.background='#8a2a2a'}};
@@ -298,7 +308,15 @@ function teamObj(tid){return state.teams.find(t=>t.id===tid)||null}
 function teamName(tid){const t=teamObj(tid);return t?t.name:"—"}
 function initials(name){const s=(name||"").trim(); if(!s) return "?"; const p=s.split(/\s+/); return (p[0][0]+(p[1]?.[0]||"")).toUpperCase()}
 function avatarHtml(tid,size,attrs){const t=teamObj(tid)||{name:"?"};const url=t.avatar;const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':'');const extra=attrs?(' '+attrs):'';const content=url?('<img src="'+esc(url)+'" alt="avatar">'):('<span class="avatar-initials">'+esc(initials(t.name))+'</span>');return '<span class="avatar '+cls+'" title="'+esc(t.name)+'"'+extra+'>'+content+'</span>'}
-function updateWho(){const names=Object.keys(session.claims||{}).map(teamName).filter(Boolean); const who=isAdmin()? (names.length?("Admin · "+names.join(", ")):"Admin") : (names[0]||"visiteur"); id("whoami").textContent="vous : "+who; id("whoami-top").textContent=who; id("btn-add-team").style.display=isAdmin()?"inline-block":"none";}
+function updateWho(){
+  const names=Object.keys(session.claims||{}).map(teamName).filter(Boolean);
+  const who=isAdmin()? (names.length?("Admin · "+names.join(", ")):"Admin") : (names[0]||"visiteur");
+  id("whoami").textContent="vous : "+who;
+  id("whoami-top").textContent=who;
+  const s=id("whoami-setup"); if(s) s.textContent=who;
+  const b=id("btn-add-team"); if(b) b.style.display=isAdmin()?"inline-block":"none";
+  const ba=id("btn-admin-on-setup"); if(ba) ba.style.display=isAdmin()?"none":"inline-block";
+}
 function renderTitle(){const name=(state.tournamentName||"").trim(); document.title=(name?name+" — ":"")+"TriSports — Fléchettes • Ping-pong • Palet"; const pill=id("tname-top"); if(name){pill.style.display="inline-block";pill.textContent=name}else{pill.style.display="none";pill.textContent=""}}
 
 /* ===== Normalisation ===== */
@@ -427,7 +445,7 @@ function renderMatches(){
     const hdr=help("Journée "+r); hdr.style.fontWeight="600"; hdr.style.margin="8px 0"; list.appendChild(hdr);
     groups[r].forEach(m=>{
       ensureLengths(m);
-      const wins=computeSetWins(m), pal=m.palet, T=state.rules.paletTarget||11, palScore=(pal.a!=null&&pal.b!=null)?(pal.a+"–"+pal.b):"—";
+      const wins=computeSetWins(m), pal=m.palet, T=state.rules.paletTarget||11, palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"—";
       const done=isMatchComplete(m); if(done) complete++;
       const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b));
       const el=document.createElement("div"); el.className="match-card"; el.dataset.id=m.id;
@@ -439,9 +457,9 @@ function renderMatches(){
             <span class="team-name">${avatarHtml(m.b,'sm')}${esc(teamName(m.b))}</span></div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             <span class="chip">Journée ${m.round||"?"}</span>
-            <span class="chip">Fléchettes G: ${wins.aw.darts}-${wins.bw.darts}</span>
-            <span class="chip">Ping G: ${wins.aw.ping}-${wins.bw.ping}</span>
-            <span class="chip">Palet (T=${T}): ${palScore}</span>
+            <span class="chip">Fléchettes: <span class="score-compact">${hy(wins.aw.darts,wins.bw.darts)}</span></span>
+            <span class="chip">Ping: <span class="score-compact">${hy(wins.aw.ping,wins.bw.ping)}</span></span>
+            <span class="chip">Palet (T=${T}): <span class="score-compact">${palScore}</span></span>
             ${done?'<span class="pill" style="border-color:#2c6;color:#8fd">✅ Complet</span>':'<span class="pill" style="border-color:#aa6;color:#ffc">⏳ Incomplet</span>'}
             <span class="chip">▶</span>
           </div>
@@ -564,9 +582,9 @@ function renderPalet(m,can){
 
 /* ===== Classement & H2H ===== */
 function computeLeaderboard(){const R=state.rules, stats={}; state.teams.forEach(t=>stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,points:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0}); state.matches.forEach(m=>{const A=stats[m.a],B=stats[m.b]; ensureLengths(m); m.darts.forEach(v=>{ if(v===0){A.dartsW++;A.points+=R.dartsWinPoints}else if(v===1){B.dartsW++;B.points+=R.dartsWinPoints} }); getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b){A.pingW++;A.points+=R.pingWinPoints}else if(s.b>s.a){B.pingW++;B.points+=R.pingWinPoints} } }); const pa=m.palet?.a,pb=m.palet?.b; if(pa!=null&&pb!=null){ A.palFor+=pa; B.palFor+=pb; A.palAg+=pb; B.palAg+=pa; A.points+=pa; B.points+=pb; } if(isMatchComplete(m)){A.matchesComplete++;B.matchesComplete++} }); const rows=Object.values(stats); rows.sort((x,y)=>(y.points-x.points)||((y.palFor-y.palAg)-(x.palFor-x.palAg))||((y.dartsW+y.pingW)-(x.dartsW+x.pingW))||x.name.localeCompare(y.name)); rows.forEach((r,i)=>r.rank=i+1); return rows;}
-function renderLeaderboard(){const tbody=qs("#table-classement tbody"); tbody.innerHTML=""; computeLeaderboard().forEach(r=>{const diff=r.palFor-r.palAg; const tr=document.createElement("tr"); tr.innerHTML=`<td>${r.rank}</td><td><span class="team-name">${r.avatar?(`<span class="avatar avatar-lg"><img src="${esc(r.avatar)}" alt="avatar"></span>`):(`<span class="avatar avatar-lg"><span class="avatar-initials">${esc(initials(r.name))}</span></span>`)} ${esc(r.name)}</span></td><td><b>${r.points}</b></td><td>${r.dartsW}</td><td>${r.pingW}</td><td>${r.palFor}–${r.palAg} <span class="muted">(${diff>=0?'+':''}${diff})</span></td><td>${r.matchesComplete}</td>`; tbody.appendChild(tr); });}
+function renderLeaderboard(){const tbody=qs("#table-classement tbody"); tbody.innerHTML=""; computeLeaderboard().forEach(r=>{const diff=r.palFor-r.palAg; const tr=document.createElement("tr"); tr.innerHTML=`<td>${r.rank}</td><td><span class="team-name">${r.avatar?(`<span class="avatar avatar-lg"><img src="${esc(r.avatar)}" alt="avatar"></span>`):(`<span class="avatar avatar-lg"><span class="avatar-initials">${esc(initials(r.name))}</span></span>`)} ${esc(r.name)}</span></td><td><b>${r.points}</b></td><td>${r.dartsW}</td><td>${r.pingW}</td><td><span class="score-compact">${hy(r.palFor,r.palAg)}</span> <span class="muted">(${diff>=0?'+':''}${diff})</span></td><td>${r.matchesComplete}</td>`; tbody.appendChild(tr); });}
 function pointsForTeamInMatch(m,tid){const R=state.rules; ensureLengths(m); const isA=m.a===tid,isB=m.b===tid; if(!isA&&!isB) return 0; let pts=0; m.darts.forEach(v=>{ if(v===0&&isA) pts+=R.dartsWinPoints; else if(v===1&&isB) pts+=R.dartsWinPoints; }); getPingPts(m).forEach(s=>{ if(isPingValid(s.a,s.b)){ if(s.a>s.b&&isA) pts+=R.pingWinPoints; else if(s.b>s.a&&isB) pts+=R.pingWinPoints; } }); if(m.palet && m.palet.a!=null && m.palet.b!=null) pts += isA?m.palet.a:m.palet.b; return pts;}
-function renderH2H(){const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); thead.innerHTML=""; tbody.innerHTML=""; const teams=state.teams.slice(); if(!teams.length){ tbody.appendChild(help("Ajoutez des équipes pour voir la matrice.")); return; } const trH=document.createElement("tr"); trH.appendChild(document.createElement("th")).textContent="Équipe"; teams.forEach(t=>{ const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>'; trH.appendChild(th); }); thead.appendChild(trH); const byPair={}; state.matches.forEach(m=>{ byPair[[m.a,m.b].sort().join("|")]=m; }); teams.forEach(ti=>{ const tr=document.createElement("tr"); const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>'; tr.appendChild(th); teams.forEach(tj=>{ const td=document.createElement("td"); if(ti.id===tj.id){ td.textContent="—"; tr.appendChild(td); return; } const m=byPair[[ti.id,tj.id].sort().join("|")]; if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; } const pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id); let cls="h2h-draw", icon="≡"; if(pI>pJ){cls="h2h-win";icon="✔"} else if(pI<pJ){cls="h2h-loss";icon="✖"} td.innerHTML='<span class="h2h-pill '+cls+'">'+icon+' '+pI+'–'+pJ+'</span>'; td.style.cursor="pointer"; td.dataset.matchId=m.id; tr.appendChild(td); }); tbody.appendChild(tr); }); tbody.addEventListener("click", e=>{ let n=e.target; while(n && n!==tbody && !(n.tagName==="TD" && n.dataset.matchId)) n=n.parentNode; if(!n||n===tbody) return; goto("calendrier"); ui.open[n.dataset.matchId]=true; setTimeout(()=>{const card=qs('.match-card[data-id="'+n.dataset.matchId+'"]'); if(card){ card.setAttribute("aria-expanded","true"); card.scrollIntoView({behavior:"smooth",block:"start"});}},0); });}
+function renderH2H(){const thead=qs("#table-h2h thead"), tbody=qs("#table-h2h tbody"); thead.innerHTML=""; tbody.innerHTML=""; const teams=state.teams.slice(); if(!teams.length){ tbody.appendChild(help("Ajoutez des équipes pour voir la matrice.")); return; } const trH=document.createElement("tr"); trH.appendChild(document.createElement("th")).textContent="Équipe"; teams.forEach(t=>{ const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>'; trH.appendChild(th); }); thead.appendChild(trH); const byPair={}; state.matches.forEach(m=>{ byPair[[m.a,m.b].sort().join("|")]=m; }); teams.forEach(ti=>{ const tr=document.createElement("tr"); const th=document.createElement("th"); th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>'; tr.appendChild(th); teams.forEach(tj=>{ const td=document.createElement("td"); if(ti.id===tj.id){ td.textContent="—"; tr.appendChild(td); return; } const m=byPair[[ti.id,tj.id].sort().join("|")]; if(!m){ td.innerHTML='<span class="chip">—</span>'; tr.appendChild(td); return; } const pI=pointsForTeamInMatch(m,ti.id), pJ=pointsForTeamInMatch(m,tj.id); let cls="h2h-draw", icon="≡"; if(pI>pJ){cls="h2h-win";icon="✔"} else if(pI<pJ){cls="h2h-loss";icon="✖"} td.innerHTML='<span class="h2h-pill '+cls+'">'+icon+' <span class="score-compact">'+hy(pI,pJ)+'</span></span>'; td.style.cursor="pointer"; td.dataset.matchId=m.id; tr.appendChild(td); }); tbody.appendChild(tr); }); tbody.addEventListener("click", e=>{ let n=e.target; while(n && n!==tbody && !(n.tagName==="TD" && n.dataset.matchId)) n=n.parentNode; if(!n||n===tbody) return; goto("calendrier"); ui.open[n.dataset.matchId]=true; setTimeout(()=>{const card=qs('.match-card[data-id="'+n.dataset.matchId+'"]'); if(card){ card.setAttribute("aria-expanded","true"); card.scrollIntoView({behavior:"smooth",block:"start"});}},0); });}
 
 /* ===== Tabs & clics ===== */
 function guardTab(t){const no = (!cloud.enabled && !state.cloudId); return (t==='equipes'||t==='calendrier'||t==='classement'||t==='options') && (no && state.teams.length===0);}
@@ -577,6 +595,15 @@ document.addEventListener("click",async (e)=>{
   const btn=e.target.closest("button"); if(btn){
     switch(btn.id){
       case "btn-fullscreen": (document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen())?.catch?.(()=>{}); break;
+
+      case "btn-admin-on-setup":
+      case "btn-admin-on": {
+        const pin=prompt("PIN administrateur :");
+        if(pin==="30041991"){ session.admin=true; updateWho(); alert("Mode administrateur activé."); }
+        else alert("PIN incorrect.");
+        break;
+      }
+      case "btn-admin-off":{ session.admin=false; session.claims={}; updateWho(); break; }
 
       case "btn-create-tournament":{
         if(!isAdmin()){ const pin=prompt("PIN administrateur :"); if(pin!=="30041991") return alert("PIN incorrect."); session.admin=true; updateWho(); }
@@ -605,9 +632,6 @@ document.addEventListener("click",async (e)=>{
       case "btn-collapse":{ qsa('#match-list .match-card').forEach(c=>c.setAttribute('aria-expanded','false')); ui.open={}; break; }
       case "btn-export":{ const data=JSON.stringify(state,null,2); const url=URL.createObjectURL(new Blob([data],{type:"application/json"})); const a=document.createElement("a"); a.href=url; a.download=("tournoi-"+(state.tournamentName||"TriSports")).replace(/\s+/g,'_')+".json"; a.click(); URL.revokeObjectURL(url); break; }
       case "btn-import":{ const f=id("file-import").files?.[0]; if(!f) return alert("Sélectionnez un fichier JSON."); f.text().then(t=>{ try{ const data=JSON.parse(t); state=data; normalize(); saveState(); renderAll(); alert("Import réussi !"); }catch(_){ alert("Fichier invalide."); } }); break; }
-
-      case "btn-admin-on":{ const pin=prompt("PIN administrateur :"); if(pin==="30041991"){ session.admin=true; updateWho(); alert("Mode administrateur activé."); } else alert("PIN incorrect."); break; }
-      case "btn-admin-off":{ session.admin=false; session.claims={}; updateWho(); break; }
 
       case "btn-cloud-copy":{ const code=state.cloudId||cloud.id; if(!code) return alert("Pas de code cloud."); const url=location.origin+location.pathname+"?id="+encodeURIComponent(code); navigator.clipboard?.writeText(url); alert("Lien copié !\n"+url); break; }
       case "btn-cloud-delete":{ if(!isAdmin()) return alert("Réservé à l’admin."); const code=state.cloudId||cloud.id; if(!code) return alert("Aucun code actif."); if(!confirm("Supprimer définitivement ce tournoi du cloud ?")) return;
