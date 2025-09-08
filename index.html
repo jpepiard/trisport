@@ -825,8 +825,7 @@ id('bonus-save').addEventListener('click',()=>{
     setBonusSelection(r, t, {type:'capitaine', player: id('bonus-player').value, sport: id('bonus-sport').value});
   }
   saveState(); id('bonus-modal').classList.remove('show'); renderMatches();
-});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
-
+});
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{normalize();renderAll();const p=id('js-ok');if(p){p.textContent='JS chargé ✅ · handlers OK';p.style.background='#14532d'}const params=new URLSearchParams(location.search);const idp=params.get("id");if(idp){id("join-code").value=idp;joinCloud(idp)}})
