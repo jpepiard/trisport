@@ -484,31 +484,31 @@ function setRoundStatusPillClasses(pill,rs){
 }
 function bonusChip(r,mTeam,rs){
   const sel = getBonusSelection(r, mTeam);
-  const used = teamBonusUsed(mTeam);
   const iAmTeam = hasClaim(mTeam);
   const revealAll = !!rs.finished;
-  const canChoose = (!rs.started && !rs.finished && !used && (iAmTeam || isAdmin()));
+  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && (iAmTeam || isAdmin()));
 
-  // Pas encore choisi -> bouton (seulement pour l'équipe propriétaire ou admin)
+  // 1) Rien choisi -> bouton pour l'équipe concernée (ou admin)
   if (!sel) {
-    return canChoose ? `<span class="pill outline" data-bonus data-team="${mTeam}" title="Choisir le bonus">🎖 Bonus</span>` : '';
+    return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
   }
 
-  // Déjà choisi :
-  // - Avant la fin de journée: visible SEULEMENT pour l'équipe qui a choisi (admin et autres équipes NE voient RIEN).
-  // - Après la fin de journée: visible pour tout le monde.
-  if (!(revealAll || iAmTeam)) {
+  // 2) Déjà choisi -> avant fin de journée, SEULE l'équipe concernée voit sa pilule
+  if (!revealAll && !iAmTeam) {
     return '';
   }
 
-  // Affichage de la pilule en mode choisi.
-  // Pour Capitaine: texte "Capitaine" + mini bulle avec l'image.
-  if (sel.type === 'capitaine' || sel.sport === 'capitaine') {
+  // 3) Affichage de la pilule
+  if (!revealAll) {
+    // Secret avant fin de journée: texte "Capitaine" + mini bulle image
     return `<span class="pill blue">Capitaine<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
+  } else {
+    // Révélé pour tout le monde: détails + total appliqué
+    const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
+    const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
+    const applied = getBonusAppliedSum(mTeam) || 0;
+    return `<span class="pill blue">Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
   }
-
-  // Fallback générique si tu ajoutes d'autres types de bonus plus tard
-  return `<span class="pill blue">Bonus<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
 }
 
 function renderMatches(){
