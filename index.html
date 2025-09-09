@@ -140,6 +140,20 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 .bonus-dialog .bonus-card .bonus-params{ flex: 1 0 100%; margin-top: 8px; }
 </style>
 
+
+<style>
+/* Bonus card layout: image left, text right, params below */
+.bonus-dialog .bonus-card{
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  column-gap: 12px;
+  align-items: start;
+}
+.bonus-dialog .bonus-card .bonus-illu{ grid-column: 1; }
+.bonus-dialog .bonus-card .bonus-text{ grid-column: 2; }
+.bonus-dialog .bonus-card .bonus-params{ grid-column: 1 / -1; margin-top: 8px; }
+</style>
+
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
