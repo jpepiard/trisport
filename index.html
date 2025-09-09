@@ -110,6 +110,35 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 <script>
 window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDomain:"trisport-9a7b2.firebaseapp.com",databaseURL:"https://trisport-9a7b2-default-rtdb.europe-west1.firebasedatabase.app",projectId:"trisport-9a7b2",messagingSenderId:"132024051367",appId:"1:132024051367:web:f9aa39785a3d4a43875d82"};
 </script>
+
+<style>
+/* Selectable bonus options as dotted boxes */
+.bonus-option, .bonus-dialog .bonus-card {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.bonus-dialog .bonus-card.selected {
+  border-color: var(--accent, #4a90e2);
+  background: rgba(0,0,0,0.03);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.06) inset;
+}
+.bonus-dialog .bonus-card .bonus-illu img { width: 56px; height: 56px; object-fit: cover; border-radius: 10px; }
+.bonus-dialog .bonus-card .bonus-text .help { opacity:.8 }
+.bonus-params{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .25s ease;
+}
+.bonus-params.open{
+  max-height: 400px;
+}
+.bonus-select { display:grid; grid-template-columns: 1fr; gap:12px; }
+@media (min-width:700px){ .bonus-select{ grid-template-columns: 1fr 1fr; } }
+</style>
+
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -322,12 +351,6 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
           <div style="font-weight:700">Miroir</div>
           <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex : si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
         </div>
-      </div>
-
-      <div class="help" style="margin-top:6px">Type de bonus</div>
-      <div class="radio-row" style="display:flex;gap:12px;align-items:center;margin-bottom:4px">
-        <label><input type="radio" name="bonus-type" id="bonus-type-cap" value="capitaine" checked> Capitaine</label>
-        <label><input type="radio" name="bonus-type" id="bonus-type-mirror" value="miroir"> Miroir</label>
       </div>
 
       <div class="help" id="bonus-context">—</div>
@@ -802,26 +825,76 @@ function openBonusModal(round,teamId){
   id('bonus-player').value=sel?.player||'p1';
   id('bonus-sport').value=sel?.sport||'darts';
   const type=sel?.type||'capitaine';
-  const capEl=id('bonus-type-cap'), mirEl=id('bonus-type-mirror');
-  if(capEl&&mirEl){ capEl.checked=(type==='capitaine'); mirEl.checked=(type==='miroir'); }
-  if(typeof toggleCapFields==='function') toggleCapFields();
+  prepareBonusOptions();
+  selectBonusType(type);
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
   id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');const type=(id('bonus-type-mirror')&&id('bonus-type-mirror').checked)?'miroir':'capitaine';
+id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');const type = (window._bonusType==='miroir') ? 'miroir' : 'capitaine';
 setBonusSelection(r,t, type==='capitaine' ? {type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value} : {type:'miroir'});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
 
 
-/* Bonus: show/hide Capitaine fields depending on the chosen type */
-function toggleCapFields(){
-  const isCap = (id('bonus-type-cap') && id('bonus-type-cap').checked);
-  const box = id('capitaine-fields');
-  if (box) box.style.display = isCap ? '' : 'none';
-}
-['bonus-type-cap','bonus-type-mirror'].forEach(x=>{ const el=id(x); if(el){ el.addEventListener('change', toggleCapFields); }});
 
+/* Bonus: selectable dotted cards + accordion for parameters */
+let _bonusType = 'capitaine';
+function ensureParamWrapper(){
+  const capFields = id('capitaine-fields');
+  if (!capFields) return null;
+  let wrap = id('cap-params');
+  if (!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'cap-params';
+    wrap.className = 'bonus-params';
+    capFields.parentNode.insertBefore(wrap, capFields);
+    wrap.appendChild(capFields);
+  }
+  return wrap;
+}
+function setParamsOpen(open){
+  const wrap = ensureParamWrapper();
+  if (!wrap) return;
+  wrap.classList.toggle('open', !!open);
+  wrap.style.maxHeight = open ? (wrap.scrollHeight + 'px') : '0px';
+}
+function selectBonusType(t){
+  _bonusType = (t === 'miroir') ? 'miroir' : 'capitaine';
+  const cards = [...document.querySelectorAll('.bonus-dialog .bonus-card')];
+  const cap = cards[0], mir = cards[1];
+  if (cap){ cap.classList.toggle('selected', _bonusType === 'capitaine'); cap.setAttribute('aria-pressed', _bonusType==='capitaine'); }
+  if (mir){ mir.classList.toggle('selected', _bonusType === 'miroir'); mir.setAttribute('aria-pressed', _bonusType==='miroir'); }
+  // Context helper text
+  const ctx = id('bonus-context');
+  if (ctx){
+    ctx.textContent = (_bonusType==='miroir')
+      ? "Miroir : inverse le bonus adverse sur tout le match."
+      : "Capitaine : choisissez le joueur et le sport concernés.";
+  }
+  setParamsOpen(_bonusType==='capitaine');
+}
+function prepareBonusOptions(){
+  // Hide any legacy radio row if still present
+  document.querySelectorAll('input[name="bonus-type"]').forEach(i=> i.closest('.radio-row')?.remove());
+  // Make cards selectable & keyboard accessible
+  const cards = [...document.querySelectorAll('.bonus-dialog .bonus-card')];
+  cards.forEach((c, idx)=>{
+    c.classList.add('selectable');
+    c.setAttribute('tabindex', '0');
+    c.setAttribute('role', 'button');
+    c.addEventListener('click', ()=> selectBonusType(idx===0?'capitaine':'miroir'));
+    c.addEventListener('keydown', (ev)=>{
+      if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); selectBonusType(idx===0?'capitaine':'miroir'); }
+    });
+  });
+  // Move params under the Capitaine card in an accordion
+  const cap = cards[0];
+  const wrap = ensureParamWrapper();
+  if (cap && wrap && wrap.previousElementSibling !== cap) {
+    cap.appendChild(wrap);
+  }
+}
 /* ===== Boot ===== */
+
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{normalize();renderAll();const p=id('js-ok');if(p){p.textContent='JS chargé ✅ · handlers OK';p.style.background='#14532d'}const params=new URLSearchParams(location.search);const idp=params.get("id");if(idp){id("join-code").value=idp;joinCloud(idp)}})
 </script>
