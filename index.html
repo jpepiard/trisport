@@ -338,24 +338,25 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
   <div class="bonus-dialog">
     <div class="hd">Choisir un bonus</div>
     <div class="bd">
-      <div class="bonus-card">
+      
+<div class="bonus-card">
         <div class="bonus-illu" aria-hidden="true">
           <img src="img/capitaine.jpg" alt="Bonus Capitaine"/></div>
         <div class="bonus-text">
           <div style="font-weight:700">Capitaine</div>
           <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
         </div>
-      
-      <div class="bonus-card">
+      <div class="bonus-sep"></div>
+<div class="bonus-card">
         <div class="bonus-illu" aria-hidden="true">
           <img src="img/miroir.jpg" alt="Bonus Miroir"/></div>
         <div class="bonus-text">
           <div style="font-weight:700">Miroir</div>
-          <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex : si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
+          <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex&nbsp;: si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
         </div>
       </div>
-
-      <div class="bonus-card">
+      <div class="bonus-sep"></div>
+<div class="bonus-card">
         <div class="bonus-illu" aria-hidden="true">
           <img src="img/taupe.png" alt="Bonus René la taupe"/></div>
         <div class="bonus-text">
@@ -363,10 +364,13 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
           <div class="help">Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br/>Si l’adversaire joue <b>Miroir</b>, <i>vous</i> portez les lunettes.</div>
         </div>
       </div>
-</div>
-
-      <div class="help" id="bonus-context">—</div>
-      <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
+<div class="help" id="bonus-context">—</div>
+<div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
+        <div><label>Sport</label>
+          <select id="taupe-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
+        </div>
+      </div>
+<div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
         <div><label>Capitaine (joueur)</label>
           <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
         </div>
@@ -374,15 +378,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
           <select id="bonus-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
-      <div class="help" style="margin-top:8px">Utilisable <b>une seule fois</b> par équipe sur tout le tournoi.</div>
-    </div>
-      <div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
-        <div><label>Sport</label>
-          <select id="taupe-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
-        </div>
-      </div>
-
-    <div class="ft">
+<div class="ft">
       <button type="button" class="btn" id="bonus-cancel">Annuler</button>
       <button type="button" class="btn primary" id="bonus-save">Valider</button>
     </div>
