@@ -796,7 +796,7 @@ function openBonusModal(round,teamId){
   const rCtl=roundState(round);
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
   if(teamBonusUsed(teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
-  if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");");
+  if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
   bonusCTX.round=round;bonusCTX.teamId=teamId;
   const sel=getBonusSelection(round,teamId);
   id('bonus-player').value=sel?.player||'p1';
