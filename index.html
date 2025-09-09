@@ -93,7 +93,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
   display:flex;align-items:center;gap:8px;
   font-weight:700;margin:0 0 10px;
 }
-.sport-title .sport-icon{width:18px;height:18px;display:grid;place-items:center}
+.sport-title .sport-icon{width:18px;height:18px;display:grid;place-items:center;font-size:16px;line-height:1}
 .sport-item{margin:0 0 10px}
 .sport-item label{display:block;margin:0 0 6px;color:var(--muted)}
 .ping-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -454,24 +454,9 @@ function computeCapitaineBonusForMatch(m, tid, player, sport){
 
 /* Icônes pour titres de sport */
 function sportIcon(name){
-  if(name==='darts'){
-    return `<svg viewBox="0 0 20 20" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="10" cy="10" r="9" fill="#0f1331" stroke="#3a4aa0"/>
-      <circle cx="10" cy="10" r="6" fill="none" stroke="#7aa2ff"/>
-      <circle cx="10" cy="10" r="3" fill="#7aa2ff"/>
-    </svg>`;
-  }
-  if(name==='ping'){
-    return `<svg viewBox="0 0 20 20" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="7" cy="7" r="5" fill="#7aa2ff"/>
-      <rect x="10" y="9" width="7" height="3" rx="1.5" fill="#9fb3ff"/>
-      <circle cx="14.8" cy="14.8" r="2" fill="#e6edf7"/>
-    </svg>`;
-  }
-  return `<svg viewBox="0 0 20 20" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="10" cy="10" r="7" fill="#9fb3ff"/>
-    <circle cx="10" cy="10" r="3.5" fill="#0f1331"/>
-  </svg>`;
+  if(name==='darts'){ return `<span class="sport-icon" role="img" aria-label="fléchettes">🎯</span>`; }
+  if(name==='ping'){  return `<span class="sport-icon" role="img" aria-label="ping-pong">🏓</span>`; }
+  return `<span class="sport-icon" role="img" aria-label="palet">🥏</span>`;
 }
 
 /* ===== Rendu Rencontres ===== */
@@ -485,31 +470,33 @@ function setRoundStatusPillClasses(pill,rs){
 function bonusChip(r,mTeam,rs){
   const sel = getBonusSelection(r, mTeam);
   const iAmTeam = hasClaim(mTeam);
-  const revealAll = !!rs.finished;
-  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && (iAmTeam || isAdmin()));
+  const roundFinished = !!rs.finished;
 
-  // 1) Rien choisi -> bouton pour l'équipe concernée (ou admin)
+  // Admin : ne voit rien avant la fin de journée
+  if (isAdmin() && !roundFinished) return '';
+
+  // Rien choisi → afficher un bouton uniquement pour l'équipe concernée, avant le début.
+  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && iAmTeam);
   if (!sel) {
     return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
   }
 
-  // 2) Déjà choisi -> avant fin de journée, SEULE l'équipe concernée voit sa pilule
-  if (!revealAll && !iAmTeam) {
-    return '';
-  }
+  // Déjà choisi : avant fin, visible UNIQUEMENT pour l'équipe concernée
+  if (!roundFinished && !iAmTeam) return '';
 
-  // 3) Affichage de la pilule
-  if (!revealAll) {
-    // Secret avant fin de journée: texte "Capitaine" + mini bulle image
+  // Affichage
+  if (!roundFinished) {
+    // Secret: pilule "Capitaine" + mini image
     return `<span class="pill blue">Capitaine<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
   } else {
-    // Révélé pour tout le monde: détails + total appliqué
+    // Révélé à tout le monde
     const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
     const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
     const applied = getBonusAppliedSum(mTeam) || 0;
     return `<span class="pill blue">Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
   }
 }
+
 
 function renderMatches(){
   const list=id("match-list");list.innerHTML="";
@@ -534,7 +521,7 @@ function renderMatches(){
     groups[r].forEach(m=>{
       ensureLengths(m);
       const wins=computeSetWins(m),pal=m.palet,palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"—";
-      const palChip = `<span class="chip">Palet: <span class="score-compact">${palScore}</span></span>`;
+      const palChip = `<span class="chip">🥏 Palet: <span class="score-compact">${palScore}</span></span>`;
       const done=isMatchComplete(m);if(done)complete++;
       const el=document.createElement("div");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
       const bonusA=bonusChip(r,m.a,rCtl), bonusB=bonusChip(r,m.b,rCtl);
@@ -543,8 +530,8 @@ function renderMatches(){
           <span class="team-name">${avatarHtml(m.a,'sm')}${esc(teamName(m.a))}</span> <span class="vs">vs</span>
           <span class="team-name">${avatarHtml(m.b,'sm')}${esc(teamName(m.b))}</span></div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <span class="chip">Fléchettes: <span class="score-compact">${hy(wins.aw.darts,wins.bw.darts)}</span></span>
-          <span class="chip">Ping: <span class="score-compact">${hy(wins.aw.ping,wins.bw.ping)}</span></span>
+          <span class="chip">🎯 Fléchettes: <span class="score-compact">${hy(wins.aw.darts,wins.bw.darts)}</span></span>
+          <span class="chip">🏓 Ping: <span class="score-compact">${hy(wins.aw.ping,wins.bw.ping)}</span></span>
           ${palChip}
           ${done?'<span class="pill green">✅ Complet</span>':'<span class="pill yellow">⏳ Incomplet</span>'}
           ${bonusA} ${bonusB}
@@ -775,134 +762,5 @@ id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{normalize();renderAll();const p=id('js-ok');if(p){p.textContent='JS chargé ✅ · handlers OK';p.style.background='#14532d'}const params=new URLSearchParams(location.search);const idp=params.get("id");if(idp){id("join-code").value=idp;joinCloud(idp)}})
 </script>
-
-<!-- Patch v2: bonus selection UX (hide params until selection; fix highlight) -->
-<style>
-  /* Force hidden across the modal */
-  #bonus-modal [hidden]{display:none !important}
-  #bonus-modal .bonus-card.selected{outline:2px solid #7aa2ff; outline-offset:2px; border-radius:12px}
-</style>
-<script>
-(function(){
-  const $ = (s,root)=> (root||document).querySelector(s);
-  const $$ = (s,root)=> Array.from((root||document).querySelectorAll(s));
-
-  function ensureCardsTagged(){
-    const modal = $('#bonus-modal'); if(!modal) return;
-    const first = $('.bonus-card', modal);
-    if(first && !first.hasAttribute('data-bonus-type')){
-      first.setAttribute('data-bonus-type','capitaine');
-      first.setAttribute('role','button'); first.setAttribute('tabindex','0');
-    }
-    // also clear any pre-existing selection class
-    $$('.bonus-card', modal).forEach(c=>c.classList.remove('selected'));
-  }
-
-  function ensureMirrorCard(){
-    const modal = $('#bonus-modal'); if(!modal) return;
-    if ($('#bonus-card-mirror', modal)) return;
-    const firstCard = $('.bonus-card', modal); if(!firstCard) return;
-    const grid = firstCard.parentElement || $('.bd', modal);
-    const card = document.createElement('div');
-    card.className = 'bonus-card';
-    card.id = 'bonus-card-mirror';
-    card.setAttribute('data-bonus-type','miroir');
-    card.setAttribute('tabindex','0'); card.setAttribute('role','button');
-    card.innerHTML = [
-      '<div class="bonus-illu" aria-hidden="true"><img src="img/miroir.jpg" alt="Bonus Miroir"/></div>',
-      '<div class="bonus-text"><div style="font-weight:700">Miroir</div>',
-      '<div class="help">Inverse le bonus de l’adversaire : s’il choisit <b>Capitaine</b>, il s’applique à votre équipe (sur toute la rencontre).</div></div>'
-    ].join('');
-    grid.appendChild(card);
-  }
-
-  // Toggle display of Capitaine parameter fields robustly
-  function toggleCapitaineFields(show){
-    // Try container id
-    let node = document.getElementById('bonus-capitaine-fields');
-    if(!node){
-      // fallback: common container of selects
-      const p = $('#bonus-player'); const s = $('#bonus-sport');
-      // Hide each field group if container cannot be found
-      [p && p.closest('div'), s && s.closest('div')].forEach(el=>{ if(el){ el.toggleAttribute('hidden', !show); } });
-      return;
-    }
-    node.toggleAttribute('hidden', !show);
-  }
-
-  let __type = null;
-  function setBonusType(t){
-    __type = (t==='capitaine'||t==='miroir') ? t : null;
-    const modal = $('#bonus-modal'); if(!modal) return;
-    // Highlight cards
-    $$('#bonus-modal .bonus-card[data-bonus-type]').forEach(c=>{
-      const is = c.getAttribute('data-bonus-type')===__type;
-      c.classList.toggle('selected', is);
-      c.setAttribute('aria-pressed', is?'true':'false');
-    });
-    // Toggle fields
-    toggleCapitaineFields(__type==='capitaine');
-    // Title and save state
-    const hd = $('#bonus-modal .hd');
-    if(hd){ hd.textContent = 'Choisir un bonus' + (__type?(' — ' + (__type==='miroir'?'Miroir':'Capitaine')):''); }
-    const save = $('#bonus-save'); if(save){ save.disabled = !__type; }
-  }
-
-  function removeOnceLine(){
-    // Remove any "utilisable une seule fois..." helper line
-    $$('#bonus-modal .help').forEach(h=>{
-      if(/Utilisable\s+une\s+seule\s+fois/i.test(h.textContent)) h.remove();
-    });
-  }
-
-  // Wrap openBonusModal
-  if (typeof window.openBonusModal === 'function'){
-    const _open = window.openBonusModal;
-    window.openBonusModal = function(round, teamId){
-      _open.call(this, round, teamId);
-      try{
-        ensureCardsTagged();
-        ensureMirrorCard();
-        removeOnceLine();
-        const sel = (typeof getBonusSelection==='function') ? getBonusSelection(round, teamId) : null;
-        // If a selection exists, preselect; otherwise show list only (no params)
-        setBonusType(sel && sel.type ? sel.type : null);
-        const modal = $('#bonus-modal');
-        if(modal && !modal.__bonusPickBound){
-          modal.__bonusPickBound = true;
-          modal.addEventListener('click', ev=>{
-            const card = ev.target.closest('.bonus-card[data-bonus-type]');
-            if(card) setBonusType(card.getAttribute('data-bonus-type'));
-          });
-        }
-      }catch(e){ console.warn('bonus UX patch v2 failed', e); }
-    }
-  }
-
-  // Intercept Save to store selected type with params when needed
-  document.addEventListener('click', function(ev){
-    const btn = ev.target.closest('#bonus-save');
-    if(!btn) return;
-    if(btn.disabled){ ev.preventDefault(); ev.stopImmediatePropagation(); return; }
-    ev.stopImmediatePropagation(); ev.preventDefault();
-    try{
-      const r = window.bonusCTX && window.bonusCTX.round;
-      const t = window.bonusCTX && window.bonusCTX.teamId;
-      if(!r || !t){ $('#bonus-modal')?.classList.remove('show'); return; }
-      if(__type==='miroir'){
-        setBonusSelection(r, t, {type:'miroir'});
-      }else if(__type==='capitaine'){
-        setBonusSelection(r, t, {type:'capitaine', player: $('#bonus-player').value, sport: $('#bonus-sport').value});
-      }else{
-        return;
-      }
-      if (typeof saveState==='function') saveState();
-      $('#bonus-modal')?.classList.remove('show');
-      if (typeof renderMatches==='function') renderMatches();
-    }catch(e){ console.error(e); }
-  }, true);
-})();
-</script>
-
 </body>
 </html>
