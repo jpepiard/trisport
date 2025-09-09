@@ -110,6 +110,50 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 <script>
 window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDomain:"trisport-9a7b2.firebaseapp.com",databaseURL:"https://trisport-9a7b2-default-rtdb.europe-west1.firebasedatabase.app",projectId:"trisport-9a7b2",messagingSenderId:"132024051367",appId:"1:132024051367:web:f9aa39785a3d4a43875d82"};
 </script>
+
+<style>
+.bonus-dialog .bonus-card{
+  border:2px dashed var(--border);
+  border-radius:12px;
+  padding:12px;
+  cursor:pointer;
+  transition:background .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.bonus-dialog .bonus-card.selected{
+  border-color: var(--accent, #4a90e2);
+  background: rgba(0,0,0,0.03);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.06) inset;
+}
+.bonus-dialog .bonus-card .bonus-illu img{ width:56px; height:56px; object-fit:cover; border-radius:10px; }
+.bonus-params{ max-height:0; overflow:hidden; transition:max-height .25s ease; }
+.bonus-params.open{ max-height: 420px; }
+.bonus-select{ display:grid; grid-template-columns: 1fr; gap:20px; }
+@media (min-width:700px){ .bonus-select{ grid-template-columns: 1fr 1fr; } }
+.bonus-sep{ height:0; border-top:1px dashed var(--border); opacity:.7; margin: 8px 0; grid-column:1/-1; }
+</style>
+
+
+<style>
+/* Place bonus params under the card content */
+.bonus-dialog .bonus-card{ flex-wrap: wrap; align-items: flex-start; }
+.bonus-dialog .bonus-card .bonus-text{ flex: 1 1 auto; min-width: 260px; }
+.bonus-dialog .bonus-card .bonus-params{ flex: 1 0 100%; margin-top: 8px; }
+</style>
+
+
+<style>
+/* Bonus card layout: image left, text right, params below */
+.bonus-dialog .bonus-card{
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  column-gap: 12px;
+  align-items: start;
+}
+.bonus-dialog .bonus-card .bonus-illu{ grid-column: 1; }
+.bonus-dialog .bonus-card .bonus-text{ grid-column: 2; }
+.bonus-dialog .bonus-card .bonus-params{ grid-column: 1 / -1; margin-top: 8px; }
+</style>
+
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -236,7 +280,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
         </div>
         <div class="bd" style="overflow:auto">
           <div id="view-summary">
-            <div class="help" style="margin-bottom:10px">Points = base + Bonus − Malus. Le bonus “Capitaine” est révélé à la fin de la journée.</div>
+            <div class="help" style="margin-bottom:10px">Points = base + Bonus − Malus. Les bonus sont révélés à la fin de la journée.</div>
             <table id="table-classement">
               <thead>
                 <tr>
@@ -304,7 +348,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <!-- MODAL BONUS -->
 <div id="bonus-modal" aria-hidden="true">
   <div class="bonus-dialog">
-    <div class="hd">Choisir un bonus — Capitaine</div>
+    <div class="hd">Choisir un bonus</div>
     <div class="bd">
       <div class="bonus-card">
         <div class="bonus-illu" aria-hidden="true">
@@ -315,8 +359,24 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
         </div>
       </div>
 
+      <div class="bonus-sep"></div>
+<div class="bonus-card">
+        <div class="bonus-illu" aria-hidden="true">
+          <img src="img/miroir.jpg" alt="Bonus Miroir"/></div>
+        <div class="bonus-text">
+          <div style="font-weight:700">Miroir</div>
+          <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex : si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
+        </div>
+      </div>
+
+      <div class="help" style="margin-top:6px;display:none">Type de bonus (legacy)</div>
+      <div class="radio-row" style="display:none;gap:12px;align-items:center;margin-bottom:4px">
+        <label><input type="radio" name="bonus-type" id="bonus-type-cap" value="capitaine" checked> Capitaine</label>
+        <label><input type="radio" name="bonus-type" id="bonus-type-mirror" value="miroir"> Miroir</label>
+      </div>
+
       <div class="help" id="bonus-context">—</div>
-      <div class="grid cols-2" style="margin-top:10px">
+      <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
         <div><label>Capitaine (joueur)</label>
           <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
         </div>
@@ -487,13 +547,17 @@ function bonusChip(r,mTeam,rs){
   // Affichage
   if (!roundFinished) {
     // Secret: pilule "Capitaine" + mini image
-    return `<span class="pill blue">Capitaine<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
+    const __lbl = sel.type === 'miroir' ? 'Miroir' : 'Capitaine'; const __img = sel.type === 'miroir' ? 'miroir.jpg' : 'capitaine.jpg'; return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
   } else {
     // Révélé à tout le monde
-    const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
-    const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
     const applied = getBonusAppliedSum(mTeam) || 0;
-    return `<span class="pill blue">Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
+    if (sel.type === 'miroir') {
+      return `<span class="pill blue">Miroir : +${applied}<span class="mini-bonus"><img src="img/miroir.jpg" alt=""></span></span>`;
+    } else {
+      const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
+      const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
+      return `<span class="pill blue">Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
+    }
   }
 }
 
@@ -714,14 +778,38 @@ document.addEventListener("click",async(e)=>{
       const incomplets = matchesOfRound.filter(m => !isMatchComplete(m));
       if (incomplets.length) { alert(`Impossible de terminer la journée #${r} : ${incomplets.length} match(s) incomplet(s).`); return; }
 
+      
       const sels = state.bonusSelections[r] || {};
-      Object.keys(sels).forEach(tid=>{
-        const sel = sels[tid]; if (!sel) return;
-        if (teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); return; }
-        let total = 0;
-        matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
-        setBonusApplied(r, tid, total); markTeamBonusUsed(tid);
+      const results = {}; // tid -> points pour cette journée
+
+      matchesOfRound.forEach(m => {
+        const selA = sels[m.a] || null;
+        const selB = sels[m.b] || null;
+
+        let capA = 0, capB = 0;
+        if (selA && selA.type === 'capitaine') capA = computeCapitaineBonusForMatch(m, m.a, selA.player, selA.sport);
+        if (selB && selB.type === 'capitaine') capB = computeCapitaineBonusForMatch(m, m.b, selB.player, selB.sport);
+
+        let applyA = 0, applyB = 0;
+        const mirrorA = !!(selA && selA.type === 'miroir');
+        const mirrorB = !!(selB && selB.type === 'miroir');
+
+        if (mirrorA && selB && selB.type === 'capitaine') { applyA += capB; capB = 0; }
+        if (mirrorB && selA && selA.type === 'capitaine') { applyB += capA; capA = 0; }
+
+        applyA += capA;
+        applyB += capB;
+
+        results[m.a] = (results[m.a] || 0) + applyA;
+        results[m.b] = (results[m.b] || 0) + applyB;
       });
+
+      Object.keys(sels).forEach(tid => {
+        const pts = results[tid] || 0;
+        if (teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); }
+        else { setBonusApplied(r, tid, pts); markTeamBonusUsed(tid); }
+      });
+
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
       alert(`Journée #${r} terminée. Les bonus sont appliqués et révélés.`); break;
@@ -752,179 +840,73 @@ function openBonusModal(round,teamId){
   const sel=getBonusSelection(round,teamId);
   id('bonus-player').value=sel?.player||'p1';
   id('bonus-sport').value=sel?.sport||'darts';
+  const type=sel?.type||'capitaine';
+  if (typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(type); }
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
   id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
+id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');const type=(window._bonusType==='miroir')?'miroir':'capitaine';
+setBonusSelection(r,t, type==='capitaine' ? {type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value} : {type:'miroir'});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
+
+
+/* Bonus: selectable dotted cards + accordion for parameters */
+window._bonusType = 'capitaine';
+function ensureParamWrapper(){
+  const capFields = id('capitaine-fields');
+  if (!capFields) return null;
+  let wrap = id('cap-params');
+  if (!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'cap-params';
+    wrap.className = 'bonus-params';
+    capFields.parentNode.insertBefore(wrap, capFields);
+    wrap.appendChild(capFields);
+  }
+  return wrap;
+}
+function setParamsOpen(open){
+  const wrap = ensureParamWrapper();
+  if (!wrap) return;
+  wrap.classList.toggle('open', !!open);
+  wrap.style.maxHeight = open ? (wrap.scrollHeight + 'px') : '0px';
+}
+function selectBonusType(t){
+  window._bonusType = (t === 'miroir') ? 'miroir' : 'capitaine';
+  const cards = [...document.querySelectorAll('.bonus-dialog .bonus-card')];
+  const cap = cards[0], mir = cards[1];
+  if (cap){ cap.classList.toggle('selected', window._bonusType === 'capitaine'); cap.setAttribute('aria-pressed', window._bonusType==='capitaine'); }
+  if (mir){ mir.classList.toggle('selected', window._bonusType === 'miroir'); mir.setAttribute('aria-pressed', window._bonusType==='miroir'); }
+  const ctx = id('bonus-context');
+  if (ctx){
+    ctx.textContent = (window._bonusType==='miroir')
+      ? "Miroir : inverse le bonus adverse sur tout le match."
+      : "Capitaine : choisissez le joueur et le sport concernés.";
+  }
+  setParamsOpen(window._bonusType==='capitaine');
+}
+function prepareBonusOptions(){
+  document.querySelectorAll('input[name="bonus-type"]').forEach(i=> i.closest('.radio-row')?.remove());
+  const cards = [...document.querySelectorAll('.bonus-dialog .bonus-card')];
+  cards.forEach((c, idx)=>{
+    c.classList.add('selectable');
+    c.setAttribute('tabindex', '0');
+    c.setAttribute('role', 'button');
+    c.addEventListener('click', ()=> selectBonusType(idx===0?'capitaine':'miroir'));
+    c.addEventListener('keydown', (ev)=>{
+      if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); selectBonusType(idx===0?'capitaine':'miroir'); }
+    });
+  });
+  const cap = cards[0];
+  const wrap = ensureParamWrapper();
+  if (cap && wrap && wrap.previousElementSibling !== cap) {
+    cap.appendChild(wrap);
+  }
+}
 
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{normalize();renderAll();const p=id('js-ok');if(p){p.textContent='JS chargé ✅ · handlers OK';p.style.background='#14532d'}const params=new URLSearchParams(location.search);const idp=params.get("id");if(idp){id("join-code").value=idp;joinCloud(idp)}})
 </script>
-
-<!-- Miroir bonus: safe append -->
-<style>
-  /* visual selection for bonus cards */
-  #bonus-modal .bonus-card.selected{outline:2px solid #7aa2ff; outline-offset:2px; border-radius:12px}
-  #bonus-capitaine-fields[hidden]{display:none}
-</style>
-<script>
-(function(){
-  // Helper to find the container to insert the Mirror card
-  function $1(sel,root){return (root||document).querySelector(sel)}
-  function $$1(sel,root){return Array.from((root||document).querySelectorAll(sel))}
-
-  function ensureMirrorCard(){
-    const modal = $1('#bonus-modal'); if(!modal) return;
-    // Already added?
-    if ($1('#bonus-card-mirror', modal)) return;
-    // Find the first .bonus-card to clone style
-    const firstCard = $1('.bonus-card', modal);
-    if (!firstCard) return;
-    // Try to find a grid container to append into (same level as firstCard)
-    const grid = firstCard.parentElement;
-    const card = document.createElement('div');
-    card.className = 'bonus-card';
-    card.id = 'bonus-card-mirror';
-    card.setAttribute('data-bonus-type','miroir');
-    card.setAttribute('tabindex','0');
-    card.setAttribute('role','button');
-    card.innerHTML = [
-      '<div class="bonus-illu" aria-hidden="true"><img src="img/miroir.jpg" alt="Bonus Miroir"/></div>',
-      '<div class="bonus-text">',
-      '  <div style="font-weight:700">Miroir</div>',
-      '  <div class="help">Inverse le bonus de l’adversaire : s’il choisit <b>Capitaine</b>, il s’applique à votre équipe (sur toute la rencontre).</div>',
-      '</div>'
-    ].join('');
-    grid.appendChild(card);
-  }
-
-  // Current chosen type in modal
-  let bonusType = 'capitaine';
-  function setBonusType(t){
-    bonusType = (t==='miroir')?'miroir':'capitaine';
-    // highlight cards
-    const modal = $1('#bonus-modal'); if(!modal) return;
-    $$1('.bonus-card[data-bonus-type]', modal).forEach(c=>{
-      const is = c.getAttribute('data-bonus-type')===bonusType;
-      c.classList.toggle('selected', is);
-      c.setAttribute('aria-pressed', is?'true':'false');
-    });
-    // show/hide capitaine fields
-    const fields = $1('#bonus-capitaine-fields') || $1('#bonus-player')?.closest('.grid');
-    if(fields){ if(bonusType==='capitaine'){ fields.removeAttribute('hidden'); } else { fields.setAttribute('hidden',''); } }
-    // title context
-    const hd = $1('#bonus-modal .hd'); if(hd){ hd.textContent = 'Choisir un bonus — ' + (bonusType==='miroir'?'Miroir':'Capitaine'); }
-  }
-
-  // Wrap openBonusModal to initialize our UI
-  if (typeof window.openBonusModal === 'function'){
-    const _open = window.openBonusModal;
-    window.openBonusModal = function(round, teamId){
-      // call original to build base UI
-      _open.call(this, round, teamId);
-      // then augment
-      try{
-        ensureMirrorCard();
-        const sel = (typeof getBonusSelection==='function') ? getBonusSelection(round, teamId) : null;
-        setBonusType(sel && sel.type ? sel.type : 'capitaine');
-        // click handlers on cards (use delegation)
-        const modal = $1('#bonus-modal');
-        if(modal && !modal.__mirrorBound){
-          modal.__mirrorBound = true;
-          modal.addEventListener('click', function(ev){
-            const card = ev.target.closest('.bonus-card[data-bonus-type]');
-            if(card){ setBonusType(card.getAttribute('data-bonus-type')); }
-          });
-        }
-      }catch(e){ console.warn('Mirror augment failed', e); }
-    };
-  }
-
-  // Intercept "Valider" to save according to selected type
-  document.addEventListener('click', function(ev){
-    const btn = ev.target.closest('#bonus-save');
-    if(!btn) return;
-    // run in capture? This is bubble; stop others to avoid double save
-    ev.stopImmediatePropagation();
-    ev.preventDefault();
-    try{
-      const r = window.bonusCTX && window.bonusCTX.round;
-      const t = window.bonusCTX && window.bonusCTX.teamId;
-      if(!r || !t){ $1('#bonus-modal')?.classList.remove('show'); return; }
-      if (bonusType === 'miroir'){
-        setBonusSelection(r, t, {type:'miroir'});
-      } else {
-        setBonusSelection(r, t, {type:'capitaine', player: $1('#bonus-player').value, sport: $1('#bonus-sport').value});
-      }
-      if (typeof saveState==='function') saveState();
-      $1('#bonus-modal')?.classList.remove('show');
-      if (typeof renderMatches==='function') renderMatches();
-    }catch(e){ console.error('Save bonus failed', e); }
-  }, true); // capture to pre-empt existing handler
-
-  // Intercept End-of-round click to apply Mirror effect before original code
-  document.addEventListener('click', function(ev){
-    const btn = ev.target.closest('#btn-end-round');
-    if(!btn) return;
-    ev.stopImmediatePropagation();
-    ev.preventDefault();
-    try{
-      const r = window.CURRENT_ROUND;
-      const rs = (typeof roundState==='function') ? roundState(r) : null;
-      if(!rs || !rs.started || rs.finished) return;
-      const matchesOfRound = (state.matches||[]).filter(m => m.round===r);
-      // ensure all matches complete
-      const incomplets = matchesOfRound.filter(m => !(typeof isMatchComplete==='function') || !isMatchComplete(m));
-      if(incomplets.length){ alert(`Impossible de terminer la journée #${r} : ${incomplets.length} match(s) incomplet(s).`); return; }
-
-      const sels = (state.bonusSelections && state.bonusSelections[r]) || {};
-      const eff = {}; // effective capitaine for each team id
-
-      // Build effective mapping per match
-      matchesOfRound.forEach(m=>{
-        const a = m.a, b = m.b;
-        const sa = sels[a] || null;
-        const sb = sels[b] || null;
-        const aCap = (sa && sa.type==='capitaine') ? sa : null;
-        const bCap = (sb && sb.type==='capitaine') ? sb : null;
-        const aMir = (sa && sa.type==='miroir');
-        const bMir = (sb && sb.type==='miroir');
-
-        // Start with own
-        eff[a] = aCap || null;
-        eff[b] = bCap || null;
-
-        // Apply mirror inversions
-        if (aMir && bCap){ eff[a] = bCap; eff[b] = null; }
-        if (bMir && aCap){ eff[b] = aCap; eff[a] = null; }
-      });
-
-      // Apply totals
-      Object.keys(sels).forEach(tid=>{
-        if (typeof teamBonusUsed==='function' && teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); return; }
-        let total = 0;
-        if (eff[tid]){
-          matchesOfRound.forEach(m=>{
-            if (m.a===tid || m.b===tid){
-              total += computeCapitaineBonusForMatch(m, tid, eff[tid].player, eff[tid].sport);
-            }
-          });
-        }
-        setBonusApplied(r, tid, total);
-        if (typeof markTeamBonusUsed==='function') markTeamBonusUsed(tid);
-      });
-
-      rs.finished = true;
-      if (typeof saveState==='function') saveState();
-      if (typeof renderMatches==='function') renderMatches();
-      if (typeof renderLeaderboard==='function') renderLeaderboard();
-      alert(`Journée #${r} terminée. Les bonus sont appliqués et révélés.`);
-    }catch(e){ console.error('End-round mirror failed', e); }
-  }, true); // capture to run before original handler
-})();
-</script>
-
 </body>
 </html>
