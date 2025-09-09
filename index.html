@@ -487,23 +487,21 @@ function setRoundStatusPillClasses(pill,rs){
   else if(rs.started) pill.classList.add('yellow');
   else pill.classList.add('red');
 }
+
 function bonusChip(r,mTeam,rs){
-  const sel = getBonusSelection(r,mTeam);
+  const sel = getBonusSelection(r, mTeam);
   const iAmTeam = hasClaim(mTeam);
   const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && iAmTeam && !sel);
   if (canChoose) {
-    // Bouton pour ouvrir la modale de sélection du bonus
-    return `<span class="pill outline" data-bonus data-team="${mTeam}" title="Choisir un bonus">🎖 Bonus</span>`;
+    return `<button type="button" class="pill outline" data-bonus data-round="${r}" data-team="${mTeam}">🎖 Bonus</button>`;
   }
-  // Pilule visible uniquement pour l'équipe propriétaire AVANT fin de journée (ou tout le monde après)
-  const canSee = (rs.finished || iAmTeam);
   if (!sel) return '';
+  const canSee = (rs.finished || iAmTeam);
   if (!canSee) return '';
-  // Affichage simple existant (Capitaine / +appliqué)
   const who = sel.player==='p1' ? 'J1' : 'J2';
   const what = sel.sport==='darts' ? 'Fléchettes' : (sel.sport==='ping' ? 'Ping' : 'Palet');
-  const total = getBonusAppliedSum(mTeam) || 0;
-  return `<span class="pill blue">Capitaine ${who} / ${what}${rs.finished?` : +${total}`:''}</span>`;
+  const applied = (typeof getBonusAppliedSum==='function') ? (getBonusAppliedSum(mTeam)||0) : 0;
+  return `<span class="pill blue">Capitaine ${who} / ${what}${rs.finished?` : +${applied}`:''}</span>`;
 }
 
 function renderMatches(){
@@ -751,24 +749,45 @@ document.addEventListener("click",async(e)=>{
 
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
-function openBonusModal(round,teamId){
-  const rCtl=roundState(round);
-  if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
-  if(teamBonusUsed(teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
-  if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
-  bonusCTX.round=round;bonusCTX.teamId=teamId;
-  const sel=getBonusSelection(round,teamId);
-  id('bonus-player').value=sel?.player||'p1';
-  id('bonus-sport').value=sel?.sport||'darts';
-  id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
+
+function openBonusModal(round, teamId){
+  const rs = roundState(round);
+  if (rs.started) { alert("La journée a démarré : bonus verrouillés."); return; }
+  if (teamBonusUsed(teamId)) { alert("Ce bonus a déjà été utilisé une fois."); return; }
+  if (!hasClaim(teamId)) { alert("Connectez-vous à cette équipe pour choisir son bonus."); return; }
+  bonusCTX.round = round; bonusCTX.teamId = teamId;
+  const sel = getBonusSelection(round, teamId) || {};
+  id('bonus-player').value = sel.player || 'p1';
+  id('bonus-sport').value  = sel.sport  || 'darts';
+  id('bonus-context').textContent = `Équipe : ${teamName(teamId)} — Journée #${round}`;
+  id('bonus-modal').classList.add('show');
+}
+ — Journée #${round}`;
   id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
+
+id('bonus-save').addEventListener('click', ()=>{
+  const r = bonusCTX.round, t = bonusCTX.teamId;
+  if(!r || !t){ id('bonus-modal').classList.remove('show'); return; }
+  setBonusSelection(r, t, { type: 'capitaine', player: id('bonus-player').value, sport: id('bonus-sport').value });
+  saveState(); id('bonus-modal').classList.remove('show'); renderMatches();
+});
+setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
 
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{normalize();renderAll();const p=id('js-ok');if(p){p.textContent='JS chargé ✅ · handlers OK';p.style.background='#14532d'}const params=new URLSearchParams(location.search);const idp=params.get("id");if(idp){id("join-code").value=idp;joinCloud(idp)}})
+
+// Open bonus modal when clicking the "🎖 Bonus" pill
+function bonusClickHandler(e){
+  const btn = e.target.closest('[data-bonus]');
+  if(!btn) return;
+  const r = parseInt(btn.getAttribute('data-round'),10);
+  const t = btn.getAttribute('data-team');
+  if (!isNaN(r) && t) openBonusModal(r, t);
+}
+document.addEventListener('click', bonusClickHandler);
 </script>
 </body>
 </html>
