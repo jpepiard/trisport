@@ -763,166 +763,107 @@ function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageL
 document.addEventListener("DOMContentLoaded",()=>{normalize();renderAll();const p=id('js-ok');if(p){p.textContent='JS chargé ✅ · handlers OK';p.style.background='#14532d'}const params=new URLSearchParams(location.search);const idp=params.get("id");if(idp){id("join-code").value=idp;joinCloud(idp)}})
 </script>
 
-<!-- Miroir bonus: safe append -->
+<!-- Patch: bonus selection UX (hide params until selection) -->
 <style>
-  /* visual selection for bonus cards */
-  #bonus-modal .bonus-card.selected{outline:2px solid #7aa2ff; outline-offset:2px; border-radius:12px}
   #bonus-capitaine-fields[hidden]{display:none}
+  #bonus-modal .bonus-card.selected{outline:2px solid #7aa2ff; outline-offset:2px; border-radius:12px}
 </style>
 <script>
 (function(){
-  // Helper to find the container to insert the Mirror card
-  function $1(sel,root){return (root||document).querySelector(sel)}
-  function $$1(sel,root){return Array.from((root||document).querySelectorAll(sel))}
+  function $(s,root){return (root||document).querySelector(s)}
+  function $all(s,root){return Array.from((root||document).querySelectorAll(s))}
 
+  // Ensure Mirror card exists in the modal
   function ensureMirrorCard(){
-    const modal = $1('#bonus-modal'); if(!modal) return;
-    // Already added?
-    if ($1('#bonus-card-mirror', modal)) return;
-    // Find the first .bonus-card to clone style
-    const firstCard = $1('.bonus-card', modal);
-    if (!firstCard) return;
-    // Try to find a grid container to append into (same level as firstCard)
-    const grid = firstCard.parentElement;
+    const modal = $('#bonus-modal'); if(!modal) return;
+    if ($('#bonus-card-mirror', modal)) return;
+    const firstCard = $('.bonus-card', modal); if(!firstCard) return;
+    const grid = firstCard.parentElement || $('.bd', modal);
     const card = document.createElement('div');
     card.className = 'bonus-card';
     card.id = 'bonus-card-mirror';
     card.setAttribute('data-bonus-type','miroir');
-    card.setAttribute('tabindex','0');
-    card.setAttribute('role','button');
+    card.setAttribute('tabindex','0'); card.setAttribute('role','button');
     card.innerHTML = [
-      '<div class="bonus-illu" aria-hidden="true"><img src="img/Miroir.jpg" alt="Bonus Miroir"/></div>',
-      '<div class="bonus-text">',
-      '  <div style="font-weight:700">Miroir</div>',
-      '  <div class="help">Inverse le bonus de l’adversaire : s’il choisit <b>Capitaine</b>, il s’applique à votre équipe (sur toute la rencontre).</div>',
-      '</div>'
+      '<div class="bonus-illu" aria-hidden="true"><img src="img/miroir.jpg" alt="Bonus Miroir"/></div>',
+      '<div class="bonus-text"><div style="font-weight:700">Miroir</div>',
+      '<div class="help">Inverse le bonus de l’adversaire : s’il choisit <b>Capitaine</b>, il s’applique à votre équipe (sur toute la rencontre).</div></div>'
     ].join('');
     grid.appendChild(card);
   }
 
-  // Current chosen type in modal
-  let bonusType = 'capitaine';
+  let __type = null; // null = rien sélectionné
   function setBonusType(t){
-    bonusType = (t==='miroir')?'miroir':'capitaine';
-    // highlight cards
-    const modal = $1('#bonus-modal'); if(!modal) return;
-    $$1('.bonus-card[data-bonus-type]', modal).forEach(c=>{
-      const is = c.getAttribute('data-bonus-type')===bonusType;
+    __type = (t==='capitaine'||t==='miroir')?t:null;
+    const modal = $('#bonus-modal'); if(!modal) return;
+    // highlight
+    $all('.bonus-card[data-bonus-type]', modal).forEach(c=>{
+      const is = (c.getAttribute('data-bonus-type')===__type);
       c.classList.toggle('selected', is);
       c.setAttribute('aria-pressed', is?'true':'false');
     });
-    // show/hide capitaine fields
-    const fields = $1('#bonus-capitaine-fields') || $1('#bonus-player')?.closest('.grid');
-    if(fields){ if(bonusType==='capitaine'){ fields.removeAttribute('hidden'); } else { fields.setAttribute('hidden',''); } }
-    // title context
-    const hd = $1('#bonus-modal .hd'); if(hd){ hd.textContent = 'Choisir un bonus — ' + (bonusType==='miroir'?'Miroir':'Capitaine'); }
+    // hide/show params
+    const fields = $('#bonus-capitaine-fields') || $('#bonus-player')?.closest('.grid');
+    if(fields){ fields.toggleAttribute('hidden', __type!=='capitaine'); }
+    // title
+    const hd = $('#bonus-modal .hd');
+    if(hd){ hd.textContent = 'Choisir un bonus' + (__type?(' — ' + (__type==='miroir'?'Miroir':'Capitaine')):''); }
+    // save button enabled only when a type is chosen
+    const saveBtn = $('#bonus-save'); if(saveBtn){ saveBtn.disabled = !__type; }
   }
 
-  // Wrap openBonusModal to initialize our UI
+  function removeOnceLine(){
+    $all('#bonus-modal .help').forEach(h=>{
+      if(/Utilisable\s+une\s+seule\s+fois/i.test(h.textContent)) h.remove();
+    });
+  }
+
+  // Wrap openBonusModal
   if (typeof window.openBonusModal === 'function'){
     const _open = window.openBonusModal;
     window.openBonusModal = function(round, teamId){
-      // call original to build base UI
       _open.call(this, round, teamId);
-      // then augment
       try{
         ensureMirrorCard();
+        removeOnceLine();
+        // default: nothing selected if no previous choice
         const sel = (typeof getBonusSelection==='function') ? getBonusSelection(round, teamId) : null;
-        setBonusType(sel && sel.type ? sel.type : 'capitaine');
-        // click handlers on cards (use delegation)
-        const modal = $1('#bonus-modal');
-        if(modal && !modal.__mirrorBound){
-          modal.__mirrorBound = true;
-          modal.addEventListener('click', function(ev){
+        setBonusType(sel && sel.type ? sel.type : null);
+        // delegate clicks on cards
+        const modal = $('#bonus-modal');
+        if(modal && !modal.__bonusPickBound){
+          modal.__bonusPickBound = true;
+          modal.addEventListener('click', ev=>{
             const card = ev.target.closest('.bonus-card[data-bonus-type]');
-            if(card){ setBonusType(card.getAttribute('data-bonus-type')); }
+            if(card) setBonusType(card.getAttribute('data-bonus-type'));
           });
         }
-      }catch(e){ console.warn('Mirror augment failed', e); }
-    };
+      }catch(e){ console.warn('bonus modal patch failed', e); }
+    }
   }
 
-  // Intercept "Valider" to save according to selected type
+  // Intercept Save (capture) to store selection according to __type
   document.addEventListener('click', function(ev){
     const btn = ev.target.closest('#bonus-save');
     if(!btn) return;
-    // run in capture? This is bubble; stop others to avoid double save
-    ev.stopImmediatePropagation();
-    ev.preventDefault();
+    if(btn.disabled){ ev.preventDefault(); ev.stopImmediatePropagation(); return; }
+    ev.stopImmediatePropagation(); ev.preventDefault();
     try{
       const r = window.bonusCTX && window.bonusCTX.round;
       const t = window.bonusCTX && window.bonusCTX.teamId;
-      if(!r || !t){ $1('#bonus-modal')?.classList.remove('show'); return; }
-      if (bonusType === 'miroir'){
+      if(!r || !t){ $('#bonus-modal')?.classList.remove('show'); return; }
+      if (__type === 'miroir'){
         setBonusSelection(r, t, {type:'miroir'});
+      } else if (__type === 'capitaine'){
+        setBonusSelection(r, t, {type:'capitaine', player: $('#bonus-player').value, sport: $('#bonus-sport').value});
       } else {
-        setBonusSelection(r, t, {type:'capitaine', player: $1('#bonus-player').value, sport: $1('#bonus-sport').value});
+        return;
       }
       if (typeof saveState==='function') saveState();
-      $1('#bonus-modal')?.classList.remove('show');
+      $('#bonus-modal')?.classList.remove('show');
       if (typeof renderMatches==='function') renderMatches();
-    }catch(e){ console.error('Save bonus failed', e); }
-  }, true); // capture to pre-empt existing handler
-
-  // Intercept End-of-round click to apply Mirror effect before original code
-  document.addEventListener('click', function(ev){
-    const btn = ev.target.closest('#btn-end-round');
-    if(!btn) return;
-    ev.stopImmediatePropagation();
-    ev.preventDefault();
-    try{
-      const r = window.CURRENT_ROUND;
-      const rs = (typeof roundState==='function') ? roundState(r) : null;
-      if(!rs || !rs.started || rs.finished) return;
-      const matchesOfRound = (state.matches||[]).filter(m => m.round===r);
-      // ensure all matches complete
-      const incomplets = matchesOfRound.filter(m => !(typeof isMatchComplete==='function') || !isMatchComplete(m));
-      if(incomplets.length){ alert(`Impossible de terminer la journée #${r} : ${incomplets.length} match(s) incomplet(s).`); return; }
-
-      const sels = (state.bonusSelections && state.bonusSelections[r]) || {};
-      const eff = {}; // effective capitaine for each team id
-
-      // Build effective mapping per match
-      matchesOfRound.forEach(m=>{
-        const a = m.a, b = m.b;
-        const sa = sels[a] || null;
-        const sb = sels[b] || null;
-        const aCap = (sa && sa.type==='capitaine') ? sa : null;
-        const bCap = (sb && sb.type==='capitaine') ? sb : null;
-        const aMir = (sa && sa.type==='miroir');
-        const bMir = (sb && sb.type==='miroir');
-
-        // Start with own
-        eff[a] = aCap || null;
-        eff[b] = bCap || null;
-
-        // Apply mirror inversions
-        if (aMir && bCap){ eff[a] = bCap; eff[b] = null; }
-        if (bMir && aCap){ eff[b] = aCap; eff[a] = null; }
-      });
-
-      // Apply totals
-      Object.keys(sels).forEach(tid=>{
-        if (typeof teamBonusUsed==='function' && teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); return; }
-        let total = 0;
-        if (eff[tid]){
-          matchesOfRound.forEach(m=>{
-            if (m.a===tid || m.b===tid){
-              total += computeCapitaineBonusForMatch(m, tid, eff[tid].player, eff[tid].sport);
-            }
-          });
-        }
-        setBonusApplied(r, tid, total);
-        if (typeof markTeamBonusUsed==='function') markTeamBonusUsed(tid);
-      });
-
-      rs.finished = true;
-      if (typeof saveState==='function') saveState();
-      if (typeof renderMatches==='function') renderMatches();
-      if (typeof renderLeaderboard==='function') renderLeaderboard();
-      alert(`Journée #${r} terminée. Les bonus sont appliqués et révélés.`);
-    }catch(e){ console.error('End-round mirror failed', e); }
-  }, true); // capture to run before original handler
+    }catch(e){ console.error(e); }
+  }, true);
 })();
 </script>
 
