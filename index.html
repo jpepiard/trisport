@@ -142,6 +142,12 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 #cap-params, #taupe-params{ grid-column: 1 / -1; }
 </style>
 
+
+<style>
+.bonus-select{ display:flex; flex-direction:column; gap:18px; }
+.bonus-select > .bonus-sep{ height:0; border-top:1px dashed var(--border); opacity:.7; margin:0; }
+</style>
+
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -338,7 +344,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
   <div class="bonus-dialog">
     <div class="hd">Choisir un bonus</div>
     <div class="bd">
-      
+      <div class="bonus-select">
 <div class="bonus-card">
         <div class="bonus-illu" aria-hidden="true">
           <img src="img/capitaine.jpg" alt="Bonus Capitaine"/></div>
@@ -346,7 +352,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
           <div style="font-weight:700">Capitaine</div>
           <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
         </div>
-      <div class="bonus-sep"></div>
+        <div class="bonus-sep"></div>
 <div class="bonus-card">
         <div class="bonus-illu" aria-hidden="true">
           <img src="img/miroir.jpg" alt="Bonus Miroir"/></div>
@@ -354,8 +360,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
           <div style="font-weight:700">Miroir</div>
           <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex&nbsp;: si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
         </div>
-      </div>
-      <div class="bonus-sep"></div>
+        <div class="bonus-sep"></div>
 <div class="bonus-card">
         <div class="bonus-illu" aria-hidden="true">
           <img src="img/taupe.png" alt="Bonus René la taupe"/></div>
@@ -884,7 +889,7 @@ function setParamsOpen(openCap, openTaupe){
 }
 function selectBonusType(t){
   window._bonusType = (t==='miroir'||t==='taupe') ? t : 'capitaine';
-  const cards = [...document.querySelectorAll('.bonus-dialog .bonus-card')];
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')] || [...document.querySelectorAll('.bonus-dialog .bonus-card')];
   const cap = cards[0], mir = cards[1], tau = cards[2];
   if (cap){ cap.classList.toggle('selected', window._bonusType==='capitaine'); cap.setAttribute('aria-pressed', window._bonusType==='capitaine'); }
   if (mir){ mir.classList.toggle('selected', window._bonusType==='miroir'); mir.setAttribute('aria-pressed', window._bonusType==='miroir'); }
@@ -900,7 +905,7 @@ function selectBonusType(t){
   setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe');
 }
 function prepareBonusOptions(){
-  const cards = [...document.querySelectorAll('.bonus-dialog .bonus-card')];
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')] || [...document.querySelectorAll('.bonus-dialog .bonus-card')];
   cards.forEach((c, idx)=>{
     c.classList.add('selectable');
     c.setAttribute('tabindex','0');
