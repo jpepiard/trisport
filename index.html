@@ -102,6 +102,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .bonus-illu img{width:100%;height:100%;object-fit:cover;border-radius:12px}
 .pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
 .pill .mini-bonus img{width:100%;height:100%;object-fit:cover}
+.sport-title .sport-icon{width:18px;height:18px;display:grid;place-items:center;font-size:16px;line-height:1}
 </style>
 
 <!-- Firebase compat -->
@@ -306,27 +307,21 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
   <div class="bonus-dialog">
     <div class="hd">Choisir un bonus</div>
     <div class="bd">
-      <div class="bonus-card">
-        <div class="bonus-illu" aria-hidden="true">
-          <img src="img/capitaine.jpg" alt="Bonus Capitaine"/></div>
-        <div class="bonus-text">
-          <div style="font-weight:700">Capitaine</div>
-          <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
-        </div>
-      </div>
-
+      \1
       <div class="bonus-card" id="bonus-card-mirror" data-type="mirror">
         <div class="bonus-illu" aria-hidden="true">
           <img src="img/miroir.mpg" alt="Bonus Miroir" onerror="this.onerror=null;this.src='img/miroir.jpg';"/>
         </div>
         <div class="bonus-text">
           <div style="font-weight:700">Miroir</div>
-          <div class="help">Inverse le bonus de l’adversaire : si l’adversaire a choisi <b>Capitaine</b>, il s’applique à votre équipe.</div>
+          <div class="help">Inverse le bonus de l’adversaire : si l’adversaire choisit <b>Capitaine</b>, il s’applique à votre équipe.</div>
         </div>
+      </div>
+    
       </div>
 
       <div class="help" id="bonus-context">—</div>
-      <div class="grid cols-2" style="margin-top:10px" id="bonus-form-capitaine">
+      <div class="grid cols-2" style="margin-top:10px">
         <div><label>Capitaine (joueur)</label>
           <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
         </div>
@@ -416,22 +411,18 @@ function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finis
 function setBonusSelection(r,tid,sel){state.bonusSelections[r]=state.bonusSelections[r]||{};state.bonusSelections[r][tid]=sel}
 function getBonusSelection(r,tid){return(state.bonusSelections[r]||{})[tid]||null}
 function findOpponentInRound(r, tid){
-  const m = state.matches.find(mm => mm.round===r && (mm.a===tid || mm.b===tid));
+  const m = state.matches.find(mm=>mm.round===r && (mm.a===tid || mm.b===tid));
   if(!m) return null; return (m.a===tid ? m.b : m.a);
 }
-// Resolve the effective bonus for a given team in a round,
-// taking into account the Mirror effect.
 function resolveEffectiveBonus(r, tid){
   const sels = state.bonusSelections[r] || {};
   const sel = sels[tid]; if(!sel) return null;
   const opp = findOpponentInRound(r, tid);
   const oppSel = opp ? sels[opp] : null;
-  // If I chose Capitaine and opponent chose Mirror, mine is neutralized.
   if(sel.type==='capitaine'){
-    if(oppSel && oppSel.type==='mirror') return null;
+    if(oppSel && oppSel.type==='mirror') return null; // neutralisé par miroir adverse
     return sel;
   }
-  // If I chose Mirror: I get opponent's Capitaine if any.
   if(sel.type==='mirror'){
     if(oppSel && oppSel.type==='capitaine'){
       return {type:'capitaine', player: oppSel.player, sport: oppSel.sport, mirrored:true, from:opp};
@@ -440,6 +431,7 @@ function resolveEffectiveBonus(r, tid){
   }
   return sel;
 }
+
 function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{};state.bonusApplied[r][tid]=pts}
 function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){const v=state.bonusApplied[r]?.[tid];if(v)s+=v}return s}
 function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
@@ -506,30 +498,19 @@ function bonusChip(r,mTeam,rs){
   const sel = getBonusSelection(r, mTeam);
   const iAmTeam = hasClaim(mTeam);
   const roundFinished = !!rs.finished;
-
-  // Admin : ne voit rien avant la fin de journée
   if (isAdmin() && !roundFinished) return '';
-
-  // Si rien choisi
-  if (!sel) return '';
-
-  // Avant la fin : seule l'équipe concernée voit sa pilule
+  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && iAmTeam);
+  if (!sel) return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
   if (!roundFinished && !iAmTeam) return '';
-
-  // Avant fin: rendu dépend du type choisi
   if (!roundFinished) {
     if (sel.type === 'mirror') {
       return `<span class="pill blue">Miroir<span class="mini-bonus"><img src="img/miroir.mpg" alt="" onerror="this.onerror=null;this.src='img/miroir.jpg';"></span></span>`;
     }
-    // Capitaine
     return `<span class="pill blue">Capitaine<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
   }
-
-  // Après fin: révéler le détail de l'effet effectif
   const eff = resolveEffectiveBonus(r, mTeam);
   const applied = (state.bonusApplied[r]||{})[mTeam] || 0;
   if (!eff || eff.type!=='capitaine') {
-    // Aucun effet (ex: miroir sans bonus adverse)
     return `<span class="pill blue">Miroir (sans effet)</span>`;
   } else {
     const labelPlayer = eff.player === 'p1' ? 'J1' : 'J2';
@@ -540,7 +521,6 @@ function bonusChip(r,mTeam,rs){
     return `<span class="pill blue">Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
   }
 }
-
 
 function renderMatches(){
   const list=id("match-list");list.innerHTML="";
@@ -766,7 +746,8 @@ Object.keys(sels).forEach(tid=>{
   if (eff && eff.type === 'capitaine') {
     matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, eff.player, eff.sport); });
   }
-  setBonusApplied(r, tid, total); markTeamBonusUsed(tid);
+  setBonusApplied(r, tid, total);
+  markTeamBonusUsed(tid);
 });
 
 
@@ -795,27 +776,15 @@ function openBonusModal(round,teamId){
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
   if(teamBonusUsed(teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
-  bonusCTX.round=round;bonusCTX.teamId=teamId;bonusCTX.type=(getBonusSelection(round,teamId)?.type||'capitaine');
+  bonusCTX.round=round;bonusCTX.teamId=teamId;const sel=getBonusSelection(round,teamId);bonusCTX.type=(sel?.type||'capitaine');
   const sel=getBonusSelection(round,teamId);
   id('bonus-player').value=sel?.player||'p1';
   id('bonus-sport').value=sel?.sport||'darts';
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
   id('bonus-modal').classList.add('show');
-  selectBonusType(bonusCTX.type);
+  if(typeof selectBonusType==='function'){ selectBonusType(bonusCTX.type); }
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-function selectBonusType(t){
-  bonusCTX.type = t;
-  const isCap = (t==='capitaine');
-  const cards = Array.from(document.querySelectorAll('#bonus-modal .bonus-card'));
-  cards.forEach(c=>c.classList.toggle('on', c.getAttribute('data-type')===t || (!c.getAttribute('data-type') && t==='capitaine')));
-  const form = id('bonus-form-capitaine'); if(form) form.style.display = isCap ? '' : 'none';
-}
-// enable clicks on cards
-document.querySelector('#bonus-modal .bonus-card')?.setAttribute('data-type','capitaine');
-document.querySelector('#bonus-card-mirror')?.addEventListener('click',()=>selectBonusType('mirror'));
-document.querySelector('#bonus-modal .bonus-card')?.addEventListener('click',()=>selectBonusType('capitaine'));
-
 id('bonus-save').addEventListener('click',()=>{
   const r = bonusCTX.round, t = bonusCTX.teamId;
   if(!r || !t){ id('bonus-modal').classList.remove('show'); return; }
@@ -825,7 +794,8 @@ id('bonus-save').addEventListener('click',()=>{
     setBonusSelection(r, t, {type:'capitaine', player: id('bonus-player').value, sport: id('bonus-sport').value});
   }
   saveState(); id('bonus-modal').classList.remove('show'); renderMatches();
-});
+});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
+
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{normalize();renderAll();const p=id('js-ok');if(p){p.textContent='JS chargé ✅ · handlers OK';p.style.background='#14532d'}const params=new URLSearchParams(location.search);const idp=params.get("id");if(idp){id("join-code").value=idp;joinCloud(idp)}})
