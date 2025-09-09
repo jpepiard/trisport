@@ -112,12 +112,18 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </script>
 
 <style>
+/* Selectable bonus cards */
 .bonus-dialog .bonus-card{
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  column-gap: 12px;
+  align-items: start;
   border:2px dashed var(--border);
   border-radius:12px;
   padding:12px;
   cursor:pointer;
   transition:background .2s ease, border-color .2s ease, box-shadow .2s ease;
+  margin: 10px 0;
 }
 .bonus-dialog .bonus-card.selected{
   border-color: var(--accent, #4a90e2);
@@ -125,33 +131,15 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
   box-shadow: 0 0 0 3px rgba(0,0,0,0.06) inset;
 }
 .bonus-dialog .bonus-card .bonus-illu img{ width:56px; height:56px; object-fit:cover; border-radius:10px; }
-.bonus-params{ max-height:0; overflow:hidden; transition:max-height .25s ease; }
+.bonus-select{ display:block; }
+.bonus-sep{ height:0; border-top:1px dashed var(--border); opacity:.7; margin:12px 0; }
+
+/* Accordion for parameters */
+.bonus-params{ max-height:0; overflow:hidden; transition:max-height .25s ease; grid-column: 1 / -1; margin-top: 8px; }
 .bonus-params.open{ max-height: 420px; }
-.bonus-select{ display:grid; grid-template-columns: 1fr; gap:20px; }
-@media (min-width:700px){ .bonus-select{ grid-template-columns: 1fr 1fr; } }
-.bonus-sep{ height:0; border-top:1px dashed var(--border); opacity:.7; margin: 8px 0; grid-column:1/-1; }
-</style>
 
-
-<style>
-/* Place bonus params under the card content */
-.bonus-dialog .bonus-card{ flex-wrap: wrap; align-items: flex-start; }
-.bonus-dialog .bonus-card .bonus-text{ flex: 1 1 auto; min-width: 260px; }
-.bonus-dialog .bonus-card .bonus-params{ flex: 1 0 100%; margin-top: 8px; }
-</style>
-
-
-<style>
-/* Bonus card layout: image left, text right, params below */
-.bonus-dialog .bonus-card{
-  display: grid;
-  grid-template-columns: 64px 1fr;
-  column-gap: 12px;
-  align-items: start;
-}
-.bonus-dialog .bonus-card .bonus-illu{ grid-column: 1; }
-.bonus-dialog .bonus-card .bonus-text{ grid-column: 2; }
-.bonus-dialog .bonus-card .bonus-params{ grid-column: 1 / -1; margin-top: 8px; }
+/* Ensure Capitaine/Taupe parameter blocks span full width under their card */
+#cap-params, #taupe-params{ grid-column: 1 / -1; }
 </style>
 
 </head>
@@ -357,10 +345,8 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
           <div style="font-weight:700">Capitaine</div>
           <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
         </div>
-      </div>
-
-      <div class="bonus-sep"></div>
-<div class="bonus-card">
+      
+      <div class="bonus-card">
         <div class="bonus-illu" aria-hidden="true">
           <img src="img/miroir.jpg" alt="Bonus Miroir"/></div>
         <div class="bonus-text">
@@ -369,11 +355,15 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
         </div>
       </div>
 
-      <div class="help" style="margin-top:6px;display:none">Type de bonus (legacy)</div>
-      <div class="radio-row" style="display:none;gap:12px;align-items:center;margin-bottom:4px">
-        <label><input type="radio" name="bonus-type" id="bonus-type-cap" value="capitaine" checked> Capitaine</label>
-        <label><input type="radio" name="bonus-type" id="bonus-type-mirror" value="miroir"> Miroir</label>
+      <div class="bonus-card">
+        <div class="bonus-illu" aria-hidden="true">
+          <img src="img/taupe.png" alt="Bonus René la taupe"/></div>
+        <div class="bonus-text">
+          <div style="font-weight:700">René la taupe</div>
+          <div class="help">Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br/>Si l’adversaire joue <b>Miroir</b>, <i>vous</i> portez les lunettes.</div>
+        </div>
       </div>
+</div>
 
       <div class="help" id="bonus-context">—</div>
       <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
@@ -386,6 +376,12 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
       </div>
       <div class="help" style="margin-top:8px">Utilisable <b>une seule fois</b> par équipe sur tout le tournoi.</div>
     </div>
+      <div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
+        <div><label>Sport</label>
+          <select id="taupe-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
+        </div>
+      </div>
+
     <div class="ft">
       <button type="button" class="btn" id="bonus-cancel">Annuler</button>
       <button type="button" class="btn primary" id="bonus-save">Valider</button>
@@ -547,12 +543,19 @@ function bonusChip(r,mTeam,rs){
   // Affichage
   if (!roundFinished) {
     // Secret: pilule "Capitaine" + mini image
-    const __lbl = sel.type === 'miroir' ? 'Miroir' : 'Capitaine'; const __img = sel.type === 'miroir' ? 'miroir.jpg' : 'capitaine.jpg'; return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
+    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':'Capitaine'); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':'capitaine.jpg'); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
   } else {
     // Révélé à tout le monde
     const applied = getBonusAppliedSum(mTeam) || 0;
     if (sel.type === 'miroir') {
       return `<span class="pill blue">Miroir : +${applied}<span class="mini-bonus"><img src="img/miroir.jpg" alt=""></span></span>`;
+    } else if (sel.type === 'taupe') {
+      // Qui porte les lunettes ? (inversion si Miroir en face)
+      const sch = state.schedule[r]||[]; let opp=null; for(const m of sch){ if(m.a===mTeam){ opp=m.b; break;} if(m.b===mTeam){ opp=m.a; break;} }
+      const oppSel = opp? getBonusSelection(r, opp): null;
+      const mirrored = !!(oppSel && oppSel.type==='miroir');
+      const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
+      return `<span class="pill blue">René la taupe / ${labelSport} : ${mirrored?'vous portez les lunettes':'l’adversaire porte les lunettes'}<span class="mini-bonus"><img src="img/taupe.png" alt=""></span></span>`;
     } else {
       const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
       const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
@@ -780,7 +783,7 @@ document.addEventListener("click",async(e)=>{
 
       
       const sels = state.bonusSelections[r] || {};
-      const results = {}; // tid -> points pour cette journée
+      const results = {}; // tid -> points de bonus
 
       matchesOfRound.forEach(m => {
         const selA = sels[m.a] || null;
@@ -805,11 +808,11 @@ document.addEventListener("click",async(e)=>{
       });
 
       Object.keys(sels).forEach(tid => {
-        const pts = results[tid] || 0;
+        const pts = results[tid] || 0; // Taupe = 0 point
         if (teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); }
         else { setBonusApplied(r, tid, pts); markTeamBonusUsed(tid); }
       });
-
+    
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
       alert(`Journée #${r} terminée. Les bonus sont appliqués et révélés.`); break;
@@ -835,23 +838,23 @@ function openBonusModal(round,teamId){
   const rCtl=roundState(round);
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
   if(teamBonusUsed(teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
-  if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
+  if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");");
   bonusCTX.round=round;bonusCTX.teamId=teamId;
   const sel=getBonusSelection(round,teamId);
-  id('bonus-player').value=sel?.player||'p1';
-  id('bonus-sport').value=sel?.sport||'darts';
-  const type=sel?.type||'capitaine';
-  if (typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(type); }
+  id('bonus-player').value=sel?.player||'p1'; id('bonus-sport').value=sel?.sport||'darts'; if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
   id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');const type=(window._bonusType==='miroir')?'miroir':'capitaine';
-setBonusSelection(r,t, type==='capitaine' ? {type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value} : {type:'miroir'});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
+id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':'capitaine');
+if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
+else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
+else setBonusSelection(r,t,{type:'miroir'});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
 
 
-/* Bonus: selectable dotted cards + accordion for parameters */
+/* === Bonus selection cards (Capitaine, Miroir, René la taupe) === */
 window._bonusType = 'capitaine';
+
 function ensureParamWrapper(){
   const capFields = id('capitaine-fields');
   if (!capFields) return null;
@@ -865,43 +868,58 @@ function ensureParamWrapper(){
   }
   return wrap;
 }
-function setParamsOpen(open){
-  const wrap = ensureParamWrapper();
-  if (!wrap) return;
-  wrap.classList.toggle('open', !!open);
-  wrap.style.maxHeight = open ? (wrap.scrollHeight + 'px') : '0px';
+function ensureTaupeWrapper(){
+  const taupeFields = id('taupe-fields');
+  if (!taupeFields) return null;
+  let wrap = id('taupe-params');
+  if (!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'taupe-params';
+    wrap.className = 'bonus-params';
+    taupeFields.parentNode.insertBefore(wrap, taupeFields);
+    wrap.appendChild(taupeFields);
+  }
+  return wrap;
+}
+function setParamsOpen(openCap, openTaupe){
+  const wrapC = ensureParamWrapper();
+  if (wrapC){ wrapC.classList.toggle('open', !!openCap); wrapC.style.maxHeight = openCap ? (wrapC.scrollHeight + 'px') : '0px'; }
+  const wrapT = ensureTaupeWrapper();
+  if (wrapT){ wrapT.classList.toggle('open', !!openTaupe); wrapT.style.maxHeight = openTaupe ? (wrapT.scrollHeight + 'px') : '0px'; }
 }
 function selectBonusType(t){
-  window._bonusType = (t === 'miroir') ? 'miroir' : 'capitaine';
+  window._bonusType = (t==='miroir'||t==='taupe') ? t : 'capitaine';
   const cards = [...document.querySelectorAll('.bonus-dialog .bonus-card')];
-  const cap = cards[0], mir = cards[1];
-  if (cap){ cap.classList.toggle('selected', window._bonusType === 'capitaine'); cap.setAttribute('aria-pressed', window._bonusType==='capitaine'); }
-  if (mir){ mir.classList.toggle('selected', window._bonusType === 'miroir'); mir.setAttribute('aria-pressed', window._bonusType==='miroir'); }
+  const cap = cards[0], mir = cards[1], tau = cards[2];
+  if (cap){ cap.classList.toggle('selected', window._bonusType==='capitaine'); cap.setAttribute('aria-pressed', window._bonusType==='capitaine'); }
+  if (mir){ mir.classList.toggle('selected', window._bonusType==='miroir'); mir.setAttribute('aria-pressed', window._bonusType==='miroir'); }
+  if (tau){ tau.classList.toggle('selected', window._bonusType==='taupe'); tau.setAttribute('aria-pressed', window._bonusType==='taupe'); }
   const ctx = id('bonus-context');
   if (ctx){
-    ctx.textContent = (window._bonusType==='miroir')
+    ctx.textContent = window._bonusType==='miroir'
       ? "Miroir : inverse le bonus adverse sur tout le match."
-      : "Capitaine : choisissez le joueur et le sport concernés.";
+      : (window._bonusType==='taupe'
+        ? "René la taupe : choisissez le sport dans lequel l’adversaire devra porter les lunettes."
+        : "Capitaine : choisissez le joueur et le sport concernés.");
   }
-  setParamsOpen(window._bonusType==='capitaine');
+  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe');
 }
 function prepareBonusOptions(){
-  document.querySelectorAll('input[name="bonus-type"]').forEach(i=> i.closest('.radio-row')?.remove());
   const cards = [...document.querySelectorAll('.bonus-dialog .bonus-card')];
   cards.forEach((c, idx)=>{
     c.classList.add('selectable');
-    c.setAttribute('tabindex', '0');
-    c.setAttribute('role', 'button');
-    c.addEventListener('click', ()=> selectBonusType(idx===0?'capitaine':'miroir'));
+    c.setAttribute('tabindex','0');
+    c.setAttribute('role','button');
+    c.addEventListener('click', ()=> selectBonusType(idx===0?'capitaine':(idx===1?'miroir':'taupe')));
     c.addEventListener('keydown', (ev)=>{
-      if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); selectBonusType(idx===0?'capitaine':'miroir'); }
+      if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); selectBonusType(idx===0?'capitaine':(idx===1?'miroir':'taupe')); }
     });
   });
-  const cap = cards[0];
-  const wrap = ensureParamWrapper();
-  if (cap && wrap && wrap.previousElementSibling !== cap) {
-    cap.appendChild(wrap);
-  }
+  const cap = cards[0], tau = cards[2];
+  const wrapC = ensureParamWrapper();
+  if (cap && wrapC && wrapC.previousElementSibling !== cap){ cap.appendChild(wrapC); }
+  const wrapT = ensureTaupeWrapper();
+  if (tau && wrapT && wrapT.previousElementSibling !== tau){ tau.appendChild(wrapT); }
 }
 
 /* ===== Boot ===== */
