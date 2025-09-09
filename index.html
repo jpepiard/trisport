@@ -67,6 +67,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .bonus-card{display:flex;gap:12px;align-items:center;margin:6px 0 12px;padding:10px;border:1px dashed #4b5bd7;border-radius:12px;background:#111636}
 .bonus-illu{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;background:#0f1331;border:1px solid var(--border)}
 .bonus-illu svg{width:36px;height:36px}
+.bonus-illu img{width:100%;height:100%;object-fit:cover;border-radius:12px}
 
 /* Couleur du badge #n selon l’état de journée */
 .round-chip{font-weight:700}
@@ -300,20 +301,11 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <!-- MODAL BONUS -->
 <div id="bonus-modal" aria-hidden="true">
   <div class="bonus-dialog">
-    <div class="hd">Choisir un bonus — Capitaine</div>
+    <div class="hd">Choisir un bonus</div>
     <div class="bd">
       <div class="bonus-card">
         <div class="bonus-illu" aria-hidden="true">
-          <!-- Icône style "capitaine" -->
-          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-            <defs><linearGradient id="g1" x1="0" x2="1"><stop stop-color="#7aa2ff"/><stop offset="1" stop-color="#4b6cff"/></linearGradient></defs>
-            <path d="M10 20c2-10 42-10 44 0-4 2-12 4-22 4s-18-2-22-4z" fill="url(#g1)"/>
-            <rect x="12" y="22" width="40" height="6" rx="3" fill="#e6edf7"/>
-            <circle cx="32" cy="38" r="10" fill="#ffd7a0"/>
-            <path d="M22 38c2 8 20 8 22 0-2 6-8 12-11 12s-9-6-11-12z" fill="#0e1430"/>
-            <circle cx="46" cy="24" r="4" fill="#2b315f"/><path d="M46 22v4m-3 1c1 3 5 3 6 0" stroke="#9fb3ff" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </div>
+          <img src="img/capitaine.jpg" alt="Bonus Capitaine"/></div>
         <div class="bonus-text">
           <div style="font-weight:700">Capitaine</div>
           <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
@@ -459,24 +451,9 @@ function computeCapitaineBonusForMatch(m, tid, player, sport){
 
 /* Icônes pour titres de sport */
 function sportIcon(name){
-  if(name==='darts'){
-    return `<svg viewBox="0 0 20 20" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="10" cy="10" r="9" fill="#0f1331" stroke="#3a4aa0"/>
-      <circle cx="10" cy="10" r="6" fill="none" stroke="#7aa2ff"/>
-      <circle cx="10" cy="10" r="3" fill="#7aa2ff"/>
-    </svg>`;
-  }
-  if(name==='ping'){
-    return `<svg viewBox="0 0 20 20" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="7" cy="7" r="5" fill="#7aa2ff"/>
-      <rect x="10" y="9" width="7" height="3" rx="1.5" fill="#9fb3ff"/>
-      <circle cx="14.8" cy="14.8" r="2" fill="#e6edf7"/>
-    </svg>`;
-  }
-  return `<svg viewBox="0 0 20 20" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="10" cy="10" r="7" fill="#9fb3ff"/>
-    <circle cx="10" cy="10" r="3.5" fill="#0f1331"/>
-  </svg>`;
+  if(name==='darts'){ return `<span class="sport-icon" role="img" aria-label="fléchettes">🎯</span>`; }
+  if(name==='ping'){  return `<span class="sport-icon" role="img" aria-label="ping-pong">🏓</span>`; }
+  return `<span class="sport-icon" role="img" aria-label="palet">🥏</span>`;
 }
 
 /* ===== Rendu Rencontres ===== */
@@ -487,23 +464,24 @@ function setRoundStatusPillClasses(pill,rs){
   else if(rs.started) pill.classList.add('yellow');
   else pill.classList.add('red');
 }
-
 function bonusChip(r,mTeam,rs){
-  const sel = getBonusSelection(r, mTeam);
+  const sel = getBonusSelection(r,mTeam);
   const iAmTeam = hasClaim(mTeam);
-  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && iAmTeam && !sel);
-  if (canChoose) {
-    return `<button type="button" class="pill outline" data-bonus data-round="${r}" data-team="${mTeam}">🎖 Bonus</button>`;
-  }
-  if (!sel) return '';
-  const canSee = (rs.finished || iAmTeam);
-  if (!canSee) return '';
-  const who = sel.player==='p1' ? 'J1' : 'J2';
-  const what = sel.sport==='darts' ? 'Fléchettes' : (sel.sport==='ping' ? 'Ping' : 'Palet');
-  const applied = (typeof getBonusAppliedSum==='function') ? (getBonusAppliedSum(mTeam)||0) : 0;
-  return `<span class="pill blue">Capitaine ${who} / ${what}${rs.finished?` : +${applied}`:''}</span>`;
+  const roundFinished = !!rs.finished;
+  // Admin: hide before finished
+  if (isAdmin() && !roundFinished) return '';
+  // If no selection, show button for the owning team before start / not finished / not used
+  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && iAmTeam);
+  if (!sel) return canChoose ? `<span class="pill outline" data-bonus data-round="${r}" data-team="${mTeam}" title="Choisir un bonus">🎖 Bonus</span>` : '';
+  // Already chosen: before finish, only the owning team sees it
+  if (!roundFinished && !iAmTeam) return '';
+  // Render Capitaine pill for now
+  const who = sel.player==='p1'?'J1':'J2';
+  const what = sel.sport==='darts'?'Fléchettes':(sel.sport==='ping'?'Ping':'Palet');
+  const total = getBonusAppliedSum(mTeam) || 0;
+  return `<span class="pill blue">Capitaine ${who} / ${what}${roundFinished?` : +${total}`:''}</span>`;
+} / ${sel.sport==='darts'?'Fléchettes':sel.sport==='ping'?'Ping':'Palet'} : +${getBonusAppliedSum(mTeam) ? getBonusAppliedSum(mTeam) : 0}</span>` : '';
 }
-
 function renderMatches(){
   const list=id("match-list");list.innerHTML="";
   if(!state.matches.length){list.appendChild(help("Aucune rencontre planifiée."));id("stats-matches").textContent="0 / 0 matches complets";id("round-status").textContent="—";id("btn-start-round").style.display="none";id("btn-end-round").style.display="none";return}
@@ -527,7 +505,7 @@ function renderMatches(){
     groups[r].forEach(m=>{
       ensureLengths(m);
       const wins=computeSetWins(m),pal=m.palet,palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"—";
-      const palChip = `<span class="chip">Palet: <span class="score-compact">${palScore}</span></span>`;
+      const palChip = `<span class="chip">🥏 Palet: <span class="score-compact">${palScore}</span></span>`;
       const done=isMatchComplete(m);if(done)complete++;
       const el=document.createElement("div");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
       const bonusA=bonusChip(r,m.a,rCtl), bonusB=bonusChip(r,m.b,rCtl);
@@ -536,8 +514,8 @@ function renderMatches(){
           <span class="team-name">${avatarHtml(m.a,'sm')}${esc(teamName(m.a))}</span> <span class="vs">vs</span>
           <span class="team-name">${avatarHtml(m.b,'sm')}${esc(teamName(m.b))}</span></div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <span class="chip">Fléchettes: <span class="score-compact">${hy(wins.aw.darts,wins.bw.darts)}</span></span>
-          <span class="chip">Ping: <span class="score-compact">${hy(wins.aw.ping,wins.bw.ping)}</span></span>
+          <span class="chip">🎯 Fléchettes: <span class="score-compact">${hy(wins.aw.darts,wins.bw.darts)}</span></span>
+          <span class="chip">🏓 Ping: <span class="score-compact">${hy(wins.aw.ping,wins.bw.ping)}</span></span>
           ${palChip}
           ${done?'<span class="pill green">✅ Complet</span>':'<span class="pill yellow">⏳ Incomplet</span>'}
           ${bonusA} ${bonusB}
@@ -620,16 +598,10 @@ function renderPing(m){
       <label>${lab}</label>
       <div class="ping-row">
         <div>
-          <input type="number" min="0" max="99" step="1"
-                 value="${set.a==null?'':set.a}"
-                 data-ping="a" data-index="${i}"
-                 placeholder="${esc(teamName(m.a))}">
+          <input type="number" min="0" max="99" step="1"                 value="${set.a==null?'':set.a}"                 data-ping="a" data-index="${i}"                 placeholder="${esc(teamName(m.a))}">
         </div>
         <div>
-          <input type="number" min="0" max="99" step="1"
-                 value="${set.b==null?'':set.b}"
-                 data-ping="b" data-index="${i}"
-                 placeholder="${esc(teamName(m.b))}">
+          <input type="number" min="0" max="99" step="1"                 value="${set.b==null?'':set.b}"                 data-ping="b" data-index="${i}"                 placeholder="${esc(teamName(m.b))}">
         </div>
       </div>
       <div class="help" data-note="ping-${m.id}-${i}">${ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}</div>
@@ -648,13 +620,11 @@ function renderPalet(m){
     <div class="ping-row">
       <div>
         <label class="muted">${esc(teamName(m.a))}</label>
-        <input type="number" min="0" max="${T}" step="1"
-               value="${a==null?'':a}" data-palet="a">
+        <input type="number" min="0" max="${T}" step="1"               value="${a==null?'':a}" data-palet="a">
       </div>
       <div>
         <label class="muted">${esc(teamName(m.b))}</label>
-        <input type="number" min="0" max="${T}" step="1"
-               value="${b==null?'':b}" data-palet="b">
+        <input type="number" min="0" max="${T}" step="1"               value="${b==null?'':b}" data-palet="b">
       </div>
     </div>
     <div class="help" data-note="pal-${m.id}">${ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}</div>
@@ -749,45 +719,39 @@ document.addEventListener("click",async(e)=>{
 
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
-
-function openBonusModal(round, teamId){
-  const rs = roundState(round);
-  if (rs.started) { alert("La journée a démarré : bonus verrouillés."); return; }
-  if (teamBonusUsed(teamId)) { alert("Ce bonus a déjà été utilisé une fois."); return; }
-  if (!hasClaim(teamId)) { alert("Connectez-vous à cette équipe pour choisir son bonus."); return; }
-  bonusCTX.round = round; bonusCTX.teamId = teamId;
-  const sel = getBonusSelection(round, teamId) || {};
-  id('bonus-player').value = sel.player || 'p1';
-  id('bonus-sport').value  = sel.sport  || 'darts';
-  id('bonus-context').textContent = `Équipe : ${teamName(teamId)} — Journée #${round}`;
-  id('bonus-modal').classList.add('show');
-}
- — Journée #${round}`;
+function openBonusModal(round,teamId){
+  const rCtl=roundState(round);
+  if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
+  if(teamBonusUsed(teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
+  if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
+  bonusCTX.round=round;bonusCTX.teamId=teamId;
+  const sel=getBonusSelection(round,teamId);
+  id('bonus-player').value=sel?.player||'p1';
+  id('bonus-sport').value=sel?.sport||'darts';
+  id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
   id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-
-id('bonus-save').addEventListener('click', ()=>{
-  const r = bonusCTX.round, t = bonusCTX.teamId;
-  if(!r || !t){ id('bonus-modal').classList.remove('show'); return; }
-  setBonusSelection(r, t, { type: 'capitaine', player: id('bonus-player').value, sport: id('bonus-sport').value });
-  saveState(); id('bonus-modal').classList.remove('show'); renderMatches();
-});
-setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
+id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
 
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{normalize();renderAll();const p=id('js-ok');if(p){p.textContent='JS chargé ✅ · handlers OK';p.style.background='#14532d'}const params=new URLSearchParams(location.search);const idp=params.get("id");if(idp){id("join-code").value=idp;joinCloud(idp)}})
-
-// Open bonus modal when clicking the "🎖 Bonus" pill
-function bonusClickHandler(e){
-  const btn = e.target.closest('[data-bonus]');
-  if(!btn) return;
-  const r = parseInt(btn.getAttribute('data-round'),10);
-  const t = btn.getAttribute('data-team');
-  if (!isNaN(r) && t) openBonusModal(r, t);
-}
-document.addEventListener('click', bonusClickHandler);
 </script>
 </body>
 </html>
+
+<script>
+(function(){
+  function __bonus_click(e){
+    const b = e.target.closest('[data-bonus]');
+    if(!b) return;
+    const card = b.closest('.match-card');
+    if(!card) return;
+    const round = parseInt(b.getAttribute('data-round'),10);
+    const team = b.getAttribute('data-team');
+    openBonusModal(round, team);
+  }
+  document.addEventListener('click', __bonus_click);
+})();
+</script>
