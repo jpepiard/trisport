@@ -98,11 +98,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .sport-item label{display:block;margin:0 0 6px;color:var(--muted)}
 .ping-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ping-row input{width:100%}
-
 .bonus-illu img{width:100%;height:100%;object-fit:cover;border-radius:12px}
-.pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
-.pill .mini-bonus img{width:100%;height:100%;object-fit:cover}
-.sport-title .sport-icon{width:18px;height:18px;display:grid;place-items:center;font-size:16px;line-height:1}
 </style>
 
 <!-- Firebase compat -->
@@ -305,9 +301,9 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <!-- MODAL BONUS -->
 <div id="bonus-modal" aria-hidden="true">
   <div class="bonus-dialog">
-    <div class="hd">Choisir un bonus</div>
+    <div class="hd">Choisir un bonus — Capitaine</div>
     <div class="bd">
-      <div class="bonus-card" data-type="capitaine">
+      <div class="bonus-card">
         <div class="bonus-illu" aria-hidden="true">
           <img src="img/capitaine.jpg" alt="Bonus Capitaine"/></div>
         <div class="bonus-text">
@@ -317,7 +313,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
       </div>
 
       <div class="help" id="bonus-context">—</div>
-      <div class="grid cols-2" style="margin-top:10px" id="bonus-form-capitaine">
+      <div class="grid cols-2" style="margin-top:10px">
         <div><label>Capitaine (joueur)</label>
           <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
         </div>
@@ -406,28 +402,6 @@ function clearMatch(mid){const m=findMatch(mid);if(!m)return;if(!(isAdmin()||has
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
 function setBonusSelection(r,tid,sel){state.bonusSelections[r]=state.bonusSelections[r]||{};state.bonusSelections[r][tid]=sel}
 function getBonusSelection(r,tid){return(state.bonusSelections[r]||{})[tid]||null}
-function findOpponentInRound(r, tid){
-  const m = state.matches.find(mm => mm.round===r && (mm.a===tid || mm.b===tid));
-  if(!m) return null; return (m.a===tid ? m.b : m.a);
-}
-function resolveEffectiveBonus(r, tid){
-  const sels = state.bonusSelections[r] || {};
-  const sel = sels[tid]; if(!sel) return null;
-  const opp = findOpponentInRound(r, tid);
-  const oppSel = opp ? sels[opp] : null;
-  if(sel.type==='capitaine'){
-    if(oppSel && oppSel.type==='mirror') return null;
-    return sel;
-  }
-  if(sel.type==='mirror'){
-    if(oppSel && oppSel.type==='capitaine'){
-      return {type:'capitaine', player: oppSel.player, sport: oppSel.sport, mirrored:true, from:opp};
-    }
-    return {type:'mirror', mirrored:false};
-  }
-  return sel;
-}
-
 function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{};state.bonusApplied[r][tid]=pts}
 function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){const v=state.bonusApplied[r]?.[tid];if(v)s+=v}return s}
 function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
@@ -482,19 +456,6 @@ function sportIcon(name){
   return `<span class="sport-icon" role="img" aria-label="palet">🥏</span>`;
 }
 
-if(name==='ping'){
-    return `<svg viewBox="0 0 20 20" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="7" cy="7" r="5" fill="#7aa2ff"/>
-      <rect x="10" y="9" width="7" height="3" rx="1.5" fill="#9fb3ff"/>
-      <circle cx="14.8" cy="14.8" r="2" fill="#e6edf7"/>
-    </svg>`;
-  }
-  return `<svg viewBox="0 0 20 20" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="10" cy="10" r="7" fill="#9fb3ff"/>
-    <circle cx="10" cy="10" r="3.5" fill="#0f1331"/>
-  </svg>`;
-}
-
 /* ===== Rendu Rencontres ===== */
 let CURRENT_ROUND=null;
 function setRoundStatusPillClasses(pill,rs){
@@ -504,36 +465,12 @@ function setRoundStatusPillClasses(pill,rs){
   else pill.classList.add('red');
 }
 function bonusChip(r,mTeam,rs){
-  const sel = getBonusSelection(r, mTeam);
-  const iAmTeam = hasClaim(mTeam);
-  const roundFinished = !!rs.finished;
-  // Admin: see nothing until finished
-  if (isAdmin() && !roundFinished) return '';
-  // Nothing chosen -> show button only for the owning team, before start
-  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && iAmTeam);
-  if (!sel) return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
-  // Already chosen: before finish, only team sees it
-  if (!roundFinished && !iAmTeam) return '';
-  // Render
-  if (!roundFinished) {
-    if (sel.type === 'mirror') return `<span class="pill blue">Miroir<span class="mini-bonus"><img src="img/miroir.mpg" alt="" onerror="this.onerror=null;this.src='img/miroir.jpg';"></span></span>`;
-    return `<span class="pill blue">Capitaine<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
-  }
-  // After finish -> reveal effective result
-  const eff = resolveEffectiveBonus(r, mTeam);
-  const applied = (state.bonusApplied[r]||{})[mTeam] || 0;
-  if (!eff || eff.type!=='capitaine') {
-    return `<span class="pill blue">Miroir (sans effet)</span>`;
-  } else {
-    const labelPlayer = eff.player === 'p1' ? 'J1' : 'J2';
-    const labelSport = eff.sport === 'darts' ? 'Fléchettes' : (eff.sport === 'ping' ? 'Ping' : 'Palet');
-    if (sel.type === 'mirror') {
-      return `<span class="pill blue">Miroir → Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/miroir.mpg" alt="" onerror="this.onerror=null;this.src='img/miroir.jpg';"></span></span>`;
-    }
-    return `<span class="pill blue">Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
-  }
+  const sel=getBonusSelection(r,mTeam);
+  // visibles uniquement pour l'équipe elle-même AVANT fin de journée
+  const canSee = (rs.finished || hasClaim(mTeam));
+  if(!sel) return '';
+  return canSee ? `<span class="pill blue">Capitaine ${sel.player==='p1'?'J1':'J2'} / ${sel.sport==='darts'?'Fléchettes':sel.sport==='ping'?'Ping':'Palet'} : +${getBonusAppliedSum(mTeam) ? getBonusAppliedSum(mTeam) : 0}</span>` : '';
 }
-
 function renderMatches(){
   const list=id("match-list");list.innerHTML="";
   if(!state.matches.length){list.appendChild(help("Aucune rencontre planifiée."));id("stats-matches").textContent="0 / 0 matches complets";id("round-status").textContent="—";id("btn-start-round").style.display="none";id("btn-end-round").style.display="none";return}
@@ -741,30 +678,27 @@ document.addEventListener("click",async(e)=>{
 
     /* ---- Fin de journée : blocage si incomplet + bonus appliqués ---- */
     case "btn-end-round": {
-  if (!isAdmin()) return;
-  const r  = CURRENT_ROUND;
-  const rs = roundState(r);
-  if (!rs.started || rs.finished) return;
+      if (!isAdmin()) return;
+      const r  = CURRENT_ROUND;
+      const rs = roundState(r);
+      if (!rs.started || rs.finished) return;
 
-  const matchesOfRound = state.matches.filter(m => m.round === r);
-  const incomplets = matchesOfRound.filter(m => !isMatchComplete(m));
-  if (incomplets.length) { alert(`Impossible de terminer la journée #${r} : ${incomplets.length} match(s) incomplet(s).`); return; }
+      const matchesOfRound = state.matches.filter(m => m.round === r);
+      const incomplets = matchesOfRound.filter(m => !isMatchComplete(m));
+      if (incomplets.length) { alert(`Impossible de terminer la journée #${r} : ${incomplets.length} match(s) incomplet(s).`); return; }
 
-  const sels = state.bonusSelections[r] || {};
-  Object.keys(sels).forEach(tid=>{
-    const eff = resolveEffectiveBonus(r, tid);
-    if (teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); return; }
-    let total = 0;
-    if (eff && eff.type === 'capitaine') {
-      matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, eff.player, eff.sport); });
+      const sels = state.bonusSelections[r] || {};
+      Object.keys(sels).forEach(tid=>{
+        const sel = sels[tid]; if (!sel) return;
+        if (teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); return; }
+        let total = 0;
+        matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
+        setBonusApplied(r, tid, total); markTeamBonusUsed(tid);
+      });
+
+      rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
+      alert(`Journée #${r} terminée. Les bonus sont appliqués et révélés.`); break;
     }
-    setBonusApplied(r, tid, total);
-    markTeamBonusUsed(tid);
-  });
-
-  rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
-  alert(`Journée #${r} terminée. Les bonus sont appliqués et révélés.`); break;
-}
   }}
   const openBtn=e.target.closest("[data-open-id]");if(openBtn){const code=openBtn.getAttribute("data-open-id").replace(/^cloud:/,"");id("join-code").value=code;joinCloud(code);goto("equipes")}
   const delBtn=e.target.closest("[data-delete-id]");if(delBtn){if(!isAdmin())return alert("Suppression cloud réservée à l’admin.");const code=delBtn.getAttribute("data-delete-id");if(!confirm("Supprimer le tournoi '"+code+"' du cloud ?"))return;deleteCloud(code).then(()=>{setIndex(getIndex().filter(e=>e.id!==code));if(state.cloudId===code||cloud.id===code){unsubscribeCloud();resetState();renderAll();history.replaceState(null,"",location.pathname);goto('setup')}alert("Supprimé.");renderSetupRecent()})}
@@ -783,29 +717,41 @@ document.addEventListener("click",async(e)=>{
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
 function openBonusModal(round,teamId){
-  const rCtl = roundState(round);
+  const rCtl=roundState(round);
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
   if(teamBonusUsed(teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
-  bonusCTX.round = round;
-  bonusCTX.teamId = teamId;
-  const sel = getBonusSelection(round,teamId);
-  bonusCTX.type = (sel?.type || 'capitaine');
-  id('bonus-player').value = sel?.player || 'p1';
-  id('bonus-sport').value  = sel?.sport  || 'darts';
-  id('bonus-context').textContent = `Équipe : ${teamName(teamId)} — Journée #${round}`;
-  id('bonus-modal').classList.add('show');
-  if (typeof selectBonusType==='function') selectBonusType(bonusCTX.type);
-}
- — Journée #${round}`;
+  bonusCTX.round=round;bonusCTX.teamId=teamId;
+  const sel=getBonusSelection(round,teamId);
+  id('bonus-player').value=sel?.player||'p1';
+  id('bonus-sport').value=sel?.sport||'darts';
+  id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
   id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
+id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
 
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{normalize();renderAll();const p=id('js-ok');if(p){p.textContent='JS chargé ✅ · handlers OK';p.style.background='#14532d'}const params=new URLSearchParams(location.search);const idp=params.get("id");if(idp){id("join-code").value=idp;joinCloud(idp)}})
 </script>
+
+<script>
+(function(){
+  try {
+    // Hide bonus pills for admin before round finished by wrapping bonusChip()
+    if (typeof window.bonusChip === 'function') {
+      const _origBonusChip = window.bonusChip;
+      window.bonusChip = function(r, mTeam, rs){
+        try {
+          if (typeof window.isAdmin === 'function' && window.isAdmin() && !rs?.finished) return '';
+          return _origBonusChip(r, mTeam, rs);
+        } catch(e){ return ''; }
+      };
+    }
+  } catch(e) {}
+})();
+</script>
+
 </body>
 </html>
