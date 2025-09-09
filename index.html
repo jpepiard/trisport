@@ -63,7 +63,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 #bonus-modal.show{display:flex}
 .bonus-dialog{width:min(560px,92vw);background:#141938;border:1px solid var(--border);border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.5)}
 .bonus-dialog .hd{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700}
-.bonus-dialog .bd{padding:16px}.bonus-dialog .ft{padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}border-top:1px solid var(--border)}
+.bonus-dialog .bd{padding:16px}.bonus-dialog .ft{padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
 .bonus-card{display:flex;gap:12px;align-items:center;margin:6px 0 12px;padding:10px;border:1px dashed #4b5bd7;border-radius:12px;background:#111636}
 .bonus-illu{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;background:#0f1331;border:1px solid var(--border)}
 .bonus-illu svg{width:36px;height:36px}
@@ -112,37 +112,24 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </script>
 
 <style>
-/* Selectable bonus options as dotted boxes */
-.bonus-option, .bonus-dialog .bonus-card {
-  border: 2px dashed var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  cursor: pointer;
-  transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+.bonus-dialog .bonus-card{
+  border:2px dashed var(--border);
+  border-radius:12px;
+  padding:12px;
+  cursor:pointer;
+  transition:background .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
-.bonus-dialog .bonus-card.selected {
+.bonus-dialog .bonus-card.selected{
   border-color: var(--accent, #4a90e2);
   background: rgba(0,0,0,0.03);
   box-shadow: 0 0 0 3px rgba(0,0,0,0.06) inset;
 }
-.bonus-dialog .bonus-card .bonus-illu img { width: 56px; height: 56px; object-fit: cover; border-radius: 10px; }
-.bonus-dialog .bonus-card .bonus-text .help { opacity:.8 }
-.bonus-params{
-  max-height:0;
-  overflow:hidden;
-  transition:max-height .25s ease;
-}
-.bonus-params.open{
-  max-height: 400px;
-}
-.bonus-select { display:grid; grid-template-columns: 1fr; gap:12px; }
+.bonus-dialog .bonus-card .bonus-illu img{ width:56px; height:56px; object-fit:cover; border-radius:10px; }
+.bonus-params{ max-height:0; overflow:hidden; transition:max-height .25s ease; }
+.bonus-params.open{ max-height: 420px; }
+.bonus-select{ display:grid; grid-template-columns: 1fr; gap:20px; }
 @media (min-width:700px){ .bonus-select{ grid-template-columns: 1fr 1fr; } }
-</style>
-
-
-<style>
-.bonus-select{ gap: 20px; }
-.bonus-sep{ height:0; border-top:1px dashed var(--border); opacity:.7; margin: 8px 0; }
+.bonus-sep{ height:0; border-top:1px dashed var(--border); opacity:.7; margin: 8px 0; grid-column:1/-1; }
 </style>
 
 </head>
@@ -360,6 +347,12 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
         </div>
       </div>
 
+      <div class="help" style="margin-top:6px;display:none">Type de bonus (legacy)</div>
+      <div class="radio-row" style="display:none;gap:12px;align-items:center;margin-bottom:4px">
+        <label><input type="radio" name="bonus-type" id="bonus-type-cap" value="capitaine" checked> Capitaine</label>
+        <label><input type="radio" name="bonus-type" id="bonus-type-mirror" value="miroir"> Miroir</label>
+      </div>
+
       <div class="help" id="bonus-context">—</div>
       <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
         <div><label>Capitaine (joueur)</label>
@@ -530,12 +523,11 @@ function bonusChip(r,mTeam,rs){
   if (!roundFinished && !iAmTeam) return '';
 
   // Affichage
-  
   if (!roundFinished) {
-    const label = sel.type === 'miroir' ? 'Miroir' : 'Capitaine';
-    const img = sel.type === 'miroir' ? 'miroir.jpg' : 'capitaine.jpg';
-    return `<span class="pill blue">${label}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+    // Secret: pilule "Capitaine" + mini image
+    const __lbl = sel.type === 'miroir' ? 'Miroir' : 'Capitaine'; const __img = sel.type === 'miroir' ? 'miroir.jpg' : 'capitaine.jpg'; return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
   } else {
+    // Révélé à tout le monde
     const applied = getBonusAppliedSum(mTeam) || 0;
     if (sel.type === 'miroir') {
       return `<span class="pill blue">Miroir : +${applied}<span class="mini-bonus"><img src="img/miroir.jpg" alt=""></span></span>`;
@@ -545,7 +537,6 @@ function bonusChip(r,mTeam,rs){
       return `<span class="pill blue">Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
     }
   }
-
 }
 
 
@@ -767,9 +758,8 @@ document.addEventListener("click",async(e)=>{
 
       
       const sels = state.bonusSelections[r] || {};
-
-      // Calcul des bonus par match, en gérant le "Miroir"
       const results = {}; // tid -> points pour cette journée
+
       matchesOfRound.forEach(m => {
         const selA = sels[m.a] || null;
         const selB = sels[m.b] || null;
@@ -782,21 +772,18 @@ document.addEventListener("click",async(e)=>{
         const mirrorA = !!(selA && selA.type === 'miroir');
         const mirrorB = !!(selB && selB.type === 'miroir');
 
-        // Miroir inverse le bonus adverse (ex: Capitaine)
         if (mirrorA && selB && selB.type === 'capitaine') { applyA += capB; capB = 0; }
         if (mirrorB && selA && selA.type === 'capitaine') { applyB += capA; capA = 0; }
 
-        // Ajout des bonus restants (Capitaine sans miroir en face)
         applyA += capA;
         applyB += capB;
 
-        results[m.a] = (results[m.a] || 0) + applyA
-        results[m.b] = (results[m.b] || 0) + applyB
+        results[m.a] = (results[m.a] || 0) + applyA;
+        results[m.b] = (results[m.b] || 0) + applyB;
       });
 
-      // Appliquer pour chaque équipe ayant joué/choisi un bonus
       Object.keys(sels).forEach(tid => {
-        const pts = results[tid] || 0
+        const pts = results[tid] || 0;
         if (teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); }
         else { setBonusApplied(r, tid, pts); markTeamBonusUsed(tid); }
       });
@@ -832,19 +819,17 @@ function openBonusModal(round,teamId){
   id('bonus-player').value=sel?.player||'p1';
   id('bonus-sport').value=sel?.sport||'darts';
   const type=sel?.type||'capitaine';
-  prepareBonusOptions();
-  selectBonusType(type);
+  if (typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(type); }
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
   id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');const type = (window._bonusType==='miroir') ? 'miroir' : 'capitaine';
+id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');const type=(window._bonusType==='miroir')?'miroir':'capitaine';
 setBonusSelection(r,t, type==='capitaine' ? {type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value} : {type:'miroir'});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
 
 
-
 /* Bonus: selectable dotted cards + accordion for parameters */
-let _bonusType = 'capitaine';
+window._bonusType = 'capitaine';
 function ensureParamWrapper(){
   const capFields = id('capitaine-fields');
   if (!capFields) return null;
@@ -865,24 +850,21 @@ function setParamsOpen(open){
   wrap.style.maxHeight = open ? (wrap.scrollHeight + 'px') : '0px';
 }
 function selectBonusType(t){
-  _bonusType = (t === 'miroir') ? 'miroir' : 'capitaine';
+  window._bonusType = (t === 'miroir') ? 'miroir' : 'capitaine';
   const cards = [...document.querySelectorAll('.bonus-dialog .bonus-card')];
   const cap = cards[0], mir = cards[1];
-  if (cap){ cap.classList.toggle('selected', _bonusType === 'capitaine'); cap.setAttribute('aria-pressed', _bonusType==='capitaine'); }
-  if (mir){ mir.classList.toggle('selected', _bonusType === 'miroir'); mir.setAttribute('aria-pressed', _bonusType==='miroir'); }
-  // Context helper text
+  if (cap){ cap.classList.toggle('selected', window._bonusType === 'capitaine'); cap.setAttribute('aria-pressed', window._bonusType==='capitaine'); }
+  if (mir){ mir.classList.toggle('selected', window._bonusType === 'miroir'); mir.setAttribute('aria-pressed', window._bonusType==='miroir'); }
   const ctx = id('bonus-context');
   if (ctx){
-    ctx.textContent = (_bonusType==='miroir')
+    ctx.textContent = (window._bonusType==='miroir')
       ? "Miroir : inverse le bonus adverse sur tout le match."
       : "Capitaine : choisissez le joueur et le sport concernés.";
   }
-  setParamsOpen(_bonusType==='capitaine');
+  setParamsOpen(window._bonusType==='capitaine');
 }
 function prepareBonusOptions(){
-  // Hide any legacy radio row if still present
   document.querySelectorAll('input[name="bonus-type"]').forEach(i=> i.closest('.radio-row')?.remove());
-  // Make cards selectable & keyboard accessible
   const cards = [...document.querySelectorAll('.bonus-dialog .bonus-card')];
   cards.forEach((c, idx)=>{
     c.classList.add('selectable');
@@ -893,15 +875,14 @@ function prepareBonusOptions(){
       if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); selectBonusType(idx===0?'capitaine':'miroir'); }
     });
   });
-  // Move params under the Capitaine card in an accordion
   const cap = cards[0];
   const wrap = ensureParamWrapper();
   if (cap && wrap && wrap.previousElementSibling !== cap) {
     cap.appendChild(wrap);
   }
 }
-/* ===== Boot ===== */
 
+/* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{normalize();renderAll();const p=id('js-ok');if(p){p.textContent='JS chargé ✅ · handlers OK';p.style.background='#14532d'}const params=new URLSearchParams(location.search);const idp=params.get("id");if(idp){id("join-code").value=idp;joinCloud(idp)}})
 </script>
