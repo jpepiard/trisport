@@ -345,51 +345,37 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
     <div class="hd">Choisir un bonus</div>
     <div class="bd">
       <div class="bonus-select">
-        <!-- Capitaine -->
-        <div class="bonus-card">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/capitaine.jpg" alt="Bonus Capitaine"/></div>
-          <div class="bonus-text">
-            <div style="font-weight:700">Capitaine</div>
-            <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
-          </div>
+<div class="bonus-card">
+        <div class="bonus-illu" aria-hidden="true">
+          <img src="img/capitaine.jpg" alt="Bonus Capitaine"/></div>
+        <div class="bonus-text">
+          <div style="font-weight:700">Capitaine</div>
+          <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
         </div>
-
         <div class="bonus-sep"></div>
-
-        <!-- Miroir -->
-        <div class="bonus-card">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/miroir.jpg" alt="Bonus Miroir"/></div>
-          <div class="bonus-text">
-            <div style="font-weight:700">Miroir</div>
-            <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex : si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
-          </div>
+<div class="bonus-card">
+        <div class="bonus-illu" aria-hidden="true">
+          <img src="img/miroir.jpg" alt="Bonus Miroir"/></div>
+        <div class="bonus-text">
+          <div style="font-weight:700">Miroir</div>
+          <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex&nbsp;: si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
         </div>
-
         <div class="bonus-sep"></div>
-
-        <!-- René la taupe -->
-        <div class="bonus-card">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/taupe.png" alt="Bonus René la taupe"/></div>
-          <div class="bonus-text">
-            <div style="font-weight:700">René la taupe</div>
-            <div class="help">Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br/>Si l’adversaire joue <b>Miroir</b>, <i>vous</i> portez les lunettes.</div>
-          </div>
+<div class="bonus-card">
+        <div class="bonus-illu" aria-hidden="true">
+          <img src="img/taupe.png" alt="Bonus René la taupe"/></div>
+        <div class="bonus-text">
+          <div style="font-weight:700">René la taupe</div>
+          <div class="help">Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br/>Si l’adversaire joue <b>Miroir</b>, <i>vous</i> portez les lunettes.</div>
         </div>
       </div>
-
-      <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
-
-      <!-- Param blocks anchor (moved under the right card at runtime) -->
-      <div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
+<div class="help" id="bonus-context">—</div>
+<div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
         <div><label>Sport</label>
           <select id="taupe-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
-
-      <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
+<div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
         <div><label>Capitaine (joueur)</label>
           <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
         </div>
@@ -602,7 +588,7 @@ function renderMatches(){
 
     groups[r].forEach(m=>{
       ensureLengths(m);
-      const wins=computeSetWins(m),pal=m.palet,palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"—";
+      const wins=computeSetWins(m),pal=m.palet,palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"0-0";
       const palChip = `<span class="chip">🥏 Palet: <span class="score-compact">${palScore}</span></span>`;
       const done=isMatchComplete(m);if(done)complete++;
       const el=document.createElement("div");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
@@ -633,12 +619,20 @@ function renderMatches(){
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!can;
+        const rs = roundState(r);
+        let can = false;
+        if (rs.started && !rs.finished) can = (isAdmin()||hasClaim(m.a)||hasClaim(m.b));
+        else if (rs.finished) can = isAdmin();
+        sel.disabled = !can;
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
+        const rs = roundState(r);
+        let can = false;
+        if (rs.started && !rs.finished) can = (isAdmin()||hasClaim(m.a)||hasClaim(m.b));
+        else if (rs.finished) can = isAdmin();
+        inp.disabled = !can;
         const mid=m.id,idxSet=parseInt(inp.getAttribute("data-index"),10),which=inp.getAttribute("data-ping");
         const updateNote=()=>{const mm=findMatch(mid),s=mm.pingPts[idxSet],ok=isPingValid(+s.a,+s.b);const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');if(note)note.textContent=ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);const mm=findMatch(mid);mm.pingPts[idxSet][which]=v;saveState();updateNote()});
@@ -647,7 +641,11 @@ function renderMatches(){
       });
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
+        const rs = roundState(r);
+        let can = false;
+        if (rs.started && !rs.finished) can = (isAdmin()||hasClaim(m.a)||hasClaim(m.b));
+        else if (rs.finished) can = isAdmin();
+        inp.disabled = !can;
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;saveState();updateNote()});
@@ -655,7 +653,14 @@ function renderMatches(){
         inp.addEventListener("change",commit);inp.addEventListener("blur",commit);inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();inp.blur()}})
       });
 
-      const clr=qs('.match-card[data-id="'+m.id+'"] [data-clear]');if(clr)clr.addEventListener("click",()=>clearMatch(m.id));
+      const clr=qs('.match-card[data-id="'+m.id+'"] [data-clear]');
+      if (clr) {
+        const rs = roundState(r);
+        let canClr = false;
+        if (rs.started && !rs.finished) canClr = (isAdmin()||hasClaim(m.a)||hasClaim(m.b));
+        else if (rs.finished) canClr = isAdmin();
+        if (canClr) clr.addEventListener("click",()=>clearMatch(m.id)); else clr.disabled = true;
+      }
       const head=qs('.match-card[data-id="'+m.id+'"] [data-expand]');if(head)head.addEventListener("click",()=>{const open=el.getAttribute("aria-expanded")==="true";el.setAttribute("aria-expanded",open?"false":"true");ui.open[m.id]=!open});
       qsa('.match-card[data-id="'+m.id+'"] [data-bonus]').forEach(b=>b.addEventListener('click',()=>openBonusModal(r,b.getAttribute('data-team'))));
     });
