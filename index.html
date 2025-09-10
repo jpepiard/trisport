@@ -183,12 +183,20 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </style>
 
 
+
 <style id="bonus-scroll-fix">
-/* Bonus modal: keep footer visible, scroll the body */
-.bonus-panel{ max-height:86vh; overflow:hidden; display:flex; flex-direction:column; }
-.bonus-panel .bd{ overflow:auto; }
-.bonus-panel .ft{ position:sticky; bottom:0; background:var(--card); padding-top:8px; }
+/* Bonus modal: header sticky, content scrollable, footer sticky */
+.bonus-panel{ max-height:90vh; overflow:hidden; display:flex; flex-direction:column; }
+.bonus-panel .hd{ position:sticky; top:0; background:var(--card); z-index:2; padding-bottom:8px; }
+.bonus-panel .bd{ overflow:auto; -webkit-overflow-scrolling:touch; padding-right:6px;
+  /* keep content visible above sticky footer on small screens */
+  padding-bottom:calc(72px + env(safe-area-inset-bottom));
+}
+.bonus-panel .ft{ position:sticky; bottom:0; background:var(--card); padding-top:8px; z-index:2;
+  box-shadow:0 -8px 12px rgba(0,0,0,.25);
+}
 </style>
+
 
 </head>
 <body>
