@@ -177,6 +177,31 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 
 
+
+<style id="bonus-modal-position-fix">
+/* Overlay centered modal – override previous rules */
+#bonus-modal.bonus-dialog{ position:fixed; inset:0; z-index:9999;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(8,14,25,.72); padding:clamp(8px,2.5vh,24px);
+  width:auto; height:auto; border:none; box-shadow:none; border-radius:0;
+}
+#bonus-modal.bonus-dialog .bonus-panel{
+  width:min(980px,96vw); max-height:90vh; overflow:hidden;
+  background:var(--card); border:2px dashed var(--border); border-radius:14px;
+  display:flex; flex-direction:column;
+}
+#bonus-modal.bonus-dialog .hd{ position:sticky; top:0; background:var(--card); z-index:2; padding:12px 16px; }
+#bonus-modal.bonus-dialog .bd{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 16px; }
+#bonus-modal.bonus-dialog .ft{ position:sticky; bottom:0; background:var(--card); padding:12px 16px; z-index:2; box-shadow:0 -8px 12px rgba(0,0,0,.25); }
+#bonus-modal .bonus-select{ gap:8px; }
+#bonus-modal .bonus-card{ grid-template-columns:80px 1fr; padding:10px; border:2px dashed var(--border); border-radius:12px; }
+#bonus-modal .bonus-card.selected{ border-color: var(--blue); box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset; }
+#bonus-modal .bonus-card .bonus-illu img{ width:72px; height:72px; border-radius:12px; }
+#bonus-modal{ opacity:0; visibility:hidden; pointer-events:none; transition:opacity .16s ease; }
+#bonus-modal.show{ opacity:1; visibility:visible; pointer-events:auto; }
+body.modal-open{ overflow:hidden; }
+</style>
+
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -881,7 +906,7 @@ function openBonusModal(round,teamId){
   id('bonus-player').value=sel?.player||'p1';
   id('bonus-sport').value=sel?.sport||'darts';
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
-  id('bonus-modal').classList.add('show');
+  document.body.classList.add('modal-open'); id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
@@ -891,7 +916,7 @@ id('bonus-save').addEventListener('click',()=>{
   else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
   else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
   else setBonusSelection(r,t,{type:'miroir'});
-  id('bonus-modal').classList.remove('show');
+  id('bonus-modal').classList.remove('show'); document.body.classList.remove('modal-open');
   if(typeof renderPills==='function') renderPills();
   if(typeof renderMatches==='function') renderMatches();
 });
