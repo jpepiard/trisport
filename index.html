@@ -177,6 +177,39 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 
 
+<style id="hotfix-bonus-modal">
+
+/* ==== HOTFIX: centrer la fenêtre Bonus + champs sous le texte ==== */
+#bonus-modal{
+  position: fixed !important;
+  inset: auto !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  display: none !important;
+  background: var(--bg) !important;
+  margin: 0 !important;
+  max-height: 90vh;
+  overflow: auto;
+  z-index: 9998;
+}
+#bonus-modal.show{ display: block !important; }
+
+.bonus-select .bonus-card{
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+.bonus-params{
+  grid-column: 1 / -1;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .25s ease;
+  margin-top: 6px;
+}
+
+</style>
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -573,30 +606,6 @@ function computeCapitaineBonusForMatch(m, tid, player, sport){
   return gain;
 }
 
-
-/* === Recalcule les bonus appliqués d'une journée terminée ===
-   Utilisé quand un admin modifie des scores après "Fin de journée".
-   Ne ré-applique PAS le flag team.bonusCapitaineUsed : on met
-   simplement à jour state.bonusApplied[r][team] à partir des scores. */
-function recomputeAppliedBonusesForRound(r){
-  const rs = roundState(r);
-  if (!rs || !rs.finished) return;
-
-  const matchesOfRound = state.matches.filter(m => m.round === r);
-  const sels = state.bonusSelections[r] || {};
-
-  Object.keys(sels).forEach(tid=>{
-    const sel = sels[tid];
-    if (!sel) return;
-    // Aujourd'hui seul Capitaine attribue des points
-    let total = 0;
-    matchesOfRound.forEach(m=>{
-      total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport);
-    });
-    setBonusApplied(r, tid, total);
-  });
-}
-
 /* Icônes pour titres de sport */
 function sportIcon(name){
   if(name==='darts'){ return `<span class="sport-icon" role="img" aria-label="fléchettes">🎯</span>`; }
@@ -606,6 +615,21 @@ function sportIcon(name){
 
 /* ===== Rendu Rencontres ===== */
 let CURRENT_ROUND=null;
+
+/* Recalcul des bonus appliqués pour une journée déjà terminée (si l'admin modifie des scores) */
+function recomputeAppliedBonusesForRound(r){
+  const rs = roundState(r);
+  if (!rs.finished) return;
+  const sels = state.bonusSelections[r] || {};
+  const matchesOfRound = state.matches.filter(m=>m.round===r);
+  Object.keys(sels).forEach(tid=>{
+    const sel = sels[tid]; if (!sel) return;
+    // Ne modifie pas le flag "used", recalcule juste le total en fonction des scores actuels
+    let total = 0;
+    matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
+    setBonusApplied(r, tid, total);
+  });
+}
 function setRoundStatusPillClasses(pill,rs){
   pill.classList.remove('red','yellow','green');
   if(rs.finished) pill.classList.add('green');
@@ -644,12 +668,12 @@ function bonusChip(r,mTeam,rs){
 
 
 function renderMatches(){
-  try{ const r=CURRENT_ROUND; const rs=roundState(r); if(rs && rs.finished){ recomputeAppliedBonusesForRound(r); } }catch(e){}
-
   const list=id("match-list");list.innerHTML="";
   if(!state.matches.length){list.appendChild(help("Aucune rencontre planifiée."));id("stats-matches").textContent="0 / 0 matches complets";id("round-status").textContent="—";id("btn-start-round").style.display="none";id("btn-end-round").style.display="none";return}
   const groups={};state.matches.forEach(m=>(groups[m.round]=groups[m.round]||[]).push(m));
   const rounds=Object.keys(groups).map(Number).sort((a,b)=>a-b);
+  // Recalcule les bonus pour toutes les journées terminées (au cas où des scores ont été modifiés)
+  Object.keys(groups).map(Number).forEach(rr=>{ if (roundState(rr).finished) { recomputeAppliedBonusesForRound(rr); } });
   CURRENT_ROUND = rounds.find(r=>!roundState(r).finished) ?? rounds[rounds.length-1];
   const rs=roundState(CURRENT_ROUND);
   const roundPill=id("round-status");
@@ -698,12 +722,12 @@ function renderMatches(){
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!can;
+        const rs=roundState(m.round); const can = rs.started ? (rs.finished ? isAdmin() : (isAdmin()||hasClaim(m.a)||hasClaim(m.b))) : false; sel.disabled=!can;
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
+        const rs=roundState(m.round); const can = rs.started ? (rs.finished ? isAdmin() : (isAdmin()||hasClaim(m.a)||hasClaim(m.b))) : false; inp.disabled=!can;
         const mid=m.id,idxSet=parseInt(inp.getAttribute("data-index"),10),which=inp.getAttribute("data-ping");
         const updateNote=()=>{const mm=findMatch(mid),s=mm.pingPts[idxSet],ok=isPingValid(+s.a,+s.b);const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');if(note)note.textContent=ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);const mm=findMatch(mid);mm.pingPts[idxSet][which]=v;saveState();updateNote()});
@@ -712,7 +736,7 @@ function renderMatches(){
       });
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
+        const rs=roundState(m.round); const can = rs.started ? (rs.finished ? isAdmin() : (isAdmin()||hasClaim(m.a)||hasClaim(m.b))) : false; inp.disabled=!can;
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;saveState();updateNote()});
