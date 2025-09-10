@@ -177,51 +177,48 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 
 
-<style id="brand-custom-overrides">
+<style id="brand-logo-title-image">
 
-/* === Branding override: logo image + GTA-like title === */
+/* ===== Brand overrides: logo + title as image ===== */
+
+/* 1) Logo block: load image (tries tripsort/ then trisport/) */
 header .brand .logo{
-  /* Replace gradient square by your logo image */
   background: none !important;
-  background-image: url('trisport/img/logo.png') !important;
+  background-image: url('tripsort/img/logo.png'), url('trisport/img/logo.png') !important;
   background-size: contain !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
   width: 44px !important;
   height: 44px !important;
   border-radius: 10px;
-  /* Hide the "T" letter if present */
-  color: transparent !important;
+  /* hide fallback "T" text if any */
   font-size: 0 !important;
+  color: transparent !important;
   line-height: 0 !important;
 }
-/* GTA / "Pricedown"-style title (with robust fallbacks) */
+
+/* 2) Replace the H1 title by an image (tries tripsort/ then trisport/) */
 header .brand h1{
-  font-family: "Pricedown", Impact, "Arial Black", system-ui, sans-serif !important;
-  font-size: 40px !important;
-  margin: 0 !important;
-  text-transform: uppercase;
-  line-height: 1.05;
-  letter-spacing: 0.5px;
-  color: #ffffff;
-  /* Black outline like GTA */
-  -webkit-text-stroke: 3px #000000;
-  /* Fallback for browsers without text-stroke */
-  text-shadow:
-    0 2px 0 #000,  0 -2px 0 #000,
-    2px 0 0 #000, -2px 0 0 #000,
-    2px 2px 0 #000, -2px 2px 0 #000,
-    2px -2px 0 #000, -2px -2px 0 #000;
+  background-image: url('tripsort/img/titre.png'), url('trisport/img/titre.png') !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: left center !important;
+  display: inline-block !important;
+  width: 220px !important;     /* adjust if your titre.png is wider */
+  height: 44px !important;
+  margin: 0 0 0 10px !important;
+  padding: 0 !important;
+  /* hide text completely */
+  font-size: 0 !important;
+  -webkit-text-stroke: 0 !important;
+  text-shadow: none !important;
+  color: transparent !important;
+  overflow: hidden;
 }
+
 @media (max-width: 520px){
-  header .brand h1{
-    font-size: 28px !important;
-    -webkit-text-stroke: 2px #000000;
-  }
-  header .brand .logo{
-    width: 36px !important;
-    height: 36px !important;
-  }
+  header .brand .logo{ width: 36px !important; height: 36px !important; }
+  header .brand h1{ width: 180px !important; height: 36px !important; margin-left: 8px !important; }
 }
 
 </style>
