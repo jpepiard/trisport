@@ -177,61 +177,6 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 
 
-<style id="patch-center-bonus-and-fields">
-
-/* ==== PATCH: Centrage modal Bonus + champs sous le texte ==== */
-
-/* Le conteneur #bonus-modal a par erreur la classe .bonus-dialog (style de panneau).
-   On force ici son rôle d'overlay plein écran, centré. */
-#bonus-modal {
-  position: fixed !important;
-  inset: 0 !important;
-  display: none !important;            /* visible seulement avec .show */
-  align-items: center !important;
-  justify-content: center !important;
-  background: rgba(0,0,0,.45) !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  max-width: none !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 16px !important;
-  z-index: 9998;
-}
-#bonus-modal.show { display: flex !important; }
-
-/* Le vrai panneau du modal */
-#bonus-modal .bonus-panel{
-  width: min(560px, 92vw);
-  background: #141938;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 12px 32px rgba(0,0,0,.5);
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Cartes bonus : image | texte, puis les champs en dessous */
-.bonus-select .bonus-card{
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: 12px;
-  align-items: start;
-}
-
-/* Champs pliés par défaut ; JS existant ajuste max-height via setParamsOpen() */
-.bonus-params{
-  grid-column: 1 / -1;
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height .25s ease;
-  margin-top: 6px;
-}
-
-</style>
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -628,6 +573,30 @@ function computeCapitaineBonusForMatch(m, tid, player, sport){
   return gain;
 }
 
+
+/* === Recalcule les bonus appliqués d'une journée terminée ===
+   Utilisé quand un admin modifie des scores après "Fin de journée".
+   Ne ré-applique PAS le flag team.bonusCapitaineUsed : on met
+   simplement à jour state.bonusApplied[r][team] à partir des scores. */
+function recomputeAppliedBonusesForRound(r){
+  const rs = roundState(r);
+  if (!rs || !rs.finished) return;
+
+  const matchesOfRound = state.matches.filter(m => m.round === r);
+  const sels = state.bonusSelections[r] || {};
+
+  Object.keys(sels).forEach(tid=>{
+    const sel = sels[tid];
+    if (!sel) return;
+    // Aujourd'hui seul Capitaine attribue des points
+    let total = 0;
+    matchesOfRound.forEach(m=>{
+      total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport);
+    });
+    setBonusApplied(r, tid, total);
+  });
+}
+
 /* Icônes pour titres de sport */
 function sportIcon(name){
   if(name==='darts'){ return `<span class="sport-icon" role="img" aria-label="fléchettes">🎯</span>`; }
@@ -675,6 +644,8 @@ function bonusChip(r,mTeam,rs){
 
 
 function renderMatches(){
+  try{ const r=CURRENT_ROUND; const rs=roundState(r); if(rs && rs.finished){ recomputeAppliedBonusesForRound(r); } }catch(e){}
+
   const list=id("match-list");list.innerHTML="";
   if(!state.matches.length){list.appendChild(help("Aucune rencontre planifiée."));id("stats-matches").textContent="0 / 0 matches complets";id("round-status").textContent="—";id("btn-start-round").style.display="none";id("btn-end-round").style.display="none";return}
   const groups={};state.matches.forEach(m=>(groups[m.round]=groups[m.round]||[]).push(m));
@@ -727,12 +698,12 @@ function renderMatches(){
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const __rs=roundState(m.round); const can=__rs.started ? (__rs.finished ? isAdmin() : (isAdmin()||hasClaim(m.a)||hasClaim(m.b))) : false; sel.disabled=!can;
+        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!can;
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
-        const __rs=roundState(m.round); const can=__rs.started ? (__rs.finished ? isAdmin() : (isAdmin()||hasClaim(m.a)||hasClaim(m.b))) : false; inp.disabled=!can;
+        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
         const mid=m.id,idxSet=parseInt(inp.getAttribute("data-index"),10),which=inp.getAttribute("data-ping");
         const updateNote=()=>{const mm=findMatch(mid),s=mm.pingPts[idxSet],ok=isPingValid(+s.a,+s.b);const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');if(note)note.textContent=ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);const mm=findMatch(mid);mm.pingPts[idxSet][which]=v;saveState();updateNote()});
@@ -741,7 +712,7 @@ function renderMatches(){
       });
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const __rs=roundState(m.round); const can=__rs.started ? (__rs.finished ? isAdmin() : (isAdmin()||hasClaim(m.a)||hasClaim(m.b))) : false; inp.disabled=!can;
+        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;saveState();updateNote()});
