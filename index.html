@@ -17,58 +17,62 @@
   }, true);
 
 function ensureParamWrapper(){
-  const f=id('capitaine-fields'); if(!f) return null;
-  let wrap=id('cap-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='cap-params'; wrap.className='bonus-params'; f.parentNode.insertBefore(wrap,f); wrap.appendChild(f); }
+  const fields = id('capitaine-fields'); if(!fields) return null;
+  let wrap=id('cap-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='cap-params'; wrap.className='bonus-params'; fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields); }
   return wrap;
 }
-
-
 function ensureTaupeWrapper(){
-  const f=id('taupe-fields'); if(!f) return null;
-  let wrap=id('taupe-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='taupe-params'; wrap.className='bonus-params'; f.parentNode.insertBefore(wrap,f); wrap.appendChild(f); }
+  const fields = id('taupe-fields'); if(!fields) return null;
+  let wrap=id('taupe-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='taupe-params'; wrap.className='bonus-params'; fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields); }
   return wrap;
 }
-
-
 function ensureLeftHandWrapper(){
-  const f=id('lefthand-fields'); if(!f) return null;
-  let wrap=id('lefthand-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='lefthand-params'; wrap.className='bonus-params'; f.parentNode.insertBefore(wrap,f); wrap.appendChild(f); }
+  const fields = id('lefthand-fields'); if(!fields) return null;
+  let wrap=id('lefthand-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='lefthand-params'; wrap.className='bonus-params'; fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields); }
   return wrap;
 }
-
-
 function setParamsOpen(openCap, openTaupe, openLeft){
-  const wrapC=ensureParamWrapper(); if(wrapC){ wrapC.style.maxHeight = openCap ? (wrapC.scrollHeight+'px') : '0px'; }
-  const wrapT=ensureTaupeWrapper(); if(wrapT){ wrapT.style.maxHeight = openTaupe ? (wrapT.scrollHeight+'px') : '0px'; }
-  const wrapL=ensureLeftHandWrapper(); if(wrapL){ wrapL.style.maxHeight = openLeft ? (wrapL.scrollHeight+'px') : '0px'; }
+  const wC = ensureParamWrapper(); if (wC){ wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px'; }
+  const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
+  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
-
 
 function selectBonusType(t){
-  window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
-  const cards=[...document.querySelectorAll('.bonus-select .bonus-card')];
-  const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3];
-  [cap,mir,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
-  if (cap && window._bonusType==='capitaine') cap.classList.add('selected');
-  if (mir && window._bonusType==='miroir') mir.classList.add('selected');
-  if (tau && window._bonusType==='taupe') tau.classList.add('selected');
-  if (leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
-  const ctx=id('bonus-context');
-  if (ctx) ctx.textContent = window._bonusType==='miroir' ?
-    "Miroir : inverse le bonus adverse sur tout le match." :
-    (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
-      (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-        "Capitaine : choisissez le joueur et le sport."));
-  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+  const cap = cards[0], mir = cards[1], tau = cards[2], leftc = cards[3];
+  // Clear UI selection
+  [cap, mir, tau, leftc].forEach(c => c && c.classList.remove('selected'));
+
+  // Accept null/undefined/'' as "no selection"
+  if (t === 'capitaine' || t === 'miroir' || t === 'taupe' || t === 'lefthand') {
+    window._bonusType = t;
+    if (cap && t==='capitaine') cap.classList.add('selected');
+    if (mir && t==='miroir')    mir.classList.add('selected');
+    if (tau && t==='taupe')     tau.classList.add('selected');
+    if (leftc && t==='lefthand') leftc.classList.add('selected');
+  } else {
+    window._bonusType = null;
+  }
+
+  const ctx = id('bonus-context');
+  if (ctx) ctx.textContent = !window._bonusType
+    ? "Sélectionnez un bonus ci-dessus."
+    : (window._bonusType==='miroir' ? "Miroir : inverse le bonus adverse sur tout le match." :
+       window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
+       window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
+       "Capitaine : choisissez le joueur et le sport.");
+
+  setParamsOpen(window._bonusType==='capitaine',
+                window._bonusType==='taupe',
+                window._bonusType==='lefthand');
 }
 
-
 function prepareBonusOptions(){
-  const cards=[...document.querySelectorAll('.bonus-select .bonus-card')];
-  cards.forEach((c,i)=>{
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+  cards.forEach((c, i)=>{
     c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
-    c.addEventListener('click',()=> selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))));
-    c.addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
+    c.addEventListener('click', ()=>selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))));
+    c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
   });
   const cap=cards[0], tau=cards[2], leftc=cards[3];
   const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
@@ -125,7 +129,9 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .bonus-dialog{width:min(560px,92vw);background:#141938;border:1px solid var(--border);border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.5)}
 .bonus-dialog .hd{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700}
 .bonus-dialog .bd{padding:16px}.bonus-dialog .ft{padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
-.bonus-card{display:flex;gap:12px;align-items:center;margin:6px 0 12px;padding:10px;border:1px dashed #4b5bd7;border-radius:12px;background:#111636}
+.bonus-card{display:grid;gap:12px;align-items:start;margin:6px 0 12px;padding:10px;border:1px dashed #4b5bd7;border-radius:12px;background:#111636;g
+.bonus-params{grid-column:1 / -1;overflow:hidden;max-height:0;transition:max-height .25s ease;margin-top:6px}
+rid-template-columns:80px 1fr}
 .bonus-illu{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;background:#0f1331;border:1px solid var(--border)}
 .bonus-illu svg{width:36px;height:36px}
 
@@ -172,31 +178,20 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDomain:"trisport-9a7b2.firebaseapp.com",databaseURL:"https://trisport-9a7b2-default-rtdb.europe-west1.firebasedatabase.app",projectId:"trisport-9a7b2",messagingSenderId:"132024051367",appId:"1:132024051367:web:f9aa39785a3d4a43875d82"};
 </script>
 
-<style>
-.bonus-select{ display:flex; flex-direction:column; gap:18px; margin:10px 0; }
-.bonus-select > .bonus-sep{ height:0; border-top:1px dashed var(--border); opacity:.7; margin:0; }
-.bonus-dialog .bonus-card{ display:grid; grid-template-columns:64px 1fr; column-gap:12px; align-items:start; border:2px dashed var(--border); border-radius:12px; padding:12px; }
-.bonus-dialog .bonus-card.selected{ outline:2px solid var(--blue); }
-.bonus-dialog .bonus-card .bonus-illu img{ width:56px; height:56px; object-fit:cover; border-radius:10px; }
-.bonus-params{ grid-column:1 / -1; overflow:hidden; transition:max-height .25s ease; }
-.bonus-title{ font-weight:800; margin-bottom:2px; }
+
+
+<style id="bonus-scroll-fix">
+.bonus-panel{ max-height:90vh; overflow:hidden; display:flex; flex-direction:column; }
+.bonus-panel .hd{ position:sticky; top:0; background:var(--card); z-index:3; padding-bottom:8px; }
+.bonus-panel .bd{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding-right:6px; padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
+.bonus-panel .ft{ position:sticky; bottom:0; background:var(--card); padding-top:8px; z-index:3; box-shadow:0 -8px 12px rgba(0,0,0,.25); }
+.bonus-select{ gap:8px; }
+.bonus-dialog .bonus-card{ grid-template-columns:80px 1fr; padding:10px; border:2px dashed var(--border); border-radius:12px; }
+.bonus-dialog .bonus-card .bonus-illu img{ width:72px; height:72px; border-radius:12px; }
+.bonus-dialog .bonus-card.selected{ border-color: var(--blue); box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset; }
 </style>
 
 
-<style id="bonus-modal-overlay-fix">
-/* Full-screen overlay and centered panel */
-#bonus-modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(8,14,25,.72); z-index:9999; padding:clamp(8px,2.5vh,24px); }
-#bonus-modal.show{ display:flex; }
-#bonus-modal .bonus-panel{ width:min(980px,96vw); max-height:90vh; overflow:hidden; background:var(--card); border:2px dashed var(--border); border-radius:14px; display:flex; flex-direction:column; }
-#bonus-modal .hd{ position:sticky; top:0; background:var(--card); z-index:1; padding:12px 16px; }
-#bonus-modal .bd{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 16px; }
-#bonus-modal .ft{ position:sticky; bottom:0; background:var(--card); padding:12px 16px; z-index:1; box-shadow:0 -8px 14px rgba(0,0,0,.35); }
-
-/* Params under the card, hidden until selection */
-#bonus-modal .bonus-card{ display:grid; grid-template-columns:80px 1fr; align-items:start; gap:12px; }
-#bonus-modal .bonus-params{ grid-column:1 / -1; max-height:0; overflow:hidden; transition:max-height .25s ease; margin-top:8px; }
-#bonus-modal .bonus-card.selected{ border-color: var(--blue); box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset; }
-</style>
 
 </head>
 <body>
@@ -390,10 +385,11 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </main>
 
 <!-- MODAL BONUS -->
-<div id="bonus-modal" aria-hidden="true">
-  <div id="bonus-modal" class="bonus-dialog">
-    <div class="hd">Choisir un bonus — Capitaine</div>
+<div id="bonus-modal" class="bonus-dialog" aria-hidden="true">
+  <div class="bonus-panel">
+    <div class="hd">Choisir un bonus</div>
     <div class="bd">
+
       <div class="bonus-select">
         <!-- Capitaine -->
         <div class="bonus-card">
@@ -437,14 +433,14 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
             <img src="img/main gauche.png" alt=""></div>
           <div class="bonus-text">
             <div class="bonus-title">10 pouces 2 mains gauche</div>
-            <div class="help">L’adversaire doit jouer un sous-match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br/>Choisissez le sport concerné.</div>
+            <div class="help">L’adversaire doit jouer un sous‑match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br/>Choisissez le sport concerné.</div>
           </div>
         </div>
       </div>
 
       <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
 
-      <!-- Paramètres (déplacés sous la carte) -->
+      <!-- Paramètres (insérés sous la carte correspondante) -->
       <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
         <div><label>Capitaine (joueur)</label>
           <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
@@ -465,7 +461,9 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
           <select id="lefthand-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
-<div class="ft">
+
+    </div>
+    <div class="ft">
       <button type="button" class="btn" id="bonus-cancel">Annuler</button>
       <button type="button" class="btn primary" id="bonus-save">Valider</button>
     </div>
@@ -617,7 +615,7 @@ function bonusChip(r,mTeam,rs){
   // Rien choisi → afficher un bouton uniquement pour l'équipe concernée, avant le début.
   const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && iAmTeam);
   if (!sel) {
-    return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}" data-round="${r}">🎖 Bonus</button>` : '';
+    return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
   }
 
   // Déjà choisi : avant fin, visible UNIQUEMENT pour l'équipe concernée
@@ -659,10 +657,10 @@ function renderMatches(){
 
     groups[r].forEach(m=>{
       ensureLengths(m);
-      const wins=computeSetWins(m),pal=m.palet,palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"0-0";
+      const wins=computeSetWins(m),pal=m.palet,palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"—";
       const palChip = `<span class="chip">🥏 Palet: <span class="score-compact">${palScore}</span></span>`;
       const done=isMatchComplete(m);if(done)complete++;
-      const el=document.createElement("div");el.className="match-card";el.setAttribute("data-round", r);-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
+      const el=document.createElement("div");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
       const bonusA=bonusChip(r,m.a,rCtl), bonusB=bonusChip(r,m.b,rCtl);
       el.innerHTML=`<div class="hd" data-expand style="border:none;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
         <div class="teams"><span class="chip round-chip ${badgeClass}">#${++idx}</span>
@@ -882,75 +880,42 @@ document.addEventListener("click",async(e)=>{
 
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
-
-function openBonusModal(round, teamId){
-  const rCtl = roundState(round);
-  if (rCtl.started) { alert("La journée a démarré : bonus verrouillés."); return; }
-  if (teamBonusUsed(teamId)) { alert("Ce bonus a déjà été utilisé une fois."); return; }
-  if (!hasClaim(teamId)) { alert("Connectez-vous à cette équipe pour choisir son bonus."); return; }
-
-  bonusCTX.round = round;
-  bonusCTX.teamId = teamId;
-
-  const sel = getBonusSelection(round, teamId);
-  if (typeof prepareBonusOptions === 'function') { prepareBonusOptions(); selectBonusType(sel?.type || 'capitaine'); }
-  if (id('taupe-sport')) id('taupe-sport').value = (sel?.sport || 'darts');
-  if (id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport || 'darts');
-  if (id('bonus-player')) id('bonus-player').value = sel?.player || 'p1';
-  if (id('bonus-sport')) id('bonus-sport').value = sel?.sport || 'darts';
-  const ctx = id('bonus-context'); if (ctx) ctx.textContent = `Équipe : ${teamName(teamId)} — Journée #${round}`;
-
-  document.body.style.overflow = 'hidden';
+function openBonusModal(round,teamId){
+  const rCtl=roundState(round);
+  if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
+  if(teamBonusUsed(teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
+  if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
+  bonusCTX.round=round;bonusCTX.teamId=teamId;
+  const sel=getBonusSelection(round,teamId);
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||null); }
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||null); }
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||null); }
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
+  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
+  id('bonus-player').value=sel?.player||'p1';
+  id('bonus-sport').value=sel?.sport||'darts';
+  id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
   id('bonus-modal').classList.add('show');
 }
+id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
+id('bonus-save').addEventListener('click',()=>{
+  const r=bonusCTX.round, t=bonusCTX.teamId;
+  if (!window._bonusType) { alert("Sélectionnez un bonus."); return; }
 
-id('bonus-cancel').addEventListener('click',()=>{ id('bonus-modal').classList.remove('show'); document.body.style.overflow=''; document.body.style.overflow=''; });
-id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show'); document.body.style.overflow='';setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});saveState();id('bonus-modal').classList.remove('show'); document.body.style.overflow='';renderMatches()});
+  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
+  if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
+  else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
+  else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
+  else setBonusSelection(r,t,{type:'miroir'});
+  id('bonus-modal').classList.remove('show');
+  if(typeof renderPills==='function') renderPills();
+  if(typeof renderMatches==='function') renderMatches();
+});
 
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
-document.addEventListener("DOMContentLoaded",()=>{normalize();renderAll();const p=id('js-ok');if(p){p.textContent='JS chargé ✅ · handlers OK';p.style.background='#14532d'}const params=new URLSearchParams(location.search);const idp=params.get("id");if(idp){id("join-code").value=idp;joinCloud(idp)}})
-
-// Robust delegated handler in case per-card listeners are not attached
-document.addEventListener('click', (ev) => {
-  const btn = ev.target.closest('[data-bonus]');
-  if (!btn) return;
-  let round = btn.getAttribute('data-round');
-  if (!round) {
-    const host = btn.closest('[data-round]');
-    if (host) round = host.getAttribute('data-round');
-  }
-  if (!round) round = window.CURRENT_ROUND || 1;
-  const team = btn.getAttribute('data-team');
-  if (round && team) openBonusModal(Number(round), team);
-});
-
-
-try {
-  id('btn-start') && id('btn-start').addEventListener('click', ()=>{ state.roundCtl['1']={started:true,finished:false}; save(); renderMatches(); });
-  id('btn-finish') && id('btn-finish').addEventListener('click', ()=>{
-    const r='1', matches = state.matches.filter(m=>m.round===r);
-    const sels = state.bonusSelections[r] || {};
-    let results = {};
-    matches.forEach(m=>{
-      const A=m.a,B=m.b, selA=sels[A], selB=sels[B];
-      let capA=0, capB=0;
-      if (selA && selA.type==='capitaine') capA = computeCapitaineBonusForMatch(m, A, selA.player, selA.sport);
-      if (selB && selB.type==='capitaine') capB = computeCapitaineBonusForMatch(m, B, selB.player, selB.sport);
-      let applyA=0, applyB=0;
-      const mirrorA = !!(selA && selA.type==='miroir');
-      const mirrorB = !!(selB && selB.type==='miroir');
-      if (mirrorA && selB && selB.type==='capitaine') { applyA += capB; capB = 0; }
-      if (mirrorB && selA && selA.type==='capitaine') { applyB += capA; capA = 0; }
-      applyA += capA; applyB += capB;
-      results[A]=(results[A]||0)+applyA;
-      results[B]=(results[B]||0)+applyB;
-    });
-    Object.keys(results).forEach(t=> setBonusApplied(r,t,results[t]||0));
-    state.roundCtl['1']={started:true,finished:true}; save(); renderPills(); renderMatches();
-  });
-} catch(e) { console && console.error && console.error(e); }
-
-</script>
+document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e) {} });</script>
 </body>
 </html>
