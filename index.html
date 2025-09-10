@@ -113,7 +113,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 <style>
 /* Selectable bonus cards */
-.bonus-dialog .bonus-card{
+.bonus-select .bonus-card{
   display: grid;
   grid-template-columns: 64px 1fr;
   column-gap: 12px;
@@ -125,12 +125,12 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
   transition:background .2s ease, border-color .2s ease, box-shadow .2s ease;
   margin: 10px 0;
 }
-.bonus-dialog .bonus-card.selected{
+.bonus-select .bonus-card.selected{
   border-color: var(--accent, #4a90e2);
   background: rgba(0,0,0,0.03);
   box-shadow: 0 0 0 3px rgba(0,0,0,0.06) inset;
 }
-.bonus-dialog .bonus-card .bonus-illu img{ width:56px; height:56px; object-fit:cover; border-radius:10px; }
+.bonus-select .bonus-card .bonus-illu img{ width:56px; height:56px; object-fit:cover; border-radius:10px; }
 .bonus-select{ display:block; }
 .bonus-sep{ height:0; border-top:1px dashed var(--border); opacity:.7; margin:12px 0; }
 
@@ -345,37 +345,51 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
     <div class="hd">Choisir un bonus</div>
     <div class="bd">
       <div class="bonus-select">
-<div class="bonus-card">
-        <div class="bonus-illu" aria-hidden="true">
-          <img src="img/capitaine.jpg" alt="Bonus Capitaine"/></div>
-        <div class="bonus-text">
-          <div style="font-weight:700">Capitaine</div>
-          <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
+        <!-- Capitaine -->
+        <div class="bonus-card">
+          <div class="bonus-illu" aria-hidden="true">
+            <img src="img/capitaine.jpg" alt="Bonus Capitaine"/></div>
+          <div class="bonus-text">
+            <div style="font-weight:700">Capitaine</div>
+            <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
+          </div>
         </div>
+
         <div class="bonus-sep"></div>
-<div class="bonus-card">
-        <div class="bonus-illu" aria-hidden="true">
-          <img src="img/miroir.jpg" alt="Bonus Miroir"/></div>
-        <div class="bonus-text">
-          <div style="font-weight:700">Miroir</div>
-          <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex&nbsp;: si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
+
+        <!-- Miroir -->
+        <div class="bonus-card">
+          <div class="bonus-illu" aria-hidden="true">
+            <img src="img/miroir.jpg" alt="Bonus Miroir"/></div>
+          <div class="bonus-text">
+            <div style="font-weight:700">Miroir</div>
+            <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex : si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
+          </div>
         </div>
+
         <div class="bonus-sep"></div>
-<div class="bonus-card">
-        <div class="bonus-illu" aria-hidden="true">
-          <img src="img/taupe.png" alt="Bonus René la taupe"/></div>
-        <div class="bonus-text">
-          <div style="font-weight:700">René la taupe</div>
-          <div class="help">Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br/>Si l’adversaire joue <b>Miroir</b>, <i>vous</i> portez les lunettes.</div>
+
+        <!-- René la taupe -->
+        <div class="bonus-card">
+          <div class="bonus-illu" aria-hidden="true">
+            <img src="img/taupe.png" alt="Bonus René la taupe"/></div>
+          <div class="bonus-text">
+            <div style="font-weight:700">René la taupe</div>
+            <div class="help">Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br/>Si l’adversaire joue <b>Miroir</b>, <i>vous</i> portez les lunettes.</div>
+          </div>
         </div>
       </div>
-<div class="help" id="bonus-context">—</div>
-<div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
+
+      <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
+
+      <!-- Param blocks anchor (moved under the right card at runtime) -->
+      <div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
         <div><label>Sport</label>
           <select id="taupe-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
-<div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
+
+      <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
         <div><label>Capitaine (joueur)</label>
           <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
         </div>
@@ -383,7 +397,8 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
           <select id="bonus-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
-<div class="ft">
+</div>
+    <div class="ft">
       <button type="button" class="btn" id="bonus-cancel">Annuler</button>
       <button type="button" class="btn primary" id="bonus-save">Valider</button>
     </div>
@@ -908,7 +923,7 @@ function setParamsOpen(openCap, openTaupe){
 }
 function selectBonusType(t){
   window._bonusType = (t==='miroir'||t==='taupe') ? t : 'capitaine';
-  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')] || [...document.querySelectorAll('.bonus-dialog .bonus-card')];
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')] || [...document.querySelectorAll('.bonus-select .bonus-card')];
   const cap = cards[0], mir = cards[1], tau = cards[2];
   if (cap){ cap.classList.toggle('selected', window._bonusType==='capitaine'); cap.setAttribute('aria-pressed', window._bonusType==='capitaine'); }
   if (mir){ mir.classList.toggle('selected', window._bonusType==='miroir'); mir.setAttribute('aria-pressed', window._bonusType==='miroir'); }
@@ -924,7 +939,7 @@ function selectBonusType(t){
   setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe');
 }
 function prepareBonusOptions(){
-  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')] || [...document.querySelectorAll('.bonus-dialog .bonus-card')];
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')] || [...document.querySelectorAll('.bonus-select .bonus-card')];
   cards.forEach((c, idx)=>{
     c.classList.add('selectable');
     c.setAttribute('tabindex','0');
