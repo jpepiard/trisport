@@ -193,6 +193,31 @@ header .brand .title-img{
 }
 
 </style>
+<style id="brand-bigger-sizes">
+
+/* ==== Brand images: bigger logo + much bigger title ==== */
+header .brand{ display:flex; align-items:center; gap:14px; }
+header .brand .logo-img{
+  width: 64px;   /* previously 44px */
+  height: 64px;
+  border-radius: 14px;
+  display: block;
+}
+header .brand .title-img{
+  height: 88px;  /* much larger title */
+  width: auto;
+  display: block;
+}
+@media (max-width: 640px){
+  header .brand .logo-img{ width:48px; height:48px; border-radius:12px; }
+  header .brand .title-img{ height:64px; }
+}
+@media (max-width: 420px){
+  header .brand .logo-img{ width:40px; height:40px; border-radius:10px; }
+  header .brand .title-img{ height:52px; }
+}
+
+</style>
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
