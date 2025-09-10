@@ -36,37 +36,23 @@ function setParamsOpen(openCap, openTaupe, openLeft){
   const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
-
 function selectBonusType(t){
+  window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const cap = cards[0], mir = cards[1], tau = cards[2], leftc = cards[3];
-  // Clear UI selection
-  [cap, mir, tau, leftc].forEach(c => c && c.classList.remove('selected'));
-
-  // Accept null/undefined/'' as "no selection"
-  if (t === 'capitaine' || t === 'miroir' || t === 'taupe' || t === 'lefthand') {
-    window._bonusType = t;
-    if (cap && t==='capitaine') cap.classList.add('selected');
-    if (mir && t==='miroir')    mir.classList.add('selected');
-    if (tau && t==='taupe')     tau.classList.add('selected');
-    if (leftc && t==='lefthand') leftc.classList.add('selected');
-  } else {
-    window._bonusType = null;
-  }
-
-  const ctx = id('bonus-context');
-  if (ctx) ctx.textContent = !window._bonusType
-    ? "Sélectionnez un bonus ci-dessus."
-    : (window._bonusType==='miroir' ? "Miroir : inverse le bonus adverse sur tout le match." :
-       window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
-       window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-       "Capitaine : choisissez le joueur et le sport.");
-
-  setParamsOpen(window._bonusType==='capitaine',
-                window._bonusType==='taupe',
-                window._bonusType==='lefthand');
+  const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3];
+  [cap,mir,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
+  if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
+  if(mir && window._bonusType==='miroir') mir.classList.add('selected');
+  if(tau && window._bonusType==='taupe') tau.classList.add('selected');
+  if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
+  const ctx=id('bonus-context');
+  if(ctx) ctx.textContent = window._bonusType==='miroir' ?
+    "Miroir : inverse le bonus adverse sur tout le match." :
+    (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
+      (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
+        "Capitaine : choisissez le joueur et le sport."));
+  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
 }
-
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   cards.forEach((c, i)=>{
@@ -129,9 +115,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .bonus-dialog{width:min(560px,92vw);background:#141938;border:1px solid var(--border);border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.5)}
 .bonus-dialog .hd{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700}
 .bonus-dialog .bd{padding:16px}.bonus-dialog .ft{padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
-.bonus-card{display:grid;gap:12px;align-items:start;margin:6px 0 12px;padding:10px;border:1px dashed #4b5bd7;border-radius:12px;background:#111636;g
-.bonus-params{grid-column:1 / -1;overflow:hidden;max-height:0;transition:max-height .25s ease;margin-top:6px}
-rid-template-columns:80px 1fr}
+.bonus-card{display:flex;gap:12px;align-items:center;margin:6px 0 12px;padding:10px;border:1px dashed #4b5bd7;border-radius:12px;background:#111636}
 .bonus-illu{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;background:#0f1331;border:1px solid var(--border)}
 .bonus-illu svg{width:36px;height:36px}
 
@@ -192,6 +176,57 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </style>
 
 
+
+
+<style id="bonus-modal-center-fix">
+/* Overlay container centered */
+#bonus-modal{
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0; /* fallback for older browsers */
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+}
+#bonus-modal.show{ display: flex; }
+
+/* The dialog box */
+.bonus-dialog{
+  width: min(560px, 92vw);
+  background: #141938;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.5);
+}
+
+/* Put cards in grid and show params below text */
+.bonus-dialog .bonus-card{
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  align-items: start;
+  gap: 12px;
+  padding: 10px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  background: #111636;
+}
+.bonus-dialog .bonus-card.selected{
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset;
+}
+.bonus-dialog .bonus-card .bonus-illu img{ width:72px; height:72px; border-radius:12px; }
+
+/* Collapsible params containers */
+.bonus-params{
+  grid-column: 1 / -1;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .25s ease;
+  margin-top: 6px;
+}
+</style>
 
 </head>
 <body>
@@ -385,7 +420,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </main>
 
 <!-- MODAL BONUS -->
-<div id="bonus-modal" class="bonus-dialog" aria-hidden="true">
+<div id="bonus-modal" aria-hidden="true"><div class="bonus-dialog">
   <div class="bonus-panel">
     <div class="hd">Choisir un bonus</div>
     <div class="bd">
@@ -887,11 +922,11 @@ function openBonusModal(round,teamId){
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
   bonusCTX.round=round;bonusCTX.teamId=teamId;
   const sel=getBonusSelection(round,teamId);
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||null); }
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
   if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||null); }
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
   if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||null); }
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
   if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
   if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   id('bonus-player').value=sel?.player||'p1';
@@ -902,8 +937,6 @@ function openBonusModal(round,teamId){
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
-  if (!window._bonusType) { alert("Sélectionnez un bonus."); return; }
-
   const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
   if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
   else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
@@ -917,5 +950,113 @@ id('bonus-save').addEventListener('click',()=>{
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e) {} });</script>
+
+<script>
+(function(){
+  const id = (x)=>document.getElementById(x);
+
+  function ensureParamWrapper(){
+    const fields = id('capitaine-fields'); if(!fields) return null;
+    let wrap = id('bonus-capitaine-params');
+    if(!wrap){
+      wrap = document.createElement('div'); wrap.id = 'bonus-capitaine-params'; wrap.className = 'bonus-params';
+      fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields);
+    }
+    return wrap;
+  }
+  function ensureTaupeWrapper(){
+    const fields = id('taupe-fields'); if(!fields) return null;
+    let wrap = id('taupe-params');
+    if(!wrap){
+      wrap = document.createElement('div'); wrap.id = 'taupe-params'; wrap.className = 'bonus-params';
+      fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields);
+    }
+    return wrap;
+  }
+  function ensureLeftHandWrapper(){
+    const fields = id('lefthand-fields'); if(!fields) return null;
+    let wrap = id('lefthand-params');
+    if(!wrap){
+      wrap = document.createElement('div'); wrap.id = 'lefthand-params'; wrap.className = 'bonus-params';
+      fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields);
+    }
+    return wrap;
+  }
+  window.setParamsOpen = function(openCap, openTaupe, openLeft){
+    const wC = ensureParamWrapper(); if (wC){ wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px'; }
+    const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
+    const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
+  };
+
+  window.selectBonusType = function(t){
+    const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
+    const [cap, mir, tau, leftc] = [cards[0], cards[1], cards[2], cards[3]];
+    [cap,mir,tau,leftc].forEach(c => c && c.classList.remove('selected'));
+    if (t==='capitaine' || t==='miroir' || t==='taupe' || t==='lefthand'){
+      window._bonusType = t;
+      if (cap && t==='capitaine') cap.classList.add('selected');
+      if (mir && t==='miroir')    mir.classList.add('selected');
+      if (tau && t==='taupe')     tau.classList.add('selected');
+      if (leftc && t==='lefthand') leftc.classList.add('selected');
+    } else {
+      window._bonusType = null;
+    }
+    const ctx = document.getElementById('bonus-context');
+    if (ctx) ctx.textContent = !window._bonusType
+      ? 'Sélectionnez un bonus ci-dessus.'
+      : (window._bonusType==='miroir' ? 'Miroir : inverse le bonus adverse sur tout le match.'
+        : (window._bonusType==='taupe' ? 'René la taupe : choisissez le sport.'
+          : (window._bonusType==='lefthand' ? '10 pouces 2 mains gauche : choisissez le sport.'
+            : 'Capitaine : choisissez le joueur et le sport.')));
+
+    window.setParamsOpen(window._bonusType==='capitaine',
+                         window._bonusType==='taupe',
+                         window._bonusType==='lefthand');
+  };
+
+  window.prepareBonusOptions = function(){
+    const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
+    cards.forEach((c, i)=>{
+      c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
+      c.addEventListener('click', ()=>window.selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))));
+      c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); window.selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
+    });
+    const cap=cards[0], tau=cards[2], leftc=cards[3];
+    const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
+    const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
+    const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
+  };
+
+  // Centering + open with no selection by default
+  const _openBonusModal_original = window.openBonusModal;
+  window.openBonusModal = function(round, teamId){
+    if (typeof _openBonusModal_original === 'function'){
+      // call original to do guards and context setup, but we will immediately reset selection
+      try{ _openBonusModal_original(round, teamId); }catch(e){}
+    }
+    const modal = document.getElementById('bonus-modal');
+    if (!modal) return;
+    // ensure correct role and visibility
+    modal.classList.add('show');
+    window.prepareBonusOptions();
+    window.selectBonusType(null); // nothing selected initially
+  };
+
+  // Block validation if nothing chosen (capture so we run first)
+  document.addEventListener('DOMContentLoaded', function(){
+    const saveBtn = document.getElementById('bonus-save');
+    if (saveBtn){
+      saveBtn.addEventListener('click', function(e){
+        if(!window._bonusType){
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          alert('Sélectionnez un bonus.');
+        }
+      }, true);
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
