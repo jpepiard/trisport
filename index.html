@@ -379,6 +379,18 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
           </div>
         </div>
       </div>
+        <div class="bonus-sep"></div>
+
+        <!-- 10 pouces 2 mains gauche -->
+        <div class="bonus-card">
+          <div class="bonus-illu" aria-hidden="true">
+            <img src="img/main gauche.png" alt="Bonus 10 pouces 2 mains gauche"/></div>
+          <div class="bonus-text">
+            <div style="font-weight:700">10 pouces 2 mains gauche</div>
+            <div class="help">L’adversaire doit jouer un sous-match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br/>Choisissez le sport concerné.</div>
+          </div>
+        </div>
+
 
       <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
 
@@ -398,7 +410,13 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
         </div>
       </div>
 </div>
-    <div class="ft">
+    
+      <div id="lefthand-fields" class="grid cols-2" style="margin-top:10px">
+        <div><label>Sport</label>
+          <select id="lefthand-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
+        </div>
+      </div>
+<div class="ft">
       <button type="button" class="btn" id="bonus-cancel">Annuler</button>
       <button type="button" class="btn primary" id="bonus-save">Valider</button>
     </div>
@@ -559,7 +577,7 @@ function bonusChip(r,mTeam,rs){
   // Affichage
   if (!roundFinished) {
     // Secret: pilule "Capitaine" + mini image
-    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':'Capitaine'); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':'capitaine.jpg'); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
+    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':'Capitaine')); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':'capitaine.jpg')); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
   } else {
     // Révélé à tout le monde
     const applied = getBonusAppliedSum(mTeam) || 0;
@@ -572,6 +590,12 @@ function bonusChip(r,mTeam,rs){
       const mirrored = !!(oppSel && oppSel.type==='miroir');
       const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
       return `<span class="pill blue">René la taupe / ${labelSport} : ${mirrored?'vous portez les lunettes':'l’adversaire porte les lunettes'}<span class="mini-bonus"><img src="img/taupe.png" alt=""></span></span>`;
+    } else if (sel.type === 'lefthand') {
+      const sch = state.schedule[r]||[]; let opp=null; for(const m of sch){ if(m.a===mTeam){ opp=m.b; break;} if(m.b===mTeam){ opp=m.a; break;} }
+      const oppSel = opp? getBonusSelection(r, opp): null;
+      const mirrored = !!(oppSel && oppSel.type==='miroir');
+      const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
+      return `<span class="pill blue">10 pouces 2 mains gauche / ${labelSport} : ${mirrored?'vous jouez avec la main faible':'l’adversaire joue avec la main faible'}<span class="mini-bonus"><img src="img/main gauche.png" alt=""></span></span>`;
     } else {
       const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
       const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
@@ -880,9 +904,10 @@ function openBonusModal(round,teamId){
   id('bonus-player').value=sel?.player||'p1'; id('bonus-sport').value=sel?.sport||'darts'; if(id('taupe-sport')) id('taupe-sport').value=(sel?.sport||'darts'); id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':'capitaine');
+id('bonus-save').addEventListener('click',()=>{const r=bonusCTX.round,t=bonusCTX.teamId;if(!r||!t)return id('bonus-modal').classList.remove('show');const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
 if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
 else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
+else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
 else setBonusSelection(r,t,{type:'miroir'});saveState();id('bonus-modal').classList.remove('show');renderMatches()});
 
 
@@ -915,45 +940,70 @@ function ensureTaupeWrapper(){
   }
   return wrap;
 }
-function setParamsOpen(openCap, openTaupe){
+
+function ensureLeftHandWrapper(){
+  const f = id('lefthand-fields');
+  if (!f) return null;
+  let wrap = id('lefthand-params');
+  if (!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'lefthand-params';
+    wrap.className = 'bonus-params';
+    f.parentNode.insertBefore(wrap, f);
+    wrap.appendChild(f);
+  }
+  return wrap;
+}
+function setParamsOpen(openCap, openTaupe, openLeft){
   const wrapC = ensureParamWrapper();
   if (wrapC){ wrapC.classList.toggle('open', !!openCap); wrapC.style.maxHeight = openCap ? (wrapC.scrollHeight + 'px') : '0px'; }
   const wrapT = ensureTaupeWrapper();
   if (wrapT){ wrapT.classList.toggle('open', !!openTaupe); wrapT.style.maxHeight = openTaupe ? (wrapT.scrollHeight + 'px') : '0px'; }
+  const wrapL = ensureLeftHandWrapper();
+  if (wrapL){ wrapL.classList.toggle('open', !!openLeft); wrapL.style.maxHeight = openLeft ? (wrapL.scrollHeight + 'px') : '0px'; }
+}
+  const wrapT = ensureTaupeWrapper();
+  if (wrapT){ wrapT.classList.toggle('open', !!openTaupe); wrapT.style.maxHeight = openTaupe ? (wrapT.scrollHeight + 'px') : '0px'; }
 }
 function selectBonusType(t){
-  window._bonusType = (t==='miroir'||t==='taupe') ? t : 'capitaine';
-  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')] || [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const cap = cards[0], mir = cards[1], tau = cards[2];
+  window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+  const cap = cards[0], mir = cards[1], tau = cards[2], leftc = cards[3];
   if (cap){ cap.classList.toggle('selected', window._bonusType==='capitaine'); cap.setAttribute('aria-pressed', window._bonusType==='capitaine'); }
   if (mir){ mir.classList.toggle('selected', window._bonusType==='miroir'); mir.setAttribute('aria-pressed', window._bonusType==='miroir'); }
   if (tau){ tau.classList.toggle('selected', window._bonusType==='taupe'); tau.setAttribute('aria-pressed', window._bonusType==='taupe'); }
+  if (leftc){ leftc.classList.toggle('selected', window._bonusType==='lefthand'); leftc.setAttribute('aria-pressed', window._bonusType==='lefthand'); }
   const ctx = id('bonus-context');
   if (ctx){
     ctx.textContent = window._bonusType==='miroir'
       ? "Miroir : inverse le bonus adverse sur tout le match."
       : (window._bonusType==='taupe'
         ? "René la taupe : choisissez le sport dans lequel l’adversaire devra porter les lunettes."
-        : "Capitaine : choisissez le joueur et le sport concernés.");
+        : (window._bonusType==='lefthand'
+          ? "10 pouces 2 mains gauche : choisissez le sport concerné."
+          : "Capitaine : choisissez le joueur et le sport concernés."));
   }
-  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe');
+  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
 }
 function prepareBonusOptions(){
-  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')] || [...document.querySelectorAll('.bonus-select .bonus-card')];
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   cards.forEach((c, idx)=>{
     c.classList.add('selectable');
     c.setAttribute('tabindex','0');
     c.setAttribute('role','button');
-    c.addEventListener('click', ()=> selectBonusType(idx===0?'capitaine':(idx===1?'miroir':'taupe')));
+    c.addEventListener('click', ()=> selectBonusType(idx===0?'capitaine':(idx===1?'miroir':(idx===2?'taupe':'lefthand'))));
     c.addEventListener('keydown', (ev)=>{
-      if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); selectBonusType(idx===0?'capitaine':(idx===1?'miroir':'taupe')); }
+      if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); selectBonusType(idx===0?'capitaine':(idx===1?'miroir':(idx===2?'taupe':'lefthand'))); }
     });
   });
-  const cap = cards[0], tau = cards[2];
+  const cards2 = [...document.querySelectorAll('.bonus-select .bonus-card')];
+  const cap = cards2[0], tau = cards2[2], leftc = cards2[3];
   const wrapC = ensureParamWrapper();
   if (cap && wrapC && wrapC.previousElementSibling !== cap){ cap.appendChild(wrapC); }
   const wrapT = ensureTaupeWrapper();
   if (tau && wrapT && wrapT.previousElementSibling !== tau){ tau.appendChild(wrapT); }
+  const wrapL = ensureLeftHandWrapper();
+  if (leftc && wrapL && wrapL.previousElementSibling !== leftc){ leftc.appendChild(wrapL); }
 }
 
 /* ===== Boot ===== */
