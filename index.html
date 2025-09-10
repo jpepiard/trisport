@@ -182,6 +182,14 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 .bonus-title{ font-weight:800; margin-bottom:2px; }
 </style>
 
+
+<style id="bonus-scroll-fix">
+/* Bonus modal: keep footer visible, scroll the body */
+.bonus-panel{ max-height:86vh; overflow:hidden; display:flex; flex-direction:column; }
+.bonus-panel .bd{ overflow:auto; }
+.bonus-panel .ft{ position:sticky; bottom:0; background:var(--card); padding-top:8px; }
+</style>
+
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
