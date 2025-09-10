@@ -177,48 +177,19 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 
 
-<style id="brand-logo-title-image">
+<style id='brand-images'>
 
-/* ===== Brand overrides: logo + title as image ===== */
-
-/* 1) Logo block: load image (tries tripsort/ then trisport/) */
-header .brand .logo{
-  background: none !important;
-  background-image: url('tripsort/img/logo.png'), url('trisport/img/logo.png') !important;
-  background-size: contain !important;
-  background-repeat: no-repeat !important;
-  background-position: center !important;
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 10px;
-  /* hide fallback "T" text if any */
-  font-size: 0 !important;
-  color: transparent !important;
-  line-height: 0 !important;
+/* === Brand images: real logo + title image === */
+header .brand{display:flex;gap:12px;align-items:center}
+header .brand .logo-img{
+  width: 44px; height: 44px; border-radius:10px; display:block;
 }
-
-/* 2) Replace the H1 title by an image (tries tripsort/ then trisport/) */
-header .brand h1{
-  background-image: url('tripsort/img/titre.png'), url('trisport/img/titre.png') !important;
-  background-size: contain !important;
-  background-repeat: no-repeat !important;
-  background-position: left center !important;
-  display: inline-block !important;
-  width: 220px !important;     /* adjust if your titre.png is wider */
-  height: 44px !important;
-  margin: 0 0 0 10px !important;
-  padding: 0 !important;
-  /* hide text completely */
-  font-size: 0 !important;
-  -webkit-text-stroke: 0 !important;
-  text-shadow: none !important;
-  color: transparent !important;
-  overflow: hidden;
+header .brand .title-img{
+  height: 44px; width: auto; display:block;
 }
-
-@media (max-width: 520px){
-  header .brand .logo{ width: 36px !important; height: 36px !important; }
-  header .brand h1{ width: 180px !important; height: 36px !important; margin-left: 8px !important; }
+@media (max-width:520px){
+  header .brand .logo-img{ width:36px; height:36px; }
+  header .brand .title-img{ height:36px; }
 }
 
 </style>
@@ -229,7 +200,14 @@ header .brand h1{
 
 <header>
   <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
-    <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
+    <div class="brand">
+  <img class="logo-img" src="img/logo.png"
+       onerror="this.onerror=function(){this.onerror=function(){this.onerror=null;this.src='tripsort/img/logo.png';};this.src='trisport/img/logo.png';}"
+       alt="TriSports logo" />
+  <img class="title-img" src="img/titre.png"
+       onerror="this.onerror=function(){this.onerror=function(){this.onerror=null;this.src='tripsort/img/titre.png';};this.src='trisport/img/titre.png';}"
+       alt="TriSports" />
+</div>
     <nav class="tabs" role="tablist" aria-label="Sections" id="tabs">
       <button type="button" class="tab" role="tab" aria-selected="true" data-tab="setup">Tournoi</button>
       <button type="button" class="tab" role="tab" aria-selected="false" data-tab="equipes">Équipes</button>
