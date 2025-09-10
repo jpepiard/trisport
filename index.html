@@ -925,6 +925,32 @@ document.addEventListener('click', (ev) => {
   if (round && team) openBonusModal(Number(round), team);
 });
 
+
+try {
+  id('btn-start') && id('btn-start').addEventListener('click', ()=>{ state.roundCtl['1']={started:true,finished:false}; save(); renderMatches(); });
+  id('btn-finish') && id('btn-finish').addEventListener('click', ()=>{
+    const r='1', matches = state.matches.filter(m=>m.round===r);
+    const sels = state.bonusSelections[r] || {};
+    let results = {};
+    matches.forEach(m=>{
+      const A=m.a,B=m.b, selA=sels[A], selB=sels[B];
+      let capA=0, capB=0;
+      if (selA && selA.type==='capitaine') capA = computeCapitaineBonusForMatch(m, A, selA.player, selA.sport);
+      if (selB && selB.type==='capitaine') capB = computeCapitaineBonusForMatch(m, B, selB.player, selB.sport);
+      let applyA=0, applyB=0;
+      const mirrorA = !!(selA && selA.type==='miroir');
+      const mirrorB = !!(selB && selB.type==='miroir');
+      if (mirrorA && selB && selB.type==='capitaine') { applyA += capB; capB = 0; }
+      if (mirrorB && selA && selA.type==='capitaine') { applyB += capA; capA = 0; }
+      applyA += capA; applyB += capB;
+      results[A]=(results[A]||0)+applyA;
+      results[B]=(results[B]||0)+applyB;
+    });
+    Object.keys(results).forEach(t=> setBonusApplied(r,t,results[t]||0));
+    state.roundCtl['1']={started:true,finished:true}; save(); renderPills(); renderMatches();
+  });
+} catch(e) { console && console.error && console.error(e); }
+
 </script>
 </body>
 </html>
