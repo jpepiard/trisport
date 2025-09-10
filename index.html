@@ -184,18 +184,26 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 
 
+
 <style id="bonus-scroll-fix">
-/* Bonus modal: header sticky, content scrollable, footer sticky */
-.bonus-panel{ max-height:90vh; overflow:hidden; display:flex; flex-direction:column; }
-.bonus-panel .hd{ position:sticky; top:0; background:var(--card); z-index:2; padding-bottom:8px; }
-.bonus-panel .bd{ overflow:auto; -webkit-overflow-scrolling:touch; padding-right:6px;
-  /* keep content visible above sticky footer on small screens */
-  padding-bottom:calc(72px + env(safe-area-inset-bottom));
+/* Modal bonus: header fixed, body scrolls, footer fixed */
+.bonus-panel{ max-height:92vh; overflow:hidden; display:flex; flex-direction:column; }
+.bonus-panel .hd{ background:var(--card); z-index:3; /* sticky not required since header is outside the scroll area */ }
+.bonus-panel .bd{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding-right:6px;
+  /* leave room so content doesn't hide behind footer */
+  padding-bottom:calc(80px + env(safe-area-inset-bottom));
 }
-.bonus-panel .ft{ position:sticky; bottom:0; background:var(--card); padding-top:8px; z-index:2;
+.bonus-panel .ft{ position:sticky; bottom:0; background:var(--card); padding-top:8px; z-index:3;
   box-shadow:0 -8px 12px rgba(0,0,0,.25);
 }
+
+/* Compact density for cards */
+.bonus-select{ gap:10px; }
+.bonus-select > .bonus-sep{ opacity:.5; }
+.bonus-dialog .bonus-card{ grid-template-columns:56px 1fr; padding:10px; border-width:1px; }
+.bonus-dialog .bonus-card .bonus-illu img{ width:48px; height:48px; }
 </style>
+
 
 
 </head>
