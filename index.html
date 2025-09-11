@@ -177,44 +177,32 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 
 
-<style id='brand-images'>
+<style id="header-compact">
 
-/* === Brand images: real logo + title image === */
-header .brand{display:flex;gap:12px;align-items:center}
+/* ==== Compact header/bandeau (reduce height) ==== */
+header, .topbar, .app-header{
+  padding-block: 8px !important;     /* was likely ~20-24px */
+}
+header .brand{ gap: 10px !important; }
+
+/* keep images big but a bit less tall to compact the band */
 header .brand .logo-img{
-  width: 44px; height: 44px; border-radius:10px; display:block;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 12px !important;
 }
 header .brand .title-img{
-  height: 44px; width: auto; display:block;
-}
-@media (max-width:520px){
-  header .brand .logo-img{ width:36px; height:36px; }
-  header .brand .title-img{ height:36px; }
+  height: 76px !important;           /* was 88px */
+  width: auto !important;
 }
 
-</style>
-<style id="brand-bigger-sizes">
-
-/* ==== Brand images: bigger logo + much bigger title ==== */
-header .brand{ display:flex; align-items:center; gap:14px; }
-header .brand .logo-img{
-  width: 64px;   /* previously 44px */
-  height: 64px;
-  border-radius: 14px;
-  display: block;
-}
-header .brand .title-img{
-  height: 88px;  /* much larger title */
-  width: auto;
-  display: block;
-}
 @media (max-width: 640px){
-  header .brand .logo-img{ width:48px; height:48px; border-radius:12px; }
-  header .brand .title-img{ height:64px; }
+  header .brand .logo-img{ width:46px !important; height:46px !important; border-radius:11px !important; }
+  header .brand .title-img{ height:62px !important; }
 }
 @media (max-width: 420px){
-  header .brand .logo-img{ width:40px; height:40px; border-radius:10px; }
-  header .brand .title-img{ height:52px; }
+  header .brand .logo-img{ width:38px !important; height:38px !important; border-radius:9px !important; }
+  header .brand .title-img{ height:50px !important; }
 }
 
 </style>
@@ -225,14 +213,7 @@ header .brand .title-img{
 
 <header>
   <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
-    <div class="brand">
-  <img class="logo-img" src="img/logo.png"
-       onerror="this.onerror=function(){this.onerror=function(){this.onerror=null;this.src='tripsort/img/logo.png';};this.src='trisport/img/logo.png';}"
-       alt="TriSports logo" />
-  <img class="title-img" src="img/titre.png"
-       onerror="this.onerror=function(){this.onerror=function(){this.onerror=null;this.src='tripsort/img/titre.png';};this.src='trisport/img/titre.png';}"
-       alt="TriSports" />
-</div>
+    <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
     <nav class="tabs" role="tablist" aria-label="Sections" id="tabs">
       <button type="button" class="tab" role="tab" aria-selected="true" data-tab="setup">Tournoi</button>
       <button type="button" class="tab" role="tab" aria-selected="false" data-tab="equipes">Équipes</button>
