@@ -537,6 +537,17 @@ function renderManageList(){renderSetupRecent()}
 let state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};
 let ui={open:{},h2h:false}; let session={admin:false,claims:{}};
 function isAdmin(){return !!session.admin} function hasClaim(tid){return !!session.claims[tid]}
+// === Droits de saisie des scores selon l'état de la journée ===
+function _iAmTeamOf(m){ return hasClaim(m.a) || hasClaim(m.b); }
+function canEditScores(m, rCtl){
+  // Pas commencée -> personne
+  if (!rCtl.started && !rCtl.finished) return false;
+  // Terminée -> admin seul
+  if (rCtl.finished) return isAdmin();
+  // En cours -> équipe concernée + admin
+  return isAdmin() || _iAmTeamOf(m);
+}
+
 function teamObj(tid){return state.teams.find(t=>t.id===tid)||null} function teamName(tid){const t=teamObj(tid);return t?t.name:"—"}
 function initials(name){const s=(name||"").trim();if(!s)return"?";const p=s.split(/\s+/);return(p[0][0]+(p[1]?.[0]||"")).toUpperCase()}
 function avatarHtml(tid,size,attrs){const t=teamObj(tid)||{name:"?"};const url=t.avatar;const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':'');const extra=attrs?(' '+attrs):'';const content=url?('<img src="'+esc(url)+'" alt="avatar">'):('<span class="avatar-initials">'+esc(initials(t.name))+'</span>');return '<span class="avatar '+cls+'" title="'+esc(t.name)+'"'+extra+'>'+content+'</span>'}
@@ -575,7 +586,7 @@ const isPingValid=(a,b)=>{if(a==null||b==null)return false;if(isNaN(a)||isNaN(b)
 function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:0,ping:0};m.darts.forEach(v=>{if(v===0)aw.darts++;else if(v===1)bw.darts++});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b)aw.ping++;else if(b>a)bw.ping++}});return{aw,bw}}
 function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v===1);const okP=getPingPts(m).every(s=>isPingValid(+s.a,+s.b));const T=+state.rules.paletTarget||11,pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1));return okD&&okP&&okL}
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
-function clearMatch(mid){const m=findMatch(mid);if(!m)return;if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b)))return;if(!confirm("Effacer tous les scores de ce match ?"))return;m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};saveState();renderMatches()}
+\1if(!canEditScores(m,roundState(m.round)))return;if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b)))return;if(!confirm("Effacer tous les scores de ce match ?"))return;m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};saveState();renderMatches()}
 
 /* ===== Bonus ===== */
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
