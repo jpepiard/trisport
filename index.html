@@ -177,32 +177,27 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 
 
-<style id="header-compact">
+<style id="brand-image-header">
 
-/* ==== Compact header/bandeau (reduce height) ==== */
+/* ===== Header compact + brand images (reliable) ===== */
 header, .topbar, .app-header{
-  padding-block: 8px !important;     /* was likely ~20-24px */
+  padding-block: 10px !important;
 }
-header .brand{ gap: 10px !important; }
+header .brand{ display:flex; align-items:center; gap:12px; }
 
-/* keep images big but a bit less tall to compact the band */
-header .brand .logo-img{
-  width: 56px !important;
-  height: 56px !important;
-  border-radius: 12px !important;
-}
-header .brand .title-img{
-  height: 76px !important;           /* was 88px */
-  width: auto !important;
-}
+/* Hide old text-based logo/title if present */
+header .brand > .logo{ display:none !important; }
+header .brand > h1{ display:none !important; }
+
+/* Our real images */
+.brand-logo{ width:64px; height:64px; border-radius:14px; display:block; }
+.brand-title{ height:72px; width:auto; display:block; }
 
 @media (max-width: 640px){
-  header .brand .logo-img{ width:46px !important; height:46px !important; border-radius:11px !important; }
-  header .brand .title-img{ height:62px !important; }
+  .brand-title{ height:60px; }
 }
 @media (max-width: 420px){
-  header .brand .logo-img{ width:38px !important; height:38px !important; border-radius:9px !important; }
-  header .brand .title-img{ height:50px !important; }
+  .brand-title{ height:48px; }
 }
 
 </style>
@@ -928,5 +923,52 @@ id('bonus-save').addEventListener('click',()=>{
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e) {} });</script>
+
+<script>
+(function(){
+  function withFallback(img, primary, fall1, fall2){
+    img.src = primary;
+    img.onerror = function(){
+      img.onerror = function(){
+        img.onerror = function(){
+          img.onerror = null;
+          img.src = fall2;
+        };
+        img.src = fall1;
+      };
+      // try img/ first
+      img.src = 'img/' + primary.split('/').pop();
+    };
+  }
+  function ensureBrandImages(){
+    var brand = document.querySelector('header .brand') || document.querySelector('.brand');
+    if(!brand) return;
+    // avoid duplicates
+    if(!brand.querySelector('img.brand-logo')){
+      var logo = document.createElement('img');
+      logo.className = 'brand-logo';
+      logo.alt = 'TriSports logo';
+      brand.prepend(logo);
+      withFallback(logo, 'tripsort/img/logo.png', 'trisport/img/logo.png', 'img/logo.png');
+    }
+    if(!brand.querySelector('img.brand-title')){
+      var title = document.createElement('img');
+      title.className = 'brand-title';
+      title.alt = 'TriSports';
+      // insert after logo
+      var ref = brand.querySelector('img.brand-logo');
+      if(ref && ref.nextSibling){ brand.insertBefore(title, ref.nextSibling); }
+      else { brand.appendChild(title); }
+      withFallback(title, 'tripsort/img/titre.png', 'trisport/img/titre.png', 'img/titre.png');
+    }
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ensureBrandImages);
+  }else{
+    ensureBrandImages();
+  }
+})();
+</script>
+
 </body>
 </html>
