@@ -540,12 +540,9 @@ function isAdmin(){return !!session.admin} function hasClaim(tid){return !!sessi
 // === Droits de saisie des scores selon l'état de la journée ===
 function _iAmTeamOf(m){ return hasClaim(m.a) || hasClaim(m.b); }
 function canEditScores(m, rCtl){
-  // Pas commencée -> personne
-  if (!rCtl.started && !rCtl.finished) return false;
-  // Terminée -> admin seul
-  if (rCtl.finished) return isAdmin();
-  // En cours -> équipe concernée + admin
-  return isAdmin() || _iAmTeamOf(m);
+  if (!rCtl.started && !rCtl.finished) return false; // pas commencé -> personne
+  if (rCtl.finished) return isAdmin();               // terminé -> admin seul
+  return isAdmin() || _iAmTeamOf(m);                 // en cours -> admin + équipe du match
 }
 
 function teamObj(tid){return state.teams.find(t=>t.id===tid)||null} function teamName(tid){const t=teamObj(tid);return t?t.name:"—"}
@@ -564,7 +561,7 @@ const cloud={enabled:false,db:null,id:null,ref:null,timer:null}; const hasFB=!!(
 function initFB(){try{if(!hasFB)return null;if(!firebase.apps||firebase.apps.length===0)firebase.initializeApp(window.FIREBASE_CONFIG);return firebase.database()}catch(_){return null}}
 function setCloudTxt(t){id("cloud-status").textContent=t;id("cloud-status-2").textContent=t}
 function unsubscribeCloud(){try{if(cloud.ref)cloud.ref.off('value')}catch(_){ }cloud.ref=null;cloud.enabled=false;cloud.id=null;setCloudTxt('hors ligne')}
-function resetState(){state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{} state.bonusUsed={};};try{localStorage.removeItem(STORAGE_KEY)}catch(_){}} 
+function resetState(){state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};try{localStorage.removeItem(STORAGE_KEY)}catch(_){}} 
 function joinCloud(code){if(!hasFB){alert("Firebase non configuré.");return}if(!cloud.db){cloud.db=initFB();if(!cloud.db){alert("Init Firebase impossible.");return}}unsubscribeCloud();cloud.id=(code||"").trim();if(!cloud.id){alert("Saisis un code tournoi.");return}cloud.ref=cloud.db.ref("tournaments/"+cloud.id+"/payload");cloud.enabled=true;setCloudTxt("connexion");cloud.ref.on("value",snap=>{const val=snap.val();if(!val){setCloudTxt("connecté (vide)");return}state=val.state||state;normalize();state.cloudId=cloud.id;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));upsertIndex({id:cloud.id,name:state.tournamentName||"Sans titre",updatedAt:Date.now()});renderAll();setCloudTxt("connecté ("+cloud.id+")")});try{history.replaceState(null,"",location.pathname+"?id="+encodeURIComponent(cloud.id))}catch(_){}}
 function pushCloud(immediate){if(!cloud.enabled||!cloud.ref)return;clearTimeout(cloud.timer);cloud.timer=setTimeout(()=>cloud.ref.set({state,updatedAt:Date.now()}),immediate?0:250)}
 function deleteCloud(code){if(!cloud.db){cloud.db=initFB()}return cloud.db.ref("tournaments/"+code).remove()}
@@ -679,7 +676,7 @@ function bonusChip(r,mTeam,rs){
     // Révélé à tout le monde
     const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
     const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); return `<span class="pill blue">${lblType} ${type==='capitaine' ? (sel.player==='p1'?'J1':'J2')+' / '+(sel.sport==='darts'?'Fléchettes':(sel.sport==='ping'?'Ping':'Palet')) : (sel.sport ? ' / '+(sel.sport==='darts'?'Fléchettes':(sel.sport==='ping'?'Ping':'Palet')) : '')} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet'); const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2'; const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); const details = type==='capitaine' ? (` ${labelPlayer} / ${labelSport}`) : (sel.sport ? (` / ${labelSport}`) : ''); return `<span class="pill blue">${lblType}${details} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
   }
 }
 
@@ -868,7 +865,7 @@ document.addEventListener("click",async(e)=>{
     case "btn-copy-link":{const code=(id("join-code").value||id("tcode-input").value||state.cloudId||"").trim();if(!code)return alert("Aucun code.");const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);navigator.clipboard?.writeText(url);alert("Lien copié !\n"+url);break}
 
     case "btn-add-team":{if(!isAdmin())return alert("Réservé à l’admin.");if(state.locked)return alert("Calendrier figé.");state.teams.push({id:uid(),name:"Équipe "+(state.teams.length+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false});saveState();renderTeams();break}
-    case "btn-generate":{if(!isAdmin())return alert("Seul l’admin peut générer.");if(state.locked)return;generateSchedule();state.locked=true;saveState();renderAll();goto("calendrier");break}
+    case "btn-generate":{if(!isAdmin())return alert("Seul l’admin peut générer.");if(state.locked)return;generateSchedule();state.locked=true;state.bonusSelections={};state.bonusApplied={};state.bonusUsed={};(state.teams||[]).forEach(t=>{if(t)t.bonusCapitaineUsed=false});saveState();renderAll();goto("calendrier");break}
 
     case "btn-refresh-standings":
     case "btn-refresh-standings-2":{renderLeaderboard();renderH2H();if(btn.id==="btn-refresh-standings-2")goto("classement");break}
@@ -883,7 +880,7 @@ document.addEventListener("click",async(e)=>{
     case "btn-cloud-delete":{if(!isAdmin())return alert("Suppression cloud réservée à l’admin.");const code=state.cloudId||cloud.id;if(!code)return alert("Aucun code actif.");if(!confirm("Supprimer définitivement ce tournoi du cloud ?"))return;deleteCloud(code).then(()=>{setIndex(getIndex().filter(e=>e.id!==code));unsubscribeCloud();resetState();renderSetupRecent();renderAll();history.replaceState(null,"",location.pathname);alert("Tournoi supprimé.");goto('setup')});break}
 
     /* ---- Réinitialiser scores => réinitialise aussi BONUS + journées ---- */
-    case "btn-reset-scores":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);saveState();renderAll();goto("calendrier");break}
+    case "btn-reset-scores":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);state.bonusSelections={};state.bonusApplied={};state.bonusUsed={};(state.teams||[]).forEach(t=>{if(t)t.bonusCapitaineUsed=false});saveState();renderAll();goto("calendrier");break}
 
     case "btn-unlock":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Déverrouiller le calendrier ?"))return;state.locked=false;saveState();renderTeams();renderMatches();updateLock();break}
 
