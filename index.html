@@ -1008,5 +1008,14 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 })();
 </script>
 
+
+<!-- Debug overlay for JS errors -->
+<div id="js-error-overlay" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:99999;
+background:#c62828;color:#fff;padding:10px 14px;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+  <strong>Erreur JavaScript :</strong>
+  <span id="js-error-msg"></span>
+</div>
+<script>(function(){function showErr(m){var el=document.getElementById('js-error-overlay');var s=document.getElementById('js-error-msg');if(!el||!s)return;s.textContent=m;el.style.display='block'};window.addEventListener('error',e=>showErr(e&&e.message?e.message:String(e)));window.addEventListener('unhandledrejection',e=>showErr('Promise: '+(e&&e.reason?(e.reason.message||String(e.reason)):String(e))))})();</script>
+
 </body>
 </html>
