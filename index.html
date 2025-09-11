@@ -660,7 +660,7 @@ function bonusChip(r,mTeam,rs){
   if (isAdmin() && !roundFinished) return '';
 
   // Rien choisi → afficher un bouton uniquement pour l'équipe concernée, avant le début.
-  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && iAmTeam);
+  const canChoose = (!rs.started && !rs.finished && !(state.bonusUsed?.[r]?.[mTeam]) && iAmTeam);
   if (!sel) {
     return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
   }
@@ -676,7 +676,7 @@ function bonusChip(r,mTeam,rs){
     // Révélé à tout le monde
     const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
     const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet'); const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2'; const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); const details = type==='capitaine' ? (` ${labelPlayer} / ${labelSport}`) : (sel.sport ? (` / ${labelSport}`) : ''); return `<span class="pill blue">${lblType}${details} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); return `<span class="pill blue">${lblType} ${type==='capitaine' ? labelPlayer+' / '+labelSport : (sel.sport ? ' / '+labelSport : '')} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
   }
 }
 
