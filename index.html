@@ -177,44 +177,58 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 
 
-<style id='brand-images'>
+<style id="brand-image-header">
 
-/* === Brand images: real logo + title image === */
-header .brand{display:flex;gap:12px;align-items:center}
-header .brand .logo-img{
-  width: 44px; height: 44px; border-radius:10px; display:block;
+/* ===== Header compact + brand images (reliable) ===== */
+header, .topbar, .app-header{
+  padding-block: 10px !important;
 }
-header .brand .title-img{
-  height: 44px; width: auto; display:block;
+header .brand{ display:flex; align-items:center; gap:12px; }
+
+/* Hide old text-based logo/title if present */
+header .brand > .logo{ display:none !important; }
+header .brand > h1{ display:none !important; }
+
+/* Our real images */
+.brand-logo{ width:64px; height:64px; border-radius:14px; display:block; }
+.brand-title{ height:72px; width:auto; display:block; }
+
+@media (max-width: 640px){
+  .brand-title{ height:60px; }
 }
-@media (max-width:520px){
-  header .brand .logo-img{ width:36px; height:36px; }
-  header .brand .title-img{ height:36px; }
+@media (max-width: 420px){
+  .brand-title{ height:48px; }
 }
 
 </style>
-<style id="brand-bigger-sizes">
+<style id="header-compact-keepimage">
 
-/* ==== Brand images: bigger logo + much bigger title ==== */
-header .brand{ display:flex; align-items:center; gap:14px; }
-header .brand .logo-img{
-  width: 64px;   /* previously 44px */
-  height: 64px;
-  border-radius: 14px;
-  display: block;
+/* ===== Ultra-compact header — keep logo/title sizes ===== */
+header, .app-header, .topbar{
+  padding-block: 6px !important;   /* reduce vertical padding without touching images */
+  min-height: unset !important;
 }
-header .brand .title-img{
-  height: 88px;  /* much larger title */
-  width: auto;
-  display: block;
+/* ensure children don't add extra vertical margins */
+header *{
+  margin-block: 0 !important;
 }
+/* layout + baseline fixes to avoid extra line-height space */
+header .brand{ display:flex; align-items:center; gap:12px; }
+header .brand img{ display:block; }             /* remove inline baseline gap */
+header nav, header .tabs, header .menu{ display:flex; align-items:center; }
+/* optional: slightly tighten chip/button vertical padding */
+header .btn, header .chip, header .pill, header .tab{
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+/* keep the image sizes exactly as they are */
+.brand-logo{ width:64px !important; height:64px !important; }
+.brand-title{ height:72px !important; width:auto !important; }
+
+/* fine-tune on small screens */
 @media (max-width: 640px){
-  header .brand .logo-img{ width:48px; height:48px; border-radius:12px; }
-  header .brand .title-img{ height:64px; }
-}
-@media (max-width: 420px){
-  header .brand .logo-img{ width:40px; height:40px; border-radius:10px; }
-  header .brand .title-img{ height:52px; }
+  header, .app-header, .topbar{ padding-block: 4px !important; }
 }
 
 </style>
@@ -225,14 +239,7 @@ header .brand .title-img{
 
 <header>
   <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
-    <div class="brand">
-  <img class="logo-img" src="img/logo.png"
-       onerror="this.onerror=function(){this.onerror=function(){this.onerror=null;this.src='tripsort/img/logo.png';};this.src='trisport/img/logo.png';}"
-       alt="TriSports logo" />
-  <img class="title-img" src="img/titre.png"
-       onerror="this.onerror=function(){this.onerror=function(){this.onerror=null;this.src='tripsort/img/titre.png';};this.src='trisport/img/titre.png';}"
-       alt="TriSports" />
-</div>
+    <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
     <nav class="tabs" role="tablist" aria-label="Sections" id="tabs">
       <button type="button" class="tab" role="tab" aria-selected="true" data-tab="setup">Tournoi</button>
       <button type="button" class="tab" role="tab" aria-selected="false" data-tab="equipes">Équipes</button>
@@ -720,12 +727,12 @@ function renderMatches(){
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!can;
+        const can=canEditScores(m,rCtl); sel.disabled=!can;
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
+        const can=canEditScores(m,rCtl); inp.disabled=!can;
         const mid=m.id,idxSet=parseInt(inp.getAttribute("data-index"),10),which=inp.getAttribute("data-ping");
         const updateNote=()=>{const mm=findMatch(mid),s=mm.pingPts[idxSet],ok=isPingValid(+s.a,+s.b);const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');if(note)note.textContent=ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);const mm=findMatch(mid);mm.pingPts[idxSet][which]=v;saveState();updateNote()});
@@ -734,7 +741,7 @@ function renderMatches(){
       });
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
+        const can=canEditScores(m,rCtl); inp.disabled=!can;
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;saveState();updateNote()});
@@ -947,5 +954,52 @@ id('bonus-save').addEventListener('click',()=>{
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e) {} });</script>
+
+<script>
+(function(){
+  function withFallback(img, primary, fall1, fall2){
+    img.src = primary;
+    img.onerror = function(){
+      img.onerror = function(){
+        img.onerror = function(){
+          img.onerror = null;
+          img.src = fall2;
+        };
+        img.src = fall1;
+      };
+      // try img/ first
+      img.src = 'img/' + primary.split('/').pop();
+    };
+  }
+  function ensureBrandImages(){
+    var brand = document.querySelector('header .brand') || document.querySelector('.brand');
+    if(!brand) return;
+    // avoid duplicates
+    if(!brand.querySelector('img.brand-logo')){
+      var logo = document.createElement('img');
+      logo.className = 'brand-logo';
+      logo.alt = 'TriSports logo';
+      brand.prepend(logo);
+      withFallback(logo, 'tripsort/img/logo.png', 'trisport/img/logo.png', 'img/logo.png');
+    }
+    if(!brand.querySelector('img.brand-title')){
+      var title = document.createElement('img');
+      title.className = 'brand-title';
+      title.alt = 'TriSports';
+      // insert after logo
+      var ref = brand.querySelector('img.brand-logo');
+      if(ref && ref.nextSibling){ brand.insertBefore(title, ref.nextSibling); }
+      else { brand.appendChild(title); }
+      withFallback(title, 'tripsort/img/titre.png', 'trisport/img/titre.png', 'img/titre.png');
+    }
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ensureBrandImages);
+  }else{
+    ensureBrandImages();
+  }
+})();
+</script>
+
 </body>
 </html>
