@@ -591,7 +591,17 @@ function setBonusSelection(r,tid,sel){state.bonusSelections[r]=state.bonusSelect
 function getBonusSelection(r,tid){return(state.bonusSelections[r]||{})[tid]||null}
 function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{}function getBonusApplied(r,tid){return ((state.bonusApplied||{})[r]||{})[tid]||0};state.bonusApplied[r][tid]=pts}
 function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){const v=state.bonusApplied[r]?.[tid];if(v)s+=v}return s}
-function teamBonusUsed(r,tid){state.bonusUsed=state.bonusUsed||{};return !!(state.bonusUsed[r]&&state.bonusUsed[r][tid]);}function markTeamBonusUsed(r,tid){state.bonusUsed=state.bonusUsed||{};state.bonusUsed[r]=state.bonusUsed[r]||{};state.bonusUsed[r][tid]=true;}
+function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}
+function teamBonusUsedR(r, tid){
+  state.bonusUsed = state.bonusUsed || {};
+  return !!(state.bonusUsed[r] && state.bonusUsed[r][tid]);
+}
+function markTeamBonusUsedR(r, tid){
+  state.bonusUsed = state.bonusUsed || {};
+  state.bonusUsed[r] = state.bonusUsed[r] || {};
+  state.bonusUsed[r][tid] = true;
+}
+function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
 
 /* Capitaine — calcul robuste */
 function computeCapitaineBonusForMatch(m, tid, player, sport){
@@ -651,41 +661,37 @@ function setRoundStatusPillClasses(pill,rs){
   else if(rs.started) pill.classList.add('yellow');
   else pill.classList.add('red');
 }
-
 function bonusChip(r,mTeam,rs){
   const sel = getBonusSelection(r, mTeam);
   const iAmTeam = hasClaim(mTeam);
   const roundFinished = !!rs.finished;
 
-  // Admin : pas de révélations avant la fin
+  // Admin : ne voit rien avant la fin de journée
   if (isAdmin() && !roundFinished) return '';
 
-  // Peut-on choisir ? Seulement avant le début, si non utilisé pour CETTE journée
-  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(r,mTeam) && iAmTeam);
+  // Rien choisi → afficher un bouton uniquement pour l'équipe concernée, avant le début.
+  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && iAmTeam);
   if (!sel) {
     return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
   }
 
-  // Déjà choisi : avant fin, visible uniquement pour l'équipe concernée
+  // Déjà choisi : avant fin, visible UNIQUEMENT pour l'équipe concernée
   if (!roundFinished && !iAmTeam) return '';
 
-  // Libellés & icônes
-  const type = sel.type || 'capitaine';
-  const labelType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine'));
-  const img = type==='miroir' ? 'miroir.png' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg'));
-  const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
-  const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-
+  // Affichage
   if (!roundFinished) {
-    // Secret pendant la journée
-    return `<span class="pill blue">${labelType}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+    // Secret: pilule "Capitaine" + mini image
+    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':'Capitaine')); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':'capitaine.jpg')); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
   } else {
-    // Révélation à la fin
-    const applied = getBonusApplied(r, mTeam) || 0;
-    const details = (type==='capitaine') ? ` ${labelPlayer} / ${labelSport}` : (sel.sport ? ` / ${labelSport}` : '');
-    return `<span class="pill blue">${labelType}${details} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+    // Révélé à tout le monde
+    const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
+    const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
+    const applied = getBonusAppliedSum(mTeam) || 0;
+    return `<span class="pill blue">Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
   }
 }
+
+
 function renderMatches(){
   const list=id("match-list");list.innerHTML="";
   if(!state.matches.length){list.appendChild(help("Aucune rencontre planifiée."));id("stats-matches").textContent="0 / 0 matches complets";id("round-status").textContent="—";id("btn-start-round").style.display="none";id("btn-end-round").style.display="none";return}
@@ -905,10 +911,10 @@ document.addEventListener("click",async(e)=>{
       const sels = state.bonusSelections[r] || {};
       Object.keys(sels).forEach(tid=>{
         const sel = sels[tid]; if (!sel) return;
-        if(teamBonusUsed(r,tid)){ setBonusApplied(r, tid, 0); return; }
+        if(teamBonusUsedR(r,tid)){ setBonusApplied(r, tid, 0); return; }
         let total = 0;
         matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
-        setBonusApplied(r, tid, total); markTeamBonusUsed(r,tid);
+        setBonusApplied(r, tid, total); markTeamBonusUsedR(r,tid);
       });
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
@@ -934,7 +940,7 @@ let bonusCTX={round:null,teamId:null};
 function openBonusModal(round,teamId){
   const rCtl=roundState(round);
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
-  if(teamBonusUsed(round,teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
+  if(teamBonusUsedR(round,teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
   bonusCTX.round=round;bonusCTX.teamId=teamId;
   const sel=getBonusSelection(round,teamId);
