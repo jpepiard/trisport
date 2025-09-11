@@ -537,6 +537,17 @@ function renderManageList(){renderSetupRecent()}
 let state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};
 let ui={open:{},h2h:false}; let session={admin:false,claims:{}};
 function isAdmin(){return !!session.admin} function hasClaim(tid){return !!session.claims[tid]}
+// === Droits de saisie des scores selon l'état de la journée ===
+function _iAmTeamOf(m){ return hasClaim(m.a) || hasClaim(m.b); }
+function canEditScores(m, rCtl){
+  // Pas commencée -> personne
+  if (!rCtl.started && !rCtl.finished) return false;
+  // Terminée -> admin seul
+  if (rCtl.finished) return isAdmin();
+  // En cours -> équipe concernée + admin
+  return isAdmin() || _iAmTeamOf(m);
+}
+
 function teamObj(tid){return state.teams.find(t=>t.id===tid)||null} function teamName(tid){const t=teamObj(tid);return t?t.name:"—"}
 function initials(name){const s=(name||"").trim();if(!s)return"?";const p=s.split(/\s+/);return(p[0][0]+(p[1]?.[0]||"")).toUpperCase()}
 function avatarHtml(tid,size,attrs){const t=teamObj(tid)||{name:"?"};const url=t.avatar;const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':'');const extra=attrs?(' '+attrs):'';const content=url?('<img src="'+esc(url)+'" alt="avatar">'):('<span class="avatar-initials">'+esc(initials(t.name))+'</span>');return '<span class="avatar '+cls+'" title="'+esc(t.name)+'"'+extra+'>'+content+'</span>'}
@@ -576,6 +587,33 @@ function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:
 function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v===1);const okP=getPingPts(m).every(s=>isPingValid(+s.a,+s.b));const T=+state.rules.paletTarget||11,pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1));return okD&&okP&&okL}
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
 function clearMatch(mid){const m=findMatch(mid);if(!m)return;if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b)))return;if(!confirm("Effacer tous les scores de ce match ?"))return;m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};saveState();renderMatches()}
+
+
+function safeClearMatch(mid){
+  const m = findMatch(mid);
+  if(!m) return;
+  const rs = roundState(m.round);
+  if(!canEditScores(m, rs)) return;
+  if(!confirm("Effacer les scores de ce match ?")) return;
+
+  // Reset darts
+  const dN = dartsTotal();
+  m.darts = Array.isArray(m.darts) ? m.darts.slice(0, dN) : [];
+  while(m.darts.length < dN) m.darts.push(0);
+
+  // Reset ping sets
+  const pN = pingTotal();
+  m.pingPts = Array.isArray(m.pingPts) ? m.pingPts.slice(0, pN) : [];
+  while(m.pingPts.length < pN) m.pingPts.push({a:null,b:null});
+
+  // Reset palet
+  m.palet = {a:null,b:null};
+
+  saveState();
+  renderMatches();
+  renderLeaderboard();
+  renderH2H();
+}
 
 /* ===== Bonus ===== */
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
@@ -749,7 +787,7 @@ function renderMatches(){
         inp.addEventListener("change",commit);inp.addEventListener("blur",commit);inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();inp.blur()}})
       });
 
-      const clr=qs('.match-card[data-id="'+m.id+'"] [data-clear]');if(clr)clr.addEventListener("click",()=>clearMatch(m.id));
+      const clr=qs('.match-card[data-id="'+m.id+'"] [data-clear]');if(clr)clr.addEventListener("click",()=>safeClearMatch(m.id));
       const head=qs('.match-card[data-id="'+m.id+'"] [data-expand]');if(head)head.addEventListener("click",()=>{const open=el.getAttribute("aria-expanded")==="true";el.setAttribute("aria-expanded",open?"false":"true");ui.open[m.id]=!open});
       qsa('.match-card[data-id="'+m.id+'"] [data-bonus]').forEach(b=>b.addEventListener('click',()=>openBonusModal(r,b.getAttribute('data-team'))));
     });
