@@ -650,9 +650,20 @@ function clearMatch(mid){const m=findMatch(mid);if(!m)return;if(!(isAdmin()||has
 
 /* ===== Bonus ===== */
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
-function setBonusSelection(r,tid,sel){state.bonusSelections[r]=state.bonusSelections[r]||{};state.bonusSelections[r][tid]=sel}
+/** Enregistre la sélection du bonus (type/joueur/sport) pour une journée & une équipe. */
+function setBonusSelection(r,tid,sel){
+  state.bonusSelections = state.bonusSelections || {};
+  const perRound = ensure(state.bonusSelections, r, () => ({}));
+  perRound[tid] = sel;
+};state.bonusSelections[r][tid]=sel}
 function getBonusSelection(r,tid){return(state.bonusSelections[r]||{})[tid]||null}
-function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{};state.bonusApplied[r][tid]=pts}
+/** Définit les points appliqués pour un bonus donné (par journée & équipe). */
+function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{}
+/** Retourne les points de bonus appliqués pour une journée & équipe (0 si absent). */
+function getBonusApplied(r,tid){
+  return ((state.bonusApplied||{})[r]||{})[tid]||0;
+}
+;state.bonusApplied[r][tid]=pts}
 function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){const v=state.bonusApplied[r]?.[tid];if(v)s+=v}return s}
 function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
 
@@ -989,6 +1000,11 @@ document.addEventListener("click",async(e)=>{
 
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
+/** Ouvre la modale de sélection de bonus pour une équipe et une journée.
+ * @param {number} round - numéro de journée
+ * @param {string} teamId - id de l'équipe
+ * Pré-conditions: journée non démarrée; bonus non utilisé pour cette journée; utilisateur connecté à l'équipe.
+ */
 function openBonusModal(round,teamId){
   const rCtl=roundState(round);
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
