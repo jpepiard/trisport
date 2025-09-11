@@ -865,7 +865,7 @@ document.addEventListener("click",async(e)=>{
     case "btn-copy-link":{const code=(id("join-code").value||id("tcode-input").value||state.cloudId||"").trim();if(!code)return alert("Aucun code.");const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);navigator.clipboard?.writeText(url);alert("Lien copié !\n"+url);break}
 
     case "btn-add-team":{if(!isAdmin())return alert("Réservé à l’admin.");if(state.locked)return alert("Calendrier figé.");state.teams.push({id:uid(),name:"Équipe "+(state.teams.length+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false});saveState();renderTeams();break}
-    case "btn-generate":{if(!isAdmin())return alert("Seul l’admin peut générer.");if(state.locked)return;generateSchedule();state.locked=true;state.bonusSelections={};state.bonusApplied={};state.bonusUsed={};(state.teams||[]).forEach(t=>{if(t)t.bonusCapitaineUsed=false});saveState();renderAll();goto("calendrier");break}
+    case "btn-generate":{if(!isAdmin())return alert("Seul l’admin peut générer.");if(state.locked)return;generateSchedule();state.locked=true;saveState();renderAll();goto("calendrier");break}
 
     case "btn-refresh-standings":
     case "btn-refresh-standings-2":{renderLeaderboard();renderH2H();if(btn.id==="btn-refresh-standings-2")goto("classement");break}
@@ -880,7 +880,7 @@ document.addEventListener("click",async(e)=>{
     case "btn-cloud-delete":{if(!isAdmin())return alert("Suppression cloud réservée à l’admin.");const code=state.cloudId||cloud.id;if(!code)return alert("Aucun code actif.");if(!confirm("Supprimer définitivement ce tournoi du cloud ?"))return;deleteCloud(code).then(()=>{setIndex(getIndex().filter(e=>e.id!==code));unsubscribeCloud();resetState();renderSetupRecent();renderAll();history.replaceState(null,"",location.pathname);alert("Tournoi supprimé.");goto('setup')});break}
 
     /* ---- Réinitialiser scores => réinitialise aussi BONUS + journées ---- */
-    case "btn-reset-scores":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);state.bonusSelections={};state.bonusApplied={};state.bonusUsed={};(state.teams||[]).forEach(t=>{if(t)t.bonusCapitaineUsed=false});saveState();renderAll();goto("calendrier");break}
+    case "btn-reset-scores":{state.bonusSelections={};state.bonusApplied={};state.bonusUsed={};(state.teams||[]).forEach(t=>{if(t)t.bonusCapitaineUsed=false});if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);saveState();renderAll();goto("calendrier");break}
 
     case "btn-unlock":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Déverrouiller le calendrier ?"))return;state.locked=false;saveState();renderTeams();renderMatches();updateLock();break}
 
@@ -1007,15 +1007,6 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   }
 })();
 </script>
-
-
-<!-- Debug overlay for JS errors -->
-<div id="js-error-overlay" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:99999;
-background:#c62828;color:#fff;padding:10px 14px;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
-  <strong>Erreur JavaScript :</strong>
-  <span id="js-error-msg"></span>
-</div>
-<script>(function(){function showErr(m){var el=document.getElementById('js-error-overlay');var s=document.getElementById('js-error-msg');if(!el||!s)return;s.textContent=m;el.style.display='block'};window.addEventListener('error',e=>showErr(e&&e.message?e.message:String(e)));window.addEventListener('unhandledrejection',e=>showErr('Promise: '+(e&&e.reason?(e.reason.message||String(e.reason)):String(e))))})();</script>
 
 </body>
 </html>
