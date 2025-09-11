@@ -586,7 +586,34 @@ const isPingValid=(a,b)=>{if(a==null||b==null)return false;if(isNaN(a)||isNaN(b)
 function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:0,ping:0};m.darts.forEach(v=>{if(v===0)aw.darts++;else if(v===1)bw.darts++});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b)aw.ping++;else if(b>a)bw.ping++}});return{aw,bw}}
 function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v===1);const okP=getPingPts(m).every(s=>isPingValid(+s.a,+s.b));const T=+state.rules.paletTarget||11,pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1));return okD&&okP&&okL}
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
-\1if(!canEditScores(m,roundState(m.round)))return;if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b)))return;if(!confirm("Effacer tous les scores de ce match ?"))return;m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};saveState();renderMatches()}
+function clearMatch(mid){const m=findMatch(mid);if(!m)return;if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b)))return;if(!confirm("Effacer tous les scores de ce match ?"))return;m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};saveState();renderMatches()}
+
+
+function safeClearMatch(mid){
+  const m = findMatch(mid);
+  if(!m) return;
+  const rs = roundState(m.round);
+  if(!canEditScores(m, rs)) return;
+  if(!confirm("Effacer les scores de ce match ?")) return;
+
+  // Reset darts
+  const dN = dartsTotal();
+  m.darts = Array.isArray(m.darts) ? m.darts.slice(0, dN) : [];
+  while(m.darts.length < dN) m.darts.push(0);
+
+  // Reset ping sets
+  const pN = pingTotal();
+  m.pingPts = Array.isArray(m.pingPts) ? m.pingPts.slice(0, pN) : [];
+  while(m.pingPts.length < pN) m.pingPts.push({a:null,b:null});
+
+  // Reset palet
+  m.palet = {a:null,b:null};
+
+  saveState();
+  renderMatches();
+  renderLeaderboard();
+  renderH2H();
+}
 
 /* ===== Bonus ===== */
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
@@ -760,7 +787,7 @@ function renderMatches(){
         inp.addEventListener("change",commit);inp.addEventListener("blur",commit);inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();inp.blur()}})
       });
 
-      const clr=qs('.match-card[data-id="'+m.id+'"] [data-clear]');if(clr)clr.addEventListener("click",()=>clearMatch(m.id));
+      const clr=qs('.match-card[data-id="'+m.id+'"] [data-clear]');if(clr)clr.addEventListener("click",()=>safeClearMatch(m.id));
       const head=qs('.match-card[data-id="'+m.id+'"] [data-expand]');if(head)head.addEventListener("click",()=>{const open=el.getAttribute("aria-expanded")==="true";el.setAttribute("aria-expanded",open?"false":"true");ui.open[m.id]=!open});
       qsa('.match-card[data-id="'+m.id+'"] [data-bonus]').forEach(b=>b.addEventListener('click',()=>openBonusModal(r,b.getAttribute('data-team'))));
     });
