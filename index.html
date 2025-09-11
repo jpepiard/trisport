@@ -201,35 +201,34 @@ header .brand > h1{ display:none !important; }
 }
 
 </style>
+<style id="header-compact-keepimage">
 
-
-<style id="header-extrathin-keepimg">
-
-/* ===== Extra-thin header — keep logo/title sizes exactly ===== */
+/* ===== Ultra-compact header — keep logo/title sizes ===== */
 header, .app-header, .topbar{
-  padding-block: 0 !important;      /* zero vertical padding */
+  padding-block: 6px !important;   /* reduce vertical padding without touching images */
   min-height: unset !important;
-  border-top-width: 0 !important;
-  border-bottom-width: 0 !important;
-  line-height: 1.05 !important;     /* prevent tall line-heights */
 }
-/* remove stray vertical margins */
-header *{ margin-top: 0 !important; margin-bottom: 0 !important; }
-
-/* keep layout tight and centered */
-header .brand{ display:flex; align-items:center; gap:10px !important; }
-header .brand img{ display:block; }            /* removes baseline gap */
+/* ensure children don't add extra vertical margins */
+header *{
+  margin-block: 0 !important;
+}
+/* layout + baseline fixes to avoid extra line-height space */
+header .brand{ display:flex; align-items:center; gap:12px; }
+header .brand img{ display:block; }             /* remove inline baseline gap */
 header nav, header .tabs, header .menu{ display:flex; align-items:center; }
+/* optional: slightly tighten chip/button vertical padding */
+header .btn, header .chip, header .pill, header .tab{
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
 
-/* keep image sizes EXACT */
+/* keep the image sizes exactly as they are */
 .brand-logo{ width:64px !important; height:64px !important; }
 .brand-title{ height:72px !important; width:auto !important; }
 
-/* compress nav items so they don't inflate the header */
-header .btn, header .chip, header .pill, header .tab{
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-  line-height: 1.1 !important;
+/* fine-tune on small screens */
+@media (max-width: 640px){
+  header, .app-header, .topbar{ padding-block: 4px !important; }
 }
 
 </style>
