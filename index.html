@@ -512,6 +512,64 @@ header .btn, header .chip, header .pill, header .tab{
 <script>
 'use strict';
 /* ===== Helpers ===== */
+/**
+ * Types utilitaires pour documentation (aucun impact runtime).
+ * @typedef {{started:boolean, finished:boolean}} RoundCtl
+ * @typedef {{[round:number]: RoundCtl}} RoundCtlMap
+ * @typedef {{[round:number]: {[teamId:string]: any}}} BonusSelections
+ * @typedef {{[round:number]: {[teamId:string]: number}}} BonusApplied
+ * @typedef {{[round:number]: {[teamId:string]: boolean}}} BonusUsed
+ */
+
+/** Centralisation des libellés et images de bonus */
+if (typeof BONUS === "undefined") {
+  var BONUS = {
+    labelForType(type){
+      switch(type){
+        case "miroir": return "Miroir";
+        case "taupe": return "René la taupe";
+        case "lefthand": return "Main gauche";
+        default: return "Capitaine";
+      }
+    },
+    imgForType(type){
+      switch(type){
+        case "miroir": return "miroir.jpg";
+        case "taupe": return "taupe.png";
+        case "lefthand": return "main gauche.png";
+        default: return "capitaine.jpg";
+      }
+    },
+    sportLabel(s){ return s==="darts"?"Fléchettes":(s==="ping"?"Ping":"Palet"); },
+    playerLabel(p){ return p==="p1"?"J1":"J2"; }
+  };
+}
+
+/** Helpers sûrs (non utilisés tant que vous ne les appelez pas) */
+if (typeof ensure === "undefined") {
+  function ensure(obj, key, defFactory){
+    if(!obj[key]) obj[key] = defFactory();
+    return obj[key];
+  }
+}
+
+/** Lecture protégée des points de bonus (non utilisée par défaut) */
+if (typeof getBonusApplied === "undefined") {
+  function getBonusApplied(r, tid){
+    try { return ((state.bonusApplied||{})[r]||{})[tid]||0; } catch(_){ return 0; }
+  }
+}
+
+/** Cloud: setState sécurisé (non utilisé par défaut) */
+if (typeof safeSetStateFromCloud === "undefined") {
+  function safeSetStateFromCloud(val){
+    try{
+      if(!val || typeof val!=="object" || !val.state || typeof val.state!=="object"){ return; }
+      state = val.state;
+    }catch(_){ /* noop */ }
+  }
+}
+
 
 /**
  * @typedef {Object} RoundCtl
@@ -650,20 +708,9 @@ function clearMatch(mid){const m=findMatch(mid);if(!m)return;if(!(isAdmin()||has
 
 /* ===== Bonus ===== */
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
-/** Enregistre la sélection du bonus (type/joueur/sport) pour une journée & une équipe. */
-function setBonusSelection(r,tid,sel){
-  state.bonusSelections = state.bonusSelections || {};
-  const perRound = ensure(state.bonusSelections, r, () => ({}));
-  perRound[tid] = sel;
-};state.bonusSelections[r][tid]=sel}
+function setBonusSelection(r,tid,sel){state.bonusSelections[r]=state.bonusSelections[r]||{};state.bonusSelections[r][tid]=sel}
 function getBonusSelection(r,tid){return(state.bonusSelections[r]||{})[tid]||null}
-/** Définit les points appliqués pour un bonus donné (par journée & équipe). */
-function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{}
-/** Retourne les points de bonus appliqués pour une journée & équipe (0 si absent). */
-function getBonusApplied(r,tid){
-  return ((state.bonusApplied||{})[r]||{})[tid]||0;
-}
-;state.bonusApplied[r][tid]=pts}
+function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{};state.bonusApplied[r][tid]=pts}
 function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){const v=state.bonusApplied[r]?.[tid];if(v)s+=v}return s}
 function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
 
@@ -1000,11 +1047,6 @@ document.addEventListener("click",async(e)=>{
 
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
-/** Ouvre la modale de sélection de bonus pour une équipe et une journée.
- * @param {number} round - numéro de journée
- * @param {string} teamId - id de l'équipe
- * Pré-conditions: journée non démarrée; bonus non utilisé pour cette journée; utilisateur connecté à l'équipe.
- */
 function openBonusModal(round,teamId){
   const rCtl=roundState(round);
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
