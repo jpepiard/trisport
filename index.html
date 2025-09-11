@@ -201,6 +201,37 @@ header .brand > h1{ display:none !important; }
 }
 
 </style>
+<style id="header-compact-keepimage">
+
+/* ===== Ultra-compact header — keep logo/title sizes ===== */
+header, .app-header, .topbar{
+  padding-block: 6px !important;   /* reduce vertical padding without touching images */
+  min-height: unset !important;
+}
+/* ensure children don't add extra vertical margins */
+header *{
+  margin-block: 0 !important;
+}
+/* layout + baseline fixes to avoid extra line-height space */
+header .brand{ display:flex; align-items:center; gap:12px; }
+header .brand img{ display:block; }             /* remove inline baseline gap */
+header nav, header .tabs, header .menu{ display:flex; align-items:center; }
+/* optional: slightly tighten chip/button vertical padding */
+header .btn, header .chip, header .pill, header .tab{
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+/* keep the image sizes exactly as they are */
+.brand-logo{ width:64px !important; height:64px !important; }
+.brand-title{ height:72px !important; width:auto !important; }
+
+/* fine-tune on small screens */
+@media (max-width: 640px){
+  header, .app-header, .topbar{ padding-block: 4px !important; }
+}
+
+</style>
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
