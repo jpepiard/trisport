@@ -589,19 +589,9 @@ function clearMatch(mid){const m=findMatch(mid);if(!m)return;if(!(isAdmin()||has
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
 function setBonusSelection(r,tid,sel){state.bonusSelections[r]=state.bonusSelections[r]||{};state.bonusSelections[r][tid]=sel}
 function getBonusSelection(r,tid){return(state.bonusSelections[r]||{})[tid]||null}
-function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{}function getBonusApplied(r,tid){return ((state.bonusApplied||{})[r]||{})[tid]||0};state.bonusApplied[r][tid]=pts}
+function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{};state.bonusApplied[r][tid]=pts}
 function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){const v=state.bonusApplied[r]?.[tid];if(v)s+=v}return s}
-function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}
-function teamBonusUsedR(r, tid){
-  state.bonusUsed = state.bonusUsed || {};
-  return !!(state.bonusUsed[r] && state.bonusUsed[r][tid]);
-}
-function markTeamBonusUsedR(r, tid){
-  state.bonusUsed = state.bonusUsed || {};
-  state.bonusUsed[r] = state.bonusUsed[r] || {};
-  state.bonusUsed[r][tid] = true;
-}
-function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
+function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
 
 /* Capitaine — calcul robuste */
 function computeCapitaineBonusForMatch(m, tid, player, sport){
@@ -911,10 +901,10 @@ document.addEventListener("click",async(e)=>{
       const sels = state.bonusSelections[r] || {};
       Object.keys(sels).forEach(tid=>{
         const sel = sels[tid]; if (!sel) return;
-        if(teamBonusUsedR(r,tid)){ setBonusApplied(r, tid, 0); return; }
+        if (teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); return; }
         let total = 0;
         matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
-        setBonusApplied(r, tid, total); markTeamBonusUsedR(r,tid);
+        setBonusApplied(r, tid, total); state.bonusUsed=state.bonusUsed||{}; state.bonusUsed[r]=state.bonusUsed[r]||{}; state.bonusUsed[r][tid]=true; markTeamBonusUsed(tid);
       });
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
@@ -940,7 +930,7 @@ let bonusCTX={round:null,teamId:null};
 function openBonusModal(round,teamId){
   const rCtl=roundState(round);
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
-  if(teamBonusUsedR(round,teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
+  if ((state.bonusUsed?.[round]?.[teamId])) return alert("Ce bonus a déjà été utilisé une fois.");
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
   bonusCTX.round=round;bonusCTX.teamId=teamId;
   const sel=getBonusSelection(round,teamId);
