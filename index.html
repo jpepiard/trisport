@@ -660,7 +660,7 @@ function bonusChip(r,mTeam,rs){
   if (isAdmin() && !roundFinished) return '';
 
   // Rien choisi → afficher un bouton uniquement pour l'équipe concernée, avant le début.
-  const canChoose = (!rs.started && !rs.finished && !(state.bonusUsed?.[r]?.[mTeam]) && iAmTeam);
+  const canChoose = (!rs.finished && !(state.bonusUsed?.[r]?.[mTeam]) && iAmTeam);
   if (!sel) {
     return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
   }
@@ -929,7 +929,7 @@ document.addEventListener("click",async(e)=>{
 let bonusCTX={round:null,teamId:null};
 function openBonusModal(round,teamId){
   const rCtl=roundState(round);
-  if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
+  if (rCtl.finished) return alert(\"Cette journée est terminée : bonus verrouillés.\");
   if ((state.bonusUsed?.[round]?.[teamId])) return alert("Ce bonus a déjà été utilisé une fois.");
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
   bonusCTX.round=round;bonusCTX.teamId=teamId;
