@@ -37,18 +37,16 @@ function setParamsOpen(openCap, openTaupe, openLeft){
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
 function selectBonusType(t){
-  window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
-  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3];
-  [cap,mir,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
-  if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
-  if(mir && window._bonusType==='miroir') mir.classList.add('selected');
-  if(tau && window._bonusType==='taupe') tau.classList.add('selected');
-  if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
-  const ctx=id('bonus-context');
-  if(ctx) ctx.textContent = window._bonusType==='miroir' ? "Miroir : inverse le bonus adverse sur tout le match." : (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." : (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." : "Capitaine : bonus équipe, +2 par manche gagnée."));
-  setParamsOpen(false, window._bonusType==='taupe', window._bonusType==='lefthand');
+  window._bonusType = t;
+  const ctx = id('bonus-context');
+  if(ctx){ ctx.textContent = t==='miroir' ? 'Miroir : inverse le bonus adverse sur tout le match.' : (t==='taupe' ? 'René la taupe : choisissez le sport.' : (t==='lefthand' ? '10 pouces 2 mains gauche : choisissez le sport.' : 'Capitaine : bonus équipe, +2 par manche gagnée.')); }
+  // Open only the right params section
+  const taupe = id('taupe-fields'); const left = id('lefthand-fields'); const cap = id('capitaine-fields');
+  if(cap) cap.style.display = 'none';
+  if(taupe) taupe.style.display = (t==='taupe' ? 'block' : 'none');
+  if(left)  left.style.display  = (t==='lefthand' ? 'block' : 'none');
 }
+
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   cards.forEach((c, i)=>{
@@ -234,6 +232,14 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 
 /* Safety: reset any lingering inline styles on list when modal is visible */
 #bonus-modal.show .bonus-select{position:static!important;left:auto!important;top:auto!important;transform:none!important;}
+
+
+/* Modal polish */
+#bonus-modal.show .bonus-panel .hd{position:sticky;top:0;z-index:2;background:var(--panel,#0f1525)}
+#bonus-modal.show .bonus-panel .ft{position:sticky;bottom:0;z-index:2;background:var(--panel,#0f1525)}
+#taupe-fields,#lefthand-fields{display:none} /* hidden by default; JS will open the right one */
+#bonus-modal.show .bonus-panel{overflow:hidden}
+#bonus-modal.show .bonus-panel .bd{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 
 </style>
 
