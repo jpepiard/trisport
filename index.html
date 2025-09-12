@@ -903,7 +903,7 @@ document.addEventListener("click",async(e)=>{
         if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
         let total = 0;
         matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
-        setBonusApplied(r, tid, total); state.bonusUsed=state.bonusUsed||{}; state.bonusUsed[r]=state.bonusUsed[r]||{}; state.bonusUsed[r][tid]=true; markTeamBonusUsed(tid);
+        setBonusApplied(r, tid, total); state.bonusUsed=state.bonusUsed||{}; state.bonusUsed[r]=state.bonusUsed[r]||{}; state.bonusUsed[r][tid]=true; state.bonusUsed=state.bonusUsed||{}; state.bonusUsed[r]=state.bonusUsed[r]||{}; state.bonusUsed[r][tid]=true; markTeamBonusUsed(tid);
       });
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
