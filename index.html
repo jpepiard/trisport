@@ -46,12 +46,8 @@ function selectBonusType(t){
   if(tau && window._bonusType==='taupe') tau.classList.add('selected');
   if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
   const ctx=id('bonus-context');
-  if(ctx) ctx.textContent = window._bonusType==='miroir' ?
-    "Miroir : inverse le bonus adverse sur tout le match." :
-    (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
-      (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-        "Capitaine : choisissez le joueur et le sport."));
-  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
+  if(ctx) ctx.textContent = window._bonusType==='miroir' ? "Miroir : inverse le bonus adverse sur tout le match." : (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." : (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." : "Capitaine : bonus équipe, +2 par manche gagnée."));
+  setParamsOpen(false, window._bonusType==='taupe', window._bonusType==='lefthand');
 }
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
@@ -477,10 +473,10 @@ header .btn, header .chip, header .pill, header .tab{
         </div>
       </div>
 
-      <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
+      <div class="help" id="bonus-context">Capitaine : bonus équipe, +2 par manche gagnée.</div>
 
       <!-- Paramètres (insérés sous la carte correspondante) -->
-      <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
+      <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px;display:none">
         <div><label>Capitaine (joueur)</label>
           <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
         </div>
