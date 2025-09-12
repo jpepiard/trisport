@@ -149,6 +149,14 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .bonus-illu img{width:100%;height:100%;object-fit:cover;border-radius:12px}
 .pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
 .pill .mini-bonus img{width:100%;height:100%;object-fit:cover}
+
+/* Hide Capitaine params (team-wide rule) */
+#capitaine-fields{display:none!important}
+#bonus-player,#capitaine-sport{display:none!important}
+#capitaine-fields label{display:none!important}
+
+/* Ensure modal centers when 'show' is added */
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
 </style>
 
 <!-- Firebase compat -->
@@ -169,6 +177,14 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 .bonus-dialog .bonus-card{ grid-template-columns:80px 1fr; padding:10px; border:2px dashed var(--border); border-radius:12px; }
 .bonus-dialog .bonus-card .bonus-illu img{ width:72px; height:72px; border-radius:12px; }
 .bonus-dialog .bonus-card.selected{ border-color: var(--blue); box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset; }
+
+/* Hide Capitaine params (team-wide rule) */
+#capitaine-fields{display:none!important}
+#bonus-player,#capitaine-sport{display:none!important}
+#capitaine-fields label{display:none!important}
+
+/* Ensure modal centers when 'show' is added */
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
 </style>
 
 
@@ -196,6 +212,14 @@ header .brand > h1{ display:none !important; }
   .brand-title{ height:48px; }
 }
 
+
+/* Hide Capitaine params (team-wide rule) */
+#capitaine-fields{display:none!important}
+#bonus-player,#capitaine-sport{display:none!important}
+#capitaine-fields label{display:none!important}
+
+/* Ensure modal centers when 'show' is added */
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
 </style>
 <style id="header-compact-keepimage">
 
@@ -227,6 +251,14 @@ header .btn, header .chip, header .pill, header .tab{
   header, .app-header, .topbar{ padding-block: 4px !important; }
 }
 
+
+/* Hide Capitaine params (team-wide rule) */
+#capitaine-fields{display:none!important}
+#bonus-player,#capitaine-sport{display:none!important}
+#capitaine-fields label{display:none!important}
+
+/* Ensure modal centers when 'show' is added */
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
 </style>
 </head>
 <body>
@@ -922,8 +954,7 @@ function openBonusModal(round,teamId){
   if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
   if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
-  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   id('bonus-player').value=sel?.player||'p1';
   id('bonus-sport').value=sel?.sport||'darts';
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
