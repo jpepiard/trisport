@@ -192,6 +192,21 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 /* Strengthen centering: when modal is visible, fix the panel and center it */
 #bonus-modal.show .bonus-select{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);}
 
+
+/* === Bonus modal centering (clean) === */
+#bonus-modal{position:fixed;inset:0;display:none;z-index:9999;background:rgba(0,0,0,.45)}
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
+
+/* Center the WHOLE panel, not just inner list */
+#bonus-modal.show .bonus-panel{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(740px,94vw);max-height:86vh;display:flex;flex-direction:column;
+  border-radius:16px;overflow:hidden;background:var(--panel,#0f1525);box-shadow:0 8px 30px rgba(0,0,0,.35);
+}
+#bonus-modal.show .bonus-panel .bd{flex:1 1 auto;overflow:auto}
+/* Make sure inner list is normal flow inside .bd */
+#bonus-modal.show .bonus-panel .bonus-select{position:static;left:auto;top:auto;transform:none;max-height:none;width:auto;max-width:none;display:block}
+
 </style>
 
 <!-- Firebase compat -->
