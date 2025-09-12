@@ -587,33 +587,35 @@ function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUs
 
 /* Capitaine — calcul robuste */
 
-function computeCapitaineBonusForMatch(m, tid){
-  // Nouveau capitaine : bonus d'équipe, tous sports, +2 pts par manche gagnée
+function computeCapitaineBonusForMatch(m, tid, player, sport){
+  // Nouveau Capitaine : bonus d'équipe, tous sports, +2 pts par manche gagnée
+  const AWARD = 2;
   let gain = 0;
   const isA = (m.a === tid), isB = (m.b === tid);
   if (!isA && !isB) return 0;
 
-  const AWARD = 2;
-
-  // Fléchettes : chaque manche (simple/double) gagnée par l'équipe = +2
+  // Fléchettes (victoires simples/doubles)
   if (Array.isArray(m.darts)) {
-    m.darts.forEach(v => {
+    m.darts.forEach(v=>{
       if (v!==0 && v!==1) return;
       const won = isA ? (v===0) : (v===1);
       if (won) gain += AWARD;
     });
   }
 
-  // Ping : chaque manche (simple/double) gagnée par l'équipe = +2
-  if (Array.isArray(m.ping)) {
-    m.ping.forEach(v => {
-      if (v!==0 && v!==1) return;
-      const won = isA ? (v===0) : (v===1);
+  // Ping (chaque sous-match gagné)
+  if (typeof getPingPts === 'function') {
+    const pts = getPingPts(m) || [];
+    pts.forEach(s=>{
+      const a = (s?.a==null?null:+s.a);
+      const b = (s?.b==null?null:+s.b);
+      if (!isPingValid(a,b)) return;
+      const won = isA ? (a>b) : (b>a);
       if (won) gain += AWARD;
     });
   }
 
-  // Palet : si l'équipe atteint la cible, +2
+  // Palet (atteindre la cible)
   const T = +state.rules.paletTarget || 11;
   const a = (m.palet?.a==null?null:+m.palet.a);
   const b = (m.palet?.b==null?null:+m.palet.b);
