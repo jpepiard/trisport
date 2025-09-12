@@ -82,6 +82,7 @@ function centerBonusPanel(){
   }catch(_){}
 }
 
+window.addEventListener('resize', centerBonusPanel); window.addEventListener('scroll', centerBonusPanel, {passive:true});
 </script>
 
 <style>
@@ -186,6 +187,10 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 
 /* Fallback for stubborn layouts: ensure the inner panel can be centered with fixed positioning */
 #bonus-modal .bonus-select{margin:0!important; display:block!important;}
+
+
+/* Strengthen centering: when modal is visible, fix the panel and center it */
+#bonus-modal.show .bonus-select{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);}
 
 </style>
 
