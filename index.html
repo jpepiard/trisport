@@ -32,9 +32,9 @@ function ensureLeftHandWrapper(){
   return wrap;
 }
 function setParamsOpen(openCap, openTaupe, openLeft){
-  const wC = ensureParamWrapper(); if (wC){ wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px'; }
-  const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
-  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
+  const wC = ensureParamWrapper(); if (wC){ wC.style.display = openCap ? 'block' : 'none'; }
+  const wT = ensureTaupeWrapper(); if (wT){ wT.style.display = openTaupe ? 'block' : 'none'; }
+  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.display = openLeft ? 'block' : 'none'; }
 }
 function selectBonusType(t){
   window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
@@ -47,12 +47,14 @@ function selectBonusType(t){
   if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
   const ctx=id('bonus-context');
   if(ctx) ctx.textContent = window._bonusType==='miroir' ?
-    "Miroir : inverse le bonus adverse sur tout le match." :
-    (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
-      (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-        "Capitaine : choisissez le joueur et le sport."));
-  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
+    'Miroir : inverse le bonus adverse sur tout le match.' :
+    (window._bonusType==='taupe' ? 'René la taupe : choisissez le sport.' :
+      (window._bonusType==='lefthand' ? '10 pouces 2 mains gauche : choisissez le sport.' :
+        'Capitaine : bonus équipe, +2 par manche gagnée.'));
+  // Ouvrir uniquement la section correspondante (Capitaine n'a pas de champs)
+  setParamsOpen(false, window._bonusType==='taupe', window._bonusType==='lefthand');
 }
+
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   cards.forEach((c, i)=>{
@@ -231,6 +233,12 @@ header .btn, header .chip, header .pill, header .tab{
   header, .app-header, .topbar{ padding-block: 4px !important; }
 }
 
+
+/* Bonus params layout: full width under the selected card text */
+#cap-params,#taupe-params,#lefthand-params{margin-top:12px}
+#cap-params .grid.cols-2,#taupe-params .grid.cols-2,#lefthand-params .grid.cols-2{grid-template-columns:1fr !important}
+#cap-params label,#taupe-params label,#lefthand-params label{display:block;margin-bottom:6px}
+#cap-params select,#taupe-params select,#lefthand-params select{width:100%}
 </style>
 </head>
 <body>
@@ -1000,206 +1008,6 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   }
 })();
 </script>
-
-
-<!-- === Bonus UI & logic patch === -->
-<style id="bonus-modal-patch">
-/* Overlay + panneau centré propre */
-#bonus-modal{position:fixed;inset:0;display:none;z-index:9999;background:rgba(7,12,24,.6)}
-#bonus-modal.show{display:flex;align-items:center;justify-content:center}
-
-/* Centre TOUT le panneau (entête+contenu+pied) */
-#bonus-modal .bonus-panel{
-  position:relative;
-  width:min(740px,94vw);
-  max-height:86vh;
-  background:#0f1525;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:16px;
-  box-shadow:0 24px 60px rgba(0,0,0,.45);
-  display:flex;flex-direction:column;overflow:hidden;
-}
-
-/* Header/pied collants, sans chevauchement */
-#bonus-modal .bonus-panel .hd{
-  position:sticky;top:0;z-index:2;
-  padding:14px 18px;background:inherit;
-  border-bottom:1px solid rgba(255,255,255,.06);
-}
-#bonus-modal .bonus-panel .ft{
-  position:sticky;bottom:0;z-index:2;
-  padding:12px 18px;background:inherit;
-  border-top:1px solid rgba(255,255,255,.06);
-}
-
-/* Scroll interne fluide uniquement dans le corps */
-#bonus-modal .bonus-panel .bd{
-  flex:1 1 auto;overflow:auto;padding:12px 18px;
-  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
-}
-
-/* La liste redevient en flux normal (pas de position fixed) */
-#bonus-modal .bonus-panel .bonus-select{
-  position:static;left:auto;top:auto;transform:none;
-  width:auto;max-height:none;margin:0;
-}
-
-/* Finitions */
-#bonus-modal .bonus-panel .card{margin:0 0 12px 0}
-#bonus-modal .bonus-panel .card:last-child{margin-bottom:0}
-
-/* Scrollbar sombre cohérente */
-#bonus-modal .bd::-webkit-scrollbar{width:10px}
-#bonus-modal .bd::-webkit-scrollbar-track{background:rgba(255,255,255,.06);border-radius:8px}
-#bonus-modal .bd::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:8px}
-
-/* Capitaine = bonus d'équipe : cacher définitivement ses champs */
-#capitaine-fields,#bonus-player,#capitaine-sport{display:none!important}
-/* Les paramètres Taupe/Main gauche sont cachés par défaut (affichés au clic) */
-#taupe-fields,#lefthand-fields{display:none}
-</style>
-<script id="bonus-modal-patch-js">
-(function(){
-  function lockScroll(on){ try{ document.documentElement.style.overflow = on ? 'hidden' : ''; }catch(_){} }
-
-  // Texte + affichage des sections de paramètres selon le type
-  var _origSelect = window.selectBonusType;
-  window.selectBonusType = function(t){
-    window._bonusType = t;
-    try{
-      var ctx = document.getElementById('bonus-context');
-      if(ctx){
-        ctx.textContent = t==='miroir' ? 'Miroir : inverse le bonus adverse sur tout le match.'
-          : (t==='taupe' ? 'René la taupe : choisissez le sport.'
-          : (t==='lefthand' ? '10 pouces 2 mains gauche : choisissez le sport.'
-          : 'Capitaine : bonus équipe, +2 par manche gagnée.'));
-      }
-      var taupe = document.getElementById('taupe-fields');
-      var left  = document.getElementById('lefthand-fields');
-      var cap   = document.getElementById('capitaine-fields');
-      if(cap)   cap.style.display='none';
-      if(taupe) taupe.style.display = (t==='taupe' ? 'block' : 'none');
-      if(left)  left.style.display  = (t==='lefthand' ? 'block' : 'none');
-    }catch(_){}
-    if (typeof _origSelect === 'function') { try{ _origSelect(t); }catch(_){ } }
-  };
-
-  // Centrage (le flex du modal fait l'essentiel)
-  function centerBonusPanel(){
-    var modal = document.getElementById('bonus-modal');
-    if(!modal) return;
-    // rien à faire si flex; cette fonction existe juste si besoin futur
-  }
-
-  // Sur ouverture : déplacer sous <body>, montrer, cacher sections, verrouiller scroll
-  var _origOpen = window.openBonusModal;
-  window.openBonusModal = function(round, teamId){
-    if (typeof _origOpen === 'function') { _origOpen(round, teamId); }
-    var el = document.getElementById('bonus-modal');
-    if(!el) return;
-    try{ if(el.parentElement !== document.body){ document.body.appendChild(el); } }catch(_){}
-    // cacher toutes les sections de params par défaut
-    try{
-      var taupe=document.getElementById('taupe-fields');
-      var left=document.getElementById('lefthand-fields');
-      var cap=document.getElementById('capitaine-fields');
-      if(cap) cap.style.display='none';
-      if(taupe) taupe.style.display='none';
-      if(left) left.style.display='none';
-    }catch(_){}
-    el.classList.add('show');
-    lockScroll(true);
-    centerBonusPanel();
-  };
-
-  // Fermer si clic sur overlay
-  document.addEventListener('click', function(e){
-    var el = document.getElementById('bonus-modal');
-    if(!el) return;
-    if(e.target === el){
-      el.classList.remove('show'); lockScroll(false);
-    }
-  });
-
-  // Fermer au clic sur Annuler/Valider (si boutons taggés data-cmd)
-  document.addEventListener('click', function(e){
-    var cmd = e.target && e.target.getAttribute && e.target.getAttribute('data-cmd');
-    if(cmd === 'bonus-cancel' || cmd === 'bonus-validate'){
-      var el = document.getElementById('bonus-modal');
-      if(el) el.classList.remove('show');
-      lockScroll(false);
-    }
-  }, true);
-
-  // === Nouveau calcul Capitaine : bonus d'équipe, +2 par manche gagnée (tous sports) ===
-  window.computeCapitaineBonusForMatch = function(m, tid, player, sport){
-    var AWARD = 2, gain = 0;
-    var isA = (m.a === tid), isB = (m.b === tid);
-    if(!isA && !isB) return 0;
-
-    // Fléchettes : 0 = A gagne, 1 = B gagne
-    if (Array.isArray(m.darts)){
-      m.darts.forEach(function(v){
-        if(v!==0 && v!==1) return;
-        var won = isA ? (v===0) : (v===1);
-        if(won) gain += AWARD;
-      });
-    }
-
-    // Ping (via getPingPts)
-    try{
-      var pts = (typeof getPingPts==='function' ? (getPingPts(m)||[]) : []);
-      pts.forEach(function(s){
-        var a = (s && s.a!=null)? +s.a : null;
-        var b = (s && s.b!=null)? +s.b : null;
-        if (typeof isPingValid==='function' && !isPingValid(a,b)) return;
-        var won = isA ? (a>b) : (b>a);
-        if(won) gain += AWARD;
-      });
-    }catch(_){}
-
-    // Palet : +2 si l'équipe atteint la cible
-    try{
-      var T = +( (window.state && state.rules && state.rules.paletTarget) || 11 );
-      var a = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
-      var b = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
-      if((isA && a===T) || (isB && b===T)) gain += AWARD;
-    }catch(_){}
-
-    return gain;
-  };
-
-  // === Disponibilité du bonus par journée ===
-  window.teamBonusUsed = function(tid){
-    var r = (typeof window.CURRENT_ROUND!=='undefined') ? window.CURRENT_ROUND : null;
-    var used = (window.state && state.bonusUsed) ? state.bonusUsed : {};
-    return !!(r!=null && used[r] && used[r][tid]);
-  };
-  window.markTeamBonusUsed = function(tid){
-    var r = (typeof window.CURRENT_ROUND!=='undefined') ? window.CURRENT_ROUND : null;
-    if(!window.state) return;
-    state.bonusUsed = state.bonusUsed || {};
-    if(r!=null){
-      state.bonusUsed[r] = state.bonusUsed[r] || {};
-      state.bonusUsed[r][tid] = true;
-    }
-  };
-  // Init safe
-  try{ if(window.state){ state.bonusSelections = state.bonusSelections||{}; state.bonusApplied=state.bonusApplied||{}; state.bonusUsed=state.bonusUsed||{}; } }catch(_){}
-
-  // Reset : nettoyer aussi les bonus maps
-  document.addEventListener('click', function(e){
-    var cmd = e.target && e.target.getAttribute && e.target.getAttribute('data-cmd');
-    if(cmd === 'btn-reset-scores'){
-      try{
-        state.bonusSelections={}; state.bonusApplied={}; state.bonusUsed={};
-        if(state.teams){ state.teams.forEach(function(t){ if(t) t.bonusCapitaineUsed=false; }); }
-      }catch(_){}
-    }
-  }, true);
-})();
-</script>
-<!-- === /Bonus UI & logic patch === -->
 
 </body>
 </html>
