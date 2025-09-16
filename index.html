@@ -32,9 +32,9 @@ function ensureLeftHandWrapper(){
   return wrap;
 }
 function setParamsOpen(openCap, openTaupe, openLeft){
-  const wC = ensureParamWrapper(); if (wC){ wC.style.display = openCap ? 'block' : 'none'; }
-  const wT = ensureTaupeWrapper(); if (wT){ wT.style.display = openTaupe ? 'block' : 'none'; }
-  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.display = openLeft ? 'block' : 'none'; }
+  const wC = ensureParamWrapper(); if (wC){ wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px'; }
+  const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
+  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
 function selectBonusType(t){
   window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
@@ -47,14 +47,12 @@ function selectBonusType(t){
   if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
   const ctx=id('bonus-context');
   if(ctx) ctx.textContent = window._bonusType==='miroir' ?
-    'Miroir : inverse le bonus adverse sur tout le match.' :
-    (window._bonusType==='taupe' ? 'René la taupe : choisissez le sport.' :
-      (window._bonusType==='lefthand' ? '10 pouces 2 mains gauche : choisissez le sport.' :
-        'Capitaine : bonus équipe, +2 par manche gagnée.'));
-  // Ouvrir uniquement la section correspondante (Capitaine n'a pas de champs)
-  setParamsOpen(false, window._bonusType==='taupe', window._bonusType==='lefthand');
+    "Miroir : inverse le bonus adverse sur tout le match." :
+    (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
+      (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
+        "Capitaine : choisissez le joueur et le sport."));
+  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
 }
-
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   cards.forEach((c, i)=>{
@@ -234,11 +232,25 @@ header .btn, header .chip, header .pill, header .tab{
 }
 
 
-/* Bonus params layout: full width under the selected card text */
-#cap-params,#taupe-params,#lefthand-params{margin-top:12px}
-#cap-params .grid.cols-2,#taupe-params .grid.cols-2,#lefthand-params .grid.cols-2{grid-template-columns:1fr !important}
-#cap-params label,#taupe-params label,#lefthand-params label{display:block;margin-bottom:6px}
-#cap-params select,#taupe-params select,#lefthand-params select{width:100%}
+/* === Modal centering & bonus params layout (final) === */
+#bonus-modal{position:fixed;inset:0;display:none;z-index:9999;background:rgba(7,12,24,.55)}
+#bonus-modal.show{display:block}
+#bonus-modal .bonus-panel{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:clamp(340px, 92vw, 760px);max-height:86vh;background:#0f1525;
+  border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.45);
+  border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;overflow:hidden;
+}
+#bonus-modal .bonus-panel .hd{position:sticky;top:0;padding:14px 18px;background:#0f1525;z-index:2;border-bottom:1px solid rgba(255,255,255,.06)}
+#bonus-modal .bonus-panel .ft{position:sticky;bottom:0;padding:12px 18px;background:#0f1525;z-index:2;border-top:1px solid rgba(255,255,255,.06)}
+#bonus-modal .bonus-panel .bd{flex:1 1 auto;overflow:auto;padding:12px 18px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+/* Place param blocks INSIDE the selected card, under the text */
+.param-wrapper{margin:12px 16px 0}
+.param-wrapper .grid.cols-2{grid-template-columns:1fr!important}
+.param-wrapper label{display:block;margin-bottom:6px}
+.param-wrapper select{width:100%}
+/* Hide Capitaine params forever (bonus d'équipe) */
+#cap-params,#capitaine-fields,#bonus-player,#capitaine-sport{display:none!important}
 </style>
 </head>
 <body>
@@ -1006,6 +1018,122 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   }else{
     ensureBrandImages();
   }
+})();
+</script>
+
+
+<script>
+(function(){
+  function lockScroll(on){ document.documentElement.style.overflow = on ? 'hidden' : ''; }
+
+  function findCardByTitle(txt){
+    const cards=[...document.querySelectorAll('#bonus-modal .bonus-select .bonus-card')];
+    return cards.find(c => (c.querySelector('.bonus-title')?.textContent||'').trim().toLowerCase()===txt.toLowerCase()) || null;
+  }
+
+  function placeParamsInCard(type){
+    // type: 'taupe' | 'lefthand'
+    const wrapId = type==='taupe' ? 'taupe-params' : 'lefthand-params';
+    const cardTitle = type==='taupe' ? 'René la taupe' : '10 pouces 2 mains gauche';
+    let wrap = document.getElementById(wrapId);
+    const card = findCardByTitle(cardTitle);
+    if(!card) return;
+    if(!wrap){
+      // rely on existing ensure*Wrapper functions if present
+      try{
+        wrap = (type==='taupe' && typeof ensureTaupeWrapper==='function') ? ensureTaupeWrapper()
+            : (type==='lefthand' && typeof ensureLeftHandWrapper==='function') ? ensureLeftHandWrapper()
+            : null;
+      }catch(_){}
+    }
+    if(!wrap) return;
+    wrap.classList.add('param-wrapper');
+    // insert after the .bonus-text of the card
+    const anchor = card.querySelector('.bonus-text') || card;
+    if(wrap.parentElement !== card) anchor.insertAdjacentElement('afterend', wrap);
+  }
+
+  // Override selectBonusType to toggle AND place params into the selected card
+  const _origSelect = window.selectBonusType;
+  window.selectBonusType = function(t){
+    window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
+    try{
+      const ctx = document.getElementById('bonus-context');
+      if(ctx){
+        ctx.textContent = window._bonusType==='miroir' ?
+          'Miroir : inverse le bonus adverse sur tout le match.' :
+          (window._bonusType==='taupe' ? 'René la taupe : choisissez le sport.' :
+          (window._bonusType==='lefthand' ? '10 pouces 2 mains gauche : choisissez le sport.' :
+           'Capitaine : bonus équipe, +2 par manche gagnée.'));
+      }
+      // Place wrappers in their cards (once)
+      placeParamsInCard('taupe');
+      placeParamsInCard('lefthand');
+      const wC = document.getElementById('cap-params');
+      const wT = document.getElementById('taupe-params');
+      const wL = document.getElementById('lefthand-params');
+      if(wC) wC.style.display='none';
+      if(wT) wT.style.display=(window._bonusType==='taupe')?'block':'none';
+      if(wL) wL.style.display=(window._bonusType==='lefthand')?'block':'none';
+    }catch(_){}
+    if(typeof _origSelect==='function'){ try{ _origSelect(t); }catch(_){ } }
+  };
+
+  // Center + open
+  const _origOpen = window.openBonusModal;
+  window.openBonusModal = function(round, teamId){
+    if(typeof _origOpen==='function'){ _origOpen(round, teamId); }
+    const el = document.getElementById('bonus-modal');
+    if(!el) return;
+    try{ if(el.parentElement!==document.body){ document.body.appendChild(el); } }catch(_){}
+    // Hide all param sections by default
+    const ids=['cap-params','taupe-params','lefthand-params'];
+    ids.forEach(id=>{ const w=document.getElementById(id); if(w) w.style.display='none'; });
+    el.classList.add('show');
+    lockScroll(true);
+  };
+
+  // Close on overlay click
+  document.addEventListener('click', function(e){
+    const modal = document.getElementById('bonus-modal');
+    if(!modal) return;
+    if(e.target===modal){ modal.classList.remove('show'); lockScroll(false); }
+  });
+
+  // Capitaine new scoring (team-wide +2 per set)
+  window.computeCapitaineBonusForMatch = function(m, tid){
+    const AWARD=2; let gain=0;
+    const isA=(m.a===tid), isB=(m.b===tid);
+    if(!isA && !isB) return 0;
+    if(Array.isArray(m.darts)){
+      m.darts.forEach(v=>{ if(v!==0&&v!==1) return; const won=isA?(v===0):(v===1); if(won) gain+=AWARD; });
+    }
+    try{
+      const pts=(typeof getPingPts==='function'?(getPingPts(m)||[]):[]);
+      pts.forEach(s=>{ const a=+s.a, b=+s.b; if(typeof isPingValid==='function' && !isPingValid(a,b)) return; const won=isA?(a>b):(b>a); if(won) gain+=AWARD; });
+    }catch(_){}
+    try{
+      const T=+( (window.state && state.rules && state.rules.paletTarget) || 11 );
+      const a=(m.palet&&m.palet.a!=null)?+m.palet.a:null;
+      const b=(m.palet&&m.palet.b!=null)?+m.palet.b:null;
+      if((isA && a===T) || (isB && b===T)) gain+=AWARD;
+    }catch(_){}
+    return gain;
+  };
+
+  // Bonus usage per round
+  window.teamBonusUsed = function(tid){
+    const r=(typeof window.CURRENT_ROUND!=='undefined')?window.CURRENT_ROUND:null;
+    const used=(window.state&&state.bonusUsed)?state.bonusUsed:{};
+    return !!(r!=null && used[r] && used[r][tid]);
+  };
+  window.markTeamBonusUsed = function(tid){
+    const r=(typeof window.CURRENT_ROUND!=='undefined')?window.CURRENT_ROUND:null;
+    if(!window.state) return;
+    state.bonusUsed=state.bonusUsed||{};
+    if(r!=null){ state.bonusUsed[r]=state.bonusUsed[r]||{}; state.bonusUsed[r][tid]=true; }
+  };
+  try{ if(window.state){ state.bonusSelections=state.bonusSelections||{}; state.bonusApplied=state.bonusApplied||{}; state.bonusUsed=state.bonusUsed||{}; } }catch(_){}
 })();
 </script>
 
