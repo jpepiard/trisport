@@ -29,10 +29,22 @@ function ensureTaupeWrapper(){
 function ensureLeftHandWrapper(){
   const fields = id('lefthand-fields'); if(!fields) return null;
   let wrap=id('lefthand-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='lefthand-params'; wrap.className='bonus-params'; fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields); }
+  function ensureMelonWrapper(){
+    let w = id('melon-fields');
+    if (!w) return null;
+    if (!w.classList.contains('bonus-params')) w.classList.add('bonus-params');
+    return w;
+  }
   return wrap;
 }
-function setParamsOpen(openCap, openTaupe, openLeft){
-  const wC = ensureParamWrapper(); if (wC){ wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px'; }
+function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
+  const w1 = ensureCapWrapper(); const w2 = ensureTaupeWrapper(); const w3 = ensureLeftHandWrapper(); const w4 = ensureMelonWrapper();
+  if (w1) w1.style.maxHeight = openCap? (w1.scrollHeight+'px') : '0px';
+  if (w2) w2.style.maxHeight = openTaupe? (w2.scrollHeight+'px') : '0px';
+  if (w3) w3.style.maxHeight = openLeft? (w3.scrollHeight+'px') : '0px';
+  if (w4) w4.style.maxHeight = openMelon? (w4.scrollHeight+'px') : '0px';
+}
+
   const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
@@ -65,6 +77,26 @@ function prepareBonusOptions(){
   const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
   const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
 }
+
+  function updateMelonOptions(){
+    try{
+      const r = state.rules || {};
+      const sport = id('melon-sport')?.value || 'darts';
+      const sel = id('melon-index');
+      if(!sel) return;
+      const opts=[];
+      if(sport==='darts'){
+        const N = (r.dartsSingles||2) + (r.dartsDoubles||1);
+        for(let i=1;i<=N;i++) opts.push(`<option value="${i}">Sous‑match ${i}</option>`);
+      }else if(sport==='ping'){
+        const N = (r.pingSingles||2) + (r.pingDoubles||1);
+        for(let i=1;i<=N;i++) opts.push(`<option value="${i}">Sous‑match ${i}</option>`);
+      }else{
+        opts.push('<option value="1">Unique sous‑match</option>');
+      }
+      sel.innerHTML = opts.join('');
+    }catch(e){}
+  }
 
 </script>
 
@@ -484,6 +516,18 @@ header .btn, header .chip, header .pill, header .tab{
           </div>
         </div>
       </div>
+        <div class="bonus-sep"></div>
+
+        <!-- Melon d'or -->
+        <div class="bonus-card">
+          <div class="bonus-illu" aria-hidden="true">
+            <img src="img/melon.png" alt=""></div>
+          <div class="bonus-text">
+            <div class="bonus-title">Melon d’or</div>
+            <div class="help">Cible un <b>sous‑match</b> (fléchettes, ping ou palet). Victoire : <b>double les points</b>. Défaite : <b>−2× l’écart</b> des scores.</div>
+          </div>
+        </div>
+
 
       <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
 
@@ -502,6 +546,16 @@ header .btn, header .chip, header .pill, header .tab{
           <select id="taupe-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
+
+      <div id="melon-fields" class="grid cols-3" style="margin-top:10px">
+        <div><label>Sport</label>
+          <select id="melon-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
+        </div>
+        <div><label>Sous‑match</label>
+          <select id="melon-index"></select>
+        </div>
+      </div>
+
 
       <div id="lefthand-fields" class="grid cols-2" style="margin-top:10px">
         <div><label>Sport</label>
@@ -682,6 +736,38 @@ function computeCapitaineBonusForMatch(m, tid, player, sport){
       } else {
         gain += BONUS_VAL;
       }
+
+/* Melon d’or — double en cas de victoire sur un sous‑match ; sinon malus = 2× l’écart */
+function computeMelonBonusForMatch(m, tid, sel){
+  try{
+    const R = state.rules||{};
+    const sport = sel?.sport, idx = Math.max(1, +sel?.index||1);
+    const isA = (m.a===tid), isB = (m.b===tid);
+    if(!isA && !isB) return 0;
+    if(sport==='ping'){
+      const sets = (typeof getPingPts==='function') ? (getPingPts(m)||[]) : [];
+      const s = sets[idx-1]; if(!s) return 0;
+      const my = isA ? +s.a : +s.b, opp = isA ? +s.b : +s.a;
+      if(my>opp) return +R.pingWinPoints||0;     // on ajoute la même valeur que la victoire pour "doubler"
+      if(my<opp) return -2*Math.abs(my-opp);      // malus = 2× écart
+      return 0;
+    } else if(sport==='palet'){
+      const T = +R.paletTarget || 11;
+      const a = (m.palet?.a==null?null:+m.palet.a);
+      const b = (m.palet?.b==null?null:+m.palet.b);
+      if(a==null || b==null) return 0;
+      const my = isA ? a : b, opp = isA ? b : a;
+      if((isA && a===T) || (isB && b===T)) return my||0;  // doubler les points → on rajoute le score atteint
+      return -2*Math.abs(my-opp);
+    } else { // darts — pas d’écart saisi, malus fixe basé sur points de victoire
+      const v = Array.isArray(m.darts)? m.darts[idx-1] : null;
+      if(v==null) return 0;
+      const win = (isA && v===0) || (isB && v===1);
+      return win ? (+R.dartsWinPoints||0) : (-2*(+R.dartsWinPoints||0));
+    }
+  }catch(e){}
+  return 0;
+}
     });
   } else if (sport === 'ping') {
     const sSingles = state.rules.pingSingles || 0;
