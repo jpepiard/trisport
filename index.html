@@ -63,47 +63,23 @@ function prepareBonusOptions(){
 }
 
 
-
 function centerBonusPanel(){
   try{
-    var modal = document.getElementById('bonus-modal');
-    if(!modal) return;
-    var panel = modal.querySelector('.bonus-panel');
-    var list  = modal.querySelector('.bonus-select');
-    // Clean any old inline styles on the list (set by previous fallback)
-    if(list){
-      list.style.position='';
-      list.style.left='';
-      list.style.top='';
-      list.style.transform='';
-      list.style.maxWidth='';
-      list.style.width='';
-      list.style.maxHeight='';
-      list.style.overflow='';
-      list.style.zIndex='';
-      list.style.margin='';
-      list.style.display='';
-    }
-    if(panel){
-      // Center the whole panel
-      panel.style.position='fixed';
-      panel.style.left='50%';
-      panel.style.top='50%';
-      panel.style.transform='translate(-50%,-50%)';
-      panel.style.width='min(740px, 94vw)';
-      panel.style.maxHeight='86vh';
-      panel.style.display='flex';
-      panel.style.flexDirection='column';
-      // Ensure body section scrolls
-      var bd = panel.querySelector('.bd');
-      if(bd){
-        bd.style.flex='1 1 auto';
-        bd.style.overflow='auto';
-      }
-    }
+    var el = document.getElementById('bonus-modal');
+    if(!el) return;
+    var panel = el.querySelector('.bonus-select');
+    if(!panel) return;
+    // Hard centering regardless of parent layout
+    panel.style.position = 'fixed';
+    panel.style.left = '50%';
+    panel.style.top = '50%';
+    panel.style.transform = 'translate(-50%, -50%)';
+    panel.style.maxWidth = '720px';
+    panel.style.width = 'min(720px, 92vw)';
+    panel.style.maxHeight = '82vh';
+    panel.style.overflow = 'auto';
+    panel.style.zIndex = '10000';
   }catch(_){}
-}
-catch(_){}
 }
 
 window.addEventListener('resize', centerBonusPanel); window.addEventListener('scroll', centerBonusPanel, {passive:true});
@@ -215,25 +191,6 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 
 /* Strengthen centering: when modal is visible, fix the panel and center it */
 #bonus-modal.show .bonus-select{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);}
-
-
-/* === Bonus modal centering (clean) === */
-#bonus-modal{position:fixed;inset:0;display:none;z-index:9999;background:rgba(0,0,0,.45)}
-#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
-
-/* Center the WHOLE panel, not just inner list */
-#bonus-modal.show .bonus-panel{
-  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:min(740px,94vw);max-height:86vh;display:flex;flex-direction:column;
-  border-radius:16px;overflow:hidden;background:var(--panel,#0f1525);box-shadow:0 8px 30px rgba(0,0,0,.35);
-}
-#bonus-modal.show .bonus-panel .bd{flex:1 1 auto;overflow:auto}
-/* Make sure inner list is normal flow inside .bd */
-#bonus-modal.show .bonus-panel .bonus-select{position:static;left:auto;top:auto;transform:none;max-height:none;width:auto;max-width:none;display:block}
-
-
-/* Safety: reset any lingering inline styles on list when modal is visible */
-#bonus-modal.show .bonus-select{position:static!important;left:auto!important;top:auto!important;transform:none!important;}
 
 </style>
 
