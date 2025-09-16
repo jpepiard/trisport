@@ -37,22 +37,16 @@ function setParamsOpen(openCap, openTaupe, openLeft){
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
 function selectBonusType(t){
-  window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
-  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3];
-  [cap,mir,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
-  if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
-  if(mir && window._bonusType==='miroir') mir.classList.add('selected');
-  if(tau && window._bonusType==='taupe') tau.classList.add('selected');
-  if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
-  const ctx=id('bonus-context');
-  if(ctx) ctx.textContent = window._bonusType==='miroir' ?
-    "Miroir : inverse le bonus adverse sur tout le match." :
-    (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
-      (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-        "Capitaine : choisissez le joueur et le sport."));
-  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
+  window._bonusType = t;
+  const ctx = id('bonus-context');
+  if(ctx){ ctx.textContent = t==='miroir' ? 'Miroir : inverse le bonus adverse sur tout le match.' : (t==='taupe' ? 'René la taupe : choisissez le sport.' : (t==='lefthand' ? '10 pouces 2 mains gauche : choisissez le sport.' : 'Capitaine : bonus équipe, +2 par manche gagnée.')); }
+  // Open only the right params section
+  const taupe = id('taupe-fields'); const left = id('lefthand-fields'); const cap = id('capitaine-fields');
+  if(cap) cap.style.display = 'none';
+  if(taupe) taupe.style.display = (t==='taupe' ? 'block' : 'none');
+  if(left)  left.style.display  = (t==='lefthand' ? 'block' : 'none');
 }
+
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   cards.forEach((c, i)=>{
@@ -66,6 +60,51 @@ function prepareBonusOptions(){
   const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
 }
 
+
+
+function centerBonusPanel(){
+  try{
+    var modal = document.getElementById('bonus-modal');
+    if(!modal) return;
+    var panel = modal.querySelector('.bonus-panel');
+    var list  = modal.querySelector('.bonus-select');
+    // Clean any old inline styles on the list (set by previous fallback)
+    if(list){
+      list.style.position='';
+      list.style.left='';
+      list.style.top='';
+      list.style.transform='';
+      list.style.maxWidth='';
+      list.style.width='';
+      list.style.maxHeight='';
+      list.style.overflow='';
+      list.style.zIndex='';
+      list.style.margin='';
+      list.style.display='';
+    }
+    if(panel){
+      // Center the whole panel
+      panel.style.position='fixed';
+      panel.style.left='50%';
+      panel.style.top='50%';
+      panel.style.transform='translate(-50%,-50%)';
+      panel.style.width='min(740px, 94vw)';
+      panel.style.maxHeight='86vh';
+      panel.style.display='flex';
+      panel.style.flexDirection='column';
+      // Ensure body section scrolls
+      var bd = panel.querySelector('.bd');
+      if(bd){
+        bd.style.flex='1 1 auto';
+        bd.style.overflow='auto';
+      }
+    }
+  }catch(_){}
+}
+catch(_){}
+}
+
+window.addEventListener('resize', centerBonusPanel); window.addEventListener('scroll', centerBonusPanel, {passive:true});
 </script>
 
 <style>
@@ -153,6 +192,55 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .bonus-illu img{width:100%;height:100%;object-fit:cover;border-radius:12px}
 .pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
 .pill .mini-bonus img{width:100%;height:100%;object-fit:cover}
+
+/* Hide Capitaine params (team-wide rule) */
+#capitaine-fields{display:none!important}
+#bonus-player,#capitaine-sport{display:none!important}
+#capitaine-fields label{display:none!important}
+
+/* Ensure modal centers when 'show' is added */
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
+
+/* Force viewport-centered bonus modal */
+#bonus-modal{position:fixed;inset:0;display:none;z-index:9999;background:rgba(0,0,0,.45)}
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
+#bonus-modal .bonus-select{max-width:720px;width:min(720px,92vw);max-height:82vh;overflow:auto;border-radius:16px}
+
+
+/* Fallback for stubborn layouts: ensure the inner panel can be centered with fixed positioning */
+#bonus-modal .bonus-select{margin:0!important; display:block!important;}
+
+
+/* Strengthen centering: when modal is visible, fix the panel and center it */
+#bonus-modal.show .bonus-select{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);}
+
+
+/* === Bonus modal centering (clean) === */
+#bonus-modal{position:fixed;inset:0;display:none;z-index:9999;background:rgba(0,0,0,.45)}
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
+
+/* Center the WHOLE panel, not just inner list */
+#bonus-modal.show .bonus-panel{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(740px,94vw);max-height:86vh;display:flex;flex-direction:column;
+  border-radius:16px;overflow:hidden;background:var(--panel,#0f1525);box-shadow:0 8px 30px rgba(0,0,0,.35);
+}
+#bonus-modal.show .bonus-panel .bd{flex:1 1 auto;overflow:auto}
+/* Make sure inner list is normal flow inside .bd */
+#bonus-modal.show .bonus-panel .bonus-select{position:static;left:auto;top:auto;transform:none;max-height:none;width:auto;max-width:none;display:block}
+
+
+/* Safety: reset any lingering inline styles on list when modal is visible */
+#bonus-modal.show .bonus-select{position:static!important;left:auto!important;top:auto!important;transform:none!important;}
+
+
+/* Modal polish */
+#bonus-modal.show .bonus-panel .hd{position:sticky;top:0;z-index:2;background:var(--panel,#0f1525)}
+#bonus-modal.show .bonus-panel .ft{position:sticky;bottom:0;z-index:2;background:var(--panel,#0f1525)}
+#taupe-fields,#lefthand-fields{display:none} /* hidden by default; JS will open the right one */
+#bonus-modal.show .bonus-panel{overflow:hidden}
+#bonus-modal.show .bonus-panel .bd{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+
 </style>
 
 <!-- Firebase compat -->
@@ -173,6 +261,20 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 .bonus-dialog .bonus-card{ grid-template-columns:80px 1fr; padding:10px; border:2px dashed var(--border); border-radius:12px; }
 .bonus-dialog .bonus-card .bonus-illu img{ width:72px; height:72px; border-radius:12px; }
 .bonus-dialog .bonus-card.selected{ border-color: var(--blue); box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset; }
+
+/* Hide Capitaine params (team-wide rule) */
+#capitaine-fields{display:none!important}
+#bonus-player,#capitaine-sport{display:none!important}
+#capitaine-fields label{display:none!important}
+
+/* Ensure modal centers when 'show' is added */
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
+
+/* Force viewport-centered bonus modal */
+#bonus-modal{position:fixed;inset:0;display:none;z-index:9999;background:rgba(0,0,0,.45)}
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
+#bonus-modal .bonus-select{max-width:720px;width:min(720px,92vw);max-height:82vh;overflow:auto;border-radius:16px}
+
 </style>
 
 
@@ -199,6 +301,20 @@ header .brand > h1{ display:none !important; }
 @media (max-width: 420px){
   .brand-title{ height:48px; }
 }
+
+
+/* Hide Capitaine params (team-wide rule) */
+#capitaine-fields{display:none!important}
+#bonus-player,#capitaine-sport{display:none!important}
+#capitaine-fields label{display:none!important}
+
+/* Ensure modal centers when 'show' is added */
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
+
+/* Force viewport-centered bonus modal */
+#bonus-modal{position:fixed;inset:0;display:none;z-index:9999;background:rgba(0,0,0,.45)}
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
+#bonus-modal .bonus-select{max-width:720px;width:min(720px,92vw);max-height:82vh;overflow:auto;border-radius:16px}
 
 </style>
 <style id="header-compact-keepimage">
@@ -232,25 +348,19 @@ header .btn, header .chip, header .pill, header .tab{
 }
 
 
-/* === Modal centering & bonus params layout (final) === */
-#bonus-modal{position:fixed;inset:0;display:none;z-index:9999;background:rgba(7,12,24,.55)}
-#bonus-modal.show{display:block}
-#bonus-modal .bonus-panel{
-  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:clamp(340px, 92vw, 760px);max-height:86vh;background:#0f1525;
-  border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.45);
-  border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;overflow:hidden;
-}
-#bonus-modal .bonus-panel .hd{position:sticky;top:0;padding:14px 18px;background:#0f1525;z-index:2;border-bottom:1px solid rgba(255,255,255,.06)}
-#bonus-modal .bonus-panel .ft{position:sticky;bottom:0;padding:12px 18px;background:#0f1525;z-index:2;border-top:1px solid rgba(255,255,255,.06)}
-#bonus-modal .bonus-panel .bd{flex:1 1 auto;overflow:auto;padding:12px 18px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-/* Place param blocks INSIDE the selected card, under the text */
-.param-wrapper{margin:12px 16px 0}
-.param-wrapper .grid.cols-2{grid-template-columns:1fr!important}
-.param-wrapper label{display:block;margin-bottom:6px}
-.param-wrapper select{width:100%}
-/* Hide Capitaine params forever (bonus d'équipe) */
-#cap-params,#capitaine-fields,#bonus-player,#capitaine-sport{display:none!important}
+/* Hide Capitaine params (team-wide rule) */
+#capitaine-fields{display:none!important}
+#bonus-player,#capitaine-sport{display:none!important}
+#capitaine-fields label{display:none!important}
+
+/* Ensure modal centers when 'show' is added */
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
+
+/* Force viewport-centered bonus modal */
+#bonus-modal{position:fixed;inset:0;display:none;z-index:9999;background:rgba(0,0,0,.45)}
+#bonus-modal.show{display:flex!important;align-items:center;justify-content:center}
+#bonus-modal .bonus-select{max-width:720px;width:min(720px,92vw);max-height:82vh;overflow:auto;border-radius:16px}
+
 </style>
 </head>
 <body>
@@ -497,10 +607,10 @@ header .btn, header .chip, header .pill, header .tab{
         </div>
       </div>
 
-      <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
+      <div class="help" id="bonus-context">Capitaine : bonus équipe, +2 par manche gagnée.</div>
 
       <!-- Paramètres (insérés sous la carte correspondante) -->
-      <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
+      <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px;display:none">
         <div><label>Capitaine (joueur)</label>
           <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
         </div>
@@ -603,51 +713,46 @@ function setBonusSelection(r,tid,sel){state.bonusSelections[r]=state.bonusSelect
 function getBonusSelection(r,tid){return(state.bonusSelections[r]||{})[tid]||null}
 function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{};state.bonusApplied[r][tid]=pts}
 function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){const v=state.bonusApplied[r]?.[tid];if(v)s+=v}return s}
-function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
+function teamBonusUsed(tid){ const r=(typeof CURRENT_ROUND!=='undefined'?CURRENT_ROUND:null); const used=(state.bonusUsed||{}); return !!(r!=null && used[r] && used[r][tid]); }function markTeamBonusUsed(tid){ const r=(typeof CURRENT_ROUND!=='undefined'?CURRENT_ROUND:null); state.bonusUsed=state.bonusUsed||{}; if(r!=null){ state.bonusUsed[r]=state.bonusUsed[r]||{}; state.bonusUsed[r][tid]=true; } }
 
 /* Capitaine — calcul robuste */
+
 function computeCapitaineBonusForMatch(m, tid, player, sport){
+  // Capitaine (nouvelle règle) : bonus d'équipe, +2 pts par manche gagnée sur tous les sports
+  const AWARD = 2;
   let gain = 0;
   const isA = (m.a === tid), isB = (m.b === tid);
   if (!isA && !isB) return 0;
 
-  if (sport === 'darts') {
-    const sSingles = state.rules.dartsSingles || 0;
-    m.darts.forEach((v,i)=>{
+  // Fléchettes : 0 = A gagne, 1 = B gagne
+  if (Array.isArray(m.darts)) {
+    m.darts.forEach(v => {
       if (v!==0 && v!==1) return;
       const won = isA ? (v===0) : (v===1);
-      if (!won) return;
-      if (i < sSingles) {
-        const which = (i===0 ? 'p1' : 'p2');
-        if (which === player) gain += BONUS_VAL;
-      } else {
-        gain += BONUS_VAL;
-      }
+      if (won) gain += AWARD;
     });
-  } else if (sport === 'ping') {
-    const sSingles = state.rules.pingSingles || 0;
-    getPingPts(m).forEach((s,i)=>{
-      const a = (s.a==null?null:+s.a);
-      const b = (s.b==null?null:+s.b);
+  }
+
+  // Ping : via getPingPts() -> {a,b} par sous-match
+  if (typeof getPingPts === 'function') {
+    const pts = getPingPts(m) || [];
+    pts.forEach(s => {
+      const a = (s?.a==null?null:+s.a);
+      const b = (s?.b==null?null:+s.b);
       if (!isPingValid(a,b)) return;
       const won = isA ? (a>b) : (b>a);
-      if (!won) return;
-      if (i < sSingles) {
-        const which = (i===0 ? 'p1' : 'p2');
-        if (which === player) gain += BONUS_VAL;
-      } else {
-        gain += BONUS_VAL;
-      }
+      if (won) gain += AWARD;
     });
-  } else if (sport === 'palet') {
-    const T = +state.rules.paletTarget || 11;
-    const a = (m.palet?.a==null?null:+m.palet.a);
-    const b = (m.palet?.b==null?null:+m.palet.b);
-    if ((isA && a===T) || (isB && b===T)) gain += BONUS_VAL;
   }
+
+  // Palet : +2 si l'équipe atteint la cible
+  const T = +state.rules.paletTarget || 11;
+  const a = (m.palet?.a==null?null:+m.palet.a);
+  const b = (m.palet?.b==null?null:+m.palet.b);
+  if ((isA && a===T) || (isB && b===T)) gain += AWARD;
+
   return gain;
 }
-
 /* Icônes pour titres de sport */
 function sportIcon(name){
   if(name==='darts'){ return `<span class="sport-icon" role="img" aria-label="fléchettes">🎯</span>`; }
@@ -689,7 +794,7 @@ function bonusChip(r,mTeam,rs){
     const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
     const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
     const applied = getBonusAppliedSum(mTeam) || 0;
-    return `<span class="pill blue">Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
+    return `<span class=\"pill blue\">Capitaine (équipe) : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
   }
 }
 
@@ -893,7 +998,7 @@ document.addEventListener("click",async(e)=>{
     case "btn-cloud-delete":{if(!isAdmin())return alert("Suppression cloud réservée à l’admin.");const code=state.cloudId||cloud.id;if(!code)return alert("Aucun code actif.");if(!confirm("Supprimer définitivement ce tournoi du cloud ?"))return;deleteCloud(code).then(()=>{setIndex(getIndex().filter(e=>e.id!==code));unsubscribeCloud();resetState();renderSetupRecent();renderAll();history.replaceState(null,"",location.pathname);alert("Tournoi supprimé.");goto('setup')});break}
 
     /* ---- Réinitialiser scores => réinitialise aussi BONUS + journées ---- */
-    case "btn-reset-scores":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);saveState();renderAll();goto("calendrier");break}
+    case "btn-reset-scores":{state.bonusSelections={};state.bonusApplied={};state.bonusUsed={};(state.teams||[]).forEach(t=>{if(t)t.bonusCapitaineUsed=false});if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);saveState();renderAll();goto("calendrier");break}
 
     case "btn-unlock":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Déverrouiller le calendrier ?"))return;state.locked=false;saveState();renderTeams();renderMatches();updateLock();break}
 
@@ -951,8 +1056,7 @@ function openBonusModal(round,teamId){
   if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
   if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
-  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   id('bonus-player').value=sel?.player||'p1';
   id('bonus-sport').value=sel?.sport||'darts';
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
@@ -1018,122 +1122,6 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   }else{
     ensureBrandImages();
   }
-})();
-</script>
-
-
-<script>
-(function(){
-  function lockScroll(on){ document.documentElement.style.overflow = on ? 'hidden' : ''; }
-
-  function findCardByTitle(txt){
-    const cards=[...document.querySelectorAll('#bonus-modal .bonus-select .bonus-card')];
-    return cards.find(c => (c.querySelector('.bonus-title')?.textContent||'').trim().toLowerCase()===txt.toLowerCase()) || null;
-  }
-
-  function placeParamsInCard(type){
-    // type: 'taupe' | 'lefthand'
-    const wrapId = type==='taupe' ? 'taupe-params' : 'lefthand-params';
-    const cardTitle = type==='taupe' ? 'René la taupe' : '10 pouces 2 mains gauche';
-    let wrap = document.getElementById(wrapId);
-    const card = findCardByTitle(cardTitle);
-    if(!card) return;
-    if(!wrap){
-      // rely on existing ensure*Wrapper functions if present
-      try{
-        wrap = (type==='taupe' && typeof ensureTaupeWrapper==='function') ? ensureTaupeWrapper()
-            : (type==='lefthand' && typeof ensureLeftHandWrapper==='function') ? ensureLeftHandWrapper()
-            : null;
-      }catch(_){}
-    }
-    if(!wrap) return;
-    wrap.classList.add('param-wrapper');
-    // insert after the .bonus-text of the card
-    const anchor = card.querySelector('.bonus-text') || card;
-    if(wrap.parentElement !== card) anchor.insertAdjacentElement('afterend', wrap);
-  }
-
-  // Override selectBonusType to toggle AND place params into the selected card
-  const _origSelect = window.selectBonusType;
-  window.selectBonusType = function(t){
-    window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
-    try{
-      const ctx = document.getElementById('bonus-context');
-      if(ctx){
-        ctx.textContent = window._bonusType==='miroir' ?
-          'Miroir : inverse le bonus adverse sur tout le match.' :
-          (window._bonusType==='taupe' ? 'René la taupe : choisissez le sport.' :
-          (window._bonusType==='lefthand' ? '10 pouces 2 mains gauche : choisissez le sport.' :
-           'Capitaine : bonus équipe, +2 par manche gagnée.'));
-      }
-      // Place wrappers in their cards (once)
-      placeParamsInCard('taupe');
-      placeParamsInCard('lefthand');
-      const wC = document.getElementById('cap-params');
-      const wT = document.getElementById('taupe-params');
-      const wL = document.getElementById('lefthand-params');
-      if(wC) wC.style.display='none';
-      if(wT) wT.style.display=(window._bonusType==='taupe')?'block':'none';
-      if(wL) wL.style.display=(window._bonusType==='lefthand')?'block':'none';
-    }catch(_){}
-    if(typeof _origSelect==='function'){ try{ _origSelect(t); }catch(_){ } }
-  };
-
-  // Center + open
-  const _origOpen = window.openBonusModal;
-  window.openBonusModal = function(round, teamId){
-    if(typeof _origOpen==='function'){ _origOpen(round, teamId); }
-    const el = document.getElementById('bonus-modal');
-    if(!el) return;
-    try{ if(el.parentElement!==document.body){ document.body.appendChild(el); } }catch(_){}
-    // Hide all param sections by default
-    const ids=['cap-params','taupe-params','lefthand-params'];
-    ids.forEach(id=>{ const w=document.getElementById(id); if(w) w.style.display='none'; });
-    el.classList.add('show');
-    lockScroll(true);
-  };
-
-  // Close on overlay click
-  document.addEventListener('click', function(e){
-    const modal = document.getElementById('bonus-modal');
-    if(!modal) return;
-    if(e.target===modal){ modal.classList.remove('show'); lockScroll(false); }
-  });
-
-  // Capitaine new scoring (team-wide +2 per set)
-  window.computeCapitaineBonusForMatch = function(m, tid){
-    const AWARD=2; let gain=0;
-    const isA=(m.a===tid), isB=(m.b===tid);
-    if(!isA && !isB) return 0;
-    if(Array.isArray(m.darts)){
-      m.darts.forEach(v=>{ if(v!==0&&v!==1) return; const won=isA?(v===0):(v===1); if(won) gain+=AWARD; });
-    }
-    try{
-      const pts=(typeof getPingPts==='function'?(getPingPts(m)||[]):[]);
-      pts.forEach(s=>{ const a=+s.a, b=+s.b; if(typeof isPingValid==='function' && !isPingValid(a,b)) return; const won=isA?(a>b):(b>a); if(won) gain+=AWARD; });
-    }catch(_){}
-    try{
-      const T=+( (window.state && state.rules && state.rules.paletTarget) || 11 );
-      const a=(m.palet&&m.palet.a!=null)?+m.palet.a:null;
-      const b=(m.palet&&m.palet.b!=null)?+m.palet.b:null;
-      if((isA && a===T) || (isB && b===T)) gain+=AWARD;
-    }catch(_){}
-    return gain;
-  };
-
-  // Bonus usage per round
-  window.teamBonusUsed = function(tid){
-    const r=(typeof window.CURRENT_ROUND!=='undefined')?window.CURRENT_ROUND:null;
-    const used=(window.state&&state.bonusUsed)?state.bonusUsed:{};
-    return !!(r!=null && used[r] && used[r][tid]);
-  };
-  window.markTeamBonusUsed = function(tid){
-    const r=(typeof window.CURRENT_ROUND!=='undefined')?window.CURRENT_ROUND:null;
-    if(!window.state) return;
-    state.bonusUsed=state.bonusUsed||{};
-    if(r!=null){ state.bonusUsed[r]=state.bonusUsed[r]||{}; state.bonusUsed[r][tid]=true; }
-  };
-  try{ if(window.state){ state.bonusSelections=state.bonusSelections||{}; state.bonusApplied=state.bonusApplied||{}; state.bonusUsed=state.bonusUsed||{}; } }catch(_){}
 })();
 </script>
 
