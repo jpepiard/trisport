@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>TriSports — Fléchettes • Ping-pong • Palet</title>
 
-<!-- Garde-fou : certaines extensions injectent du React minifié qui loggue "Minified React error #...".
+<!-- Garde-fou : certaines extensions injectent du React minifié qui loggue "Minified React error #".
      On évite que ça remonte et perturbe l'app (ça n'affecte PAS ton site). -->
 <script>
   window.addEventListener('error', function (e) {
@@ -38,7 +38,7 @@ function setParamsOpen(openCap, openTaupe, openLeft){
 }
 function selectBonusType(t){
   window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand'||t==='melon') ? t : 'capitaine';
-  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+  const cards = [document.querySelectorAll('.bonus-select .bonus-card')];
   const cap=cards[0], mir=cards[1], melon=cards[2], tau=cards[3], leftc=cards[4];
   [cap,mir,melon,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
   if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
@@ -55,7 +55,7 @@ function selectBonusType(t){
   setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
 }
 function prepareBonusOptions(){
-  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+  const cards = [document.querySelectorAll('.bonus-select .bonus-card')];
   cards.forEach((c, i)=>{
     c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
     c.addEventListener('click', ()=>selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'melon':(i===3?'taupe':'lefthand'))));
@@ -1001,9 +1001,17 @@ function openBonusModal(round,teamId){
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
-  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
+  const type = (window._bonusType==='miroir') ? 'miroir' :
+               (window._bonusType==='melon')  ? 'melon'  :
+               (window._bonusType==='taupe')  ? 'taupe'  :
+               (window._bonusType==='lefthand') ? 'lefthand' : 'capitaine';
   if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
   else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
+  else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
+  else if(type==='melon') setBonusSelection(r,t,{type:'melon'});
+  else setBonusSelection(r,t,{type:'miroir'});
+  id('bonus-modal').classList.remove('show');
+});
   else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
         else if(type==='melon') setBonusSelection(r,t,{type:'melon'});
   else setBonusSelection(r,t,{type:'miroir'});
