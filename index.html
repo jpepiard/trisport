@@ -174,6 +174,26 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 .bonus-dialog .bonus-card .bonus-illu img{ width:72px; height:72px; border-radius:12px; }
 .bonus-dialog .bonus-card.selected{ border-color: var(--blue); box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset; }
 </style>
+<style id="bonus-card-layout-fix">
+/* --- Bonus panel layout: params under the card text, hidden until selection --- */
+#bonus-modal .bonus-dialog .bonus-card{
+  display: grid !important;
+  grid-template-columns: 80px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+#bonus-modal .bonus-dialog .bonus-card .bonus-illu{ grid-column: 1; grid-row: 1; }
+#bonus-modal .bonus-dialog .bonus-card .bonus-text{ grid-column: 2; grid-row: 1; }
+#bonus-modal .bonus-dialog .bonus-card .bonus-params{
+  grid-column: 2;
+  grid-row: 2;
+  margin-top: 8px;
+  max-height: 0;            /* hidden by default */
+  overflow: hidden;
+  transition: max-height .25s ease;
+}
+</style>
+
 
 
 
