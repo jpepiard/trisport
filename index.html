@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>TriSports — Fléchettes • Ping-pong • Palet</title>
 
-<!-- Garde-fou : certaines extensions injectent du React minifié qui loggue "Minified React error #".
+<!-- Garde-fou : certaines extensions injectent du React minifié qui loggue "Minified React error #...".
      On évite que ça remonte et perturbe l'app (ça n'affecte PAS ton site). -->
 <script>
   window.addEventListener('error', function (e) {
@@ -38,7 +38,7 @@ function setParamsOpen(openCap, openTaupe, openLeft){
 }
 function selectBonusType(t){
   window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand'||t==='melon') ? t : 'capitaine';
-  const cards = [document.querySelectorAll('.bonus-select .bonus-card')];
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   const cap=cards[0], mir=cards[1], melon=cards[2], tau=cards[3], leftc=cards[4];
   [cap,mir,melon,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
   if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
@@ -55,13 +55,13 @@ function selectBonusType(t){
   setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
 }
 function prepareBonusOptions(){
-  const cards = [document.querySelectorAll('.bonus-select .bonus-card')];
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   cards.forEach((c, i)=>{
     c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
-    c.addEventListener('click', ()=>selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'melon':(i===3?'taupe':'lefthand'))));
-    c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'melon':(i===3?'taupe':'lefthand')))); } }); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
+    c.addEventListener('click', ()=>selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))));
+    c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
   });
-  const cap=cards[0], tau=cards[3], leftc=cards[4];
+  const cap=cards[0], tau=cards[2], leftc=cards[3];
   const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
   const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
   const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
@@ -454,21 +454,6 @@ header .btn, header .chip, header .pill, header .tab{
         </div>
 
         <div class="bonus-sep"></div>
-        <!-- Melon d’or -->
-        <div class="bonus-card">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/melon.png" alt=""></div>
-          <div class="bonus-text">
-            <div class="bonus-title">Melon d’or</div>
-            <div class="help">
-              Double les points si vous gagnez un sous‑match (fléchettes, ping, palet).<br/>
-              Si vous perdez un sous‑match, vous perdez <b>le double de l’écart</b> (ex. 5–10 → −10 ; 5–11 → −12).
-            </div>
-          </div>
-        </div>
-
-        <div class="bonus-sep"></div>
-
 
         <!-- René la taupe -->
         <div class="bonus-card">
@@ -616,45 +601,7 @@ function computeCapitaineBonusForMatch(m, tid, player, sport){
       if (i < sSingles) {
         const which = (i===0 ? 'p1' : 'p2');
         if (which === player) gain += BONUS_VAL;
-      }
-
-function computeMelonBonusForMatch(m, tid){
-  const R = state.rules;
-  let gain = 0;
-  const isA = (m.a === tid), isB = (m.b === tid);
-  if (!isA && !isB) return 0;
-  if (Array.isArray(m.darts)) {
-    m.darts.forEach(v=>{
-      if (v!==0 && v!==1) return;
-      const won = isA ? (v===0) : (v===1);
-      gain += won ? R.dartsWinPoints : (-2 * R.dartsWinPoints);
-    });
-  }
-  try{
-    const sets = (typeof getPingPts==='function' ? (getPingPts(m)||[]) : []);
-    sets.forEach(s=>{
-      const a = (s && s.a!=null) ? +s.a : null;
-      const b = (s && s.b!=null) ? +s.b : null;
-      if (typeof isPingValid==='function' && !isPingValid(a,b)) return;
-      if (a==null || b==null) return;
-      const my = isA ? a : b, opp = isA ? b : a;
-      if (my > opp) gain += R.pingWinPoints;
-      else if (my < opp) gain -= 2 * Math.abs(my - opp);
-    });
-  }catch(_){}
-  try{
-    const T = +((state && state.rules && state.rules.paletTarget) || 11);
-    const a = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
-    const b = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
-    if (a!=null && b!=null){
-      const my = isA ? a : b, opp = isA ? b : a;
-      if (my === T && opp < T) gain += my;
-      else if (my < T && opp === T) gain -= 2 * Math.abs(my - opp);
-    }
-  }catch(_){}
-  return gain;
-}
- else {
+      } else {
         gain += BONUS_VAL;
       }
     });
@@ -949,7 +896,7 @@ document.addEventListener("click",async(e)=>{
         const sel = sels[tid]; if (!sel) return;
         if (teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); return; }
         let total = 0;
-        matchesOfRound.forEach(m=>{ total += (sel.type==='melon' ? computeMelonBonusForMatch(m, tid) : computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport)); });
+        matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
         setBonusApplied(r, tid, total); markTeamBonusUsed(tid);
       });
 
@@ -980,19 +927,10 @@ function openBonusModal(round,teamId){
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
   bonusCTX.round=round;bonusCTX.teamId=teamId;
   const sel=getBonusSelection(round,teamId);
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine');
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
   if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
-  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts'); }
-   if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine');
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
-  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts'); }
-   if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine');
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
-  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts'); }
-  
-  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   id('bonus-player').value=sel?.player||'p1';
   id('bonus-sport').value=sel?.sport||'darts';
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
@@ -1011,13 +949,6 @@ id('bonus-save').addEventListener('click',()=>{
   else if(type==='melon') setBonusSelection(r,t,{type:'melon'});
   else setBonusSelection(r,t,{type:'miroir'});
   id('bonus-modal').classList.remove('show');
-});
-  else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
-        else if(type==='melon') setBonusSelection(r,t,{type:'melon'});
-  else setBonusSelection(r,t,{type:'miroir'});
-  id('bonus-modal').classList.remove('show');
-  if(typeof renderPills==='function') renderPills();
-  if(typeof renderMatches==='function') renderMatches();
 });
 
 /* ===== Boot ===== */
