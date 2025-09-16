@@ -37,13 +37,12 @@ function setParamsOpen(openCap, openTaupe, openLeft){
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
 function selectBonusType(t){
-  window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand'||t==='melon') ? t : 'capitaine';
+  window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const cap=cards[0], mir=cards[1], melon=cards[2], tau=cards[3], leftc=cards[4];
-  [cap,mir,melon,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
+  const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3];
+  [cap,mir,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
   if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
   if(mir && window._bonusType==='miroir') mir.classList.add('selected');
-  if(melon && window._bonusType==='melon') melon.classList.add('selected');
   if(tau && window._bonusType==='taupe') tau.classList.add('selected');
   if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
   const ctx=id('bonus-context');
@@ -232,6 +231,14 @@ header .btn, header .chip, header .pill, header .tab{
   header, .app-header, .topbar{ padding-block: 4px !important; }
 }
 
+
+/* --- Bonus panel: put params under the card text (minimal, scoped) --- */
+#bonus-modal .bonus-dialog .bonus-card{display:grid!important;grid-template-columns:96px 1fr;gap:12px;align-items:start}
+#bonus-modal .bonus-dialog .bonus-card .bonus-illu{grid-column:1;grid-row:1}
+#bonus-modal .bonus-dialog .bonus-card .bonus-text{grid-column:2;grid-row:1}
+#bonus-modal .bonus-dialog .bonus-card .bonus-params{grid-column:2;grid-row:2;margin-top:8px;max-height:0;overflow:hidden;transition:max-height .25s ease,opacity .2s;opacity:.0}
+/* When JS opens the wrapper by setting max-height, fade in */
+#bonus-modal .bonus-dialog .bonus-card .bonus-params[style*="max-height:"][style*="px"]{opacity:1}
 </style>
 </head>
 <body>
@@ -425,8 +432,8 @@ header .btn, header .chip, header .pill, header .tab{
 </main>
 
 <!-- MODAL BONUS -->
-<div id="bonus-modal" class="bonus-dialog" aria-hidden="true">
-  <div class="bonus-panel">
+<div id="bonus-modal" aria-hidden="true">
+  <div class="bonus-panel bonus-dialog">
     <div class="hd">Choisir un bonus</div>
     <div class="bd">
 
@@ -511,7 +518,59 @@ header .btn, header .chip, header .pill, header .tab{
 </div>
 
 <script>
+'use strict';
 /* ===== Helpers ===== */
+
+/**
+ * @typedef {Object} RoundCtl
+ * @property {boolean} started
+ * @property {boolean} finished
+ *
+ * @typedef {Object.<string, any>} Team
+ *
+ * @typedef {Object} AppState
+ * @property {number} version
+ * @property {string} tid
+ * @property {string|null} cloudId
+ * @property {string} tournamentName
+ * @property {Object} rules
+ * @property {Array<Team>} teams
+ * @property {Array<any>} matches
+ * @property {Object.<number, RoundCtl>} roundCtl
+ * @property {Object.<number, Object.<string, any>>} bonusSelections
+ * @property {Object.<number, Object.<string, number>>} bonusApplied
+ * @property {Object.<number, Object.<string, boolean>>} bonusUsed
+ */
+
+
+// Centralise libellés/images pour les bonus (évite les erreurs de frappe)
+const BONUS = {
+  /** @param {"capitaine"|"miroir"|"taupe"|"lefthand"|string} type */
+  labelForType(type){
+    switch(type){
+      case "miroir": return "Miroir";
+      case "taupe": return "René la taupe";
+      case "lefthand": return "Main gauche";
+      default: return "Capitaine";
+    }
+  },
+  imgForType(type){
+    switch(type){
+      case "miroir": return "miroir.jpg";
+      case "taupe": return "taupe.png";
+      case "lefthand": return "main gauche.png";
+      default: return "capitaine.jpg";
+    }
+  },
+  sportLabel(s){ return s==="darts"?"Fléchettes":(s==="ping"?"Ping":"Palet"); },
+  playerLabel(p){ return p==="p1"?"J1":"J2"; }
+};
+// Helpers sûrs pour initialiser les containers imbriqués
+function ensure(obj, key, defFactory){
+  if(!obj[key]) obj[key] = defFactory();
+  return obj[key];
+}
+
 const id=x=>document.getElementById(x), qs=s=>document.querySelector(s), qsa=s=>Array.from(document.querySelectorAll(s));
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;","\"":"&quot;","'":"&#39;"}[c]));
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -538,6 +597,14 @@ function renderManageList(){renderSetupRecent()}
 let state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};
 let ui={open:{},h2h:false}; let session={admin:false,claims:{}};
 function isAdmin(){return !!session.admin} function hasClaim(tid){return !!session.claims[tid]}
+// === Droits de saisie des scores selon l'état de la journée ===
+function _iAmTeamOf(m){ return hasClaim(m.a) || hasClaim(m.b); }
+function canEditScores(m, rCtl){
+  if (!rCtl.started && !rCtl.finished) return false; // pas commencé -> personne
+  if (rCtl.finished) return isAdmin();               // terminé -> admin seul
+  return isAdmin() || _iAmTeamOf(m);                 // en cours -> admin + équipe du match
+}
+
 function teamObj(tid){return state.teams.find(t=>t.id===tid)||null} function teamName(tid){const t=teamObj(tid);return t?t.name:"—"}
 function initials(name){const s=(name||"").trim();if(!s)return"?";const p=s.split(/\s+/);return(p[0][0]+(p[1]?.[0]||"")).toUpperCase()}
 function avatarHtml(tid,size,attrs){const t=teamObj(tid)||{name:"?"};const url=t.avatar;const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':'');const extra=attrs?(' '+attrs):'';const content=url?('<img src="'+esc(url)+'" alt="avatar">'):('<span class="avatar-initials">'+esc(initials(t.name))+'</span>');return '<span class="avatar '+cls+'" title="'+esc(t.name)+'"'+extra+'>'+content+'</span>'}
@@ -547,7 +614,7 @@ function dartsTotal(){return (state.rules?.dartsSingles||0)+(state.rules?.dartsD
 function pingTotal(){return (state.rules?.pingSingles||0)+(state.rules?.pingDoubles||0)}
 function ensureLengths(m){const dN=dartsTotal(),pN=pingTotal();m.darts=Array.isArray(m.darts)?m.darts.slice(0,dN):[];while(m.darts.length<dN)m.darts.push(null);if(!Array.isArray(m.pingPts))m.pingPts=[];m.pingPts=m.pingPts.slice(0,pN);while(m.pingPts.length<pN)m.pingPts.push({a:null,b:null});}
 function _normMatch(m){m=m||{};m.id=m.id||uid();m.a=m.a||"";m.b=m.b||"";ensureLengths(m);m.palet=m.palet||{a:null,b:null};m.palet.a=(m.palet.a==null?null:+m.palet.a);m.palet.b=(m.palet.b==null?null:+m.palet.b);m.round=m.round||1;m.order=m.order||0;return m}
-function normalize(){state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11};state.teams=Array.isArray(state.teams)?state.teams:[];state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[];state.protect=state.protect||{};state.protect.teamPassHash=state.protect.teamPassHash||{};state.roundCtl=state.roundCtl||{};state.bonusSelections=state.bonusSelections||{};state.bonusApplied=state.bonusApplied||{}}
+function normalize(){state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11};state.teams=Array.isArray(state.teams)?state.teams:[];state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[];state.protect=state.protect||{};state.protect.teamPassHash=state.protect.teamPassHash||{};state.roundCtl=state.roundCtl||{};state.bonusSelections=state.bonusSelections||{};state.bonusApplied=state.bonusApplied||{};state.bonusUsed=state.bonusUsed||{};state.bonusUsed=state.bonusUsed||{}}
 
 /* ===== Firebase ===== */
 const cloud={enabled:false,db:null,id:null,ref:null,timer:null}; const hasFB=!!(window.firebase&&window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey);
@@ -555,7 +622,18 @@ function initFB(){try{if(!hasFB)return null;if(!firebase.apps||firebase.apps.len
 function setCloudTxt(t){id("cloud-status").textContent=t;id("cloud-status-2").textContent=t}
 function unsubscribeCloud(){try{if(cloud.ref)cloud.ref.off('value')}catch(_){ }cloud.ref=null;cloud.enabled=false;cloud.id=null;setCloudTxt('hors ligne')}
 function resetState(){state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};try{localStorage.removeItem(STORAGE_KEY)}catch(_){}} 
-function joinCloud(code){if(!hasFB){alert("Firebase non configuré.");return}if(!cloud.db){cloud.db=initFB();if(!cloud.db){alert("Init Firebase impossible.");return}}unsubscribeCloud();cloud.id=(code||"").trim();if(!cloud.id){alert("Saisis un code tournoi.");return}cloud.ref=cloud.db.ref("tournaments/"+cloud.id+"/payload");cloud.enabled=true;setCloudTxt("connexion");cloud.ref.on("value",snap=>{const val=snap.val();if(!val){setCloudTxt("connecté (vide)");return}state=val.state||state;normalize();state.cloudId=cloud.id;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));upsertIndex({id:cloud.id,name:state.tournamentName||"Sans titre",updatedAt:Date.now()});renderAll();setCloudTxt("connecté ("+cloud.id+")")});try{history.replaceState(null,"",location.pathname+"?id="+encodeURIComponent(cloud.id))}catch(_){}}
+function joinCloud(code){if(!hasFB){alert("Firebase non configuré.");return}if(!cloud.db){cloud.db=initFB();if(!cloud.db){alert("Init Firebase impossible.");return}}unsubscribeCloud();cloud.id=(code||"").trim();if(!cloud.id){alert("Saisis un code tournoi.");return}cloud.ref=cloud.db.ref("tournaments/"+cloud.id+"/payload");cloud.enabled=true;setCloudTxt("connexion");cloud.ref.on("value",snap=>{const val=snap.val();if(!val){setCloudTxt("connecté (vide)");return}safeSetStateFromCloud(val);normalize();state.cloudId=cloud.id;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));upsertIndex({id:cloud.id,name:state.tournamentName||"Sans titre",updatedAt:Date.now()});renderAll();setCloudTxt("connecté ("+cloud.id+")")});try{history.replaceState(null,"",location.pathname+"?id="+encodeURIComponent(cloud.id))}catch(_){}}
+
+function safeSetStateFromCloud(val){
+  try{
+    if(!val || typeof val!=="object" || !val.state || typeof val.state!=="object"){
+      // pas d'état valide côté cloud : on laisse l'état local tel quel
+      return;
+    }
+    state = val.state;
+  }catch(_){ /* on ignore, on garde l'état local */ }
+}
+
 function pushCloud(immediate){if(!cloud.enabled||!cloud.ref)return;clearTimeout(cloud.timer);cloud.timer=setTimeout(()=>cloud.ref.set({state,updatedAt:Date.now()}),immediate?0:250)}
 function deleteCloud(code){if(!cloud.db){cloud.db=initFB()}return cloud.db.ref("tournaments/"+code).remove()}
 function saveState(){normalize();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));upsertIndex({id:state.cloudId||cloud.id||"?",name:state.tournamentName||"Sans titre",updatedAt:Date.now()});renderTitle();renderSetupRecent();renderManageList();if(cloud.enabled)pushCloud()}
@@ -653,7 +731,7 @@ function bonusChip(r,mTeam,rs){
   if (isAdmin() && !roundFinished) return '';
 
   // Rien choisi → afficher un bouton uniquement pour l'équipe concernée, avant le début.
-  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && iAmTeam);
+  const canChoose = (!rs.started && !rs.finished && !(state.bonusUsed?.[r]?.[mTeam]) && iAmTeam);
   if (!sel) {
     return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
   }
@@ -669,8 +747,7 @@ function bonusChip(r,mTeam,rs){
     // Révélé à tout le monde
     const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
     const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-    const applied = getBonusAppliedSum(mTeam) || 0;
-    return `<span class="pill blue">Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
+    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); return `<span class="pill blue">${lblType} ${type==='capitaine' ? labelPlayer+' / '+labelSport : (sel.sport ? ' / '+labelSport : '')} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
   }
 }
 
@@ -728,12 +805,12 @@ function renderMatches(){
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!can;
+        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!(can && canEditScores(m,rCtl));
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
+        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
         const mid=m.id,idxSet=parseInt(inp.getAttribute("data-index"),10),which=inp.getAttribute("data-ping");
         const updateNote=()=>{const mm=findMatch(mid),s=mm.pingPts[idxSet],ok=isPingValid(+s.a,+s.b);const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');if(note)note.textContent=ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);const mm=findMatch(mid);mm.pingPts[idxSet][which]=v;saveState();updateNote()});
@@ -742,7 +819,7 @@ function renderMatches(){
       });
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
+        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;saveState();updateNote()});
@@ -874,7 +951,7 @@ document.addEventListener("click",async(e)=>{
     case "btn-cloud-delete":{if(!isAdmin())return alert("Suppression cloud réservée à l’admin.");const code=state.cloudId||cloud.id;if(!code)return alert("Aucun code actif.");if(!confirm("Supprimer définitivement ce tournoi du cloud ?"))return;deleteCloud(code).then(()=>{setIndex(getIndex().filter(e=>e.id!==code));unsubscribeCloud();resetState();renderSetupRecent();renderAll();history.replaceState(null,"",location.pathname);alert("Tournoi supprimé.");goto('setup')});break}
 
     /* ---- Réinitialiser scores => réinitialise aussi BONUS + journées ---- */
-    case "btn-reset-scores":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);saveState();renderAll();goto("calendrier");break}
+    case "btn-reset-scores":{state.bonusSelections={};state.bonusApplied={};state.bonusUsed={};(state.teams||[]).forEach(t=>{if(t)t.bonusCapitaineUsed=false});if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);saveState();renderAll();goto("calendrier");break}
 
     case "btn-unlock":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Déverrouiller le calendrier ?"))return;state.locked=false;saveState();renderTeams();renderMatches();updateLock();break}
 
@@ -894,10 +971,10 @@ document.addEventListener("click",async(e)=>{
       const sels = state.bonusSelections[r] || {};
       Object.keys(sels).forEach(tid=>{
         const sel = sels[tid]; if (!sel) return;
-        if (teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); return; }
+        if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
         let total = 0;
         matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
-        setBonusApplied(r, tid, total); markTeamBonusUsed(tid);
+        setBonusApplied(r, tid, total); state.bonusUsed=state.bonusUsed||{}; state.bonusUsed[r]=state.bonusUsed[r]||{}; state.bonusUsed[r][tid]=true; markTeamBonusUsed(tid);
       });
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
@@ -923,14 +1000,17 @@ let bonusCTX={round:null,teamId:null};
 function openBonusModal(round,teamId){
   const rCtl=roundState(round);
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
-  if(teamBonusUsed(teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
+  if ((state.bonusUsed?.[round]?.[teamId])) return alert("Ce bonus a déjà été utilisé une fois.");
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
   bonusCTX.round=round;bonusCTX.teamId=teamId;
   const sel=getBonusSelection(round,teamId);
   if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
   if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
+  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   id('bonus-player').value=sel?.player||'p1';
   id('bonus-sport').value=sel?.sport||'darts';
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
@@ -939,16 +1019,14 @@ function openBonusModal(round,teamId){
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
-  const type = (window._bonusType==='miroir') ? 'miroir' :
-               (window._bonusType==='melon')  ? 'melon'  :
-               (window._bonusType==='taupe')  ? 'taupe'  :
-               (window._bonusType==='lefthand') ? 'lefthand' : 'capitaine';
+  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
   if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
   else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
   else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
-  else if(type==='melon') setBonusSelection(r,t,{type:'melon'});
   else setBonusSelection(r,t,{type:'miroir'});
   id('bonus-modal').classList.remove('show');
+  if(typeof renderPills==='function') renderPills();
+  if(typeof renderMatches==='function') renderMatches();
 });
 
 /* ===== Boot ===== */
