@@ -1085,9 +1085,21 @@ function openBonusModal(round,teamId){
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
   if ((state.bonusUsed?.[round]?.[teamId])) return alert("Ce bonus a déjà été utilisé une fois.");
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
-  bonusCTX.round=round;bonusCTX.teamId=teamId;
-  const sel=getBonusSelection(round,teamId);
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
+  bonusCTX.round=round; bonusCTX.teamId=teamId;
+  const sel = getBonusSelection(round,teamId) || {};
+  try{ if(typeof prepareBonusOptions==='function') prepareBonusOptions(); }catch(e){}
+  try{ selectBonusType(sel.type || 'capitaine'); }catch(e){}
+  // Pré-remplissage des paramètres selon le bonus existant
+  if(id('bonus-player')) id('bonus-player').value = sel.player || 'p1';
+  if(id('bonus-sport'))  id('bonus-sport').value  = sel.sport  || 'darts';
+  if(id('taupe-sport'))  id('taupe-sport').value  = sel.sport  || 'darts';
+  if(id('lefthand-sport')) id('lefthand-sport').value = sel.sport || 'darts';
+  if(id('melon-sport'))  id('melon-sport').value  = sel.sport  || 'darts';
+  if(typeof updateMelonOptions==='function') try{ updateMelonOptions(); }catch(e){}
+  if(id('melon-index')) id('melon-index').value = String(sel.index || 1);
+  if(id('bonus-context')) id('bonus-context').textContent = `Équipe : ${teamName(teamId)} — Journée #${round}`;
+  id('bonus-modal').classList.add('show');
+}
   if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
   if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
@@ -1246,22 +1258,8 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     try{ window.prepareBonusOptions(); }catch(e){}
   });
 
-  // when the modal opens, ensure options & default selection
-  document.addEventListener('click', function(ev){
-    const modal = document.getElementById('bonus-modal');
-    if(!modal) return;
-    if(modal.classList.contains('show')){
-      try{
-        window.prepareBonusOptions();
-        if(document.getElementById('melon-sport')){
-          window.updateMelonOptions();
-          if(!document.getElementById('melon-index').value) document.getElementById('melon-index').value='1';
-        }
-      }catch(e){}
-    }
-  });
-})();
-</script>
+  <!-- removed auto-reinit click handler: now handled in openBonusModal() -->
+
 
 
 <script>
@@ -1276,6 +1274,29 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
       melSport.__patched = true;
     }
   } catch(e){ /* noop */ }
+})();
+</script>
+
+
+<script>
+// Bloque la propagation des clics depuis les <select> du panneau bonus (sinon les cartes capturent le clic)
+(function(){
+  function stop(e){ e.stopPropagation(); }
+  function bindStops(sel){
+    if(!sel || sel.__stopBound) return;
+    ['click','mousedown','touchstart'].forEach(evt=> sel.addEventListener(evt, stop));
+    sel.__stopBound = true;
+  }
+  function init(){
+    ['bonus-sport','taupe-sport','lefthand-sport','melon-sport','melon-index'].forEach(id=>{
+      var el = document.getElementById(id);
+      if(el) bindStops(el);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('click', function(e){
+    if(document.getElementById('bonus-modal')?.classList.contains('show')) init();
+  });
 })();
 </script>
 
