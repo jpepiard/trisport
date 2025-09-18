@@ -45,10 +45,10 @@ function ensureMelonWrapper(){
 }
 
 function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
-  const wC = ensureParamWrapper(); if(wC) wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px';
-  const wT = ensureTaupeWrapper(); if(wT) wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px';
-  const wL = ensureLeftHandWrapper(); if(wL) wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px';
-  const wM = ensureMelonWrapper(); if(wM) wM.style.maxHeight = openMelon ? (wM.scrollHeight+'px') : '0px';
+  const wC = ensureParamWrapper(); if(wC){ wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px'; }
+  const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
+  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
+  const wM = (typeof ensureMelonWrapper==='function') ? ensureMelonWrapper() : null; if (wM){ wM.style.maxHeight = openMelon ? (wM.scrollHeight+'px') : '0px'; }
 }
   const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
@@ -56,13 +56,13 @@ function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
 function selectBonusType(t){
   window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand'||t==='melon') ? t : 'capitaine';
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3], melon=cards[4];
-  [cap,mir,tau,leftc,melon].forEach(c=>c&&c.classList.remove('selected'));
+  const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3], mel=cards[4];
+  [cap,mir,tau,leftc,mel].forEach(c=>c&&c.classList.remove('selected'));
   if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
   if(mir && window._bonusType==='miroir') mir.classList.add('selected');
   if(tau && window._bonusType==='taupe') tau.classList.add('selected');
   if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
-  if(melon && window._bonusType==='melon') melon.classList.add('selected');
+  if(mel && window._bonusType==='melon') mel.classList.add('selected');
   const ctx=id('bonus-context');
   if(ctx) ctx.textContent = window._bonusType==='miroir' ? "Miroir : inverse le bonus adverse sur tout le match." : (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." : (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." : (window._bonusType==='melon' ? "Melon d’or : choisissez le sport." : "Capitaine : choisissez le joueur et le sport.")));
     "Miroir : inverse le bonus adverse sur tout le match." :
@@ -76,32 +76,15 @@ function prepareBonusOptions(){
   cards.forEach((c, i)=>{
     c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
     c.addEventListener('click', ()=>selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':(i===3?'lefthand':'melon')))));
-    c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':(i===3?'lefthand':'melon')))); } }); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':(i===3?'lefthand':'melon')))); 
-  function updateMelonOptions(){
-    try{
-      const r = state.rules || {};
-      const sport = id('melon-sport')?.value || 'darts';
-      const sel = id('melon-index'); if(!sel) return;
-      const opts=[];
-      if(sport==='darts'){
-        const N = (r.dartsSingles||2) + (r.dartsDoubles||1);
-        for(let i=1;i<=N;i++) opts.push(`<option value="${i}">Sous‑match ${i}</option>`);
-      }else if(sport==='ping'){
-        const N = (r.pingSingles||2) + (r.pingDoubles||1);
-        for(let i=1;i<=N;i++) opts.push(`<option value="${i}">Sous‑match ${i}</option>`);
-      }else{
-        opts.push('<option value="1">Unique sous‑match</option>');
-      }
-      sel.innerHTML = opts.join('');
-    }catch(e){}
-  }
-} }); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
+    c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':(i===3?'lefthand':'melon')))); } }); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
   });
-  const cap=cards[0], tau=cards[2], leftc=cards[3], melon=cards[4];
+  const cap=cards[0], tau=cards[2], leftc=cards[3], mel=cards[4];
+  const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
+  const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
   const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
   const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
   const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
-  const wM=ensureMelonWrapper(); if(melon && wM && wM.previousElementSibling!==melon) melon.appendChild(wM);
+  const wM=ensureMelonWrapper(); if(mel && wM && wM.previousElementSibling!==mel) mel.appendChild(wM);
 }
 
 </script>
@@ -269,14 +252,14 @@ header .btn, header .chip, header .pill, header .tab{
   header, .app-header, .topbar{ padding-block: 4px !important; }
 }
 
+</style>
 
-/* --- Bonus panel: put params under the card text (minimal, scoped) --- */
-#bonus-modal .bonus-dialog .bonus-card{display:grid!important;grid-template-columns:96px 1fr;gap:12px;align-items:start}
+<style>
+#bonus-modal .bonus-dialog .bonus-card{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:start}
 #bonus-modal .bonus-dialog .bonus-card .bonus-illu{grid-column:1;grid-row:1}
 #bonus-modal .bonus-dialog .bonus-card .bonus-text{grid-column:2;grid-row:1}
 #bonus-modal .bonus-dialog .bonus-card .bonus-params{grid-column:2;grid-row:2;margin-top:8px;max-height:0;overflow:hidden;transition:max-height .25s ease,opacity .2s;opacity:.0}
-/* When JS opens the wrapper by setting max-height, fade in */
-#bonus-modal .bonus-dialog .bonus-card .bonus-params[style*="max-height:"][style*="px"]{opacity:1}
+#bonus-modal .bonus-dialog .bonus-card.selected .bonus-params{max-height:500px;opacity:1}
 </style>
 </head>
 <body>
@@ -470,8 +453,8 @@ header .btn, header .chip, header .pill, header .tab{
 </main>
 
 <!-- MODAL BONUS -->
-<div id="bonus-modal" aria-hidden="true">
-  <div class="bonus-panel bonus-dialog">
+<div id="bonus-modal" class="bonus-dialog" aria-hidden="true">
+  <div class="bonus-panel">
     <div class="hd">Choisir un bonus</div>
     <div class="bd">
 
@@ -529,10 +512,10 @@ header .btn, header .chip, header .pill, header .tab{
         <!-- Melon d'or -->
         <div class="bonus-card" tabindex="0" role="button" aria-label="Bonus Melon d’or">
           <div class="bonus-illu" aria-hidden="true">
-            <img src="img/melon.png" alt="Melon d’or"></div>
+            <img src="img/melon.png" alt=""></div>
           <div class="bonus-text">
             <div class="bonus-title">Melon d’or</div>
-            <div class="help">Cible un <b>sous‑match</b> (fléchettes, ping ou palet). Victoire : <b>double les points</b>. Défaite : <b>−2× l’écart</b> des scores.</div>
+            <div class="help">Cible un <b>sport</b> (fléchettes, ping ou palet). Victoire : <b>double les points</b>. Défaite : <b>−2× l’écart</b>.</div>
           </div>
         </div>
 <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
@@ -558,9 +541,9 @@ header .btn, header .chip, header .pill, header .tab{
           <select id="lefthand-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
-      <div id="melon-fields" class="grid cols-3" style="margin-top:10px"><div><label>Sport</label><select id="melon-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select></div></div>
-        <div><label>Sous‑match</label>
-          <select id="melon-index"></select>
+      <div id="melon-fields" class="grid cols-3" style="margin-top:10px">
+        <div><label>Sport</label>
+          <select id="melon-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
 
@@ -574,59 +557,7 @@ header .btn, header .chip, header .pill, header .tab{
 </div>
 
 <script>
-'use strict';
 /* ===== Helpers ===== */
-
-/**
- * @typedef {Object} RoundCtl
- * @property {boolean} started
- * @property {boolean} finished
- *
- * @typedef {Object.<string, any>} Team
- *
- * @typedef {Object} AppState
- * @property {number} version
- * @property {string} tid
- * @property {string|null} cloudId
- * @property {string} tournamentName
- * @property {Object} rules
- * @property {Array<Team>} teams
- * @property {Array<any>} matches
- * @property {Object.<number, RoundCtl>} roundCtl
- * @property {Object.<number, Object.<string, any>>} bonusSelections
- * @property {Object.<number, Object.<string, number>>} bonusApplied
- * @property {Object.<number, Object.<string, boolean>>} bonusUsed
- */
-
-
-// Centralise libellés/images pour les bonus (évite les erreurs de frappe)
-const BONUS = {
-  /** @param {"capitaine"|"miroir"|"taupe"|"lefthand"|string} type */
-  labelForType(type){
-    switch(type){
-      case "miroir": return "Miroir";
-      case "taupe": return "René la taupe";
-      case "lefthand": return "Main gauche";
-      default: return "Capitaine";
-    }
-  },
-  imgForType(type){
-    switch(type){
-      case "miroir": return "miroir.jpg";
-      case "taupe": return "taupe.png";
-      case "lefthand": return "main gauche.png";
-      default: return "capitaine.jpg";
-    }
-  },
-  sportLabel(s){ return s==="darts"?"Fléchettes":(s==="ping"?"Ping":"Palet"); },
-  playerLabel(p){ return p==="p1"?"J1":"J2"; }
-};
-// Helpers sûrs pour initialiser les containers imbriqués
-function ensure(obj, key, defFactory){
-  if(!obj[key]) obj[key] = defFactory();
-  return obj[key];
-}
-
 const id=x=>document.getElementById(x), qs=s=>document.querySelector(s), qsa=s=>Array.from(document.querySelectorAll(s));
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;","\"":"&quot;","'":"&#39;"}[c]));
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -653,14 +584,6 @@ function renderManageList(){renderSetupRecent()}
 let state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};
 let ui={open:{},h2h:false}; let session={admin:false,claims:{}};
 function isAdmin(){return !!session.admin} function hasClaim(tid){return !!session.claims[tid]}
-// === Droits de saisie des scores selon l'état de la journée ===
-function _iAmTeamOf(m){ return hasClaim(m.a) || hasClaim(m.b); }
-function canEditScores(m, rCtl){
-  if (!rCtl.started && !rCtl.finished) return false; // pas commencé -> personne
-  if (rCtl.finished) return isAdmin();               // terminé -> admin seul
-  return isAdmin() || _iAmTeamOf(m);                 // en cours -> admin + équipe du match
-}
-
 function teamObj(tid){return state.teams.find(t=>t.id===tid)||null} function teamName(tid){const t=teamObj(tid);return t?t.name:"—"}
 function initials(name){const s=(name||"").trim();if(!s)return"?";const p=s.split(/\s+/);return(p[0][0]+(p[1]?.[0]||"")).toUpperCase()}
 function avatarHtml(tid,size,attrs){const t=teamObj(tid)||{name:"?"};const url=t.avatar;const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':'');const extra=attrs?(' '+attrs):'';const content=url?('<img src="'+esc(url)+'" alt="avatar">'):('<span class="avatar-initials">'+esc(initials(t.name))+'</span>');return '<span class="avatar '+cls+'" title="'+esc(t.name)+'"'+extra+'>'+content+'</span>'}
@@ -670,7 +593,7 @@ function dartsTotal(){return (state.rules?.dartsSingles||0)+(state.rules?.dartsD
 function pingTotal(){return (state.rules?.pingSingles||0)+(state.rules?.pingDoubles||0)}
 function ensureLengths(m){const dN=dartsTotal(),pN=pingTotal();m.darts=Array.isArray(m.darts)?m.darts.slice(0,dN):[];while(m.darts.length<dN)m.darts.push(null);if(!Array.isArray(m.pingPts))m.pingPts=[];m.pingPts=m.pingPts.slice(0,pN);while(m.pingPts.length<pN)m.pingPts.push({a:null,b:null});}
 function _normMatch(m){m=m||{};m.id=m.id||uid();m.a=m.a||"";m.b=m.b||"";ensureLengths(m);m.palet=m.palet||{a:null,b:null};m.palet.a=(m.palet.a==null?null:+m.palet.a);m.palet.b=(m.palet.b==null?null:+m.palet.b);m.round=m.round||1;m.order=m.order||0;return m}
-function normalize(){state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11};state.teams=Array.isArray(state.teams)?state.teams:[];state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[];state.protect=state.protect||{};state.protect.teamPassHash=state.protect.teamPassHash||{};state.roundCtl=state.roundCtl||{};state.bonusSelections=state.bonusSelections||{};state.bonusApplied=state.bonusApplied||{};state.bonusUsed=state.bonusUsed||{};state.bonusUsed=state.bonusUsed||{}}
+function normalize(){state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11};state.teams=Array.isArray(state.teams)?state.teams:[];state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[];state.protect=state.protect||{};state.protect.teamPassHash=state.protect.teamPassHash||{};state.roundCtl=state.roundCtl||{};state.bonusSelections=state.bonusSelections||{};state.bonusApplied=state.bonusApplied||{}}
 
 /* ===== Firebase ===== */
 const cloud={enabled:false,db:null,id:null,ref:null,timer:null}; const hasFB=!!(window.firebase&&window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey);
@@ -678,18 +601,7 @@ function initFB(){try{if(!hasFB)return null;if(!firebase.apps||firebase.apps.len
 function setCloudTxt(t){id("cloud-status").textContent=t;id("cloud-status-2").textContent=t}
 function unsubscribeCloud(){try{if(cloud.ref)cloud.ref.off('value')}catch(_){ }cloud.ref=null;cloud.enabled=false;cloud.id=null;setCloudTxt('hors ligne')}
 function resetState(){state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};try{localStorage.removeItem(STORAGE_KEY)}catch(_){}} 
-function joinCloud(code){if(!hasFB){alert("Firebase non configuré.");return}if(!cloud.db){cloud.db=initFB();if(!cloud.db){alert("Init Firebase impossible.");return}}unsubscribeCloud();cloud.id=(code||"").trim();if(!cloud.id){alert("Saisis un code tournoi.");return}cloud.ref=cloud.db.ref("tournaments/"+cloud.id+"/payload");cloud.enabled=true;setCloudTxt("connexion");cloud.ref.on("value",snap=>{const val=snap.val();if(!val){setCloudTxt("connecté (vide)");return}safeSetStateFromCloud(val);normalize();state.cloudId=cloud.id;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));upsertIndex({id:cloud.id,name:state.tournamentName||"Sans titre",updatedAt:Date.now()});renderAll();setCloudTxt("connecté ("+cloud.id+")")});try{history.replaceState(null,"",location.pathname+"?id="+encodeURIComponent(cloud.id))}catch(_){}}
-
-function safeSetStateFromCloud(val){
-  try{
-    if(!val || typeof val!=="object" || !val.state || typeof val.state!=="object"){
-      // pas d'état valide côté cloud : on laisse l'état local tel quel
-      return;
-    }
-    state = val.state;
-  }catch(_){ /* on ignore, on garde l'état local */ }
-}
-
+function joinCloud(code){if(!hasFB){alert("Firebase non configuré.");return}if(!cloud.db){cloud.db=initFB();if(!cloud.db){alert("Init Firebase impossible.");return}}unsubscribeCloud();cloud.id=(code||"").trim();if(!cloud.id){alert("Saisis un code tournoi.");return}cloud.ref=cloud.db.ref("tournaments/"+cloud.id+"/payload");cloud.enabled=true;setCloudTxt("connexion");cloud.ref.on("value",snap=>{const val=snap.val();if(!val){setCloudTxt("connecté (vide)");return}state=val.state||state;normalize();state.cloudId=cloud.id;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));upsertIndex({id:cloud.id,name:state.tournamentName||"Sans titre",updatedAt:Date.now()});renderAll();setCloudTxt("connecté ("+cloud.id+")")});try{history.replaceState(null,"",location.pathname+"?id="+encodeURIComponent(cloud.id))}catch(_){}}
 function pushCloud(immediate){if(!cloud.enabled||!cloud.ref)return;clearTimeout(cloud.timer);cloud.timer=setTimeout(()=>cloud.ref.set({state,updatedAt:Date.now()}),immediate?0:250)}
 function deleteCloud(code){if(!cloud.db){cloud.db=initFB()}return cloud.db.ref("tournaments/"+code).remove()}
 function saveState(){normalize();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));upsertIndex({id:state.cloudId||cloud.id||"?",name:state.tournamentName||"Sans titre",updatedAt:Date.now()});renderTitle();renderSetupRecent();renderManageList();if(cloud.enabled)pushCloud()}
@@ -762,17 +674,16 @@ function computeCapitaineBonusForMatch(m, tid, player, sport){
   }
   return gain;
 }
-/* Melon d’or — double si victoire sur un sous‑match ; sinon malus = 2× l’écart */
+/* Melon d’or — double si victoire sur le sous‑match choisi ; sinon malus = 2× l’écart */
 function computeMelonBonusForMatch(m, tid, sel){
   try{
     const R = state.rules||{};
     const sport = sel?.sport || 'darts';
-    const idx = 1;
     const isA = (m.a===tid), isB = (m.b===tid);
     if(!isA && !isB) return 0;
     if(sport==='ping'){
       const sets = (typeof getPingPts==='function') ? (getPingPts(m)||[]) : [];
-      const s = sets[idx-1]; if(!s) return 0;
+      const s = sets[0]; if(!s) return 0;
       const a = (s.a==null?null:+s.a), b = (s.b==null?null:+s.b);
       if(!isPingValid(a,b)) return 0;
       const my = isA ? a : b, opp = isA ? b : a;
@@ -788,7 +699,7 @@ function computeMelonBonusForMatch(m, tid, sel){
       if((isA && a===T) || (isB && b===T)) return my||0;
       return -2*Math.abs(my-opp);
     } else { // darts
-      const v = Array.isArray(m.darts) ? m.darts[idx-1] : null;
+      const v = Array.isArray(m.darts) ? m.darts[0] : null;
       if(v==null) return 0;
       const win = (isA && v===0) || (isB && v===1);
       return win ? (+R.dartsWinPoints||0) : (-2*(+R.dartsWinPoints||0));
@@ -822,7 +733,7 @@ function bonusChip(r,mTeam,rs){
   if (isAdmin() && !roundFinished) return '';
 
   // Rien choisi → afficher un bouton uniquement pour l'équipe concernée, avant le début.
-  const canChoose = (!rs.started && !rs.finished && !(state.bonusUsed?.[r]?.[mTeam]) && iAmTeam);
+  const canChoose = (!rs.started && !rs.finished && !teamBonusUsed(mTeam) && iAmTeam);
   if (!sel) {
     return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
   }
@@ -838,7 +749,8 @@ function bonusChip(r,mTeam,rs){
     // Révélé à tout le monde
     const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
     const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); return `<span class="pill blue">${lblType} ${type==='capitaine' ? labelPlayer+' / '+labelSport : (sel.sport ? ' / '+labelSport : '')} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+    const applied = getBonusAppliedSum(mTeam) || 0;
+    return `<span class="pill blue">Capitaine ${labelPlayer} / ${labelSport} : +${applied}<span class="mini-bonus"><img src="img/capitaine.jpg" alt=""></span></span>`;
   }
 }
 
@@ -896,12 +808,12 @@ function renderMatches(){
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!(can && canEditScores(m,rCtl));
+        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!can;
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
+        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
         const mid=m.id,idxSet=parseInt(inp.getAttribute("data-index"),10),which=inp.getAttribute("data-ping");
         const updateNote=()=>{const mm=findMatch(mid),s=mm.pingPts[idxSet],ok=isPingValid(+s.a,+s.b);const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');if(note)note.textContent=ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);const mm=findMatch(mid);mm.pingPts[idxSet][which]=v;saveState();updateNote()});
@@ -910,7 +822,7 @@ function renderMatches(){
       });
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
+        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;saveState();updateNote()});
@@ -1042,7 +954,7 @@ document.addEventListener("click",async(e)=>{
     case "btn-cloud-delete":{if(!isAdmin())return alert("Suppression cloud réservée à l’admin.");const code=state.cloudId||cloud.id;if(!code)return alert("Aucun code actif.");if(!confirm("Supprimer définitivement ce tournoi du cloud ?"))return;deleteCloud(code).then(()=>{setIndex(getIndex().filter(e=>e.id!==code));unsubscribeCloud();resetState();renderSetupRecent();renderAll();history.replaceState(null,"",location.pathname);alert("Tournoi supprimé.");goto('setup')});break}
 
     /* ---- Réinitialiser scores => réinitialise aussi BONUS + journées ---- */
-    case "btn-reset-scores":{state.bonusSelections={};state.bonusApplied={};state.bonusUsed={};(state.teams||[]).forEach(t=>{if(t)t.bonusCapitaineUsed=false});if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);saveState();renderAll();goto("calendrier");break}
+    case "btn-reset-scores":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);saveState();renderAll();goto("calendrier");break}
 
     case "btn-unlock":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Déverrouiller le calendrier ?"))return;state.locked=false;saveState();renderTeams();renderMatches();updateLock();break}
 
@@ -1062,10 +974,10 @@ document.addEventListener("click",async(e)=>{
       const sels = state.bonusSelections[r] || {};
       Object.keys(sels).forEach(tid=>{
         const sel = sels[tid]; if (!sel) return;
-        if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
+        if (teamBonusUsed(tid)) { setBonusApplied(r, tid, 0); return; }
         let total = 0;
         matchesOfRound.forEach(m=>{ total += (sel.type==='melon' ? computeMelonBonusForMatch(m, tid, sel) : computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport)); });
-        setBonusApplied(r, tid, total); state.bonusUsed=state.bonusUsed||{}; state.bonusUsed[r]=state.bonusUsed[r]||{}; state.bonusUsed[r][tid]=true; markTeamBonusUsed(tid);
+        setBonusApplied(r, tid, total); markTeamBonusUsed(tid);
       });
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
@@ -1091,20 +1003,17 @@ let bonusCTX={round:null,teamId:null};
 function openBonusModal(round,teamId){
   const rCtl=roundState(round);
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
-  if ((state.bonusUsed?.[round]?.[teamId])) return alert("Ce bonus a déjà été utilisé une fois.");
+  if(teamBonusUsed(teamId)) return alert("Ce bonus a déjà été utilisé une fois.");
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
   bonusCTX.round=round;bonusCTX.teamId=teamId;
   const sel=getBonusSelection(round,teamId);
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine');
-  if(id('melon-sport')) id('melon-sport').value = (sel?.sport||'darts');
-  try{  if(null
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine');
-  if(id('melon-sport')) id('melon-sport').value = (sel?.sport||'darts');
-  try{  if(null
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine');
-  if(id('melon-sport')) id('melon-sport').value = (sel?.sport||'darts');
-  try{  if(null
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
   if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
+  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   id('bonus-player').value=sel?.player||'p1';
   id('bonus-sport').value=sel?.sport||'darts';
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
@@ -1113,16 +1022,15 @@ function openBonusModal(round,teamId){
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
-  const type = (window._bonusType==='miroir') ? 'miroir' :
-               (window._bonusType==='taupe') ? 'taupe' :
-               (window._bonusType==='lefthand') ? 'lefthand' :
-               (window._bonusType==='melon') ? 'melon' : 'capitaine';
+  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
   if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
   else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
   else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
   else if(type==='melon') setBonusSelection(r,t,{type:'melon',sport:id('melon-sport').value||'darts'});
   else setBonusSelection(r,t,{type:'miroir'});
   id('bonus-modal').classList.remove('show');
+  if(typeof renderPills==='function') renderPills();
+  if(typeof renderMatches==='function') renderMatches();
 });
 
 /* ===== Boot ===== */
@@ -1178,51 +1086,10 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 
 <script>
 (function(){
-  if (typeof window.selectBonusType !== 'function' && typeof selectBonusType === 'function') {
-    window.selectBonusType = selectBonusType;
-  }
-  if (typeof window.setParamsOpen !== 'function' && typeof setParamsOpen === 'function') {
-    window.setParamsOpen = setParamsOpen;
-  }
-  if (typeof window.prepareBonusOptions !== 'function' && typeof prepareBonusOptions === 'function') {
-    window.prepareBonusOptions = prepareBonusOptions;
-  }
-  document.addEventListener('DOMContentLoaded', function(){
-    try{ if(typeof window.prepareBonusOptions==='function') window.prepareBonusOptions(); }catch(e){}
-  });
-})();
-</script>
-
-
-<script>
-// Buttons hotfix: ensure globals and click wiring even if earlier scripts fail.
-(function(){
-  function expose(name){
-    try{
-      if(typeof window[name] !== 'function' && typeof window[name] !== 'undefined') return;
-      if(typeof window[name] !== 'function' && typeof eval(name) === 'function'){ window[name] = eval(name); }
-    }catch(_){}
-  }
-  expose('selectBonusType');
-  expose('setParamsOpen');
-  expose('prepareBonusOptions');
-  expose('openBonusModal');
-
-  // Always (re)prepare bonus cards after DOM ready
-  document.addEventListener('DOMContentLoaded', function(){
-    try{ if(typeof window.prepareBonusOptions==='function') window.prepareBonusOptions(); }catch(e){}
-  });
-
-  // Delegated click on bonus cards as fallback
-  document.addEventListener('click', function(ev){
-    const card = ev.target.closest && ev.target.closest('.bonus-select .bonus-card');
-    if(card){
-      const cards = Array.from(card.parentNode.querySelectorAll('.bonus-card'));
-      const i = cards.indexOf(card);
-      const t = (i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':(i===3?'lefthand':'melon'))));
-      if(typeof window.selectBonusType === 'function'){ window.selectBonusType(t); }
-    }
-  });
+  if (typeof window.selectBonusType !== 'function' && typeof selectBonusType === 'function') window.selectBonusType = selectBonusType;
+  if (typeof window.setParamsOpen !== 'function' && typeof setParamsOpen === 'function') window.setParamsOpen = setParamsOpen;
+  if (typeof window.prepareBonusOptions !== 'function' && typeof prepareBonusOptions === 'function') window.prepareBonusOptions = prepareBonusOptions;
+  document.addEventListener('DOMContentLoaded', function(){ try{ if(typeof window.prepareBonusOptions==='function') window.prepareBonusOptions(); }catch(e){} });
 })();
 </script>
 
