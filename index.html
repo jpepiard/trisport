@@ -177,58 +177,58 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 
 
-<style id="brand-image-header">
+<style id="patch-center-bonus-and-fields">
 
-/* ===== Header compact + brand images (reliable) ===== */
-header, .topbar, .app-header{
-  padding-block: 10px !important;
+/* ==== PATCH: Centrage modal Bonus + champs sous le texte ==== */
+
+/* Le conteneur #bonus-modal a par erreur la classe .bonus-dialog (style de panneau).
+   On force ici son rôle d'overlay plein écran, centré. */
+#bonus-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  display: none !important;            /* visible seulement avec .show */
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(0,0,0,.45) !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 16px !important;
+  z-index: 9998;
 }
-header .brand{ display:flex; align-items:center; gap:12px; }
+#bonus-modal.show { display: flex !important; }
 
-/* Hide old text-based logo/title if present */
-header .brand > .logo{ display:none !important; }
-header .brand > h1{ display:none !important; }
-
-/* Our real images */
-.brand-logo{ width:64px; height:64px; border-radius:14px; display:block; }
-.brand-title{ height:72px; width:auto; display:block; }
-
-@media (max-width: 640px){
-  .brand-title{ height:60px; }
-}
-@media (max-width: 420px){
-  .brand-title{ height:48px; }
-}
-
-</style>
-<style id="header-compact-keepimage">
-
-/* ===== Ultra-compact header — keep logo/title sizes ===== */
-header, .app-header, .topbar{
-  padding-block: 6px !important;   /* reduce vertical padding without touching images */
-  min-height: unset !important;
-}
-/* ensure children don't add extra vertical margins */
-header *{
-  margin-block: 0 !important;
-}
-/* layout + baseline fixes to avoid extra line-height space */
-header .brand{ display:flex; align-items:center; gap:12px; }
-header .brand img{ display:block; }             /* remove inline baseline gap */
-header nav, header .tabs, header .menu{ display:flex; align-items:center; }
-/* optional: slightly tighten chip/button vertical padding */
-header .btn, header .chip, header .pill, header .tab{
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
+/* Le vrai panneau du modal */
+#bonus-modal .bonus-panel{
+  width: min(560px, 92vw);
+  background: #141938;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.5);
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* keep the image sizes exactly as they are */
-.brand-logo{ width:64px !important; height:64px !important; }
-.brand-title{ height:72px !important; width:auto !important; }
+/* Cartes bonus : image | texte, puis les champs en dessous */
+.bonus-select .bonus-card{
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 12px;
+  align-items: start;
+}
 
-/* fine-tune on small screens */
-@media (max-width: 640px){
-  header, .app-header, .topbar{ padding-block: 4px !important; }
+/* Champs pliés par défaut ; JS existant ajuste max-height via setParamsOpen() */
+.bonus-params{
+  grid-column: 1 / -1;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .25s ease;
+  margin-top: 6px;
 }
 
 </style>
@@ -727,12 +727,12 @@ function renderMatches(){
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!can;
+        const __rs=roundState(m.round); const can=__rs.started ? (__rs.finished ? isAdmin() : (isAdmin()||hasClaim(m.a)||hasClaim(m.b))) : false; sel.disabled=!can;
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
       qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
+        const __rs=roundState(m.round); const can=__rs.started ? (__rs.finished ? isAdmin() : (isAdmin()||hasClaim(m.a)||hasClaim(m.b))) : false; inp.disabled=!can;
         const mid=m.id,idxSet=parseInt(inp.getAttribute("data-index"),10),which=inp.getAttribute("data-ping");
         const updateNote=()=>{const mm=findMatch(mid),s=mm.pingPts[idxSet],ok=isPingValid(+s.a,+s.b);const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');if(note)note.textContent=ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);const mm=findMatch(mid);mm.pingPts[idxSet][which]=v;saveState();updateNote()});
@@ -741,7 +741,7 @@ function renderMatches(){
       });
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!can;
+        const __rs=roundState(m.round); const can=__rs.started ? (__rs.finished ? isAdmin() : (isAdmin()||hasClaim(m.a)||hasClaim(m.b))) : false; inp.disabled=!can;
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;saveState();updateNote()});
@@ -954,52 +954,5 @@ id('bonus-save').addEventListener('click',()=>{
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
 document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e) {} });</script>
-
-<script>
-(function(){
-  function withFallback(img, primary, fall1, fall2){
-    img.src = primary;
-    img.onerror = function(){
-      img.onerror = function(){
-        img.onerror = function(){
-          img.onerror = null;
-          img.src = fall2;
-        };
-        img.src = fall1;
-      };
-      // try img/ first
-      img.src = 'img/' + primary.split('/').pop();
-    };
-  }
-  function ensureBrandImages(){
-    var brand = document.querySelector('header .brand') || document.querySelector('.brand');
-    if(!brand) return;
-    // avoid duplicates
-    if(!brand.querySelector('img.brand-logo')){
-      var logo = document.createElement('img');
-      logo.className = 'brand-logo';
-      logo.alt = 'TriSports logo';
-      brand.prepend(logo);
-      withFallback(logo, 'tripsort/img/logo.png', 'trisport/img/logo.png', 'img/logo.png');
-    }
-    if(!brand.querySelector('img.brand-title')){
-      var title = document.createElement('img');
-      title.className = 'brand-title';
-      title.alt = 'TriSports';
-      // insert after logo
-      var ref = brand.querySelector('img.brand-logo');
-      if(ref && ref.nextSibling){ brand.insertBefore(title, ref.nextSibling); }
-      else { brand.appendChild(title); }
-      withFallback(title, 'tripsort/img/titre.png', 'trisport/img/titre.png', 'img/titre.png');
-    }
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', ensureBrandImages);
-  }else{
-    ensureBrandImages();
-  }
-})();
-</script>
-
 </body>
 </html>
