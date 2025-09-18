@@ -257,44 +257,12 @@ header .btn, header .chip, header .pill, header .tab{
 #bonus-modal .bonus-dialog .bonus-card.selected .bonus-params{max-height:500px;opacity:1}
 </style>
 
-<style id="bonus-modal-layout-hotfix">
-/* ========== BONUS MODAL LAYOUT HOTFIX ========== */
-#bonus-modal .bonus-dialog .bonus-select{display:grid;gap:16px}
-#bonus-modal .bonus-dialog .bonus-card{
-  display:grid;
-  grid-template-columns:96px 1fr;
-  grid-auto-rows:auto;
-  align-items:start;
-  gap:12px;
-  padding:14px;
-  border:1px dashed rgba(255,255,255,.25);
-  border-radius:12px;
-}
-#bonus-modal .bonus-dialog .bonus-card .bonus-illu{
-  grid-column:1;grid-row:1;
-  width:96px;height:96px;border-radius:12px;
-  overflow:hidden;display:block;position:static !important;
-}
-#bonus-modal .bonus-dialog .bonus-card .bonus-illu img{
-  width:100%;height:100%;object-fit:cover;display:block;position:static !important;
-}
-#bonus-modal .bonus-dialog .bonus-card .bonus-text{grid-column:2;grid-row:1;min-width:0}
-/* parameters block under the text, spanning full width */
-#bonus-modal .bonus-dialog .bonus-card .bonus-params{grid-column:1 / -1;grid-row:2;margin-top:8px;max-height:0;overflow:hidden;opacity:.0;transition:max-height .25s ease,opacity .2s}
-#bonus-modal .bonus-dialog .bonus-card.selected .bonus-params{max-height:600px;opacity:1}
-/* Never let inner content use absolute positioning that could collapse layout */
-#bonus-modal .bonus-dialog .bonus-card *{position:relative}
-/* Fix long help text wrapping inside cards */
-#bonus-modal .bonus-dialog .bonus-card .help{white-space:normal}
-</style>
-
-
-<style id="bonus-params-visibility-fix">
-/* cache tous les params des bonus si non sélectionné */
-#bonus-modal .bonus-card .bonus-params{display:none}
-#bonus-modal .bonus-card.selected .bonus-params{display:block}
-/* pour Melon d’or, placer sous le texte */
-#bonus-modal #melon-params{grid-column:1 / -1; margin-top:8px}
+<style id="melon-strict-ui-fix">
+/* Melon d’or: seul le champ Sport apparaît sous sa carte et uniquement quand elle est sélectionnée */
+#bonus-modal .bonus-card #melon-params{display:none; grid-column:1 / -1; margin-top:8px}
+#bonus-modal .bonus-card.selected #melon-params{display:block}
+/* Si un vieux select "melon-index" subsiste, on le masque explicitement */
+#bonus-modal #melon-params #melon-index{display:none !important}
 </style>
 
 </head>
@@ -577,7 +545,14 @@ header .btn, header .chip, header .pill, header .tab{
           <select id="lefthand-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
-      <div id="melon-fields" class="grid cols-2" style="margin-top:8px"><div><label>Sport</label><select id="melon-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select></div></div>
+      <div id="melon-fields" class="grid cols-3" style="margin-top:10px">
+        <div><label>Sport</label>
+          <select id="melon-sport">
+            <option value="darts">Fléchettes</option>
+            <option value="ping">Ping</option>
+            <option value="palet">Palet</option>
+          </select>
+        </div>
         <div><label>Sport</label>
           <select id="melon-index"></select>
         </div>
@@ -1287,42 +1262,107 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 
 
-<script id="mount-melon-under-card">
+<script id="melon-strict-mount">
 (function(){
-  function findMelonCard(){
+  function findCardByTitle(rx){
     const cards = document.querySelectorAll('#bonus-modal .bonus-select .bonus-card');
     for(const c of cards){
-      const t = c.querySelector('.bonus-title'); 
-      if(t && /Melon d[’']or/i.test(t.textContent||'')) return c;
+      const t = c.querySelector('.bonus-title');
+      if(t && rx.test((t.textContent||'').trim())) return c;
     }
     return null;
   }
+  function buildSportSelect(current){
+    const sel = document.createElement('select');
+    sel.id = 'melon-sport';
+    const opts = [
+      ['darts','Fléchettes'],
+      ['ping','Ping'],
+      ['palet','Palet']
+    ];
+    opts.forEach(([val,lab])=>{
+      const o = document.createElement('option'); o.value=val; o.textContent=lab;
+      sel.appendChild(o);
+    });
+    if(current){
+      // Try to map old value to sport; default darts
+      const lc = (''+current).toLowerCase();
+      if(lc.includes('fléch') || lc.includes('fleche')) sel.value='darts';
+      else if(lc.includes('ping')) sel.value='ping';
+      else if(lc.includes('palet')) sel.value='palet';
+    }
+    return sel;
+  }
   function mount(){
-    const fields = document.getElementById('melon-fields');
-    if(!fields) return;
+    const melonCard = findCardByTitle(/Melon d[’']or/i);
+    const leftCard  = findCardByTitle(/10\s*pouces.*mains\s*gauche/i);
+    if(!melonCard) return;
+    // ensure wrapper
     let wrap = document.getElementById('melon-params');
     if(!wrap){
       wrap = document.createElement('div');
       wrap.id = 'melon-params';
       wrap.className = 'bonus-params';
     }
-    const card = findMelonCard();
-    if(card && wrap.parentNode !== card){
-      const text = card.querySelector('.bonus-text');
-      if(text && text.nextSibling){
-        card.insertBefore(wrap, text.nextSibling);
-      }else{
-        card.appendChild(wrap);
-      }
+    // ensure wrapper sits right under melon text
+    const text = melonCard.querySelector('.bonus-text');
+    if(text && wrap.parentNode !== melonCard){
+      if(text.nextSibling) melonCard.insertBefore(wrap, text.nextSibling);
+      else melonCard.appendChild(wrap);
+    }else if(!text && wrap.parentNode !== melonCard){
+      melonCard.appendChild(wrap);
     }
-    if(fields.parentNode !== wrap){
+    // Ensure melon-fields exists in wrapper
+    let fields = document.getElementById('melon-fields');
+    if(!fields){
+      fields = document.createElement('div');
+      fields.id = 'melon-fields';
+      wrap.appendChild(fields);
+    }else if(fields.parentNode !== wrap){
       wrap.appendChild(fields);
     }
+    // Rebuild fields content: only label "Sport" + select#melon-sport
+    // Remove any old melon-index select
+    const oldIndex = fields.querySelector('#melon-index');
+    if(oldIndex && oldIndex.parentElement) oldIndex.parentElement.remove();
+    // Make sure there's exactly one select#melon-sport with correct options
+    let sportSel = fields.querySelector('#melon-sport');
+    const prev = sportSel ? sportSel.value : null;
+    fields.innerHTML = ''; // wipe and rebuild
+    const row = document.createElement('div');
+    const lab = document.createElement('label'); lab.textContent='Sport';
+    sportSel = buildSportSelect(prev);
+    row.appendChild(lab); row.appendChild(sportSel);
+    fields.appendChild(row);
+
+    // If lefthand fields accidentally ended up here, move them back
+    const strayLeft = wrap.querySelector('#lefthand-fields');
+    if(strayLeft){
+      let leftWrap = document.getElementById('lefthand-params');
+      if(!leftWrap){
+        leftWrap = document.createElement('div');
+        leftWrap.id = 'lefthand-params';
+        leftWrap.className = 'bonus-params';
+      }
+      if(leftCard){
+        const leftText = leftCard.querySelector('.bonus-text');
+        if(leftText && leftWrap.parentNode !== leftCard){
+          if(leftText.nextSibling) leftCard.insertBefore(leftWrap, leftText.nextSibling);
+          else leftCard.appendChild(leftWrap);
+        }else if(!leftText && leftWrap.parentNode !== leftCard){
+          leftCard.appendChild(leftWrap);
+        }
+      }
+      leftWrap.appendChild(strayLeft);
+    }
   }
-  document.addEventListener('click', function(){
+  // mount when modal shows (delegated) and on DOM ready
+  document.addEventListener('click', function(e){
     const modal = document.getElementById('bonus-modal');
-    if(modal && modal.classList.contains('show')) mount();
-  });
+    if(modal && (modal.classList.contains('show') || modal.getClientRects().length)){
+      mount();
+    }
+  }, true);
   document.addEventListener('DOMContentLoaded', mount);
 })();
 </script>
