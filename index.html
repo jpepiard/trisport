@@ -257,35 +257,9 @@ header .btn, header .chip, header .pill, header .tab{
 #bonus-modal .bonus-dialog .bonus-card.selected .bonus-params{max-height:500px;opacity:1}
 </style>
 
-<style id="bonus-modal-layout-hotfix">
-/* ========== BONUS MODAL LAYOUT HOTFIX ========== */
-#bonus-modal .bonus-dialog .bonus-select{display:grid;gap:16px}
-#bonus-modal .bonus-dialog .bonus-card{
-  display:grid;
-  grid-template-columns:96px 1fr;
-  grid-auto-rows:auto;
-  align-items:start;
-  gap:12px;
-  padding:14px;
-  border:1px dashed rgba(255,255,255,.25);
-  border-radius:12px;
-}
-#bonus-modal .bonus-dialog .bonus-card .bonus-illu{
-  grid-column:1;grid-row:1;
-  width:96px;height:96px;border-radius:12px;
-  overflow:hidden;display:block;position:static !important;
-}
-#bonus-modal .bonus-dialog .bonus-card .bonus-illu img{
-  width:100%;height:100%;object-fit:cover;display:block;position:static !important;
-}
-#bonus-modal .bonus-dialog .bonus-card .bonus-text{grid-column:2;grid-row:1;min-width:0}
-/* parameters block under the text, spanning full width */
-#bonus-modal .bonus-dialog .bonus-card .bonus-params{grid-column:1 / -1;grid-row:2;margin-top:8px;max-height:0;overflow:hidden;opacity:.0;transition:max-height .25s ease,opacity .2s}
-#bonus-modal .bonus-dialog .bonus-card.selected .bonus-params{max-height:600px;opacity:1}
-/* Never let inner content use absolute positioning that could collapse layout */
-#bonus-modal .bonus-dialog .bonus-card *{position:relative}
-/* Fix long help text wrapping inside cards */
-#bonus-modal .bonus-dialog .bonus-card .help{white-space:normal}
+<style id="bonus-modal-coherent-css">
+#bonus-modal .bonus-card .bonus-params{display:none}
+#bonus-modal .bonus-card.selected .bonus-params{display:block}
 </style>
 
 </head>
@@ -1285,80 +1259,116 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 
 
-<script id="bonus-buttons-safety-net">
-// File-injected safety net so the Bonus modal buttons always work even if other scripts fail.
+<script id="bonus-modal-coherent-melon">
 (function(){
-  function id(x){ return document.getElementById(x); }
-  function qs(s, r){ return (r||document).querySelector(s); }
-  function closeModal(){
-    var m = id('bonus-modal');
-    if (m) m.classList.remove('show');
+  function id(x){return document.getElementById(x)}
+  function qs(s,r){return (r||document).querySelector(s)}
+  function qsa(s,r){return Array.from((r||document).querySelectorAll(s))}
+  function norm(t){return (t||'').toLowerCase().replace(/[’']/g,"'").trim()}
+
+  function findCardByType(t){
+    const cards = qsa('#bonus-modal .bonus-select .bonus-card')
+    return cards.find(c => (c.dataset.type||'')===t) || null
   }
-  function refresh(){
-    try{ if (typeof renderPills==='function') renderPills(); }catch(e){}
-    try{ if (typeof renderMatches==='function') renderMatches(); }catch(e){}
-    try{ if (typeof updateRanking==='function') updateRanking(); }catch(e){}
-  }
-  function collectMelon(){
-    var sportSel = id('melon-sport');
-    return { type:'melon', sport: sportSel ? sportSel.value : 'darts' };
-  }
-  function collectCapitaine(){
-    var p = id('bonus-player'), s = id('bonus-sport');
-    return { type:'capitaine', player: p ? p.value : 'J1', sport: s ? s.value : 'darts' };
-  }
-  function collectTaupe(){
-    var s = id('taupe-sport'); return { type:'taupe', sport: s ? s.value : 'darts' };
-  }
-  function collectLeft(){
-    var s = id('lefthand-sport'); return { type:'lefthand', sport: s ? s.value : 'darts' };
-  }
-  function collectMiroir(){
-    return { type:'miroir' };
-  }
-  function doSave(){
-    try{
-      var r = (window.bonusCTX && window.bonusCTX.round) || window._activeRound || 1;
-      var t = (window.bonusCTX && window.bonusCTX.teamId) || window._activeTeam || null;
-      var type = window._bonusType || 'capitaine';
-      var sel;
-      if (type==='capitaine') sel = collectCapitaine();
-      else if (type==='taupe') sel = collectTaupe();
-      else if (type==='lefthand') sel = collectLeft();
-      else if (type==='melon') sel = collectMelon();
-      else sel = collectMiroir();
-      if (typeof setBonusSelection==='function' && t!=null){
-        setBonusSelection(r, t, sel);
+  function ensureParamWrapper(type){
+    if(type==='capitaine'){ return id('capitaine-params') || null }
+    if(type==='taupe'){ return id('taupe-params') || null }
+    if(type==='lefthand'){ return id('lefthand-params') || null }
+    if(type==='melon'){
+      // build minimal melon wrapper under Melon card
+      let wrap = id('melon-params')
+      if(!wrap){
+        wrap = document.createElement('div')
+        wrap.id = 'melon-params'
+        wrap.className = 'bonus-params'
       }
-    }catch(e){ console && console.warn && console.warn('bonus safety save failed:', e); }
-    closeModal(); refresh();
+      let fields = id('melon-fields')
+      if(!fields){
+        fields = document.createElement('div')
+        fields.id = 'melon-fields'
+      }
+      // only keep "Sport" select inside
+      fields.innerHTML = ''
+      const row = document.createElement('div')
+      const lab = document.createElement('label'); lab.textContent='Sport'
+      const sel = document.createElement('select'); sel.id='melon-sport'
+      ;[['darts','Fléchettes'],['ping','Ping'],['palet','Palet']].forEach(([v,l])=>{
+        const o = document.createElement('option'); o.value=v; o.textContent=l; sel.appendChild(o)
+      })
+      row.appendChild(lab); row.appendChild(sel)
+      fields.appendChild(row)
+      if(fields.parentNode !== wrap) wrap.appendChild(fields)
+      // mount under card
+      const card = findCardByType('melon')
+      if(card && wrap.parentNode !== card){
+        const text = qs('.bonus-text', card)
+        if(text && text.nextSibling) card.insertBefore(wrap, text.nextSibling)
+        else card.appendChild(wrap)
+      }
+      return wrap
+    }
+    return null
   }
 
-  // Delegate clicks for Annuler/Valider inside the modal footer
-  document.addEventListener('click', function(ev){
-    var btn = ev.target.closest('#bonus-modal .ft button, #bonus-modal .ft .button');
-    if (!btn) return;
-    var txt = (btn.textContent||'').trim().toLowerCase();
-    if (btn.id==='bonus-cancel' || txt==='annuler'){
-      ev.preventDefault(); closeModal();
-    } else if (btn.id==='bonus-save' || txt==='valider'){
-      ev.preventDefault(); doSave();
-    }
-  }, true);
+  function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
+    const wC = ensureParamWrapper('capitaine'); if(wC){ wC.style.display = openCap?'block':'none' }
+    const wT = ensureParamWrapper('taupe'); if(wT){ wT.style.display = openTaupe?'block':'none' }
+    const wL = ensureParamWrapper('lefthand'); if(wL){ wL.style.display = openLeft?'block':'none' }
+    const wM = ensureParamWrapper('melon'); if(wM){ wM.style.display = openMelon?'block':'none' }
+  }
 
-  // As a fallback, ensure explicit handlers exist
-  window.addEventListener('DOMContentLoaded', function(){
-    var bCancel = id('bonus-cancel');
-    if (bCancel && !bCancel.dataset.__safetyBound){
-      bCancel.addEventListener('click', function(e){ e.preventDefault(); closeModal(); });
-      bCancel.dataset.__safetyBound = 1;
-    }
-    var bSave = id('bonus-save');
-    if (bSave && !bSave.dataset.__safetyBound){
-      bSave.addEventListener('click', function(e){ e.preventDefault(); doSave(); });
-      bSave.dataset.__safetyBound = 1;
-    }
-  });
+  function setContextText(t){
+    const ctx = id('bonus-context')
+    if(!ctx) return
+    ctx.textContent = t==='miroir' ? "Miroir : inverse le bonus adverse sur tout le match."
+                   : t==='taupe' ? "René la taupe : choisissez le sport."
+                   : t==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport."
+                   : t==='melon' ? "Melon d’or : choisissez le sport."
+                   : "Capitaine : choisissez le joueur et le sport."
+  }
+
+  function selectBonusTypeCoherent(t){
+    const allowed = ['capitaine','miroir','taupe','lefthand','melon']
+    window._bonusType = allowed.includes(t)?t:'capitaine'
+    const cards = qsa('#bonus-modal .bonus-select .bonus-card')
+    cards.forEach(c=>c.classList.remove('selected'))
+    const card = findCardByType(window._bonusType)
+    if(card) card.classList.add('selected')
+    setContextText(window._bonusType)
+    setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand', window._bonusType==='melon')
+  }
+
+  // Prepare cards: assign dataset.type based on title text
+  function prepare(){
+    const cards = qsa('#bonus-modal .bonus-select .bonus-card')
+    cards.forEach(c=>{
+      const title = qs('.bonus-title', c)
+      const t = norm(title && title.textContent)
+      if(!c.dataset.type){
+        if(/^capitaine/.test(t)) c.dataset.type='capitaine'
+        else if(/^miroir/.test(t)) c.dataset.type='miroir'
+        else if(/taupe/.test(t)) c.dataset.type='taupe'
+        else if(/10\s*pouces/.test(t)) c.dataset.type='lefthand'
+        else if(/melon d'or/.test(t)) c.dataset.type='melon'
+      }
+      // click + keyboard
+      c.addEventListener('click', ()=>selectBonusTypeCoherent(c.dataset.type))
+      c.addEventListener('keydown', ev=>{
+        if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusTypeCoherent(c.dataset.type) }
+      })
+    })
+    // ensure melon wrapper exists and is attached
+    ensureParamWrapper('melon')
+  }
+
+  // Override legacy selectBonusType if present
+  window.selectBonusType = selectBonusTypeCoherent
+
+  document.addEventListener('click', function(){
+    const m = id('bonus-modal')
+    if(m && (m.classList.contains('show') || m.getClientRects().length)) prepare()
+  }, true)
+  document.addEventListener('DOMContentLoaded', prepare)
 })();
 </script>
 
