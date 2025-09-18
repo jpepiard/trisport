@@ -289,23 +289,12 @@ header .btn, header .chip, header .pill, header .tab{
 </style>
 
 
-<style id="melon-param-visibility-fix">
-/* Melon d’or – le champ Sport est sous le texte et masqué tant que la carte n'est pas sélectionnée */
-#bonus-modal .bonus-dialog .bonus-card .bonus-params { /* base for cards that already use this */
-  overflow: hidden;
-}
-#bonus-modal .bonus-dialog .bonus-card #melon-params{
-  grid-column: 1 / -1;
-  margin-top: 8px;
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-  transition: max-height .25s ease, opacity .2s ease;
-}
-#bonus-modal .bonus-dialog .bonus-card.selected #melon-params{
-  max-height: 240px;
-  opacity: 1;
-}
+<style id="bonus-params-visibility-fix">
+/* cache tous les params des bonus si non sélectionné */
+#bonus-modal .bonus-card .bonus-params{display:none}
+#bonus-modal .bonus-card.selected .bonus-params{display:block}
+/* pour Melon d’or, placer sous le texte */
+#bonus-modal #melon-params{grid-column:1 / -1; margin-top:8px}
 </style>
 
 </head>
@@ -588,14 +577,7 @@ header .btn, header .chip, header .pill, header .tab{
           <select id="lefthand-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
-      <div id="melon-fields" class="grid cols-3" style="margin-top:10px">
-        <div><label>Sport</label>
-          <select id="melon-sport">
-            <option value="darts">Fléchettes</option>
-            <option value="ping">Ping</option>
-            <option value="palet">Palet</option>
-          </select>
-        </div>
+      <div id="melon-fields" class="grid cols-2" style="margin-top:8px"><div><label>Sport</label><select id="melon-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select></div></div>
         <div><label>Sport</label>
           <select id="melon-index"></select>
         </div>
@@ -1305,47 +1287,43 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 
 
-<script id="melon-param-mount-fix">
+<script id="mount-melon-under-card">
 (function(){
   function findMelonCard(){
     const cards = document.querySelectorAll('#bonus-modal .bonus-select .bonus-card');
-    for(const card of cards){
-      const title = card.querySelector('.bonus-title');
-      if(title && /Melon d[’']or/i.test(title.textContent.trim())) return card;
+    for(const c of cards){
+      const t = c.querySelector('.bonus-title'); 
+      if(t && /Melon d[’']or/i.test(t.textContent||'')) return c;
     }
     return null;
   }
   function mount(){
-    try{
-      const fields = document.getElementById('melon-fields');
-      if(!fields) return;
-      let wrap = document.getElementById('melon-params');
-      if(!wrap){
-        wrap = document.createElement('div');
-        wrap.id = 'melon-params';
-        wrap.className = 'bonus-params';
+    const fields = document.getElementById('melon-fields');
+    if(!fields) return;
+    let wrap = document.getElementById('melon-params');
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.id = 'melon-params';
+      wrap.className = 'bonus-params';
+    }
+    const card = findMelonCard();
+    if(card && wrap.parentNode !== card){
+      const text = card.querySelector('.bonus-text');
+      if(text && text.nextSibling){
+        card.insertBefore(wrap, text.nextSibling);
+      }else{
+        card.appendChild(wrap);
       }
-      const card = findMelonCard();
-      if(card && wrap.parentNode !== card){
-        // Place wrapper just after the text block so it's under the content.
-        const text = card.querySelector('.bonus-text');
-        if(text && text.nextSibling){
-          card.insertBefore(wrap, text.nextSibling);
-        }else{
-          card.appendChild(wrap);
-        }
-        if(fields.parentNode !== wrap){
-          wrap.appendChild(fields);
-        }
-      }
-    }catch(e){ /* silent */ }
+    }
+    if(fields.parentNode !== wrap){
+      wrap.appendChild(fields);
+    }
   }
-  // mount when modal is opened or DOM is ready
-  document.addEventListener('DOMContentLoaded', mount);
   document.addEventListener('click', function(){
     const modal = document.getElementById('bonus-modal');
     if(modal && modal.classList.contains('show')) mount();
   });
+  document.addEventListener('DOMContentLoaded', mount);
 })();
 </script>
 
