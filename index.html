@@ -1193,5 +1193,38 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 })();
 </script>
 
+
+<script>
+// Buttons hotfix: ensure globals and click wiring even if earlier scripts fail.
+(function(){
+  function expose(name){
+    try{
+      if(typeof window[name] !== 'function' && typeof window[name] !== 'undefined') return;
+      if(typeof window[name] !== 'function' && typeof eval(name) === 'function'){ window[name] = eval(name); }
+    }catch(_){}
+  }
+  expose('selectBonusType');
+  expose('setParamsOpen');
+  expose('prepareBonusOptions');
+  expose('openBonusModal');
+
+  // Always (re)prepare bonus cards after DOM ready
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ if(typeof window.prepareBonusOptions==='function') window.prepareBonusOptions(); }catch(e){}
+  });
+
+  // Delegated click on bonus cards as fallback
+  document.addEventListener('click', function(ev){
+    const card = ev.target.closest && ev.target.closest('.bonus-select .bonus-card');
+    if(card){
+      const cards = Array.from(card.parentNode.querySelectorAll('.bonus-card'));
+      const i = cards.indexOf(card);
+      const t = (i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':(i===3?'lefthand':'melon'))));
+      if(typeof window.selectBonusType === 'function'){ window.selectBonusType(t); }
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
