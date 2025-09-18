@@ -46,39 +46,47 @@ function ensureMelonWrapper(){
 }
 
 
-function setParamsOpen(openCap, openTaupe, openLeft){
-  const wC = ensureParamWrapper(); if (wC){ wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px'; }
+function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
+  const wC = ensureParamWrapper(); if (wC) wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px';
+  const wT = ensureTaupeWrapper(); if (wT) wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px';
+  const wL = ensureLeftHandWrapper(); if (wL) wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px';
+  const wM = (typeof ensureMelonWrapper==='function') ? ensureMelonWrapper() : null; if (wM) wM.style.maxHeight = openMelon ? (wM.scrollHeight+'px') : '0px';
+}
   const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
 function selectBonusType(t){
-  window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
+  window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand'||t==='melon') ? t : 'capitaine';
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3];
-  [cap,mir,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
+  const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3], mel=cards[4];
+  [cap,mir,tau,leftc,mel].forEach(c=>c&&c.classList.remove('selected'));
   if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
   if(mir && window._bonusType==='miroir') mir.classList.add('selected');
   if(tau && window._bonusType==='taupe') tau.classList.add('selected');
   if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
+  if(mel && window._bonusType==='melon') mel.classList.add('selected');
   const ctx=id('bonus-context');
-  if(ctx) ctx.textContent = window._bonusType==='miroir' ?
+  if(ctx) ctx.textContent = window._bonusType==='miroir' ? "Miroir : inverse le bonus adverse sur tout le match." : (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." : (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." : (window._bonusType==='melon' ? "Melon d’or : choisissez le sport." : "Capitaine : choisissez le joueur et le sport.")));
     "Miroir : inverse le bonus adverse sur tout le match." :
     (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
       (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
         "Capitaine : choisissez le joueur et le sport."));
-  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
+  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand', window._bonusType==='melon');
 }
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   cards.forEach((c, i)=>{
     c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
-    c.addEventListener('click', ()=>selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))));
-    c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
+    c.addEventListener('click', ()=>selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':(i===3?'lefthand':'melon')))));
+    c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':(i===3?'lefthand':'melon')))); } }); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
   });
-  const cap=cards[0], tau=cards[2], leftc=cards[3];
+  const cap=cards[0], tau=cards[2], leftc=cards[3], mel=cards[4];
+  const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
+  const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
   const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
   const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
   const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
+  const wM=ensureMelonWrapper(); if(mel && wM && wM.previousElementSibling!==mel) mel.appendChild(wM);
 }
 
 </script>
@@ -258,33 +266,13 @@ header .btn, header .chip, header .pill, header .tab{
 </style>
 
 <style id="bonus-modal-layout-hotfix">
-/* ========== BONUS MODAL LAYOUT HOTFIX ========== */
 #bonus-modal .bonus-dialog .bonus-select{display:grid;gap:16px}
-#bonus-modal .bonus-dialog .bonus-card{
-  display:grid;
-  grid-template-columns:96px 1fr;
-  grid-auto-rows:auto;
-  align-items:start;
-  gap:12px;
-  padding:14px;
-  border:1px dashed rgba(255,255,255,.25);
-  border-radius:12px;
-}
-#bonus-modal .bonus-dialog .bonus-card .bonus-illu{
-  grid-column:1;grid-row:1;
-  width:96px;height:96px;border-radius:12px;
-  overflow:hidden;display:block;position:static !important;
-}
-#bonus-modal .bonus-dialog .bonus-card .bonus-illu img{
-  width:100%;height:100%;object-fit:cover;display:block;position:static !important;
-}
+#bonus-modal .bonus-dialog .bonus-card{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:start}
+#bonus-modal .bonus-dialog .bonus-card .bonus-illu{grid-column:1;grid-row:1;width:96px;height:96px;border-radius:12px;overflow:hidden;position:static}
+#bonus-modal .bonus-dialog .bonus-card .bonus-illu img{width:100%;height:100%;object-fit:cover;display:block;position:static}
 #bonus-modal .bonus-dialog .bonus-card .bonus-text{grid-column:2;grid-row:1;min-width:0}
-/* parameters block under the text, spanning full width */
 #bonus-modal .bonus-dialog .bonus-card .bonus-params{grid-column:1 / -1;grid-row:2;margin-top:8px;max-height:0;overflow:hidden;opacity:.0;transition:max-height .25s ease,opacity .2s}
 #bonus-modal .bonus-dialog .bonus-card.selected .bonus-params{max-height:600px;opacity:1}
-/* Never let inner content use absolute positioning that could collapse layout */
-#bonus-modal .bonus-dialog .bonus-card *{position:relative}
-/* Fix long help text wrapping inside cards */
 #bonus-modal .bonus-dialog .bonus-card .help{white-space:normal}
 </style>
 
@@ -489,7 +477,15 @@ header .btn, header .chip, header .pill, header .tab{
         <!-- Capitaine -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
-            <img src="img/capitaine.jpg" alt=""></div>
+            <img src="img/capitaine.jpg" alt="">
+
+      
+        <div class="bonus-sep"></div>
+
+        <!-- Melon d'or -->
+        <div class="bonus-card" tabindex="0" role="button" aria-label="Bonus Melon d’or">
+          <div class="bonus-illu" aria-hidden="true">
+            <img src="img/melon.png" alt="Melon d’or"></div></div>
           <div class="bonus-text">
             <div class="bonus-title">Capitaine</div>
             <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
@@ -532,14 +528,6 @@ header .btn, header .chip, header .pill, header .tab{
           </div>
         </div>
       </div>
-
-      
-        <div class="bonus-sep"></div>
-
-        <!-- Melon d'or -->
-        <div class="bonus-card" tabindex="0" role="button" aria-label="Bonus Melon d’or">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/melon.png" alt="Melon d’or"></div>
           <div class="bonus-text">
             <div class="bonus-title">Melon d’or</div>
             <div class="help">Cible un <b>sous‑match</b> (fléchettes, ping ou palet). Victoire : <b>double les points</b>. Défaite : <b>−2× l’écart</b> des scores.</div>
@@ -568,16 +556,9 @@ header .btn, header .chip, header .pill, header .tab{
           <select id="lefthand-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
-      <div id="melon-fields" class="grid cols-3" style="margin-top:10px">
+      <div id="melon-fields" class="grid cols-2" style="margin-top:10px"><div><label>Sport</label><select id="melon-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select></div></div>
         <div><label>Sport</label>
-          <select id="melon-sport">
-            <option value="darts">Fléchettes</option>
-            <option value="ping">Ping</option>
-            <option value="palet">Palet</option>
-          </select>
-        </div>
-        <div><label>Sport</label>
-          <select id="melon-index"></select>
+          
         </div>
       </div>
 
@@ -1131,6 +1112,7 @@ id('bonus-save').addEventListener('click',()=>{
   if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
   else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
   else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
+  else if(type==='melon') setBonusSelection(r,t,{type:'melon',sport:id('melon-sport').value||'darts'});
   else setBonusSelection(r,t,{type:'miroir'});
   id('bonus-modal').classList.remove('show');
   if(typeof renderPills==='function') renderPills();
