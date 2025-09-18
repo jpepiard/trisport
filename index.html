@@ -506,10 +506,7 @@ header .btn, header .chip, header .pill, header .tab{
             <div class="help">L’adversaire doit jouer un sous‑match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br/>Choisissez le sport concerné.</div>
           </div>
         </div>
-      </div>
-
-      
-        <div class="bonus-sep"></div>
+      <div class=\"bonus-sep\"></div>
 
         <!-- Melon d'or -->
         <div class="bonus-card" tabindex="0" role="button" aria-label="Bonus Melon d’or">
@@ -520,6 +517,7 @@ header .btn, header .chip, header .pill, header .tab{
             <div class="help">Cible un <b>sous‑match</b> (fléchettes, ping ou palet). Victoire : <b>double les points</b>. Défaite : <b>−2× l’écart</b> des scores.</div>
           </div>
         </div>
+</div>
 <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
 
       <!-- Paramètres (insérés sous la carte correspondante) -->
@@ -599,6 +597,7 @@ const BONUS = {
       case "miroir": return "Miroir";
       case "taupe": return "René la taupe";
       case "lefthand": return "Main gauche";
+      case "melon": return "Melon d’or";
       default: return "Capitaine";
     }
   },
@@ -607,6 +606,7 @@ const BONUS = {
       case "miroir": return "miroir.jpg";
       case "taupe": return "taupe.png";
       case "lefthand": return "main gauche.png";
+      case "melon": return "melon.png";
       default: return "capitaine.jpg";
     }
   },
@@ -1096,16 +1096,20 @@ function openBonusModal(round,teamId){
   if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
   id('bonus-player').value=sel?.player||'p1';
   id('bonus-sport').value=sel?.sport||'darts';
+  if(id('melon-sport')) id('melon-sport').value = (sel?.sport||'darts');
+  if(typeof updateMelonOptions==='function') updateMelonOptions();
+  if(id('melon-index')) id('melon-index').value = String(sel?.index||1);
   id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
   id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
-  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
+  const type = (window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe')?'taupe':(window._bonusType==='lefthand')?'lefthand':(window._bonusType==='melon')?'melon':'capitaine';
   if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
   else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
   else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
+  else if(type==='melon') setBonusSelection(r,t,{type:'melon',sport:id('melon-sport').value||'darts',index:+(id('melon-index').value||1)});
   else setBonusSelection(r,t,{type:'miroir'});
   id('bonus-modal').classList.remove('show');
   if(typeof renderPills==='function') renderPills();
