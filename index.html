@@ -1618,3 +1618,65 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 })();
 </script>
 
+
+
+<!-- ===== Melon d’or — correctif sélection click (capture) ===== -->
+<style>
+/* Améliore l'UX de la carte Melon */
+.bonus-card[data-bonus-type="melon"]{ cursor:pointer; position:relative; }
+</style>
+<script>
+(function(){
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function $all(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+
+  function markMelonSelected(){
+    const modal = $('#bonus-modal'); if(!modal) return;
+    const select = $('.bonus-select', modal); if(!select) return;
+    const melon = select.querySelector('.bonus-card[data-bonus-type="melon"]'); if(!melon) return;
+    const cards = $all('.bonus-card', select);
+    cards.forEach(c=>c && c.classList.remove('selected'));
+    melon.classList.add('selected');
+    const ctx = $('#bonus-context'); if(ctx) ctx.textContent = "Melon d’or : choisissez le sport.";
+    // Ouvrir panneau interne
+    const wM = melon.querySelector('#melon-params');
+    if(wM){ wM.style.maxHeight = wM.scrollHeight + 'px'; }
+    // Fermer autres panneaux standards si présents
+    const wC = $('#cap-params'), wT = $('#taupe-params'), wL = $('#lefthand-params');
+    if(wC) wC.style.maxHeight = '0px';
+    if(wT) wT.style.maxHeight = '0px';
+    if(wL) wL.style.maxHeight = '0px';
+    window._bonusType = 'melon';
+  }
+
+  // Intercepteur global en phase de capture pour forcer la sélection
+  document.addEventListener('click', function(ev){
+    const card = ev.target && ev.target.closest && ev.target.closest('.bonus-card[data-bonus-type="melon"]');
+    if(!card) return;
+    // Si la modale bonus est ouverte
+    const modal = document.getElementById('bonus-modal');
+    if(!modal || !modal.classList.contains('show')) return;
+    ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    markMelonSelected();
+  }, true);
+
+  // Accessibilité clavier
+  document.addEventListener('keydown', function(ev){
+    if(ev.key!==' ' && ev.key!=='Enter') return;
+    const card = ev.target && ev.target.closest && ev.target.closest('.bonus-card[data-bonus-type="melon"]');
+    if(!card) return;
+    const modal = document.getElementById('bonus-modal');
+    if(!modal || !modal.classList.contains('show')) return;
+    ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    markMelonSelected();
+  }, true);
+
+  // Si l'appli appelle selectBonusType('melon'), s'assurer que l'UI suit
+  const _select = window.selectBonusType;
+  window.selectBonusType = function(t){
+    if(t==='melon'){ markMelonSelected(); return; }
+    if(typeof _select==='function') _select(t);
+  };
+})();
+</script>
+
