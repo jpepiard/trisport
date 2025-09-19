@@ -1567,3 +1567,54 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 })();
 </script>
 
+
+
+<!-- ===== Melon d’or — correctif anti-doublon de champ ===== -->
+<script>
+(function(){
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function $all(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+
+  function cleanupMelonDuplicates(){
+    const card = document.querySelector('#bonus-modal .bonus-select .bonus-card[data-bonus-type="melon"]');
+    if(!card) return;
+    const wraps = $all('#melon-params');
+    wraps.forEach(w => {
+      if(w.parentElement !== card){
+        // Supprime les panneaux "melon-params" qui ne sont pas dans la carte
+        w.remove();
+      }
+    });
+    // S'il reste plusieurs champs melon-fields, on ne garde que celui dans la carte
+    const fields = $all('#melon-fields');
+    fields.forEach(f => {
+      if(f.closest('.bonus-card[data-bonus-type="melon"]') !== card){
+        f.remove();
+      }
+    });
+  }
+
+  // Appelle au chargement, à l'ouverture et à la sélection
+  document.addEventListener('DOMContentLoaded', cleanupMelonDuplicates);
+  const _open = window.openBonusModal;
+  window.openBonusModal = function(r, t){
+    if(typeof _open==='function') _open(r, t);
+    cleanupMelonDuplicates();
+  };
+  const _select = window.selectBonusType;
+  window.selectBonusType = function(type){
+    if(typeof _select==='function' && type!=='melon'){ _select(type); return; }
+    // Melon : nettoyer et ouvrir uniquement le panneau de la carte
+    cleanupMelonDuplicates();
+    const card = document.querySelector('#bonus-modal .bonus-select .bonus-card[data-bonus-type="melon"]');
+    if(!card) return;
+    const wrap = card.querySelector('#melon-params');
+    if(wrap){
+      // Ferme tout autre éventuel panneau via style
+      $all('#melon-params').forEach(w=>{ if(w!==wrap) w.style.maxHeight='0px'; });
+      wrap.style.maxHeight = wrap.scrollHeight + 'px';
+    }
+  };
+})();
+</script>
+
