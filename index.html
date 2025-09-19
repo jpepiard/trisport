@@ -1236,3 +1236,99 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 })();
 </script>
 
+
+
+<!-- ===== Melon d’or — injecteur résilient (MutationObserver) ===== -->
+<script>
+(function(){
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function $all(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+
+  // Création carte + panneau (dans la carte) si manquants
+  function ensureMelonCard(){
+    const modal = $('#bonus-modal'); if(!modal) return;
+    const select = $('.bonus-select', modal); if(!select) return;
+
+    // Si une carte existe déjà : OK
+    let card = select.querySelector('.bonus-card[data-bonus-type="melon"]');
+    if(!card){
+      card = document.createElement('div');
+      card.className = 'bonus-card';
+      card.setAttribute('data-bonus-type','melon');
+      card.innerHTML = '<div class="bonus-illu" aria-hidden="true">\
+          <img src="img/melon.png" alt="">\
+        </div>\
+        <div class="bonus-text">\
+          <div class="bonus-title">Melon d’or</div>\
+          <div class="help">Choisissez un sport (fléchettes, ping, palet).<br/>\
+            <b>Victoire</b> : vos points de ce sport sont doublés (bonus = vos points du sport).<br/>\
+            <b>Défaite</b> : malus = 2 × l’écart (ex. 4–11 ⇒ −14).</div>\
+        </div>';
+      select.appendChild(card);
+    }
+
+    // Panneau dans la carte
+    let wrap = card.querySelector('#melon-params');
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.id = 'melon-params';
+      wrap.className = 'bonus-params';
+      wrap.style.maxHeight = '0px';
+      const fields = document.createElement('div');
+      fields.id = 'melon-fields';
+      fields.className = 'grid cols-2';
+      fields.style.marginTop = '10px';
+      fields.innerHTML = '<div><label>Sport</label>\
+        <select id="melon-sport">\
+          <option value="darts">Fléchettes</option>\
+          <option value="ping">Ping</option>\
+          <option value="palet">Palet</option>\
+        </select></div>';
+      wrap.appendChild(fields);
+      card.appendChild(wrap);
+    }
+
+    // Rendre la carte cliquable
+    card.classList.add('selectable'); card.tabIndex = 0; card.setAttribute('role','button');
+    const onClick = (ev)=>{ ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); window.selectBonusType && window.selectBonusType('melon'); };
+    // Évite les doublons en retirant les anciens et en mettant un nouveau capteur capture
+    card.onclick = null;
+    card.addEventListener('click', onClick, true);
+    card.addEventListener('keydown', function(ev){ if(ev.key===' '||ev.key==='Enter'){ onClick(ev); } }, true);
+
+    // Nettoyage des doublons éventuels créés par d'anciens patches
+    $all('#melon-params').forEach(w=>{ if(w.closest('.bonus-card[data-bonus-type="melon"]')!==card) w.remove(); });
+    $all('#melon-fields').forEach(f=>{ if(f.closest('.bonus-card[data-bonus-type="melon"]')!==card) f.remove(); });
+  }
+
+  // Observateur sur le body pour détecter l'apparition/reconstruction de la modale
+  const bodyObs = new MutationObserver(()=>{
+    const modal = $('#bonus-modal');
+    if(!modal) return;
+    ensureMelonCard();
+    // Observer les changements de la modale elle-même (contenu/classe)
+    if(!modal.__melonObserved){
+      modal.__melonObserved = true;
+      const modalObs = new MutationObserver(()=> ensureMelonCard());
+      modalObs.observe(modal, { childList:true, subtree:true, attributes:true });
+    }
+  });
+  bodyObs.observe(document.documentElement || document.body, { childList:true, subtree:true });
+
+  // Filets de sécurité à l'ouverture
+  const _open = window.openBonusModal;
+  window.openBonusModal = function(r,t){
+    if(typeof _open==='function') _open(r,t);
+    setTimeout(ensureMelonCard, 0);
+    setTimeout(ensureMelonCard, 50);
+  };
+
+  // Au chargement initial
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ensureMelonCard);
+  } else {
+    ensureMelonCard();
+  }
+})();
+</script>
+
