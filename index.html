@@ -233,13 +233,11 @@ header .btn, header .chip, header .pill, header .tab{
 
 </style>
 
-<style id="bonus-modal-clean">
-/* Hide all params by default, show only for selected card */
+<style id="bonus-modal-final-ui">
 #bonus-modal .bonus-card .bonus-params{display:none !important;}
 #bonus-modal .bonus-card.selected .bonus-params{display:block !important;}
-/* Make cards obviously clickable */
 #bonus-modal .bonus-select .bonus-card{cursor:pointer; outline:0;}
-#bonus-modal .bonus-select .bonus-card:focus{box-shadow:0 0 0 2px rgba(255,255,255,.2) inset;}
+#bonus-modal .bonus-select .bonus-card:focus{box-shadow:0 0 0 2px rgba(255,255,255,.25) inset;}
 </style>
 
 </head>
@@ -434,8 +432,8 @@ header .btn, header .chip, header .pill, header .tab{
 </main>
 
 <!-- MODAL BONUS -->
-<div id="bonus-modal" aria-hidden="true">
-  <div class="bonus-panel bonus-dialog">
+<div id="bonus-modal" class="bonus-dialog" aria-hidden="true">
+  <div class="bonus-panel">
     <div class="hd">Choisir un bonus</div>
     <div class="bd">
 
@@ -1078,133 +1076,6 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   }else{
     ensureBrandImages();
   }
-})();
-</script>
-
-
-<script id="bonus-modal-rehome-fix">
-(function(){
-  function id(x){return document.getElementById(x)}
-  function qs(s,r){return (r||document).querySelector(s)}
-  function qsa(s,r){return Array.from((r||document).querySelectorAll(s))}
-  function norm(t){return (t||'').toLowerCase().replace(/[’']/g,"'").trim()}
-  function modal(){return id('bonus-modal')}
-
-  function detectTypeByTitle(c){
-    const t = norm(qs('.bonus-title', c)?.textContent||'')
-    if(/^capitaine/.test(t)) return 'capitaine'
-    if(/^miroir/.test(t)) return 'miroir'
-    if(/taupe/.test(t)) return 'taupe'
-    if(/10\s*pouces/.test(t)) return 'lefthand'
-    if(/melon d'or/.test(t)) return 'melon'
-    return ''
-  }
-
-  function reHomeWrappers(){
-    const m = modal(); if(!m) return
-    const cards = qsa('.bonus-select .bonus-card', m)
-    const map = {}
-    cards.forEach(c=>{ c.dataset.type = detectTypeByTitle(c); map[c.dataset.type]=c })
-    // Ensure melon has only one 'Sport' select under its wrapper
-    let melonWrap = id('melon-params')
-    if(!melonWrap){ melonWrap = document.createElement('div'); melonWrap.id='melon-params'; melonWrap.className='bonus-params' }
-    let melonFields = id('melon-fields')
-    if(!melonFields){ melonFields = document.createElement('div'); melonFields.id='melon-fields' }
-    melonFields.innerHTML = ''
-    const row = document.createElement('div')
-    const lab = document.createElement('label'); lab.textContent='Sport'
-    const sel = document.createElement('select'); sel.id='melon-sport'
-    ;[['darts','Fléchettes'],['ping','Ping'],['palet','Palet']].forEach(([v,l])=>{
-      const o=document.createElement('option'); o.value=v; o.textContent=l; sel.appendChild(o)
-    })
-    row.appendChild(lab); row.appendChild(sel)
-    melonFields.appendChild(row)
-    if(melonFields.parentNode !== melonWrap) melonWrap.appendChild(melonFields)
-
-    // Move each params block under its own card (wherever it is now)
-    const capW = id('capitaine-params')
-    const tauW = id('taupe-params')
-    const lefW = id('lefthand-params')
-    const melCard = map['melon']
-    if(map['capitaine'] && capW && capW.parentNode !== map['capitaine']) map['capitaine'].appendChild(capW)
-    if(map['taupe'] && tauW && tauW.parentNode !== map['taupe']) map['taupe'].appendChild(tauW)
-    if(map['lefthand'] && lefW && lefW.parentNode !== map['lefthand']) map['lefthand'].appendChild(lefW)
-    if(melCard && melonWrap.parentNode !== melCard){
-      const text = qs('.bonus-text', melCard)
-      if(text && text.nextSibling) melCard.insertBefore(melonWrap, text.nextSibling)
-      else melCard.appendChild(melonWrap)
-    }
-  }
-
-  function setContext(t){
-    const el = id('bonus-context'); if(!el) return
-    el.textContent = t==='miroir' ? "Miroir : inverse le bonus adverse sur tout le match."
-                : t==='taupe' ? "René la taupe : choisissez le sport."
-                : t==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport."
-                : t==='melon' ? "Melon d’or : choisissez le sport."
-                : "Capitaine : choisissez le joueur et le sport."
-  }
-
-  function selectedType(){
-    const sel = qs('#bonus-modal .bonus-card.selected')
-    return sel ? (sel.dataset.type||detectTypeByTitle(sel)||'capitaine') : 'capitaine'
-  }
-
-  function wireCards(){
-    const m = modal(); if(!m) return
-    reHomeWrappers()
-    const cards = qsa('.bonus-select .bonus-card', m)
-    cards.forEach(c=>{
-      if(c.dataset.bound) return
-      c.dataset.bound = "1"
-      c.tabIndex = 0; c.setAttribute('role','button')
-      c.addEventListener('click', function(){
-        cards.forEach(x=>x.classList.remove('selected'))
-        c.classList.add('selected')
-        setContext(selectedType())
-      })
-      c.addEventListener('keydown', function(ev){
-        if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); c.click() }
-      })
-    })
-  }
-
-  function saveSelection(){
-    const r = (window.bonusCTX&&window.bonusCTX.round) || window._activeRound || 1
-    const t = (window.bonusCTX&&window.bonusCTX.teamId) || window._activeTeam || null
-    const tp = selectedType()
-    let sel
-    if(tp==='capitaine'){
-      sel = { type:'capitaine', player:(id('bonus-player')?id('bonus-player').value:'J1'), sport:(id('bonus-sport')?id('bonus-sport').value:'darts') }
-    }else if(tp==='taupe'){
-      sel = { type:'taupe', sport:(id('taupe-sport')?id('taupe-sport').value:'darts') }
-    }else if(tp==='lefthand'){
-      sel = { type:'lefthand', sport:(id('lefthand-sport')?id('lefthand-sport').value:'darts') }
-    }else if(tp==='melon'){
-      sel = { type:'melon', sport:(id('melon-sport')?id('melon-sport').value:'darts') }
-    }else{
-      sel = { type:'miroir' }
-    }
-    try{ if(typeof setBonusSelection==='function' && t!=null) setBonusSelection(r,t,sel) }catch(e){}
-    const m = modal(); if(m) m.classList.remove('show')
-    try{ if (typeof renderPills==='function') renderPills(); }catch(e){}
-    try{ if (typeof renderMatches==='function') renderMatches(); }catch(e){}
-    try{ if (typeof updateRanking==='function') updateRanking(); }catch(e){}
-  }
-
-  // Hook buttons
-  document.addEventListener('click', function(ev){
-    const m = modal(); if(!m) return
-    if(ev.target.closest('#bonus-save')){ ev.preventDefault(); saveSelection(); }
-    if(ev.target.closest('#bonus-cancel')){ ev.preventDefault(); m.classList.remove('show'); }
-  }, true)
-
-  // Prepare when modal is visible/interacted
-  document.addEventListener('click', function(){
-    const m = modal()
-    if(m && (m.classList.contains('show') || m.getClientRects().length)) wireCards()
-  }, true)
-  document.addEventListener('DOMContentLoaded', wireCards)
 })();
 </script>
 
