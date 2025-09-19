@@ -1422,54 +1422,47 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 
 
-<script id="pill-melon-display-fix">
+<script id="pill-melon-display-only">
+// Correctif minimal d'affichage de la pilule pour "Melon d’or" (ne touche à rien d'autre).
 (function(){
   function qs(s,r){return (r||document).querySelector(s)}
-  function qsa(s,r){return Array.from((r||document).querySelectorAll(s))}
-  function norm(t){return (t||'').trim().toLowerCase()}
+  window.BONUS = window.BONUS || {};
+  const _lbl = window.BONUS.labelForType;
+  window.BONUS.labelForType = function(type){
+    if(type === 'melon') return 'Melon d’or';
+    return _lbl ? _lbl(type) : (type==='capitaine' ? 'Capitaine' : type);
+  };
+  const _img = window.BONUS.imgForType;
+  window.BONUS.imgForType = function(type){
+    if(type === 'melon') return 'melon.png';
+    return _img ? _img(type) : (type==='capitaine' ? 'capitaine.jpg' : 'capitaine.jpg');
+  };
   function selectedTypeInModal(){
     const sel = qs('#bonus-modal .bonus-card.selected');
     const title = sel && qs('.bonus-title', sel);
-    const txt = title ? title.textContent : '';
-    return /melon d'or/i.test(txt) ? 'melon' : null;
+    const text = title ? title.textContent : '';
+    return /melon d'or/i.test(text) ? 'melon' : null;
   }
-  function morphNode(node){
-    if(!node) return;
-    // Replace text "Capitaine" by "Melon d’or"
-    if(node.nodeType===Node.TEXT_NODE){
-      if(norm(node.textContent)==='capitaine') node.textContent = 'Melon d’or';
-    }
-    // Images
-    if(node.nodeType===Node.ELEMENT_NODE){
-      if(node.matches('img')){
-        const src = node.getAttribute('src')||'';
-        if(/capitaine\.(png|jpg|jpeg|webp)/i.test(src)) node.setAttribute('src','img/melon.png');
-      }
-      // Also replace inner text for chip containers
-      const textEl = node.querySelector('span,.label,.chip-text');
-      if(textEl && norm(textEl.textContent)==='capitaine'){ textEl.textContent = 'Melon d’or'; }
-    }
-  }
-  function scanAll(scope){
-    (scope? [scope] : []).concat(qsa('*', scope||document)).forEach(morphNode);
-  }
-
   document.addEventListener('click', function(ev){
     const save = ev.target && ev.target.closest('#bonus-save');
     if(!save) return;
     const intended = selectedTypeInModal();
-    if(intended!=='melon') return;
-    // Observe DOM changes for a short period after save to fix newly rendered chips
-    const obs = new MutationObserver(function(muts){
-      muts.forEach(m=>{
-        m.addedNodes && m.addedNodes.forEach(n=>scanAll(n));
-      });
-    });
-    const root = document.body;
-    obs.observe(root, {childList:true, subtree:true});
-    // First pass immediately
-    scanAll(document);
-    setTimeout(function(){ obs.disconnect(); }, 1200);
+    if(intended !== 'melon' || typeof window.setBonusSelection !== 'function') return;
+    const orig = window.setBonusSelection;
+    let once = true;
+    window.setBonusSelection = function(round, teamId, sel){
+      try{
+        if(once){
+          sel = Object.assign({}, sel, { type: 'melon' });
+        }
+      }finally{
+        once = false;
+        window.setBonusSelection = orig;
+      }
+      return orig.apply(this, [round, teamId, sel]);
+    };
+    // Restauration de sécurité au cas où
+    setTimeout(function(){ if(window.setBonusSelection!==orig) window.setBonusSelection = orig; }, 1500);
   }, true);
 })();
 </script>
