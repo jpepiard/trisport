@@ -31,21 +31,6 @@ function ensureLeftHandWrapper(){
   let wrap=id('lefthand-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='lefthand-params'; wrap.className='bonus-params'; fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields); }
   return wrap;
 }
-
-function ensureMelonWrapper(){
-  const fields = id('melon-fields'); if(!fields) return null;
-  let wrap = id('melon-params');
-  if(!wrap){
-    wrap = document.createElement('div');
-    wrap.id = 'melon-params';
-    wrap.className = 'bonus-params';
-    fields.parentNode.insertBefore(wrap, fields);
-    wrap.appendChild(fields);
-  }
-  return wrap;
-}
-
-
 function setParamsOpen(openCap, openTaupe, openLeft){
   const wC = ensureParamWrapper(); if (wC){ wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px'; }
   const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
@@ -246,49 +231,15 @@ header .btn, header .chip, header .pill, header .tab{
   header, .app-header, .topbar{ padding-block: 4px !important; }
 }
 
-</style>
 
-<style>
-/* Place params under the card & hide by default */
-#bonus-modal .bonus-dialog .bonus-card{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:start}
+/* --- Bonus panel: put params under the card text (minimal, scoped) --- */
+#bonus-modal .bonus-dialog .bonus-card{display:grid!important;grid-template-columns:96px 1fr;gap:12px;align-items:start}
 #bonus-modal .bonus-dialog .bonus-card .bonus-illu{grid-column:1;grid-row:1}
 #bonus-modal .bonus-dialog .bonus-card .bonus-text{grid-column:2;grid-row:1}
 #bonus-modal .bonus-dialog .bonus-card .bonus-params{grid-column:2;grid-row:2;margin-top:8px;max-height:0;overflow:hidden;transition:max-height .25s ease,opacity .2s;opacity:.0}
-#bonus-modal .bonus-dialog .bonus-card.selected .bonus-params{max-height:500px;opacity:1}
+/* When JS opens the wrapper by setting max-height, fade in */
+#bonus-modal .bonus-dialog .bonus-card .bonus-params[style*="max-height:"][style*="px"]{opacity:1}
 </style>
-
-<style id="bonus-modal-layout-hotfix">
-/* ========== BONUS MODAL LAYOUT HOTFIX ========== */
-#bonus-modal .bonus-dialog .bonus-select{display:grid;gap:16px}
-#bonus-modal .bonus-dialog .bonus-card{
-  display:grid;
-  grid-template-columns:96px 1fr;
-  grid-auto-rows:auto;
-  align-items:start;
-  gap:12px;
-  padding:14px;
-  border:1px dashed rgba(255,255,255,.25);
-  border-radius:12px;
-}
-#bonus-modal .bonus-dialog .bonus-card .bonus-illu{
-  grid-column:1;grid-row:1;
-  width:96px;height:96px;border-radius:12px;
-  overflow:hidden;display:block;position:static !important;
-}
-#bonus-modal .bonus-dialog .bonus-card .bonus-illu img{
-  width:100%;height:100%;object-fit:cover;display:block;position:static !important;
-}
-#bonus-modal .bonus-dialog .bonus-card .bonus-text{grid-column:2;grid-row:1;min-width:0}
-/* parameters block under the text, spanning full width */
-#bonus-modal .bonus-dialog .bonus-card .bonus-params{grid-column:1 / -1;grid-row:2;margin-top:8px;max-height:0;overflow:hidden;opacity:.0;transition:max-height .25s ease,opacity .2s}
-#bonus-modal .bonus-dialog .bonus-card.selected .bonus-params{max-height:600px;opacity:1}
-/* Never let inner content use absolute positioning that could collapse layout */
-#bonus-modal .bonus-dialog .bonus-card *{position:relative}
-/* Fix long help text wrapping inside cards */
-#bonus-modal .bonus-dialog .bonus-card .help{white-space:normal}
-</style>
-
-
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -534,19 +485,7 @@ header .btn, header .chip, header .pill, header .tab{
         </div>
       </div>
 
-      
-        <div class="bonus-sep"></div>
-
-        <!-- Melon d'or -->
-        <div class="bonus-card" tabindex="0" role="button" aria-label="Bonus Melon d’or">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/melon.png" alt="Melon d’or"></div>
-          <div class="bonus-text">
-            <div class="bonus-title">Melon d’or</div>
-            <div class="help">Cible un <b>sous‑match</b> (fléchettes, ping ou palet). Victoire : <b>double les points</b>. Défaite : <b>−2× l’écart</b> des scores.</div>
-          </div>
-        </div>
-<div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
+      <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
 
       <!-- Paramètres (insérés sous la carte correspondante) -->
       <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
@@ -569,19 +508,6 @@ header .btn, header .chip, header .pill, header .tab{
           <select id="lefthand-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
-      <div id="melon-fields" class="grid cols-3" style="margin-top:10px">
-        <div><label>Sport</label>
-          <select id="melon-sport">
-            <option value="darts">Fléchettes</option>
-            <option value="ping">Ping</option>
-            <option value="palet">Palet</option>
-          </select>
-        </div>
-        <div><label>Sport</label>
-          <select id="melon-index"></select>
-        </div>
-      </div>
-
 
     </div>
     <div class="ft">
@@ -780,41 +706,6 @@ function computeCapitaineBonusForMatch(m, tid, player, sport){
   }
   return gain;
 }
-/* Melon d’or — double si victoire sur un sous‑match ; sinon malus = 2× l’écart */
-function computeMelonBonusForMatch(m, tid, sel){
-  try{
-    const R = state.rules||{};
-    const sport = sel?.sport || 'darts';
-    const idx = Math.max(1, +sel?.index||1);
-    const isA = (m.a===tid), isB = (m.b===tid);
-    if(!isA && !isB) return 0;
-    if(sport==='ping'){
-      const sets = (typeof getPingPts==='function') ? (getPingPts(m)||[]) : [];
-      const s = sets[idx-1]; if(!s) return 0;
-      const a = (s.a==null?null:+s.a), b = (s.b==null?null:+s.b);
-      if(!isPingValid(a,b)) return 0;
-      const my = isA ? a : b, opp = isA ? b : a;
-      if(my>opp) return +R.pingWinPoints||0;
-      if(my<opp) return -2*Math.abs(my-opp);
-      return 0;
-    } else if(sport==='palet'){
-      const T = +R.paletTarget || 11;
-      const a = (m.palet?.a==null?null:+m.palet.a);
-      const b = (m.palet?.b==null?null:+m.palet.b);
-      if(a==null || b==null) return 0;
-      const my = isA ? a : b, opp = isA ? b : a;
-      if((isA && a===T) || (isB && b===T)) return my||0;
-      return -2*Math.abs(my-opp);
-    } else { // darts
-      const v = Array.isArray(m.darts) ? m.darts[idx-1] : null;
-      if(v==null) return 0;
-      const win = (isA && v===0) || (isB && v===1);
-      return win ? (+R.dartsWinPoints||0) : (-2*(+R.dartsWinPoints||0));
-    }
-  }catch(e){}
-  return 0;
-}
-
 
 /* Icônes pour titres de sport */
 function sportIcon(name){
@@ -1082,7 +973,7 @@ document.addEventListener("click",async(e)=>{
         const sel = sels[tid]; if (!sel) return;
         if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
         let total = 0;
-        matchesOfRound.forEach(m=>{ total += (sel.type==='melon' ? computeMelonBonusForMatch(m, tid, sel) : computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport)); });
+        matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
         setBonusApplied(r, tid, total); state.bonusUsed=state.bonusUsed||{}; state.bonusUsed[r]=state.bonusUsed[r]||{}; state.bonusUsed[r][tid]=true; markTeamBonusUsed(tid);
       });
 
@@ -1188,173 +1079,5 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 })();
 </script>
 
-
-<script>
-(function(){
-  // Safe helpers existence check
-  function byQS(sel){ return Array.from(document.querySelectorAll(sel)); }
-
-  window.setParamsOpen = function(openCap, openTaupe, openLeft, openMelon){
-    try{
-      const wC = (typeof ensureParamWrapper==='function') ? ensureParamWrapper() : null; if(wC) wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px';
-      const wT = (typeof ensureTaupeWrapper==='function') ? ensureTaupeWrapper() : null; if(wT) wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px';
-      const wL = (typeof ensureLeftHandWrapper==='function') ? ensureLeftHandWrapper() : null; if(wL) wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px';
-      const wM = (typeof ensureMelonWrapper==='function') ? ensureMelonWrapper() : null; if(wM) wM.style.maxHeight = openMelon ? (wM.scrollHeight+'px') : '0px';
-    }catch(e){ console.error('setParamsOpen error', e); }
-  };
-
-  window.selectBonusType = function(t){
-    try{
-      window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand'||t==='melon') ? t : 'capitaine';
-      const cards = byQS('.bonus-select .bonus-card');
-      const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3], mel=cards[4];
-      [cap,mir,tau,leftc,mel].forEach(c=>c&&c.classList.remove('selected'));
-      if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
-      if(mir && window._bonusType==='miroir') mir.classList.add('selected');
-      if(tau && window._bonusType==='taupe') tau.classList.add('selected');
-      if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
-      if(mel && window._bonusType==='melon') mel.classList.add('selected');
-      const ctx=document.getElementById('bonus-context');
-      if(ctx){
-        ctx.textContent = window._bonusType==='miroir' ? "Miroir : inverse le bonus adverse sur tout le match." :
-                        window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
-                        window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-                        window._bonusType==='melon' ? "Melon d’or : choisissez le sport et le sous‑match." :
-                        "Capitaine : choisissez le joueur et le sport.";
-      }
-      window.setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand', window._bonusType==='melon');
-    }catch(e){ console.error('selectBonusType error', e); }
-  };
-
-  window.prepareBonusOptions = function(){
-    try{
-      const cards = byQS('.bonus-select .bonus-card');
-      cards.forEach((c,i)=>{
-        if(!c.classList.contains('selectable')){
-          c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
-          const sel = ()=> window.selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':(i===3?'lefthand':'melon'))));
-          c.addEventListener('click', sel);
-          c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); sel(); } });
-        }
-      });
-      const cap=cards[0], tau=cards[2], leftc=cards[3], mel=cards[4];
-      const wC = (typeof ensureParamWrapper==='function') ? ensureParamWrapper() : null; if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
-      const wT = (typeof ensureTaupeWrapper==='function') ? ensureTaupeWrapper() : null; if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
-      const wL = (typeof ensureLeftHandWrapper==='function') ? ensureLeftHandWrapper() : null; if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
-      const wM = (typeof ensureMelonWrapper==='function') ? ensureMelonWrapper() : null; if(mel && wM && wM.previousElementSibling!==mel) mel.appendChild(wM);
-    }catch(e){ console.error('prepareBonusOptions error', e); }
-  };
-
-  window.updateMelonOptions = function(){
-    try{
-      const r = window.state?.rules || {};
-      const sport = document.getElementById('melon-sport')?.value || 'darts';
-      const sel = document.getElementById('melon-index'); if(!sel) return;
-      const opts=[];
-      if(sport==='darts'){
-        const N = (r.dartsSingles||2) + (r.dartsDoubles||1);
-        for(let i=1;i<=N;i++) opts.push(`<option value="${i}">Sous‑match ${i}</option>`);
-      }else if(sport==='ping'){
-        const N = (r.pingSingles||2) + (r.pingDoubles||1);
-        for(let i=1;i<=N;i++) opts.push(`<option value="${i}">Sous‑match ${i}</option>`);
-      }else{
-        opts.push('<option value="1">Unique sous‑match</option>');
-      }
-      sel.innerHTML = opts.join('');
-    }catch(e){}
-  };
-
-  document.addEventListener('DOMContentLoaded', function(){
-    try{ window.prepareBonusOptions(); }catch(e){}
-  });
-
-  // when the modal opens, ensure options & default selection
-  document.addEventListener('click', function(ev){
-    const modal = document.getElementById('bonus-modal');
-    if(!modal) return;
-    if(modal.classList.contains('show')){
-      try{
-        window.prepareBonusOptions();
-        if(document.getElementById('melon-sport')){
-          window.updateMelonOptions();
-          if(!document.getElementById('melon-index').value) document.getElementById('melon-index').value='1';
-        }
-      }catch(e){}
-    }
-  });
-})();
-</script>
-
-
 </body>
 </html>
-
-<script id="final-bonus-chip-clean">
-(function(){
-  // Robust helpers that include Melon d’or and don't depend on older versions
-  window.BONUS = window.BONUS || {};
-  window.BONUS.labelForType = function(type){
-    switch(type){
-      case 'miroir': return 'Miroir';
-      case 'taupe': return 'René la taupe';
-      case 'lefthand': return '10 pouces 2 mains gauche';
-      case 'melon': return 'Melon d’or';
-      case 'capitaine': default: return 'Capitaine';
-    }
-  };
-  window.BONUS.imgForType = function(type){
-    switch(type){
-      case 'miroir': return 'miroir.jpg';
-      case 'taupe': return 'taupe.png';
-      case 'lefthand': return 'main gauche.png';
-      case 'melon': return 'melon.png';
-      case 'capitaine': default: return 'capitaine.jpg';
-    }
-  };
-
-  // Final renderer for the pill that always respects 'melon'
-  // Signature preserved: bonusChip(roundIndex, teamId, roundState)
-  window.bonusChip = function(r, mTeam, rs){
-    try{
-      const getSel = (typeof getBonusSelection==='function') ? getBonusSelection : null;
-      const has = (typeof hasClaim==='function') ? hasClaim : function(){return false};
-      const isAdm = (typeof isAdmin==='function') ? isAdmin : function(){return false};
-      const sel = getSel ? getSel(r, mTeam) : null;
-      const roundFinished = !!(rs && rs.finished);
-      const iAmTeam = !!has(mTeam);
-
-      // Admin ne voit pas le bonus tant que non révélé (comportement d'origine)
-      if (isAdm() && !roundFinished) return '';
-
-      const bonusUsed = (window.state && window.state.bonusUsed && window.state.bonusUsed[r] && window.state.bonusUsed[r][mTeam]) ? true : false;
-      const canChoose = (!rs?.started && !rs?.finished && !bonusUsed && iAmTeam);
-
-      if (!sel) {
-        return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
-      }
-      if (!roundFinished && !iAmTeam) return '';
-
-      const type   = sel.type || 'capitaine';
-      const label  = window.BONUS.labelForType(type);
-      const img    = window.BONUS.imgForType(type);
-
-      if (!roundFinished) {
-        // Avant révélation : afficher simplement le type choisi (inclut 'melon')
-        return `<span class="pill blue">${label}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
-      }
-
-      // Après révélation : conserver l'affichage détaillé existant
-      const labelPlayer = sel.player==='p1' ? 'J1' : (sel.player==='p2' ? 'J2' : '');
-      const labelSport  = sel.sport==='darts' ? 'Fléchettes' : (sel.sport==='ping' ? 'Ping' : (sel.sport==='palet' ? 'Palet' : ''));
-      const applied     = (window.state && window.state.bonusApplied && window.state.bonusApplied[r] && window.state.bonusApplied[r][mTeam]) || 0;
-      const extra = (type==='capitaine')
-          ? (labelPlayer && labelSport ? ` ${labelPlayer} / ${labelSport}` : '')
-          : (sel.sport ? ` / ${labelSport}` : '');
-      return `<span class="pill blue">${label}${extra} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
-    }catch(e){
-      // En cas de problème, ne pas casser l'UI
-      return '';
-    }
-  };
-})();
-</script>
