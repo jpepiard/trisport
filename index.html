@@ -633,9 +633,7 @@ const BONUS = {
       case "miroir": return "Miroir";
       case "taupe": return "René la taupe";
       case "lefthand": return "Main gauche";
-      
-      case "melon": return "Melon d’or";
-default: return "Capitaine";
+      default: return "Capitaine";
     }
   },
   imgForType(type){
@@ -643,9 +641,7 @@ default: return "Capitaine";
       case "miroir": return "miroir.jpg";
       case "taupe": return "taupe.png";
       case "lefthand": return "main gauche.png";
-      
-      case "melon": return "melon.png";
-default: return "capitaine.jpg";
+      default: return "capitaine.jpg";
     }
   },
   sportLabel(s){ return s==="darts"?"Fléchettes":(s==="ping"?"Ping":"Palet"); },
@@ -1422,6 +1418,71 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 
   document.addEventListener('click', wireCards, true)
   document.addEventListener('DOMContentLoaded', wireCards)
+})();
+</script>
+
+
+<script id="pill-melon-display-fix">
+(function(){
+  // 1) Make sure helpers know 'melon'
+  window.BONUS = window.BONUS || {};
+  const oldLbl = window.BONUS.labelForType;
+  window.BONUS.labelForType = function(type){
+    if(type === 'melon') return 'Melon d’or';
+    return oldLbl ? oldLbl(type) : (type==='capitaine' ? 'Capitaine' : type);
+  };
+  const oldImg = window.BONUS.imgForType;
+  window.BONUS.imgForType = function(type){
+    if(type === 'melon') return 'melon.png';
+    return oldImg ? oldImg(type) : (type==='capitaine' ? 'capitaine.jpg' : 'capitaine.jpg');
+  };
+
+  // Helper to change one chip DOM to Melon d’or
+  function morphChipToMelon(chip){
+    if(!chip) return;
+    const img = chip.querySelector('img');
+    const textEl = chip.querySelector('span, .label, .chip-text') || chip;
+    if (img) img.setAttribute('src', 'img/melon.png');
+    if (textEl) textEl.textContent = 'Melon d’or';
+  }
+
+  // 2) After saving a 'melon' selection, enforce the chip display
+  function selectedTypeInModal(){
+    const card = document.querySelector('#bonus-modal .bonus-card.selected');
+    const title = card && card.querySelector('.bonus-title');
+    const t = title ? (title.textContent||'').toLowerCase() : '';
+    if (/melon d'or/.test(t)) return 'melon';
+    if (/capitaine/.test(t)) return 'capitaine';
+    if (/miroir/.test(t)) return 'miroir';
+    if (/taupe/.test(t)) return 'taupe';
+    if (/10\s*pouces/.test(t)) return 'lefthand';
+    return null;
+  }
+
+  document.addEventListener('click', function(ev){
+    const saveBtn = ev.target && ev.target.closest('#bonus-save');
+    if (!saveBtn) return;
+    // Note intent before original handlers run
+    const intended = selectedTypeInModal();
+    if (intended !== 'melon') return;
+    // After the UI re-renders, fix the closest chip text/icon
+    setTimeout(function(){
+      // Try to find a chip within the active/expanded match row or the last chip
+      let scope = document.querySelector('.match-row.expanded, .match-card.expanded, .match.open') || document;
+      let chips = scope.querySelectorAll('.bonus-chip, .pill, .badge');
+      // Heuristic: prefer a chip whose text currently is "Capitaine"
+      let target = null;
+      chips.forEach(function(c){
+        const txt = (c.textContent||'').trim();
+        if(!target && /^capitaine$/i.test(txt)) target = c;
+      });
+      if (!target) {
+        // fallback: last chip element
+        target = chips[chips.length-1];
+      }
+      morphChipToMelon(target);
+    }, 60);
+  }, true);
 })();
 </script>
 
