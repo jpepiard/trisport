@@ -289,9 +289,12 @@ header .btn, header .chip, header .pill, header .tab{
 </style>
 
 
-
 <style id="bonus-clean-core-css">
-#bonus-modal .ft{ position:relative; z-index: 9999; }
+#bonus-modal .ft{position:relative; z-index:9999;}
+#bonus-modal .ft button{pointer-events:auto;}
+#bonus-modal .overlay, #bonus-modal .backdrop, #bonus-modal [data-overlay]{pointer-events:none!important;}
+/* Hide Capitaine parameters (no player/sport) */
+#capitaine-fields, #cap-params, #capitaine-params .grid, #capitaine-params .row{display:none!important;}
 </style>
 
 </head>
@@ -629,7 +632,7 @@ const BONUS = {
     switch(type){
       case "miroir": return "Miroir";
       case "taupe": return "René la taupe";
-      case "lefthand": return "Main gauche";  case "melon": return "Melon d’or";
+      case "lefthand": return "Main gauche";
       default: return "Capitaine";
     }
   },
@@ -637,7 +640,7 @@ const BONUS = {
     switch(type){
       case "miroir": return "miroir.jpg";
       case "taupe": return "taupe.png";
-      case "lefthand": return "main gauche.png";  case "melon": return "melon.png";
+      case "lefthand": return "main gauche.png";
       default: return "capitaine.jpg";
     }
   },
@@ -743,40 +746,22 @@ function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]|
 function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){const v=state.bonusApplied[r]?.[tid];if(v)s+=v}return s}
 function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
 
-/* Capitaine — calcul équipe : +2 pts par manche gagnée (fléchettes/ping : simples & doubles ; palet si gagné) */
-function computeCapitaineBonusForMatch(m, tid){
-  try{
-    let wins = 0;
-    const isA = (m.a===tid), isB = (m.b===tid);
-    if(!isA && !isB) return 0;
+/* Capitaine — calcul robuste */
+function computeCapitaineBonusForMatch(m, tid, player, sport){
+  let gain = 0;
+  const isA = (m.a === tid), isB = (m.b === tid);
+  if (!isA && !isB) return 0;
 
-    // Fléchettes: tableau de vainqueurs 0/1
-    if(Array.isArray(m.darts)){
-      m.darts.forEach(v=>{ if(v===0 && isA) wins++; else if(v===1 && isB) wins++; });
-    }
-
-    // Ping: sets gagnés (via getPingPts si dispo, sinon m.pingPts)
-    const sets = (typeof getPingPts==='function') ? getPingPts(m) : (Array.isArray(m.pingPts)?m.pingPts:[]);
-    const isValid = (a,b)=> a!=null && b!=null && a!=='' && b!=='' && isFinite(+a) && isFinite(+b);
-    sets.forEach(s=>{
-      const a = s?.a, b = s?.b;
-      if(!isValid(a,b)) return;
-      if(+a>+b && isA) wins++; else if(+b>+a && isB) wins++;
-    });
-
-    // Palet: victoire du match = +1 manche
-    const R = (window.state && state.rules)||{};
-    const T = +(R.paletTarget ?? 11);
-    const pa = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
-    const pb = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
-    if(pa!=null && pb!=null){
-      if(pa>=T && pa>pb && isA) wins++;
-      else if(pb>=T && pb>pa && isB) wins++;
-    }
-
-    return 2*wins;
-  }catch(_){ return 0; }
-} else {
+  if (sport === 'darts') {
+    const sSingles = state.rules.dartsSingles || 0;
+    m.darts.forEach((v,i)=>{
+      if (v!==0 && v!==1) return;
+      const won = isA ? (v===0) : (v===1);
+      if (!won) return;
+      if (i < sSingles) {
+        const which = (i===0 ? 'p1' : 'p2');
+        if (which === player) gain += BONUS_VAL;
+      } else {
         gain += BONUS_VAL;
       }
     });
@@ -804,45 +789,9 @@ function computeCapitaineBonusForMatch(m, tid){
   return gain;
 }
 /* Melon d’or — double si victoire sur un sous‑match ; sinon malus = 2× l’écart */
-
 function computeMelonBonusForMatch(m, tid, sel){
   try{
     const R = state.rules||{};
-    const sport = (sel&&sel.sport)||'darts';
-    const isA = (m.a===tid), isB = (m.b===tid);
-    if(!isA && !isB) return 0;
-
-    if(sport==='darts'){
-      const winPts = +R.dartsWinPoints||0;
-      let wA=0, wB=0;
-      (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0) wA++; else if(v===1) wB++; });
-      const ptsA = wA*winPts, ptsB = wB*winPts;
-      const my = isA?ptsA:ptsB, opp = isA?ptsB:ptsA;
-      return (my>opp)? my : (my<opp ? -2*(opp-my) : 0);
-    }else if(sport==='ping'){
-      const winPts = +R.pingWinPoints||0;
-      let wA=0, wB=0;
-      (typeof getPingPts==='function' ? getPingPts(m) : (m.pingPts||[])).forEach(s=>{
-        const a=(s.a==null?null:+s.a), b=(s.b==null?null:+s.b);
-        if(!(a!=null && b!=null && a!=='' && b!=='' && isFinite(a) && isFinite(b))) return;
-        if(a>b) wA++; else if(b>a) wB++;
-      });
-      const ptsA = wA*winPts, ptsB = wB*winPts;
-      const my = isA?ptsA:ptsB, opp = isA?ptsB:ptsA;
-      return (my>opp)? my : (my<opp ? -2*(opp-my) : 0);
-    }else{ // palet
-      const T = +((state.rules&&state.rules.paletTarget) || 11);
-      const a=(m.palet?.a==null?null:+m.palet.a), b=(m.palet?.b==null?null:+m.palet.b);
-      if(a==null || b==null) return 0;
-      const winA=(a===T && b<T), winB=(b===T && a<T);
-      const my = isA? a : b, opp = isA? b : a;
-      if((isA&&winA) || (isB&&winB)) return my||0;
-      return -2*Math.abs(opp - my);
-    }
-  }catch(_){}
-  return 0;
-}
-;
     const sport = sel?.sport || 'darts';
     const idx = Math.max(1, +sel?.index||1);
     const isA = (m.a===tid), isB = (m.b===tid);
@@ -910,7 +859,7 @@ function bonusChip(r,mTeam,rs){
   // Affichage
   if (!roundFinished) {
     // Secret: pilule "Capitaine" + mini image
-    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':(sel.type==='melon'?'Melon d’or':'Capitaine'))); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':(sel.type==='melon'?'melon.png':'capitaine.jpg'))); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
+    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':'Capitaine')); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':'capitaine.jpg')); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
   } else {
     // Révélé à tout le monde
     const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
@@ -1187,11 +1136,10 @@ function openBonusModal(round,teamId){
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
-  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe')?'taupe':(window._bonusType==='lefthand')?'lefthand':(window._bonusType==='melon')?'melon':'capitaine';
+  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
   if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
   else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
   else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
-  else if(type==='melon') setBonusSelection(r,t,{type:'melon',sport:id('melon-sport').value||'darts'});
   else setBonusSelection(r,t,{type:'miroir'});
   id('bonus-modal').classList.remove('show');
   if(typeof renderPills==='function') renderPills();
@@ -1346,75 +1294,224 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 
 
-</body>
-</html>
-
 <script id="bonus-clean-core">
 (function(){
-  function id(x){return document.getElementById(x)}
-  function qs(s,r){return (r||document).querySelector(s)}
-  function qsa(s,r){return Array.from((r||document).querySelectorAll(s))}
-  function tOfCard(c){
-    const t = (qs('.bonus-title', c)?.textContent||'').toLowerCase();
+  const $ = (s,r=document)=>r.querySelector(s);
+  const $$= (s,r=document)=>Array.from(r.querySelectorAll(s));
+  const id = (x)=>document.getElementById(x);
+
+  // ---------- Helpers: labels/images ----------
+  window.BONUS = window.BONUS || {};
+  window.BONUS.labelForType = function(type){
+    switch(type){
+      case 'miroir': return 'Miroir';
+      case 'taupe': return 'René la taupe';
+      case 'lefthand': return '10 pouces 2 mains gauche';
+      case 'melon': return 'Melon d’or';
+      default: return 'Capitaine';
+    }
+  };
+  window.BONUS.imgForType = function(type){
+    switch(type){
+      case 'miroir': return 'miroir.jpg';
+      case 'taupe': return 'taupe.png';
+      case 'lefthand': return 'main gauche.png';
+      case 'melon': return 'melon.png';
+      default: return 'capitaine.jpg';
+    }
+  };
+
+  // ---------- Open modal (delegated) ----------
+  document.addEventListener('click', function(ev){
+    const btn = ev.target.closest('[data-bonus]');
+    if(!btn) return;
+    try{
+      const teamId = btn.getAttribute('data-team') || btn.dataset.team;
+      const round  = btn.getAttribute('data-round') || (window._activeRound || 1);
+      if(typeof openBonusModal==='function'){ openBonusModal(+round, teamId); }
+      else {
+        // emergency open
+        window.bonusCTX = { round:+round, teamId:teamId };
+        const hdr = id('bonus-hdr');
+        if(hdr) hdr.textContent = `Équipe : ${teamId} — Journée #${round}`;
+        id('bonus-modal')?.classList.add('show');
+      }
+      ev.preventDefault();
+    }catch(_){}
+  }, true);
+
+  // ---------- Make cards selectable ----------
+  function wireCards(){
+    const modal = id('bonus-modal'); if(!modal) return;
+    const cards = $$('.bonus-select .bonus-card', modal);
+    cards.forEach(c=>{
+      if(c.dataset.bound) return;
+      c.dataset.bound="1";
+      c.tabIndex = 0; c.setAttribute('role','button');
+      c.addEventListener('click', ()=>{ cards.forEach(x=>x.classList.remove('selected')); c.classList.add('selected'); window._bonusType = detectType(c); });
+      c.addEventListener('keydown', e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); c.click(); } });
+    });
+  }
+  function detectType(card){
+    const t = (card?.querySelector('.bonus-title')?.textContent || '').toLowerCase();
     if(/melon d'or/.test(t)) return 'melon';
-    if(/^capitaine/.test(t)) return 'capitaine';
     if(/^miroir/.test(t)) return 'miroir';
     if(/taupe/.test(t)) return 'taupe';
     if(/10\s*pouces|mains gauche|main gauche/.test(t)) return 'lefthand';
     return 'capitaine';
   }
 
-  // Ensure Melon has the single Sport select under its card
+  // ---------- Ensure Melon has single Sport field ----------
   function ensureMelonFields(){
     const modal = id('bonus-modal'); if(!modal) return;
-    const cards = qsa('.bonus-select .bonus-card', modal);
-    const melon = cards.find(c=>/melon d'or/i.test((qs('.bonus-title',c)?.textContent||'')));
+    const cards = $$('.bonus-select .bonus-card', modal);
+    const melon = cards.find(c=>/melon d'or/i.test(c.querySelector('.bonus-title')?.textContent||''));
     if(!melon) return;
     let wrap = id('melon-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='melon-params'; wrap.className='bonus-params'; }
     let fields = id('melon-fields'); if(!fields){ fields=document.createElement('div'); fields.id='melon-fields'; }
     fields.innerHTML = '<div><label>Sport</label><select id="melon-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select></div>';
     if(fields.parentNode!==wrap) wrap.appendChild(fields);
-    const txt = qs('.bonus-text', melon);
+    const txt = $('.bonus-text', melon);
     if(txt && txt.nextSibling) melon.insertBefore(wrap, txt.nextSibling); else melon.appendChild(wrap);
   }
 
-  // Buttons: capture-phase to avoid duplicate broken handlers
+  // ---------- Buttons: capture-phase single handler ----------
   document.addEventListener('click', function(ev){
-    const save = ev.target && ev.target.closest('#bonus-save');
-    const cancel = ev.target && ev.target.closest('#bonus-cancel');
-    if(!save && !cancel) return;
-    if(cancel){ ev.preventDefault(); const m=id('bonus-modal'); if(m) m.classList.remove('show'); return; }
+    const cancel = ev.target.closest('#bonus-cancel');
+    const save   = ev.target.closest('#bonus-save');
+    if(!cancel && !save) return;
+    ev.preventDefault();
+
+    if(cancel){ id('bonus-modal')?.classList.remove('show'); return; }
+
     try{
       ensureMelonFields();
-      const m = id('bonus-modal');
-      const selCard = qs('.bonus-select .bonus-card.selected', m) || qs('.bonus-select .bonus-card', m);
-      const type = tOfCard(selCard);
+      wireCards();
+      const modal = id('bonus-modal');
+      const selCard = $('.bonus-select .bonus-card.selected', modal) || $('.bonus-select .bonus-card', modal);
+      const type = (window._bonusType) || detectType(selCard) || 'capitaine';
       const r = (window.bonusCTX && bonusCTX.round) || window._activeRound || 1;
-      const teamId = (window.bonusCTX && bonusCTX.teamId) || window._activeTeam || null;
-      let data = {type:'capitaine'};
-      if(type==='taupe') data={type:'taupe', sport: id('taupe-sport')?.value||'darts'};
-      else if(type==='lefthand') data={type:'lefthand', sport: id('lefthand-sport')?.value||'darts'};
-      else if(type==='melon') data={type:'melon', sport: id('melon-sport')?.value||'darts'};
-      else if(type==='miroir') data={type:'miroir'};
-      if(typeof setBonusSelection==='function' && teamId!=null) setBonusSelection(r, teamId, data);
-      if(m) m.classList.remove('show');
+      const t = (window.bonusCTX && bonusCTX.teamId) || window._activeTeam || null;
+
+      let data = { type:'capitaine' };
+      if(type==='taupe')     data = { type:'taupe',     sport: id('taupe-sport')?.value || 'darts' };
+      else if(type==='lefthand') data = { type:'lefthand', sport: id('lefthand-sport')?.value || 'darts' };
+      else if(type==='melon')    data = { type:'melon',    sport: id('melon-sport')?.value || 'darts' };
+      else if(type==='miroir')   data = { type:'miroir' };
+
+      if(typeof setBonusSelection==='function' && t!=null){
+        setBonusSelection(r, t, data);
+      }
+      id('bonus-modal')?.classList.remove('show');
       try{ if(typeof renderPills==='function') renderPills(); }catch(_){}
       try{ if(typeof renderMatches==='function') renderMatches(); }catch(_){}
       try{ if(typeof updateRanking==='function') updateRanking(); }catch(_){}
-      ev.stopImmediatePropagation(); ev.preventDefault();
+      ev.stopImmediatePropagation();
     }catch(_){}
   }, true);
 
-  // Make cards clickable for selection highlighting
-  document.addEventListener('click', function(){
-    const modal = id('bonus-modal'); if(!modal) return;
-    const cards = qsa('.bonus-select .bonus-card', modal);
-    cards.forEach(c=>{
-      if(c.dataset.bound) return;
-      c.dataset.bound="1";
-      c.addEventListener('click', function(){ cards.forEach(x=>x.classList.remove('selected')); c.classList.add('selected'); });
-      c.addEventListener('keydown', function(e){ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); c.click(); } });
-    });
-  }, true);
+  // ---------- Compute Captain (team-wide) ----------
+  window.computeCapitaineBonusForMatch = function(m, tid){
+    try{
+      let wins=0; const isA=(m.a===tid), isB=(m.b===tid);
+      if(!isA && !isB) return 0;
+      if(Array.isArray(m.darts)){ m.darts.forEach(v=>{ if(v===0&&isA) wins++; else if(v===1&&isB) wins++; }); }
+      const sets = (typeof getPingPts==='function') ? getPingPts(m) : (Array.isArray(m.pingPts)?m.pingPts:[]);
+      const ok = (a,b)=> a!=null && b!=null && a!=='' && b!=='' && isFinite(+a) && isFinite(+b);
+      sets.forEach(s=>{ const a=+s?.a, b=+s?.b; if(!ok(a,b)) return; if(a>b && isA) wins++; else if(b>a && isB) wins++; });
+      const R=(window.state&&state.rules)||{}; const T=+(R.paletTarget??11);
+      const pa=(m.palet&&m.palet.a!=null)?+m.palet.a:null, pb=(m.palet&&m.palet.b!=null)?+m.palet.b:null;
+      if(pa!=null && pb!=null){ if(pa>=T && pa>pb && isA) wins++; else if(pb>=T && pb>pa && isB) wins++; }
+      return 2*wins;
+    }catch(_){ return 0; }
+  };
+
+  // ---------- Compute Melon (by sport) ----------
+  window.computeMelonBonusForMatch = function(m, tid, sel){
+    try{
+      const R = state.rules||{};
+      const sport = (sel&&sel.sport)||'darts';
+      const isA=(m.a===tid), isB=(m.b===tid);
+      if(!isA && !isB) return 0;
+
+      if(sport==='darts'){
+        const winPts=+R.dartsWinPoints||0;
+        let wA=0,wB=0; (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0)wA++; else if(v===1)wB++; });
+        const ptsA=wA*winPts, ptsB=wB*winPts;
+        const my=isA?ptsA:ptsB, opp=isA?ptsB:ptsA;
+        return (my>opp)? my : (my<opp ? -2*(opp-my) : 0);
+      }else if(sport==='ping'){
+        const winPts=+R.pingWinPoints||0;
+        let wA=0,wB=0; (typeof getPingPts==='function'?getPingPts(m):(m.pingPts||[])).forEach(s=>{
+          const a=(s.a==null?null:+s.a), b=(s.b==null?null:+s.b);
+          if(!(a!=null && b!=null && a!=='' && b!=='' && isFinite(a)&&isFinite(b))) return;
+          if(a>b) wA++; else if(b>a) wB++;
+        });
+        const ptsA=wA*winPts, ptsB=wB*winPts;
+        const my=isA?ptsA:ptsB, opp=isA?ptsB:ptsA;
+        return (my>opp)? my : (my<opp ? -2*(opp-my) : 0);
+      }else{ // palet
+        const T=+((state.rules&&state.rules.paletTarget)||11);
+        const a=(m.palet?.a==null?null:+m.palet.a), b=(m.palet?.b==null?null:+m.palet.b);
+        if(a==null||b==null) return 0;
+        const winA=(a===T && b<T), winB=(b===T && a<T);
+        const my=isA?a:b, opp=isA?b:a;
+        if((isA&&winA)||(isB&&winB)) return my||0;
+        return -2*Math.abs(opp-my);
+      }
+    }catch(_){}
+    return 0;
+  };
+
+  // ---------- End-of-round: include melon when summing ----------
+  const applyBonusesAtReveal = (function(){
+    const orig = window.applyEndOfRoundBonuses || window.revealRoundResults || null;
+    return function(roundIndex){
+      try{
+        const sels = (state.bonusSel && state.bonusSel[roundIndex]) || {};
+        Object.keys(sels).forEach(tid=>{
+          const sel = sels[tid]; let total=0;
+          const ms = (window.getMatchesOfRound? getMatchesOfRound(roundIndex): (state.matches||[]).filter(m=>m.r===roundIndex));
+          ms.forEach(m=>{
+            if(sel.type==='capitaine') total += computeCapitaineBonusForMatch(m, tid);
+            else if(sel.type==='melon') total += computeMelonBonusForMatch(m, tid, sel);
+          });
+          state.bonusApplied = state.bonusApplied||{};
+          state.bonusApplied[roundIndex] = state.bonusApplied[roundIndex]||{};
+          state.bonusApplied[roundIndex][tid] = total;
+        });
+      }catch(_){}
+      if(typeof orig==='function') orig(roundIndex);
+    };
+  })();
+  window.applyEndOfRoundBonuses = applyBonusesAtReveal;
+
+  // ---------- Pre-reveal chip rendering fix ----------
+  const _teamName = (typeof teamName==='function')?teamName:(x=>`Équipe ${x}`);
+  window.bonusChip = function(r, mTeam, rs){
+    const sel = (typeof getBonusSelection==='function')? getBonusSelection(r, mTeam): null;
+    const iAmTeam = (typeof hasClaim==='function')? hasClaim(mTeam): false;
+    const roundFinished = !!(rs && rs.finished);
+    if (typeof isAdmin==='function' && isAdmin() && !roundFinished) return '';
+    const used = !!(state.bonusUsed && state.bonusUsed[r] && state.bonusUsed[r][mTeam]);
+    const canChoose = (!rs?.started && !rs?.finished && !used && iAmTeam);
+    if(!sel) return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
+    if(!roundFinished && !iAmTeam) return '';
+    const lbl = BONUS.labelForType(sel.type||'capitaine');
+    const img = BONUS.imgForType(sel.type||'capitaine');
+    if(!roundFinished){
+      return `<span class="pill blue">${lbl}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+    }
+    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0;
+    const labelSport = sel.sport==='darts'?'Fléchettes':(sel.sport==='ping'?'Ping':(sel.sport==='palet'?'Palet':''));
+    const extra = (sel.type==='capitaine')? '' : (sel.sport ? ` / ${labelSport}` : '');
+    return `<span class="pill blue">${lbl}${extra} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+  };
+
+  // Wire cards on first modal open
+  document.addEventListener('click', ()=>setTimeout(()=>{ wireCards(); ensureMelonFields(); },0), true);
 })();
 </script>
+
+</body>
+</html>
