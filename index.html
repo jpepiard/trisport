@@ -249,16 +249,6 @@ header .btn, header .chip, header .pill, header .tab{
 #capitaine-params .row { display: none !important; }
 </style>
 
-
-<style id="chatgpt-quick-fixes">
-/* Keep brand title visible unless replacement images exist */
-header .brand > .logo, header .brand > h1 { display:block !important; }
-/* If you later add .brand-logo / .brand-title images, feel free to remove this override. */
-
-/* Unhide Capitaine parameters so the selection UI works */
-#capitaine-fields, #cap-params, #capitaine-params .grid, #capitaine-params .row { display:initial !important; }
-</style>
-
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -300,11 +290,11 @@ header .brand > .logo, header .brand > h1 { display:block !important; }
           <div><label>Nom du tournoi</label><input type="text" id="tname-input" placeholder="ex : Tournoi de la plage"/></div>
           <div><label>Nombre d’équipes</label><input type="number" id="teams-count-input" min="2" max="64" step="1" value="4"/></div>
           <div></div>
-          <div><label>Fléchettes – Simples (#)</label><input type="number" id="rule-d-s" min="0" max="2" value="2"/></div>
+          <div><label>Fléchettes – Simples (#)</label><input type="number" id="rule-d-s" min="0" max="9" value="2"/></div>
           <div><label>Fléchettes – Doubles (#)</label><input type="number" id="rule-d-d" min="0" max="9" value="1"/></div>
           <div><label>Points / victoire fléchettes</label><input type="number" id="rule-d-p" min="1" max="50" value="5"/></div>
           <div></div>
-          <div><label>Ping – Simples (#)</label><input type="number" id="rule-p-s" min="0" max="2" value="2"/></div>
+          <div><label>Ping – Simples (#)</label><input type="number" id="rule-p-s" min="0" max="9" value="2"/></div>
           <div><label>Ping – Doubles (#)</label><input type="number" id="rule-p-d" min="0" max="9" value="1"/></div>
           <div><label>Points / victoire ping</label><input type="number" id="rule-p-p" min="1" max="50" value="5"/></div>
           <div></div>
