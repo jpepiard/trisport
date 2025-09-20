@@ -50,7 +50,7 @@ function selectBonusType(t){
     "Miroir : inverse le bonus adverse sur tout le match." :
     (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
       (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-        "Capitaine : choisissez le joueur et le sport."));
+        "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet."));
   setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
 }
 function prepareBonusOptions(){
@@ -241,13 +241,7 @@ header .btn, header .chip, header .pill, header .tab{
 #bonus-modal .bonus-dialog .bonus-card .bonus-params[style*="max-height:"][style*="px"]{opacity:1}
 </style>
 
-<style id="capitaine-teamwide-v2">
-/* Capitaine : suppression des champs joueur/sport dans l'UI (masqués) */
-#capitaine-fields,
-#cap-params,
-#capitaine-params .grid,
-#capitaine-params .row { display: none !important; }
-</style>
+
 
 </head>
 <body>
@@ -497,11 +491,7 @@ header .btn, header .chip, header .pill, header .tab{
       <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
 
       <!-- Paramètres (insérés sous la carte correspondante) -->
-      <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
-        <div><label>Capitaine (joueur)</label>
-          <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
-        </div>
-        <div><label>Sport</label>
+      <div><label>Sport</label>
           <select id="bonus-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
         </div>
       </div>
@@ -674,21 +664,42 @@ function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){cons
 function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
 
 /* Capitaine — calcul robuste */
-function computeCapitaineBonusForMatch(m, tid, player, sport){
-  let gain = 0;
-  const isA = (m.a === tid), isB = (m.b === tid);
-  if (!isA && !isB) return 0;
+/* Capitaine — calcul teamwide (+2/manche gagnée) */
+function computeCapitaineBonusForMatch(m, tid, _player, _sport){
+  try{
+    let wins = 0;
+    const isA = (m.a === tid), isB = (m.b === tid);
+    if(!isA && !isB) return 0;
 
-  if (sport === 'darts') {
-    const sSingles = state.rules.dartsSingles || 0;
-    m.darts.forEach((v,i)=>{
-      if (v!==0 && v!==1) return;
-      const won = isA ? (v===0) : (v===1);
-      if (!won) return;
-      if (i < sSingles) {
-        const which = (i===0 ? 'p1' : 'p2');
-        if (which === player) gain += BONUS_VAL;
-      } else {
+    // Fléchettes : chaque manche (0 = A gagne, 1 = B gagne)
+    (m.darts || []).forEach(v=>{
+      if(v===0 && isA) wins++;
+      else if(v===1 && isB) wins++;
+    });
+
+    // Ping : chaque set validé
+    const sets = (typeof getPingPts==='function') ? getPingPts(m)
+                 : (Array.isArray(m.pingPts) ? m.pingPts : []);
+    sets.forEach(s=>{
+      const a = s?.a, b = s?.b;
+      const valid = a!=null && b!=null && a!=='' && b!=='' && isFinite(+a) && isFinite(+b);
+      if(!valid) return;
+      if(+a > +b && isA) wins++;
+      else if(+b > +a && isB) wins++;
+    });
+
+    // Palet : victoire du match
+    const T  = +(state?.rules?.paletTarget ?? 11);
+    const pa = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
+    const pb = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
+    if(pa!=null && pb!=null){
+      if(pa>=T && pa>pb && isA) wins++;
+      else if(pb>=T && pb>pa && isB) wins++;
+    }
+
+    return 2 * wins;
+  }catch(_){ return 0; }
+} else {
         gain += BONUS_VAL;
       }
     });
@@ -751,12 +762,12 @@ function bonusChip(r,mTeam,rs){
   // Affichage
   if (!roundFinished) {
     // Secret: pilule "Capitaine" + mini image
-    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':'Capitaine')); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':'capitaine.jpg')); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
+    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':'Capitaine')); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':'capitaine.jpg')); return `<span class="pill blue">${lblType} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
   } else {
     // Révélé à tout le monde
     const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
     const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); return `<span class="pill blue">${lblType} ${type==='capitaine' ? labelPlayer+' / '+labelSport : (sel.sport ? ' / '+labelSport : '')} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); return `<span class="pill blue">${lblType} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
   }
 }
 
@@ -1026,10 +1037,21 @@ function openBonusModal(round,teamId){
   id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-id('bonus-save').addEventListener('click',()=>{
-  const r=bonusCTX.round, t=bonusCTX.teamId;
-  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
-  if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
+id('bonus-save').addEventListener('click', ()=>{
+  const r = bonusCTX.round, t = bonusCTX.teamId;
+  const type = (window._bonusType==='miroir') ? 'miroir'
+              : (window._bonusType==='taupe') ? 'taupe'
+              : (window._bonusType==='lefthand') ? 'lefthand' : 'capitaine';
+
+  if(type==='capitaine') setBonusSelection(r, t, { type:'capitaine' });
+  else if(type==='taupe') setBonusSelection(r, t, { type:'taupe', sport: id('taupe-sport').value||'darts' });
+  else if(type==='lefthand') setBonusSelection(r, t, { type:'lefthand', sport: id('lefthand-sport').value||'darts' });
+  else setBonusSelection(r, t, { type:'miroir' });
+
+  id('bonus-modal').classList.remove('show');
+  if(typeof renderPills==='function') renderPills();
+  if(typeof renderMatches==='function') renderMatches();
+});
   else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
   else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
   else setBonusSelection(r,t,{type:'miroir'});
@@ -1089,111 +1111,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 
 
-<script id="capitaine-teamwide-v2">
-(function(){
-  const $ = (s,r=document)=>r.querySelector(s);
-  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
 
-  // --- Texte d'aide dans la carte Capitaine (optionnel, non bloquant) ---
-  function rewriteCapitaineHelp(){
-    $$('.bonus-card').forEach(card=>{
-      const title = $('.bonus-title', card);
-      if(!title) return;
-      if((title.textContent||'').trim().toLowerCase()==='capitaine'){
-        const help = card.querySelector('.help');
-        if(help){
-          help.innerHTML = "Bonus d’équipe — aucun réglage.<br><b>+2 points par manche gagnée</b> sur fléchettes & ping (simples et doubles) et <b>+2</b> si <i>palet</i> gagné.";
-        }
-      }
-    });
-  }
-  document.addEventListener('DOMContentLoaded', rewriteCapitaineHelp);
-  document.addEventListener('click', ()=>setTimeout(rewriteCapitaineHelp,0), true);
-
-  // --- Calcul : Capitaine = +2 points par manche gagnée, tous sports ---
-  // Remplace/ajoute la fonction de calcul pour Capitaine
-  window.computeCapitaineBonusForMatch = function(match, teamId){
-    try{
-      let wins = 0;
-      const isA = match.a === teamId;
-      const isB = match.b === teamId;
-      if(!isA && !isB) return 0;
-
-      // Fléchettes: tableau de vainqueurs 0(A)/1(B)
-      if (Array.isArray(match.darts)){
-        match.darts.forEach(v=>{
-          if(v===0 && isA) wins++;
-          else if(v===1 && isB) wins++;
-        });
-      }
-
-      // Ping: sets via getPingPts(match) si dispo, sinon match.pingPts
-      const valid = (a,b)=> a!=null && b!=null && a!=='' && b!=='' && isFinite(+a) && isFinite(+b);
-      const sets = (typeof window.getPingPts==='function') ? getPingPts(match)
-                    : (Array.isArray(match.pingPts) ? match.pingPts : []);
-      if (Array.isArray(sets)){
-        sets.forEach(s=>{
-          const a = s?.a, b = s?.b;
-          if(!valid(a,b)) return;
-          if(+a > +b && isA) wins++;
-          else if(+b > +a && isB) wins++;
-        });
-      }
-
-      // Palet: victoire du match
-      const R = (window.state && state.rules) || {};
-      const target = +(R.paletTarget ?? 11);
-      const pa = (match.palet && match.palet.a!=null) ? +match.palet.a : null;
-      const pb = (match.palet && match.palet.b!=null) ? +match.palet.b : null;
-      if(pa!=null && pb!=null){
-        if(pa>=target && pa>pb && isA) wins++;
-        else if(pb>=target && pb>pa && isB) wins++;
-      }
-
-      return 2 * wins;
-    }catch(e){
-      return 0;
-    }
-  };
-
-  // --- Enregistrement : Capitaine sans paramètres ---
-  // Si la modale tente de lire joueur/sport, on intercepte pour n'envoyer que {type:'capitaine'}
-  document.addEventListener('click', function(ev){
-    const save = ev.target && ev.target.closest && ev.target.closest('#bonus-save');
-    if(!save) return;
-    const t = (window._bonusType||'').toLowerCase();
-    if(t !== 'capitaine') return; // on laisse la logique existante pour les autres bonus
-    try{
-      if(!window.bonusCTX) return;
-      const r = window.bonusCTX.round;
-      const tid = window.bonusCTX.teamId;
-      if (typeof window.setBonusSelection==='function'){
-        window.setBonusSelection(r, tid, { type:'capitaine' });
-      }
-      const modal = document.getElementById('bonus-modal');
-      if(modal) modal.classList.remove('show');
-      try{ if(typeof renderPills==='function') renderPills(); }catch(_){}
-      try{ if(typeof renderMatches==='function') renderMatches(); }catch(_){}
-      try{ if(typeof updateRanking==='function') updateRanking(); }catch(_){}
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-    }catch(_){}
-  }, true);
-
-  // --- Affichage après révélation : ne pas afficher joueur/sport pour Capitaine ---
-  if (typeof window.bonusChip === 'function'){
-    const _origChip = window.bonusChip;
-    window.bonusChip = function(r, mTeam, rs){
-      const html = _origChip(r, mTeam, rs);
-      // Si révélé et que le label Capitaine inclut "J1 / ..." etc., on l'épure
-      if (typeof html === 'string' && /Capitaine\s*:?\s*J\d/i.test(html)){
-        return html.replace(/Capitaine\s*:?\s*J\d\s*\/\s*(Fléchettes|Ping|Palet)/i, 'Capitaine');
-      }
-      return html;
-    };
-  }
-})();
-</script>
 
 </body>
 </html>
