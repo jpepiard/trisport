@@ -18,17 +18,44 @@
 
 function ensureParamWrapper(){
   const fields = id('capitaine-fields'); if(!fields) return null;
-  let wrap=id('cap-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='cap-params'; wrap.className='bonus-params'; fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields); }
+  let wrap = id('cap-params');
+  if(!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'cap-params';
+    wrap.className = 'bonus-params';
+    fields.parentNode.insertBefore(wrap, fields);
+    wrap.appendChild(fields);
+  }
+  return wrap;
+}
   return wrap;
 }
 function ensureTaupeWrapper(){
   const fields = id('taupe-fields'); if(!fields) return null;
-  let wrap=id('taupe-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='taupe-params'; wrap.className='bonus-params'; fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields); }
+  let wrap = id('taupe-params');
+  if(!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'taupe-params';
+    wrap.className = 'bonus-params';
+    fields.parentNode.insertBefore(wrap, fields);
+    wrap.appendChild(fields);
+  }
+  return wrap;
+}
   return wrap;
 }
 function ensureLeftHandWrapper(){
   const fields = id('lefthand-fields'); if(!fields) return null;
-  let wrap=id('lefthand-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='lefthand-params'; wrap.className='bonus-params'; fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields); }
+  let wrap = id('lefthand-params');
+  if(!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'lefthand-params';
+    wrap.className = 'bonus-params';
+    fields.parentNode.insertBefore(wrap, fields);
+    wrap.appendChild(fields);
+  }
+  return wrap;
+}
   return wrap;
 }
 function setParamsOpen(openCap, openTaupe, openLeft){
@@ -58,513 +85,18 @@ function prepareBonusOptions(){
   cards.forEach((c, i)=>{
     c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
     c.addEventListener('click', ()=>selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))));
-    c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
+    c.addEventListener('keydown', ev=>{
+      if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); }
+    });
   });
   const cap=cards[0], tau=cards[2], leftc=cards[3];
   const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
   const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
   const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
+  // Init state
+  selectBonusType(window._bonusType || 'capitaine');
 }
 
-</script>
-
-<style>
-:root{--bg:#0f1220;--border:#2b315f;--text:#e7e9f7;--muted:#8b94b8;--chip:#242b55;--card:#1b2242}
-*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;background:radial-gradient(1200px 800px at 20% -10%,#1c2040,transparent),radial-gradient(1000px 600px at 120% 0%,#1b2550,transparent),var(--bg);color:var(--text)}
-header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(130%) blur(8px);background:linear-gradient(180deg,rgba(15,18,32,.9),rgba(15,18,32,.6));border-bottom:1px solid var(--border)}
-.container{max-width:1100px;margin:0 auto;padding:18px 16px}.brand{display:flex;gap:12px;align-items:center}
-.logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(from 210deg,#6ee7b7,#7aa2ff);display:grid;place-items:center;font-weight:900;color:#0a0d1c}
-.tabs{display:flex;gap:8px;flex-wrap:wrap}.tab{background:var(--chip);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:999px;cursor:pointer}
-.tab[aria-selected="true"]{background:linear-gradient(180deg,#1d2a57,#1a2450);border-color:#3a4aa0}
-main .container{padding-top:22px}section{display:none}section.active{display:block}
-.card{background:linear-gradient(180deg,#171d3a,#121632);border:1px solid var(--border);border-radius:16px}
-.card .hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
-.card .bd{padding:16px}
-.help{font-size:13px;color:var(--muted)}.muted{color:var(--muted)}
-.btn{appearance:none;border:1px solid var(--border);background:var(--chip);color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
-.btn.primary{background:linear-gradient(180deg,#2f3da2,#25337d);border-color:#3a4aa0}.btn.small{padding:6px 10px;border-radius:10px;font-size:13px}.btn.danger{background:linear-gradient(180deg,#7a2b2b,#5c2222);border-color:#8a2b2b}
-.btn.toggle[aria-pressed="true"]{background:linear-gradient(180deg,#2b3a99,#22307c);border-color:#3a4aa0}
-.grid{display:grid;gap:12px}.grid.cols-2{grid-template-columns:repeat(2,1fr)}.grid.cols-3{grid-template-columns:repeat(3,1fr)}.grid.cols-4{grid-template-columns:repeat(4,1fr)}.grid.responsive{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:#fff}
-label{font-size:13px;color:var(--muted)}
-table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left}th{color:var(--muted);font-weight:600}
-.match-card{border-radius:14px;border:1px solid var(--border);background:var(--card);overflow:hidden}
-.match-card[aria-expanded="false"] .bd{display:none}.match-card[aria-expanded="true"] .bd{display:block}
-.chip{font-size:12px;padding:4px 8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;color:var(--muted)}
-.pill{padding:4px 8px;border-radius:999px;background:#0f1331;border:1px solid var(--border);color:var(--muted);font-size:12px}
-.pill.red{border-color:#ef4444;color:#fecaca;background:rgba(239,68,68,.08)}
-.pill.yellow{border-color:#eab308;color:#fde68a;background:rgba(234,179,8,.10)}
-.pill.green{border-color:#22c55e;color:#a7f3d0;background:rgba(34,197,94,.10)}
-.pill.blue{border-color:#3b82f6;color:#bfdbfe;background:rgba(59,130,246,.10)} /* bonus BLEU */
-.team-name{display:inline-flex;align-items:center;gap:8px;line-height:1.25;vertical-align:middle}
-.match-card .hd .teams{display:flex;align-items:center;gap:10px}
-.avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:#0f1331;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;color:#cbd5ff;font-weight:700;font-size:14px;flex:0 0 auto}
-.avatar img{width:100%;height:100%;object-fit:cover}.avatar .avatar-initials{display:inline-block;line-height:40px}
-.avatar-lg{width:48px;height:48px;font-size:15px}.avatar-lg .avatar-initials{line-height:48px}
-.avatar-sm{width:32px;height:32px;font-size:12px}.avatar-sm .avatar-initials{line-height:32px}
-.h2h-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-weight:600}
-.h2h-win{border:1px solid #22c55e;color:#a7f3d0;background:rgba(34,197,94,.08)}
-.h2h-loss{border:1px solid #ef4444;color:#fecaca;background:rgba(239,68,68,.08)}
-.h2h-draw{border:1px solid #eab308;color:#fde68a;background:rgba(234,179,8,.08)}
-.score-compact{font-variant-numeric:tabular-nums}
-
-/* Bonus */
-.bonus-btn{border:1px dashed #4b5bd7;background:transparent;color:#7aa2ff;padding:8px 10px;border-radius:12px;font-weight:700}.bonus-btn[disabled]{opacity:.45;cursor:not-allowed}
-#bonus-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9998}
-#bonus-modal.show{display:flex}
-.bonus-dialog{width:min(560px,92vw);background:#141938;border:1px solid var(--border);border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.5)}
-.bonus-dialog .hd{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700}
-.bonus-dialog .bd{padding:16px}.bonus-dialog .ft{padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
-.bonus-card{display:flex;gap:12px;align-items:center;margin:6px 0 12px;padding:10px;border:1px dashed #4b5bd7;border-radius:12px;background:#111636}
-.bonus-illu{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;background:#0f1331;border:1px solid var(--border)}
-.bonus-illu svg{width:36px;height:36px}
-
-/* Couleur du badge #n selon l’état de journée */
-.round-chip{font-weight:700}
-.round-chip.red{border-color:#ef4444;color:#fecaca;background:rgba(239,68,68,.08)}
-.round-chip.yellow{border-color:#eab308;color:#fde68a;background:rgba(234,179,8,.10)}
-.round-chip.green{border-color:#22c55e;color:#a7f3d0;background:rgba(34,197,94,.10)}
-
-#storage-warning{position:fixed;right:12px;bottom:12px;display:none;background:#0f1331;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 10px;z-index:99;box-shadow:0 6px 24px rgba(0,0,0,.35)}
-#js-ok{position:fixed;right:12px;top:12px;background:#7a2525;color:#fff;padding:6px 10px;border-radius:10px;z-index:9999;font:600 12px system-ui,Segoe UI,Roboto}
-
-/* --------- RELOOK MATCH: 2 colonnes + encarts de sport --------- */
-.match-two-col{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
-  gap:16px;
-}
-.sport-group{
-  background:linear-gradient(180deg,#151c3b,#131734);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:12px;
-}
-.sport-title{
-  display:flex;align-items:center;gap:8px;
-  font-weight:700;margin:0 0 10px;
-}
-.sport-title .sport-icon{width:18px;height:18px;display:grid;place-items:center;font-size:16px;line-height:1}
-.sport-item{margin:0 0 10px}
-.sport-item label{display:block;margin:0 0 6px;color:var(--muted)}
-.ping-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ping-row input{width:100%}
-
-.bonus-illu img{width:100%;height:100%;object-fit:cover;border-radius:12px}
-.pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
-.pill .mini-bonus img{width:100%;height:100%;object-fit:cover}
-</style>
-
-<!-- Firebase compat -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script>
-window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDomain:"trisport-9a7b2.firebaseapp.com",databaseURL:"https://trisport-9a7b2-default-rtdb.europe-west1.firebasedatabase.app",projectId:"trisport-9a7b2",messagingSenderId:"132024051367",appId:"1:132024051367:web:f9aa39785a3d4a43875d82"};
-</script>
-
-
-
-<style id="bonus-scroll-fix">
-.bonus-panel{ max-height:90vh; overflow:hidden; display:flex; flex-direction:column; }
-.bonus-panel .hd{ position:sticky; top:0; background:var(--card); z-index:3; padding-bottom:8px; }
-.bonus-panel .bd{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding-right:6px; padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
-.bonus-panel .ft{ position:sticky; bottom:0; background:var(--card); padding-top:8px; z-index:3; box-shadow:0 -8px 12px rgba(0,0,0,.25); }
-.bonus-select{ gap:8px; }
-.bonus-dialog .bonus-card{ grid-template-columns:80px 1fr; padding:10px; border:2px dashed var(--border); border-radius:12px; }
-.bonus-dialog .bonus-card .bonus-illu img{ width:72px; height:72px; border-radius:12px; }
-.bonus-dialog .bonus-card.selected{ border-color: var(--blue); box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset; }
-</style>
-
-
-
-<style id="brand-image-header">
-
-/* ===== Header compact + brand images (reliable) ===== */
-header, .topbar, .app-header{
-  padding-block: 10px !important;
-}
-header .brand{ display:flex; align-items:center; gap:12px; }
-
-/* Hide old text-based logo/title if present */
-header .brand > .logo{ display:none !important; }
-header .brand > h1{ display:none !important; }
-
-/* Our real images */
-.brand-logo{ width:64px; height:64px; border-radius:14px; display:block; }
-.brand-title{ height:72px; width:auto; display:block; }
-
-@media (max-width: 640px){
-  .brand-title{ height:60px; }
-}
-@media (max-width: 420px){
-  .brand-title{ height:48px; }
-}
-
-</style>
-<style id="header-compact-keepimage">
-
-/* ===== Ultra-compact header — keep logo/title sizes ===== */
-header, .app-header, .topbar{
-  padding-block: 6px !important;   /* reduce vertical padding without touching images */
-  min-height: unset !important;
-}
-/* ensure children don't add extra vertical margins */
-header *{
-  margin-block: 0 !important;
-}
-/* layout + baseline fixes to avoid extra line-height space */
-header .brand{ display:flex; align-items:center; gap:12px; }
-header .brand img{ display:block; }             /* remove inline baseline gap */
-header nav, header .tabs, header .menu{ display:flex; align-items:center; }
-/* optional: slightly tighten chip/button vertical padding */
-header .btn, header .chip, header .pill, header .tab{
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-}
-
-/* keep the image sizes exactly as they are */
-.brand-logo{ width:64px !important; height:64px !important; }
-.brand-title{ height:72px !important; width:auto !important; }
-
-/* fine-tune on small screens */
-@media (max-width: 640px){
-  header, .app-header, .topbar{ padding-block: 4px !important; }
-}
-
-
-/* --- Bonus panel: put params under the card text (minimal, scoped) --- */
-#bonus-modal .bonus-dialog .bonus-card{display:grid!important;grid-template-columns:96px 1fr;gap:12px;align-items:start}
-#bonus-modal .bonus-dialog .bonus-card .bonus-illu{grid-column:1;grid-row:1}
-#bonus-modal .bonus-dialog .bonus-card .bonus-text{grid-column:2;grid-row:1}
-#bonus-modal .bonus-dialog .bonus-card .bonus-params{grid-column:2;grid-row:2;margin-top:8px;max-height:0;overflow:hidden;transition:max-height .25s ease,opacity .2s;opacity:.0}
-/* When JS opens the wrapper by setting max-height, fade in */
-#bonus-modal .bonus-dialog .bonus-card .bonus-params[style*="max-height:"][style*="px"]{opacity:1}
-</style>
-
-
-
-</head>
-<body>
-<div id="js-ok">JS non chargé</div>
-<script>(function(){const p=document.getElementById('js-ok');if(p){p.textContent='JS chargé ✅';p.style.background='#14532d';}})();</script>
-
-<header>
-  <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
-    <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
-    <nav class="tabs" role="tablist" aria-label="Sections" id="tabs">
-      <button type="button" class="tab" role="tab" aria-selected="true" data-tab="setup">Tournoi</button>
-      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="equipes">Équipes</button>
-      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="calendrier">Rencontres</button>
-      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="classement">Classement</button>
-      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="options">Options</button>
-    </nav>
-    <div style="display:flex;align-items:center;gap:8px">
-      <span id="tname-top" class="pill" style="display:none"></span>
-      <span id="whoami-top" class="pill">visiteur</span>
-      <button type="button" class="btn small" id="btn-fullscreen">⛶ Plein écran</button>
-    </div>
-  </div>
-</header>
-
-<main>
-  <div class="container">
-    <div id="storage-warning" class="help" style="display:none"></div>
-
-    <!-- TOURNOI -->
-    <section id="setup" class="active">
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin:4px 0 8px">
-        <button type="button" class="btn small" id="btn-admin-on-setup">Se connecter admin</button>
-        <span class="pill" id="whoami-setup">visiteur</span>
-      </div>
-
-      <div class="card">
-        <div class="hd"><strong>Créer un tournoi (Cloud)</strong></div>
-        <div class="bd grid cols-4">
-          <div><label>Code cloud (ex: apero2025)</label><input type="text" id="tcode-input" placeholder="code unique"/></div>
-          <div><label>Nom du tournoi</label><input type="text" id="tname-input" placeholder="ex : Tournoi de la plage"/></div>
-          <div><label>Nombre d’équipes</label><input type="number" id="teams-count-input" min="2" max="64" step="1" value="4"/></div>
-          <div></div>
-          <div><label>Fléchettes – Simples (#)</label><input type="number" id="rule-d-s" min="0" max="9" value="2"/></div>
-          <div><label>Fléchettes – Doubles (#)</label><input type="number" id="rule-d-d" min="0" max="9" value="1"/></div>
-          <div><label>Points / victoire fléchettes</label><input type="number" id="rule-d-p" min="1" max="50" value="5"/></div>
-          <div></div>
-          <div><label>Ping – Simples (#)</label><input type="number" id="rule-p-s" min="0" max="9" value="2"/></div>
-          <div><label>Ping – Doubles (#)</label><input type="number" id="rule-p-d" min="0" max="9" value="1"/></div>
-          <div><label>Points / victoire ping</label><input type="number" id="rule-p-p" min="1" max="50" value="5"/></div>
-          <div></div>
-          <div><label>Palet – Score cible (victoire)</label><input type="number" id="rule-l-target" min="1" max="50" value="11"/></div>
-          <div style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button type="button" class="btn primary" id="btn-create-tournament">Créer et ouvrir</button>
-            <span class="help">Création réservée à l’<b>administrateur</b> (PIN requis).</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <div class="hd"><strong>Ouvrir un tournoi existant (Cloud)</strong></div>
-        <div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <input type="text" id="join-code" placeholder="code du tournoi" style="max-width:220px"/>
-          <button type="button" class="btn primary" id="btn-join-code">Rejoindre</button>
-          <button type="button" class="btn" id="btn-copy-link">Copier lien ?id=code</button>
-          <span class="help">Statut : <span id="cloud-status">hors ligne</span></span>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <div class="hd"><strong>Tournois Cloud récents (ce navigateur)</strong></div>
-        <div class="bd" id="recent-list"><div class="help">Aucun tournoi cloud listé pour l’instant.</div></div>
-      </div>
-    </section>
-
-    <!-- EQUIPES -->
-    <section id="equipes">
-      <div class="card">
-        <div class="hd">
-          <div>
-            <strong>Équipes</strong>
-            <div class="help">L’<b>administrateur</b> crée et édite les équipes. Les joueurs se connectent à leur équipe pour saisir <b>leurs scores</b> uniquement.</div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <span class="pill" id="lock-pill" style="display:none">Calendrier figé 🔒</span>
-            <button type="button" class="btn" id="btn-add-team" style="display:none">+ Ajouter équipe (admin)</button>
-            <button type="button" class="btn primary" id="btn-generate">Générer le calendrier</button>
-          </div>
-        </div>
-        <div class="bd"><div id="team-list" class="grid responsive"></div></div>
-      </div>
-    </section>
-
-    <!-- RENCONTRES -->
-    <section id="calendrier">
-      <div class="card">
-        <div class="hd">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <strong>Rencontres</strong>
-            <span class="pill" id="round-status">—</span>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <span class="pill" id="stats-matches">0 / 0 matches complets</span>
-            <button type="button" class="btn small" id="btn-start-round" style="display:none">Démarrer journée</button>
-            <button type="button" class="btn small" id="btn-end-round" style="display:none">Fin de journée</button>
-            <button type="button" class="btn small" id="btn-refresh-standings">Mettre à jour le classement</button>
-            <button type="button" class="btn small" id="btn-collapse">Tout replier</button>
-          </div>
-        </div>
-        <div class="bd"><div id="match-list" class="grid"></div></div>
-      </div>
-    </section>
-
-    <!-- CLASSEMENT -->
-    <section id="classement">
-      <div class="card">
-        <div class="hd">
-          <strong>Classement</strong>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <span class="pill" id="teams-count">0 équipes</span>
-            <span class="pill" id="rounds-count">0 matchs par équipe</span>
-            <button type="button" class="btn small toggle" id="btn-show-summary" aria-pressed="true">Classement général</button>
-            <button type="button" class="btn small toggle" id="btn-show-h2h" aria-pressed="false">Face à face</button>
-            <button type="button" class="btn small" id="btn-refresh-standings-2">Mettre à jour</button>
-          </div>
-        </div>
-        <div class="bd" style="overflow:auto">
-          <div id="view-summary">
-            <div class="help" style="margin-bottom:10px">Points = base + Bonus − Malus. Le bonus “Capitaine” est révélé à la fin de la journée.</div>
-            <table id="table-classement">
-              <thead>
-                <tr>
-                  <th>#</th><th>Équipe</th><th>Points</th>
-                  <th>Fléchettes</th><th>Ping-pong</th><th>Palet (PF–PA)</th>
-                  <th>Bonus</th><th>Malus</th>
-                  <th>Matchs complets</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <div id="view-h2h" style="display:none">
-            <div class="help" style="margin-bottom:10px">Face-à-face : cliquez sur une cellule pour ouvrir la rencontre.</div>
-            <table id="table-h2h" class="h2h-table"><thead></thead><tbody></tbody></table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- OPTIONS -->
-    <section id="options">
-      <div class="grid cols-2">
-        <div class="card"><div class="hd"><strong>Exporter / Importer</strong></div>
-          <div class="bd grid" style="gap:10px">
-            <button type="button" class="btn" id="btn-export">Exporter en JSON</button>
-            <input type="file" id="file-import" accept="application/json"/>
-            <button type="button" class="btn" id="btn-import">Importer le fichier JSON</button>
-          </div>
-        </div>
-        <div class="card"><div class="hd"><strong>Accès administrateur</strong></div>
-          <div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <button type="button" class="btn" id="btn-admin-on">Activer admin</button>
-            <button type="button" class="btn" id="btn-admin-off">Désactiver admin</button>
-            <span class="pill" id="whoami">vous : visiteur (lecture seule)</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <div class="hd"><strong>Gestion Cloud</strong></div>
-        <div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <span class="pill">Statut : <span id="cloud-status-2">hors ligne</span></span>
-          <button type="button" class="btn" id="btn-cloud-copy">Copier le lien de partage</button>
-          <button type="button" class="btn danger" id="btn-cloud-delete">Supprimer ce tournoi du cloud</button>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <div class="hd"><strong>Tournois Cloud récents</strong></div>
-        <div class="bd" id="manage-list"><div class="help">Aucun tournoi mémorisé.</div></div>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <div class="hd"><strong>Maintenance</strong></div>
-        <div class="bd grid" style="gap:10px">
-          <button type="button" class="btn" id="btn-reset-scores">Réinitialiser les scores (garde équipes + calendrier)</button>
-          <button type="button" class="btn" id="btn-unlock">🔓 Déverrouiller le calendrier</button>
-        </div>
-      </div>
-    </section>
-  </div>
-</main>
-
-<!-- MODAL BONUS -->
-<div id="bonus-modal" aria-hidden="true">
-  <div class="bonus-panel bonus-dialog">
-    <div class="hd">Choisir un bonus</div>
-    <div class="bd">
-
-      <div class="bonus-select">
-        <!-- Capitaine -->
-        <div class="bonus-card">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/capitaine.jpg" alt=""></div>
-          <div class="bonus-text">
-            <div class="bonus-title">Capitaine</div>
-            <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
-          </div>
-        </div>
-
-        <div class="bonus-sep"></div>
-
-        <!-- Miroir -->
-        <div class="bonus-card">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/miroir.jpg" alt=""></div>
-          <div class="bonus-text">
-            <div class="bonus-title">Miroir</div>
-            <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex : si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
-          </div>
-        </div>
-
-        <div class="bonus-sep"></div>
-
-        <!-- René la taupe -->
-        <div class="bonus-card">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/taupe.png" alt=""></div>
-          <div class="bonus-text">
-            <div class="bonus-title">René la taupe</div>
-            <div class="help">Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br/>Si l’adversaire joue <b>Miroir</b>, <i>vous</i> portez les lunettes.</div>
-          </div>
-        </div>
-
-        <div class="bonus-sep"></div>
-
-        <!-- 10 pouces 2 mains gauche -->
-        <div class="bonus-card">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/main gauche.png" alt=""></div>
-          <div class="bonus-text">
-            <div class="bonus-title">10 pouces 2 mains gauche</div>
-            <div class="help">L’adversaire doit jouer un sous‑match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br/>Choisissez le sport concerné.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
-
-      <!-- Paramètres (insérés sous la carte correspondante) -->
-      <div><label>Sport</label>
-          <select id="bonus-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
-        </div>
-      </div>
-
-      <div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
-        <div><label>Sport</label>
-          <select id="taupe-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
-        </div>
-      </div>
-
-      <div id="lefthand-fields" class="grid cols-2" style="margin-top:10px">
-        <div><label>Sport</label>
-          <select id="lefthand-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
-        </div>
-      </div>
-
-    </div>
-    <div class="ft">
-      <button type="button" class="btn" id="bonus-cancel">Annuler</button>
-      <button type="button" class="btn primary" id="bonus-save">Valider</button>
-    </div>
-  </div>
-</div>
-
-<script>
-'use strict';
-/* ===== Helpers ===== */
-
-/**
- * @typedef {Object} RoundCtl
- * @property {boolean} started
- * @property {boolean} finished
- *
- * @typedef {Object.<string, any>} Team
- *
- * @typedef {Object} AppState
- * @property {number} version
- * @property {string} tid
- * @property {string|null} cloudId
- * @property {string} tournamentName
- * @property {Object} rules
- * @property {Array<Team>} teams
- * @property {Array<any>} matches
- * @property {Object.<number, RoundCtl>} roundCtl
- * @property {Object.<number, Object.<string, any>>} bonusSelections
- * @property {Object.<number, Object.<string, number>>} bonusApplied
- * @property {Object.<number, Object.<string, boolean>>} bonusUsed
- */
-
-
-// Centralise libellés/images pour les bonus (évite les erreurs de frappe)
-const BONUS = {
-  /** @param {"capitaine"|"miroir"|"taupe"|"lefthand"|string} type */
-  labelForType(type){
-    switch(type){
-      case "miroir": return "Miroir";
-      case "taupe": return "René la taupe";
-      case "lefthand": return "Main gauche";
-      default: return "Capitaine";
-    }
-  },
-  imgForType(type){
-    switch(type){
-      case "miroir": return "miroir.jpg";
-      case "taupe": return "taupe.png";
-      case "lefthand": return "main gauche.png";
-      default: return "capitaine.jpg";
-    }
-  },
-  sportLabel(s){ return s==="darts"?"Fléchettes":(s==="ping"?"Ping":"Palet"); },
-  playerLabel(p){ return p==="p1"?"J1":"J2"; }
-};
-// Helpers sûrs pour initialiser les containers imbriqués
 function ensure(obj, key, defFactory){
   if(!obj[key]) obj[key] = defFactory();
   return obj[key];
