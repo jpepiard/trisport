@@ -669,6 +669,8 @@ function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUs
 
 /* Capitaine — calcul robuste */
 /* Capitaine — calcul teamwide (+2/manche gagnée) */
+/* Capitaine — calcul teamwide (+2/manche gagnée) */
+/* Capitaine — calcul teamwide (+2/manche gagnée) */
 function computeCapitaineBonusForMatch(m, tid, _player, _sport){
   try{
     let wins = 0;
@@ -703,35 +705,7 @@ function computeCapitaineBonusForMatch(m, tid, _player, _sport){
 
     return 2 * wins;
   }catch(_){ return 0; }
-} else {
-        gain += BONUS_VAL;
-      }
-    });
-  } else if (sport === 'ping') {
-    const sSingles = state.rules.pingSingles || 0;
-    getPingPts(m).forEach((s,i)=>{
-      const a = (s.a==null?null:+s.a);
-      const b = (s.b==null?null:+s.b);
-      if (!isPingValid(a,b)) return;
-      const won = isA ? (a>b) : (b>a);
-      if (!won) return;
-      if (i < sSingles) {
-        const which = (i===0 ? 'p1' : 'p2');
-        if (which === player) gain += BONUS_VAL;
-      } else {
-        gain += BONUS_VAL;
-      }
-    });
-  } else if (sport === 'palet') {
-    const T = +state.rules.paletTarget || 11;
-    const a = (m.palet?.a==null?null:+m.palet.a);
-    const b = (m.palet?.b==null?null:+m.palet.b);
-    if ((isA && a===T) || (isB && b===T)) gain += BONUS_VAL;
-  }
-  return gain;
 }
-
-/* Icônes pour titres de sport */
 function sportIcon(name){
   if(name==='darts'){ return `<span class="sport-icon" role="img" aria-label="fléchettes">🎯</span>`; }
   if(name==='ping'){  return `<span class="sport-icon" role="img" aria-label="ping-pong">🏓</span>`; }
