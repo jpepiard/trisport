@@ -52,12 +52,9 @@ function setParamsOpen(openCap, openTaupe, openLeft){
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
 function selectBonusType(t){
-  // Normalize type
   const norm = (x)=> (x||'').toLowerCase().replace(/\s+/g,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const wanted = ['capitaine','miroir','taupe','lefthand','melon'].includes(norm(t)) ? norm(t) : 'capitaine';
   window._bonusType = wanted;
-
-  // Toggle selected cards by title text content
   const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
   const map = {};
   cards.forEach(c=>{
@@ -71,8 +68,6 @@ function selectBonusType(t){
   Object.values(map).forEach(c=>c && c.classList.remove('selected'));
   const selCard = map[wanted] || map['capitaine'];
   if(selCard) selCard.classList.add('selected');
-
-  // Context + parameter panels
   if(typeof openParams==='function') openParams(wanted);
   const ctx=id('bonus-context'); if(ctx){
     ctx.textContent = wanted==='miroir' ? "Miroir : inverse le bonus adverse sur tout le match."
@@ -85,7 +80,6 @@ function selectBonusType(t){
 
 function prepareBonusOptions(){
   const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
-  // Make all cards selectable
   cards.forEach((c)=>{
     c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
     c.addEventListener('click', ()=>{
@@ -101,14 +95,11 @@ function prepareBonusOptions(){
       if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); c.click(); }
     });
   });
-
-  // Ensure parameter wrappers are placed inside corresponding cards
-  const wC=ensureParamWrapper?.(); if(wC){ const card=Array.from(cards).find(c=>(c.querySelector('.bonus-title')?.textContent||'').toLowerCase().includes('capitaine')); if(card&&wC.parentNode!==card) card.appendChild(wC); }
-  const wT=ensureTaupeWrapper?.(); if(wT){ const card=Array.from(cards).find(c=>(c.querySelector('.bonus-title')?.textContent||'').toLowerCase().includes('taupe')); if(card&&wT.parentNode!==card) card.appendChild(wT); }
-  const wL=ensureLeftHandWrapper?.(); if(wL){ const card=Array.from(cards).find(c=>/(10\s*pouces|main\s*gauche|mains?\s*gauche)/.test((c.querySelector('.bonus-title')?.textContent||'').toLowerCase())); if(card&&wL.parentNode!==card) card.appendChild(wL); }
-  const wM=ensureMelonWrapper?.(); if(wM){ const card=Array.from(cards).find(c=>(c.querySelector('.bonus-title')?.textContent||'').toLowerCase().includes('melon')); if(card&&wM.parentNode!==card) card.appendChild(wM); }
-
-  // Initialize selection
+  const cards2 = cards;
+  const wC=ensureParamWrapper?.(); if(wC){ const card=cards2.find(c=>(c.querySelector('.bonus-title')?.textContent||'').toLowerCase().includes('capitaine')); if(card&&wC.parentNode!==card) card.appendChild(wC); }
+  const wT=ensureTaupeWrapper?.(); if(wT){ const card=cards2.find(c=>(c.querySelector('.bonus-title')?.textContent||'').toLowerCase().includes('taupe')); if(card&&wT.parentNode!==card) card.appendChild(wT); }
+  const wL=ensureLeftHandWrapper?.(); if(wL){ const card=cards2.find(c=>/(10\s*pouces|main\s*gauche|mains?\s*gauche)/.test((c.querySelector('.bonus-title')?.textContent||'').toLowerCase())); if(card&&wL.parentNode!==card) card.appendChild(wL); }
+  const wM=ensureMelonWrapper?.(); if(wM){ const card=cards2.find(c=>(c.querySelector('.bonus-title')?.textContent||'').toLowerCase().includes('melon')); if(card&&wM.parentNode!==card) card.appendChild(wM); }
   selectBonusType(window._bonusType||'capitaine');
 }
 
@@ -851,7 +842,7 @@ function computeMelonBonusForMatch(m, tid, sel){
       const win = (isA && v===0) || (isB && v===1);
       return win ? (+R.dartsWinPoints||0) : (-2*(+R.dartsWinPoints||0));
     }
-  }
+  }catch(e){}
   return 0;
 }
 
@@ -1151,14 +1142,9 @@ function openBonusModal(round,teamId){
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
   if ((state.bonusUsed?.[round]?.[teamId])) return alert("Ce bonus a déjà été utilisé une fois.");
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
-
   bonusCTX.round=round; bonusCTX.teamId=teamId;
   const sel=getBonusSelection(round,teamId) || {type:'capitaine', sport:'darts', player:'J1'};
-
-  // Prepare UI once
   if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); }
-
-  // Pre-fill fields
   if(id('bonus-player')) id('bonus-player').value = sel.player || 'J1';
   if(id('bonus-sport')) id('bonus-sport').value = sel.sport || 'darts';
   if(id('taupe-sport')) id('taupe-sport').value = sel.sport || 'darts';
@@ -1166,38 +1152,26 @@ function openBonusModal(round,teamId){
   if(typeof updateMelonOptions==='function') updateMelonOptions();
   if(id('melon-sport')) id('melon-sport').value = sel.sport || 'darts';
   if(id('melon-index')) id('melon-index').value = (sel.index ? String(sel.index) : (id('melon-index').value||"1"));
-
-  // Select the correct card and params
   selectBonusType(sel.type||'capitaine');
-
-  const modal = id('bonus-modal'); if(modal) modal.classList.add('show');
+  id('bonus-modal')?.classList.add('show');
 }
 
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-id('bonus-save').addEventListener('click',
-{
-const r=bonusCTX.round, t=bonusCTX.teamId;
-const type = (['miroir','taupe','lefthand','melon','capitaine'].includes(window._bonusType)) ? window._bonusType : 'capitaine';
-if(type==='capitaine'){
-  setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
-} else if(type==='taupe'){
-  setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
-} else if(type==='lefthand'){
-  setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
-} else if(type==='melon'){
-  setBonusSelection(r,t,{type:'melon',sport:id('melon-sport').value||'darts',index:parseInt(id('melon-index').value,10)||1});
-} else {
-  setBonusSelection(r,t,{type:'miroir'});
-}
-id('bonus-modal').classList.remove('show');
-if(typeof renderPills==='function') renderPills();
-if(typeof renderMatches==='function') renderMatches();
-}
-););
+id('bonus-save').addEventListener('click',()=>{
+  const r=bonusCTX.round, t=bonusCTX.teamId;
+  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
+  if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
+  else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
+  else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
+  else setBonusSelection(r,t,{type:'miroir'});
+  id('bonus-modal').classList.remove('show');
+  if(typeof renderPills==='function') renderPills();
+  if(typeof renderMatches==='function') renderMatches();
+});
 
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
-document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } });</script>
+document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e) {} });</script>
 
 <script>
 (function(){
@@ -1318,11 +1292,11 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } });</scr
         opts.push('<option value="1">Unique sous‑match</option>');
       }
       sel.innerHTML = opts.join('');
-    }
+    }catch(e){}
   };
 
   document.addEventListener('DOMContentLoaded', function(){
-    try{ window.prepareBonusOptions(); }
+    try{ window.prepareBonusOptions(); }catch(e){}
   });
 
   // when the modal opens, ensure options & default selection
@@ -1336,7 +1310,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } });</scr
           window.updateMelonOptions();
           if(!document.getElementById('melon-index').value) document.getElementById('melon-index').value='1';
         }
-      }
+      }catch(e){}
     }
   });
 })();
@@ -1415,32 +1389,9 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } });</scr
     if(mel) mel.style.display = (t==='melon')?'block':'none'
   }
 
-  function selectBonusTypeSafe(t){
-    if(typeof window.selectBonusType === 'function'){
-      try{ return window.selectBonusType(t) }
-    }
-    // Fallback robuste
-    const modal = id('bonus-modal'); if(!modal) return
-    const cards = qsa('.bonus-select .bonus-card', modal)
-    cards.forEach(c=>c.classList.remove('selected'))
-    const map = {}
-    cards.forEach(c=>{
-      const title = qs('.bonus-title', c)
-      const nt = norm(title && title.textContent)
-      if(/^capitaine/.test(nt)) map['capitaine']=c
-      else if(/^miroir/.test(nt)) map['miroir']=c
-      else if(/taupe/.test(nt)) map['taupe']=c
-      else if(/10\s*pouces/.test(nt)) map['lefthand']=c
-      else if(/melon d'or/.test(nt)) map['melon']=c
-    })
-    const card = map[t] || map['capitaine']
-    if(card) card.classList.add('selected')
-    setContext(t)
-    openParams(t)
-    window._bonusType = t
-  }
-
-  function wireCards(){
+  function selectBonusTypeSafe(t){ try{ return selectBonusType(t) }catch(e){} }
+    
+    function wireCards(){
     if(!modalVisible()) return
     ensureMelonInsideList()
     ensureMelonParams()
