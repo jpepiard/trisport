@@ -851,7 +851,7 @@ function computeMelonBonusForMatch(m, tid, sel){
       const win = (isA && v===0) || (isB && v===1);
       return win ? (+R.dartsWinPoints||0) : (-2*(+R.dartsWinPoints||0));
     }
-  }catch(e){}
+  }
   return 0;
 }
 
@@ -1197,7 +1197,7 @@ if(typeof renderMatches==='function') renderMatches();
 
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
-document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e) {} });</script>
+document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } });</script>
 
 <script>
 (function(){
@@ -1318,11 +1318,11 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
         opts.push('<option value="1">Unique sous‑match</option>');
       }
       sel.innerHTML = opts.join('');
-    }catch(e){}
+    }
   };
 
   document.addEventListener('DOMContentLoaded', function(){
-    try{ window.prepareBonusOptions(); }catch(e){}
+    try{ window.prepareBonusOptions(); }
   });
 
   // when the modal opens, ensure options & default selection
@@ -1336,7 +1336,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
           window.updateMelonOptions();
           if(!document.getElementById('melon-index').value) document.getElementById('melon-index').value='1';
         }
-      }catch(e){}
+      }
     }
   });
 })();
@@ -1417,7 +1417,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 
   function selectBonusTypeSafe(t){
     if(typeof window.selectBonusType === 'function'){
-      try{ return window.selectBonusType(t) }catch(e){ /* fallback below */ }
+      try{ return window.selectBonusType(t) }
     }
     // Fallback robuste
     const modal = id('bonus-modal'); if(!modal) return
