@@ -240,6 +240,14 @@ header .btn, header .chip, header .pill, header .tab{
 /* When JS opens the wrapper by setting max-height, fade in */
 #bonus-modal .bonus-dialog .bonus-card .bonus-params[style*="max-height:"][style*="px"]{opacity:1}
 </style>
+
+<style id="melon-restore">
+/* Ensure bonus cards are clearly selectable */
+#bonus-modal .bonus-card{cursor:pointer;outline:0}
+#bonus-modal .bonus-card.selected{box-shadow:0 0 0 2px rgba(100,150,255,.8) inset;border-color:#6aa3ff}
+#bonus-modal .ft{position:relative;z-index:9999} /* footer buttons always clickable */
+</style>
+
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -742,7 +750,7 @@ function bonusChip(r,mTeam,rs){
   // Affichage
   if (!roundFinished) {
     // Secret: pilule "Capitaine" + mini image
-    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':(sel.type==='melon'?'Melon d’or':'Capitaine'))); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':(sel.type==='melon'?'melon.png':'capitaine.jpg'))); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
+    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':'Capitaine')); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':'capitaine.jpg')); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
   } else {
     // Révélé à tout le monde
     const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
@@ -1019,11 +1027,10 @@ function openBonusModal(round,teamId){
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
-  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe')?'taupe':(window._bonusType==='lefthand')?'lefthand':(window._bonusType==='melon')?'melon':'capitaine';
+  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
   if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
   else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
   else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
-  else if(type==='melon') setBonusSelection(r,t,{type:'melon',sport:id('melon-sport')?.value||'darts'});
   else setBonusSelection(r,t,{type:'miroir'});
   id('bonus-modal').classList.remove('show');
   if(typeof renderPills==='function') renderPills();
@@ -1081,25 +1088,172 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 
 
-<script id="melon-pill-fix-v3">
+<script id="melon-restore">
 (function(){
-  function one(sel, root=document){return root.querySelector(sel);}
-  if(typeof window.bonusChip==='function'){
-    const _old = window.bonusChip;
-    window.bonusChip = function(r, mTeam, rs){
-      try{
+  const $ = (s,r=document)=>r.querySelector(s);
+  const $$= (s,r=document)=>Array.from(r.querySelectorAll(s));
+  const id = (x)=>document.getElementById(x);
+
+  function hasMelon(modal){
+    return !!$$('.bonus-select .bonus-card', modal).find(c=>/melon d'?or/i.test(c.querySelector('.bonus-title')?.textContent||''));
+  }
+
+  function buildMelonCard(){
+    const card = document.createElement('div');
+    card.className = 'bonus-card';
+    card.dataset.type = 'melon';
+    card.innerHTML = `
+      <div class="icon"><img src="img/melon.png" alt=""></div>
+      <div class="content">
+        <div class="bonus-title">Melon d’or</div>
+        <div class="bonus-text">
+          Cible un <b>sous-match</b> (fléchettes, ping ou palet). Victoire : <b>double les points</b>.
+          Défaite : <b>−2× l’écart</b> des scores.
+        </div>
+      </div>
+      <div class="bonus-params" id="melon-params" style="display:none;margin-top:10px">
+        <label>Sport</label>
+        <select id="melon-sport">
+          <option value="darts">Fléchettes</option>
+          <option value="ping">Ping</option>
+          <option value="palet">Palet</option>
+        </select>
+      </div>`;
+    return card;
+  }
+
+  function wireCards(modal){
+    const cards = $$('.bonus-select .bonus-card', modal);
+    cards.forEach(c=>{
+      if(c.dataset.bound) return;
+      c.dataset.bound = "1";
+      c.tabIndex = 0; c.setAttribute('role','button');
+      c.addEventListener('click', function(){
+        cards.forEach(x=>x.classList.remove('selected'));
+        c.classList.add('selected');
+        const t = (c.dataset.type) || (c.querySelector('.bonus-title')?.textContent||'').toLowerCase();
+        if(/melon/.test(t)){
+          $('#melon-params', c)?.style && (c.querySelector('#melon-params').style.display='block');
+        }else{
+          const mp = $('#melon-params', c) || id('melon-params');
+          if(mp) mp.style.display='none';
+        }
+        window._bonusType = (/melon/.test(t)?'melon':
+                             (/miroir/i.test(t)?'miroir':
+                              (/taupe/i.test(t)?'taupe':
+                               (/10\s*pouces|gauche/i.test(t)?'lefthand':'capitaine'))));
+      });
+      c.addEventListener('keydown', e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); c.click(); } });
+    });
+  }
+
+  function ensureMelonCard(){
+    const modal = id('bonus-modal'); if(!modal) return;
+    const container = modal.querySelector('.bonus-select') || modal;
+    if(!hasMelon(modal)){
+      // Insert melon after the last card
+      container.appendChild(buildMelonCard());
+    }
+    wireCards(modal);
+  }
+
+  // When opening the modal via any [data-bonus] trigger
+  document.addEventListener('click', function(e){
+    if(e.target.closest('[data-bonus]')) setTimeout(ensureMelonCard, 0);
+  }, true);
+
+  // Save handler safety net for Melon
+  document.addEventListener('click', function(e){
+    const save = e.target && e.target.closest && e.target.closest('#bonus-save');
+    if(!save) return;
+    try{
+      const modal = id('bonus-modal'); if(!modal) return;
+      const selected = modal.querySelector('.bonus-select .bonus-card.selected');
+      const t = window._bonusType || (selected?.dataset.type) || (selected?.querySelector('.bonus-title')?.textContent||'').toLowerCase();
+      if(!/melon/.test(t)) return; // let original code handle other bonuses
+      const r = (window.bonusCTX&&bonusCTX.round) || window._activeRound || 1;
+      const teamId = (window.bonusCTX&&bonusCTX.teamId) || window._activeTeam || null;
+      const sport = (modal.querySelector('#melon-sport')?.value)||'darts';
+      if(typeof window.setBonusSelection==='function' && teamId!=null){
+        window.setBonusSelection(r, teamId, {type:'melon', sport});
+        modal.classList.remove('show');
+        try{ if(typeof renderPills==='function') renderPills(); }catch(_){}
+        try{ if(typeof renderMatches==='function') renderMatches(); }catch(_){}
+        try{ if(typeof updateRanking==='function') updateRanking(); }catch(_){}
+        e.stopImmediatePropagation(); e.preventDefault();
+      }
+    }catch(_){}
+  }, true);
+
+  // Label/img mapping safety (pre-reveal pill)
+  (function(){
+    if(typeof window.bonusChip==='function'){
+      const _old = window.bonusChip;
+      window.bonusChip = function(r, mTeam, rs){
         const html = _old(r, mTeam, rs);
-        // If selection exists and it's melon but the pill shows Capitaine, rewrite it
         try{
           const sel = (typeof getBonusSelection==='function') ? getBonusSelection(r, mTeam) : null;
           if(sel && sel.type==='melon' && typeof html==='string' && html.includes('Capitaine')){
-            return html
-              .replace('Capitaine', 'Melon d’or')
-              .replace('capitaine.jpg', 'melon.png');
+            return html.replace('Capitaine','Melon d’or').replace('capitaine.jpg','melon.png');
           }
         }catch(_){}
         return html;
-      }catch(e){ return ''; }
+      };
+    }
+  })();
+
+  // Compute Melon at end-round if not present
+  if(typeof window.computeMelonBonusForMatch!=='function'){
+    window.computeMelonBonusForMatch = function(m, tid, sel){
+      try{
+        const R = state.rules||{};
+        const sport = (sel&&sel.sport)||'darts';
+        const isA=(m.a===tid), isB=(m.b===tid); if(!isA && !isB) return 0;
+        if(sport==='darts'){
+          const winPts=+R.dartsWinPoints||0; let wA=0,wB=0;
+          (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0)wA++; else if(v===1)wB++; });
+          const ptsA=wA*winPts, ptsB=wB*winPts; const my=isA?ptsA:ptsB, opp=isA?ptsB:ptsA;
+          return (my>opp)? my : (my<opp ? -2*(opp-my) : 0);
+        }else if(sport==='ping'){
+          const winPts=+R.pingWinPoints||0; let wA=0,wB=0;
+          (typeof getPingPts==='function'?getPingPts(m):(m.pingPts||[])).forEach(s=>{
+            const a=(s.a==null?null:+s.a), b=(s.b==null?null:+s.b);
+            if(!(a!=null && b!=null)) return;
+            if(a>b) wA++; else if(b>a) wB++;
+          });
+          const ptsA=wA*winPts, ptsB=wB*winPts; const my=isA?ptsA:ptsB, opp=isA?ptsB:ptsA;
+          return (my>opp)? my : (my<opp ? -2*(opp-my) : 0);
+        }else{ // palet
+          const T=+((state.rules&&state.rules.paletTarget)||11);
+          const a=(m.palet?.a==null?null:+m.palet.a), b=(m.palet?.b==null?null:+m.palet.b);
+          if(a==null||b==null) return 0;
+          const winA=(a===T && b<T), winB=(b===T && a<T);
+          const my=isA?a:b, opp=isA?b:a;
+          if((isA&&winA)||(isB&&winB)) return my||0;
+          return -2*Math.abs(opp-my);
+        }
+      }catch(_){}
+      return 0;
+    };
+  }
+  // Hook into end-of-round calculation if needed
+  if(!window.__melonEndHook){
+    window.__melonEndHook = true;
+    const orig = window.applyEndOfRoundBonuses || window.revealRoundResults || null;
+    window.applyEndOfRoundBonuses = function(roundIndex){
+      try{
+        const sels = (state.bonusSel && state.bonusSel[roundIndex]) || {};
+        Object.keys(sels).forEach(tid=>{
+          const sel = sels[tid]; if(!sel) return;
+          if(sel.type!=='melon') return;
+          const matches = (window.getMatchesOfRound? getMatchesOfRound(roundIndex):(state.matches||[]).filter(m=>m.r===roundIndex));
+          let total=0; matches.forEach(m=> total += computeMelonBonusForMatch(m, tid, sel));
+          state.bonusApplied = state.bonusApplied||{};
+          state.bonusApplied[roundIndex] = state.bonusApplied[roundIndex]||{};
+          state.bonusApplied[roundIndex][tid] = (state.bonusApplied[roundIndex][tid]||0)+total;
+        });
+      }catch(_){}
+      if(typeof orig==='function') orig(roundIndex);
     };
   }
 })();
