@@ -1052,13 +1052,8 @@ id('bonus-save').addEventListener('click', ()=>{
   if(typeof renderPills==='function') renderPills();
   if(typeof renderMatches==='function') renderMatches();
 });
-  else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
-  else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
-  else setBonusSelection(r,t,{type:'miroir'});
-  id('bonus-modal').classList.remove('show');
-  if(typeof renderPills==='function') renderPills();
-  if(typeof renderMatches==='function') renderMatches();
-});
+
+
 
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
