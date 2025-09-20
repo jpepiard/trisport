@@ -52,57 +52,34 @@ function setParamsOpen(openCap, openTaupe, openLeft){
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
 function selectBonusType(t){
-  const norm = (x)=> (x||'').toLowerCase().replace(/\s+/g,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const wanted = ['capitaine','miroir','taupe','lefthand','melon'].includes(norm(t)) ? norm(t) : 'capitaine';
-  window._bonusType = wanted;
-  const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
-  const map = {};
-  cards.forEach(c=>{
-    const title = (c.querySelector('.bonus-title')?.textContent||'').toLowerCase();
-    if(/capitaine/.test(title)) map['capitaine']=c;
-    else if(/miroir/.test(title)) map['miroir']=c;
-    else if(/taupe/.test(title)) map['taupe']=c;
-    else if(/(10\s*pouces|main\s*gauche|mains?\s*gauche)/.test(title)) map['lefthand']=c;
-    else if(/melon/.test(title)) map['melon']=c;
-  });
-  Object.values(map).forEach(c=>c && c.classList.remove('selected'));
-  const selCard = map[wanted] || map['capitaine'];
-  if(selCard) selCard.classList.add('selected');
-  if(typeof openParams==='function') openParams(wanted);
-  const ctx=id('bonus-context'); if(ctx){
-    ctx.textContent = wanted==='miroir' ? "Miroir : inverse le bonus adverse sur tout le match."
-                 : wanted==='taupe' ? "René la taupe : choisissez le sport."
-                 : wanted==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport."
-                 : wanted==='melon' ? "Melon d’or : choisissez le sport et le sous‑match."
-                 : "Capitaine : choisissez le joueur et le sport.";
-  }
+  window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+  const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3];
+  [cap,mir,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
+  if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
+  if(mir && window._bonusType==='miroir') mir.classList.add('selected');
+  if(tau && window._bonusType==='taupe') tau.classList.add('selected');
+  if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
+  const ctx=id('bonus-context');
+  if(ctx) ctx.textContent = window._bonusType==='miroir' ?
+    "Miroir : inverse le bonus adverse sur tout le match." :
+    (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
+      (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
+        "Capitaine : choisissez le joueur et le sport."));
+  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
 }
-
 function prepareBonusOptions(){
-  const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
-  cards.forEach((c)=>{
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+  cards.forEach((c, i)=>{
     c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
-    c.addEventListener('click', ()=>{
-      const title = (c.querySelector('.bonus-title')?.textContent||'').toLowerCase();
-      const t = /capitaine/.test(title)?'capitaine'
-              : /miroir/.test(title)?'miroir'
-              : /taupe/.test(title)?'taupe'
-              : /(10\s*pouces|main\s*gauche|mains?\s*gauche)/.test(title)?'lefthand'
-              : /melon/.test(title)?'melon' : 'capitaine';
-      selectBonusType(t);
-    });
-    c.addEventListener('keydown', ev=>{
-      if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); c.click(); }
-    });
+    c.addEventListener('click', ()=>selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))));
+    c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
   });
-  const cards2 = cards;
-  const wC=ensureParamWrapper?.(); if(wC){ const card=cards2.find(c=>(c.querySelector('.bonus-title')?.textContent||'').toLowerCase().includes('capitaine')); if(card&&wC.parentNode!==card) card.appendChild(wC); }
-  const wT=ensureTaupeWrapper?.(); if(wT){ const card=cards2.find(c=>(c.querySelector('.bonus-title')?.textContent||'').toLowerCase().includes('taupe')); if(card&&wT.parentNode!==card) card.appendChild(wT); }
-  const wL=ensureLeftHandWrapper?.(); if(wL){ const card=cards2.find(c=>/(10\s*pouces|main\s*gauche|mains?\s*gauche)/.test((c.querySelector('.bonus-title')?.textContent||'').toLowerCase())); if(card&&wL.parentNode!==card) card.appendChild(wL); }
-  const wM=ensureMelonWrapper?.(); if(wM){ const card=cards2.find(c=>(c.querySelector('.bonus-title')?.textContent||'').toLowerCase().includes('melon')); if(card&&wM.parentNode!==card) card.appendChild(wM); }
-  selectBonusType(window._bonusType||'capitaine');
+  const cap=cards[0], tau=cards[2], leftc=cards[3];
+  const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
+  const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
+  const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
 }
-
 
 </script>
 
@@ -608,7 +585,7 @@ header .btn, header .chip, header .pill, header .tab{
             <option value="palet">Palet</option>
           </select>
         </div>
-        <div><label>Sous-match</label>
+        <div><label>Sport</label>
           <select id="melon-index"></select>
         </div>
       </div>
@@ -882,12 +859,12 @@ function bonusChip(r,mTeam,rs){
   // Affichage
   if (!roundFinished) {
     // Secret: pilule "Capitaine" + mini image
-    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':(sel.type==='melon'?'Melon d’or':'Capitaine'))); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':(sel.type==='melon'?'melon.png':'capitaine.jpg'))); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
+    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':'Capitaine')); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':'capitaine.jpg')); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
   } else {
     // Révélé à tout le monde
     const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
     const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir'?'Miroir':(type==='taupe'?'René la taupe':(type==='lefthand'?'Main gauche':(type==='melon'?'Melon d’or':'Capitaine'))); const img = type==='miroir'?'miroir.jpg':(type==='taupe'?'taupe.png':(type==='lefthand'?'main gauche.png':(type==='melon'?'melon.png':'capitaine.jpg'))); return `<span class="pill blue">${lblType} ${type==='capitaine' ? labelPlayer+' / '+labelSport : (sel.sport ? ' / '+labelSport : '')} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); return `<span class="pill blue">${lblType} ${type==='capitaine' ? labelPlayer+' / '+labelSport : (sel.sport ? ' / '+labelSport : '')} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
   }
 }
 
@@ -1142,29 +1119,27 @@ function openBonusModal(round,teamId){
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
   if ((state.bonusUsed?.[round]?.[teamId])) return alert("Ce bonus a déjà été utilisé une fois.");
   if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
-  bonusCTX.round=round; bonusCTX.teamId=teamId;
-  const sel=getBonusSelection(round,teamId) || {type:'capitaine', sport:'darts', player:'J1'};
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); }
-  if(id('bonus-player')) id('bonus-player').value = sel.player || 'J1';
-  if(id('bonus-sport')) id('bonus-sport').value = sel.sport || 'darts';
-  if(id('taupe-sport')) id('taupe-sport').value = sel.sport || 'darts';
-  if(id('lefthand-sport')) id('lefthand-sport').value = sel.sport || 'darts';
-  if(typeof updateMelonOptions==='function') updateMelonOptions();
-  if(id('melon-sport')) id('melon-sport').value = sel.sport || 'darts';
-  if(id('melon-index')) id('melon-index').value = (sel.index ? String(sel.index) : (id('melon-index').value||"1"));
-  selectBonusType(sel.type||'capitaine');
-  id('bonus-modal')?.classList.add('show');
+  bonusCTX.round=round;bonusCTX.teamId=teamId;
+  const sel=getBonusSelection(round,teamId);
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
+  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
+  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
+  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
+  id('bonus-player').value=sel?.player||'p1';
+  id('bonus-sport').value=sel?.sport||'darts';
+  id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
+  id('bonus-modal').classList.add('show');
 }
-
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
-  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':(window._bonusType==='melon'?'melon':'capitaine')));
+  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
   if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
   else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
   else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
-  else if(type==='melon') setBonusSelection(r,t,{type:'melon',sport:id('melon-sport').value||'darts',index:parseInt(id('melon-index').value,10)||1});
-
   else setBonusSelection(r,t,{type:'miroir'});
   id('bonus-modal').classList.remove('show');
   if(typeof renderPills==='function') renderPills();
@@ -1391,9 +1366,32 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     if(mel) mel.style.display = (t==='melon')?'block':'none'
   }
 
-  function selectBonusTypeSafe(t){ try{ return selectBonusType(t) }catch(e){} }
-    
-    function wireCards(){
+  function selectBonusTypeSafe(t){
+    if(typeof window.selectBonusType === 'function'){
+      try{ return window.selectBonusType(t) }catch(e){ /* fallback below */ }
+    }
+    // Fallback robuste
+    const modal = id('bonus-modal'); if(!modal) return
+    const cards = qsa('.bonus-select .bonus-card', modal)
+    cards.forEach(c=>c.classList.remove('selected'))
+    const map = {}
+    cards.forEach(c=>{
+      const title = qs('.bonus-title', c)
+      const nt = norm(title && title.textContent)
+      if(/^capitaine/.test(nt)) map['capitaine']=c
+      else if(/^miroir/.test(nt)) map['miroir']=c
+      else if(/taupe/.test(nt)) map['taupe']=c
+      else if(/10\s*pouces/.test(nt)) map['lefthand']=c
+      else if(/melon d'or/.test(nt)) map['melon']=c
+    })
+    const card = map[t] || map['capitaine']
+    if(card) card.classList.add('selected')
+    setContext(t)
+    openParams(t)
+    window._bonusType = t
+  }
+
+  function wireCards(){
     if(!modalVisible()) return
     ensureMelonInsideList()
     ensureMelonParams()
