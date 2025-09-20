@@ -51,7 +51,6 @@ function setParamsOpen(openCap, openTaupe, openLeft){
   const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
-
 function selectBonusType(t){
   // Normalize type
   const norm = (x)=> (x||'').toLowerCase().replace(/\s+/g,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -112,13 +111,7 @@ function prepareBonusOptions(){
   // Initialize selection
   selectBonusType(window._bonusType||'capitaine');
 }
-});
-  });
-  const cap=cards[0], tau=cards[2], leftc=cards[3];
-  const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
-  const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
-  const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
-}
+
 
 </script>
 
@@ -1153,7 +1146,6 @@ document.addEventListener("click",async(e)=>{
 
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
-
 function openBonusModal(round,teamId){
   const rCtl=roundState(round);
   if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
@@ -1178,22 +1170,12 @@ function openBonusModal(round,teamId){
   // Select the correct card and params
   selectBonusType(sel.type||'capitaine');
 
-  id('bonus-modal')?.classList.add('show');
+  const modal = id('bonus-modal'); if(modal) modal.classList.add('show');
 }
-if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
-  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  id('bonus-player').value=sel?.player||'p1';
-  id('bonus-sport').value=sel?.sport||'darts';
-  id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
-  id('bonus-modal').classList.add('show');
-}
+
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-id('bonus-save').addEventListener('click',()=>{
-  
+id('bonus-save').addEventListener('click',
+{
 const r=bonusCTX.round, t=bonusCTX.teamId;
 const type = (['miroir','taupe','lefthand','melon','capitaine'].includes(window._bonusType)) ? window._bonusType : 'capitaine';
 if(type==='capitaine'){
@@ -1208,9 +1190,10 @@ if(type==='capitaine'){
   setBonusSelection(r,t,{type:'miroir'});
 }
 id('bonus-modal').classList.remove('show');
-  if(typeof renderPills==='function') renderPills();
-  if(typeof renderMatches==='function') renderMatches();
-});
+if(typeof renderPills==='function') renderPills();
+if(typeof renderMatches==='function') renderMatches();
+}
+););
 
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
@@ -1432,7 +1415,9 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     if(mel) mel.style.display = (t==='melon')?'block':'none'
   }
 
-  function selectBonusTypeSafe(t){ try{ return selectBonusType(t) }catch(e){} }catch(e){ /* fallback below */ }
+  function selectBonusTypeSafe(t){
+    if(typeof window.selectBonusType === 'function'){
+      try{ return window.selectBonusType(t) }catch(e){ /* fallback below */ }
     }
     // Fallback robuste
     const modal = id('bonus-modal'); if(!modal) return
