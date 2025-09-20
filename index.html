@@ -17,8 +17,16 @@
   }, true);
 
 function ensureParamWrapper(){
-  const fields = id('capitaine-fields'); if(!fields) return null;
-  let wrap=id('cap-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='cap-params'; wrap.className='bonus-params'; fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields); }
+  const fields = id('capitaine-fields');
+  if(!fields) return null;
+  let wrap = id('cap-params');
+  if(!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'cap-params';
+    wrap.className = 'bonus-params';
+    fields.parentNode.insertBefore(wrap, fields);
+    wrap.appendChild(fields);
+  }
   return wrap;
 }
 function ensureTaupeWrapper(){
@@ -36,7 +44,7 @@ function setParamsOpen(openCap, openTaupe, openLeft){
   const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
-function selectBonusType(t){
+function selectBonusType(type){
   window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3];
@@ -50,7 +58,7 @@ function selectBonusType(t){
     "Miroir : inverse le bonus adverse sur tout le match." :
     (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
       (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-        "Capitaine : choisissez le joueur et le sport."));
+        "Capitaine : aucun réglage. +2/manche gagnée (fléchettes & ping) et +2 si palet."));
   setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
 }
 function prepareBonusOptions(){
@@ -447,7 +455,7 @@ header .btn, header .chip, header .pill, header .tab{
             <img src="img/capitaine.jpg" alt=""></div>
           <div class="bonus-text">
             <div class="bonus-title">Capitaine</div>
-            <div class="help">Ajoute 2 points supplémentaires pour chaque manche gagnée.</div>
+            <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
           </div>
         </div>
 
@@ -488,8 +496,14 @@ header .btn, header .chip, header .pill, header .tab{
         </div>
       </div>
 
-          <!-- Paramètres (insérés sous la carte correspondante) -->
-     
+      <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
+
+      <!-- Paramètres (insérés sous la carte correspondante) -->
+      <div><label>Sport</label>
+          <select id="bonus-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
+        </div>
+      </div>
+
       <div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
         <div><label>Sport</label>
           <select id="taupe-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
