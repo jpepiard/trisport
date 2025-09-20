@@ -285,6 +285,51 @@ header .btn, header .chip, header .pill, header .tab{
 #capitaine-params .row { display: none !important; }
 </style>
 
+
+<style>
+.bonus-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 6px 0 12px;
+  padding: 10px;
+  border: 1px dashed #4b5bd7;
+  border-radius: 12px;
+  background: #111636;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bonus-illu img {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.bonus-text {
+  flex: 1;
+}
+
+.bonus-text h3 {
+  margin: 0 0 5px 0;
+  font-size: 18px;
+}
+
+.bonus-text p {
+  margin: 0;
+  font-size: 14px;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.bonus-params {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease, opacity 0.2s;
+  opacity: 0;
+}
+</style>
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
