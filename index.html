@@ -289,17 +289,11 @@ header .btn, header .chip, header .pill, header .tab{
 </style>
 
 
-
-<style id="site-clean-core">
-/* Unify bonus card icon size */
-#bonus-modal .bonus-card .icon{width:96px;height:96px;flex:0 0 96px}
-#bonus-modal .bonus-card .icon img{width:96px;height:96px;object-fit:cover;border-radius:12px;display:block}
-/* Pill mini icon */
-.pill .mini-bonus img{width:18px;height:18px;object-fit:cover;display:inline-block;vertical-align:middle}
-/* Footer buttons always clickable */
-#bonus-modal .ft{position:relative;z-index:9999}
-/* Capitaine: no parameters */
-#capitaine-fields, #cap-params, #capitaine-params .grid, #capitaine-params .row { display:none !important; }
+<style id="bonus-select-delegate-fix">
+/* Make bonus cards obviously clickable and show selection */
+#bonus-modal .bonus-card { cursor: pointer; }
+#bonus-modal .bonus-card.selected { box-shadow: 0 0 0 2px rgba(88,140,255,.9) inset; border-color: #6aa3ff; }
+#bonus-modal .ft { position: relative; z-index: 9999; } /* ensure buttons clickable */
 </style>
 
 </head>
@@ -637,7 +631,7 @@ const BONUS = {
     switch(type){
       case "miroir": return "Miroir";
       case "taupe": return "René la taupe";
-      case "lefthand": return "Main gauche";  case "melon": return "Melon d’or";
+      case "lefthand": return "Main gauche";
       default: return "Capitaine";
     }
   },
@@ -645,7 +639,7 @@ const BONUS = {
     switch(type){
       case "miroir": return "miroir.jpg";
       case "taupe": return "taupe.png";
-      case "lefthand": return "main gauche.png";  case "melon": return "melon.png";
+      case "lefthand": return "main gauche.png";
       default: return "capitaine.jpg";
     }
   },
@@ -1299,203 +1293,82 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 
 
-
-<script id="site-clean-core">
+<script id="bonus-select-delegate-fix">
 (function(){
-  const $=(s,r=document)=>r.querySelector(s);
-  const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const id=x=>document.getElementById(x);
+  const $  = (s,r=document)=>r.querySelector(s);
+  const $$ = (s,r=document)=>Array.from((r||document).querySelectorAll(s));
+  const id = (x)=>document.getElementById(x);
 
-  // ---------- Labels & images ----------
-  window.BONUS = window.BONUS || {};
-  window.BONUS.labelForType = function(type){
-    switch(type){
-      case 'miroir': return 'Miroir';
-      case 'taupe': return 'René la taupe';
-      case 'lefthand': return '10 pouces 2 mains gauche';
-      case 'melon': return 'Melon d’or';
-      default: return 'Capitaine';
-    }
-  };
-  window.BONUS.imgForType = function(type){
-    switch(type){
-      case 'miroir': return 'miroir.jpg';
-      case 'taupe': return 'taupe.png';
-      case 'lefthand': return 'main gauche.png';
-      case 'melon': return 'melon.png';
-      default: return 'capitaine.jpg';
-    }
-  };
-
-  // ---------- Make cards selectable & ensure Melon fields ----------
-  function detectType(card){
+  function cardType(card){
     if(!card) return 'capitaine';
-    const t=(card.querySelector('.bonus-title')?.textContent||'').toLowerCase();
-    if(/melon d'?or/.test(t)) return 'melon';
-    if(/^miroir/.test(t)) return 'miroir';
-    if(/taupe/.test(t)) return 'taupe';
-    if(/10\s*pouces|mains? gauche|main gauche/.test(t)) return 'lefthand';
+    const dt = (card.dataset.type||'').toLowerCase();
+    if(dt) return dt;
+    const title = (card.querySelector('.bonus-title')?.textContent||'').toLowerCase();
+    const img   = (card.querySelector('img')?.getAttribute('src')||'').toLowerCase();
+    if(/melon/.test(title) || /melon d[’']?or/.test(title) || /melon/.test(img)) return 'melon';
+    if(/^miroir/.test(title) || /miroir/.test(img)) return 'miroir';
+    if(/taupe/.test(title) || /taupe/.test(img)) return 'taupe';
+    if(/10\s*pouces|mains? gauche|main gauche/.test(title) || /main/.test(img)) return 'lefthand';
     return 'capitaine';
   }
+
   function ensureMelonFields(){
-    const modal=id('bonus-modal'); if(!modal) return;
-    const cards=$$('.bonus-select .bonus-card', modal);
-    const melon=cards.find(c=>/melon d'?or/i.test(c.querySelector('.bonus-title')?.textContent||''));
-    if(!melon) return;
-    let wrap=melon.querySelector('#melon-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='melon-params'; wrap.className='bonus-params'; wrap.style.marginTop='10px'; }
-    let fields=melon.querySelector('#melon-fields'); if(!fields){ fields=document.createElement('div'); fields.id='melon-fields'; }
-    fields.innerHTML='<div><label>Sport</label><select id="melon-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select></div>';
-    if(fields.parentNode!==wrap) wrap.appendChild(fields);
-    const txt=melon.querySelector('.bonus-text');
-    if(txt && txt.nextSibling) melon.insertBefore(wrap, txt.nextSibling); else melon.appendChild(wrap);
-    // Hide stray "Sous-match" legacy fields if any
-    $$('#melon-index, #melon-submatch, #melon-sub, [data-melon-index]', melon).forEach(n=>{ n.closest('.row, .col, div')?.classList?.add('hidden'); });
-  }
-  function wireCards(){
-    const modal=id('bonus-modal'); if(!modal) return;
-    const cards=$$('.bonus-select .bonus-card', modal);
-    cards.forEach(c=>{
-      if(c.dataset.bound) return;
-      c.dataset.bound="1";
-      c.tabIndex=0; c.setAttribute('role','button');
-      c.addEventListener('click',()=>{ cards.forEach(x=>x.classList.remove('selected')); c.classList.add('selected'); window._bonusType = detectType(c); if(window._bonusType==='melon') ensureMelonFields(); });
-      c.addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); c.click(); } });
+    const modal = id('bonus-modal'); if(!modal) return;
+    const cards = $$('.bonus-select .bonus-card', modal);
+    const melon = cards.find(c=>{
+      const t = (c.querySelector('.bonus-title')?.textContent||'').toLowerCase();
+      return /melon/.test(t);
     });
+    if(!melon) return;
+    let wrap = melon.querySelector('#melon-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='melon-params'; wrap.className='bonus-params'; wrap.style.marginTop='10px'; }
+    let fields = melon.querySelector('#melon-fields'); if(!fields){ fields=document.createElement('div'); fields.id='melon-fields'; }
+    fields.innerHTML = '<div><label>Sport</label><select id="melon-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select></div>';
+    if(fields.parentNode!==wrap) wrap.appendChild(fields);
+    const txt = melon.querySelector('.bonus-text');
+    if(txt && txt.nextSibling) melon.insertBefore(wrap, txt.nextSibling); else melon.appendChild(wrap);
   }
-  document.addEventListener('click', e=>{ if(e.target.closest('[data-bonus]')) setTimeout(()=>{ wireCards(); ensureMelonFields(); },0); }, true);
 
-  // ---------- Save / Cancel (capture) ----------
-  document.addEventListener('click', function(e){
-    const cancel = e.target.closest && e.target.closest('#bonus-cancel');
-    const save   = e.target.closest && e.target.closest('#bonus-save');
-    if(!cancel && !save) return;
-    e.preventDefault();
-    if(cancel){ id('bonus-modal')?.classList.remove('show'); return; }
-
-    try{
-      const modal=id('bonus-modal');
-      const selCard = $('.bonus-select .bonus-card.selected', modal) || $('.bonus-select .bonus-card', modal);
-      const type = window._bonusType || detectType(selCard) || 'capitaine';
-      const r = (window.bonusCTX && bonusCTX.round) || window._activeRound || 1;
-      const t = (window.bonusCTX && bonusCTX.teamId) || window._activeTeam || null;
-      let data = { type:'capitaine' };
-      if(type==='taupe')      data = { type:'taupe',     sport: id('taupe-sport')?.value || 'darts' };
-      else if(type==='lefthand') data = { type:'lefthand', sport: id('lefthand-sport')?.value || 'darts' };
-      else if(type==='melon')    data = { type:'melon',    sport: id('melon-sport')?.value || 'darts' };
-      else if(type==='miroir')   data = { type:'miroir' };
-
-      if(typeof setBonusSelection==='function' && t!=null){
-        setBonusSelection(r, t, data);
-      }
-      id('bonus-modal')?.classList.remove('show');
-      try{ if(typeof renderPills==='function') renderPills(); }catch(_){}
-      try{ if(typeof renderMatches==='function') renderMatches(); }catch(_){}
-      try{ if(typeof updateRanking==='function') updateRanking(); }catch(_){}
-      e.stopImmediatePropagation();
-    }catch(_){}
+  // Delegated selection handler (works even if cards are re-rendered)
+  document.addEventListener('click', function(ev){
+    const card = ev.target.closest && ev.target.closest('#bonus-modal .bonus-card');
+    if(!card) return;
+    const modal = id('bonus-modal'); if(!modal) return;
+    const container = card.closest('.bonus-select') || modal;
+    $$('.bonus-card.selected', container).forEach(x=>x.classList.remove('selected'));
+    card.classList.add('selected');
+    window._bonusType = cardType(card);
+    if(window._bonusType==='melon'){
+      ensureMelonFields();
+      const mp = card.querySelector('#melon-params') || id('melon-params');
+      if(mp) mp.style.display = 'block';
+    }else{
+      const mp = card.querySelector('#melon-params') || id('melon-params');
+      if(mp) mp.style.display = 'none';
+    }
   }, true);
 
-  // ---------- Compute Capitaine team-wide (+2 par manche gagnée) ----------
-  window.computeCapitaineBonusForMatch = function(m, tid){
+  // Save: ensure melon is honored
+  document.addEventListener('click', function(ev){
+    const save = ev.target && ev.target.closest && ev.target.closest('#bonus-save');
+    if(!save) return;
     try{
-      let wins=0; const isA=(m.a===tid), isB=(m.b===tid);
-      if(!isA && !isB) return 0;
-      // Fléchettes: tableau 0/1
-      if(Array.isArray(m.darts)){ m.darts.forEach(v=>{ if(v===0&&isA) wins++; else if(v===1&&isB) wins++; }); }
-      // Ping: sets
-      const sets = (typeof getPingPts==='function') ? getPingPts(m) : (Array.isArray(m.pingPts)?m.pingPts:[]);
-      const ok=(a,b)=> a!=null && b!=null && a!=='' && b!=='' && isFinite(+a) && isFinite(+b);
-      sets.forEach(s=>{ const a=+s?.a, b=+s?.b; if(!ok(a,b)) return; if(a>b && isA) wins++; else if(b>a && isB) wins++; });
-      // Palet: match gagné
-      const R=(window.state&&state.rules)||{}; const T=+(R.paletTarget??11);
-      const pa=(m.palet&&m.palet.a!=null)?+m.palet.a:null, pb=(m.palet&&m.palet.b!=null)?+m.palet.b:null;
-      if(pa!=null && pb!=null){ if(pa>=T && pa>pb && isA) wins++; else if(pb>=T && pb>pa && isB) wins++; }
-      return 2*wins;
-    }catch(_){ return 0; }
-  };
-
-  // ---------- Compute Melon (by sport) ----------
-  window.computeMelonBonusForMatch = function(m, tid, sel){
-    try{
-      const R = state.rules||{};
-      const sport = (sel&&sel.sport)||'darts';
-      const isA=(m.a===tid), isB=(m.b===tid);
-      if(!isA && !isB) return 0;
-      if(sport==='darts'){
-        const winPts=+R.dartsWinPoints||0;
-        let wA=0,wB=0; (Array.isArray(m.darts)?m.darts:[]).forEach(v=>{ if(v===0)wA++; else if(v===1)wB++; });
-        const ptsA=wA*winPts, ptsB=wB*winPts; const my=isA?ptsA:ptsB, opp=isA?ptsB:ptsA;
-        return (my>opp)? my : (my<opp ? -2*(opp-my) : 0);
-      }else if(sport==='ping'){
-        const winPts=+R.pingWinPoints||0;
-        let wA=0,wB=0; (typeof getPingPts==='function'?getPingPts(m):(m.pingPts||[])).forEach(s=>{
-          const a=(s.a==null?null:+s.a), b=(s.b==null?null:+s.b);
-          if(!(a!=null && b!=null && a!=='' && b!=='' && isFinite(a)&&isFinite(b))) return;
-          if(a>b) wA++; else if(b>a) wB++;
-        });
-        const ptsA=wA*winPts, ptsB=wB*winPts; const my=isA?ptsA:ptsB, opp=isA?ptsB:ptsA;
-        return (my>opp)? my : (my<opp ? -2*(opp-my) : 0);
-      }else{ // palet
-        const T=+((state.rules&&state.rules.paletTarget)||11);
-        const a=(m.palet?.a==null?null:+m.palet.a), b=(m.palet?.b==null?null:+m.palet.b);
-        if(a==null||b==null) return 0;
-        const winA=(a===T && b<T), winB=(b===T && a<T);
-        const my=isA?a:b, opp=isA?b:a;
-        if((isA&&winA)||(isB&&winB)) return my||0;
-        return -2*Math.abs(opp-my);
+      const modal = id('bonus-modal');
+      const selCard = modal && modal.querySelector('.bonus-select .bonus-card.selected');
+      const type = (window._bonusType || cardType(selCard) || 'capitaine');
+      if(type!=='melon') return; // let native code handle other bonuses
+      const r = (window.bonusCTX && bonusCTX.round) || window._activeRound || 1;
+      const t = (window.bonusCTX && bonusCTX.teamId) || window._activeTeam || null;
+      const sport = (id('melon-sport')?.value)||'darts';
+      if(typeof setBonusSelection==='function' && t!=null){
+        setBonusSelection(r, t, {type:'melon', sport});
+        if(modal) modal.classList.remove('show');
+        try{ if(typeof renderPills==='function') renderPills(); }catch(_){}
+        try{ if(typeof renderMatches==='function') renderMatches(); }catch(_){}
+        try{ if(typeof updateRanking==='function') updateRanking(); }catch(_){}
+        ev.stopImmediatePropagation(); ev.preventDefault();
       }
     }catch(_){}
-    return 0;
-  };
-
-  // ---------- End-of-round hook to include melon ----------
-  if(!window.__applyBonusesHook){
-    window.__applyBonusesHook = true;
-    const orig = window.applyEndOfRoundBonuses || window.revealRoundResults || null;
-    window.applyEndOfRoundBonuses = function(roundIndex){
-      try{
-        const sels = (state.bonusSel && state.bonusSel[roundIndex]) || {};
-        Object.keys(sels).forEach(tid=>{
-          const sel = sels[tid]; if(!sel) return;
-          let total = 0;
-          const ms = (window.getMatchesOfRound? getMatchesOfRound(roundIndex): (state.matches||[]).filter(m=>m.r===roundIndex));
-          ms.forEach(m=>{
-            if(sel.type==='capitaine') total += computeCapitaineBonusForMatch(m, tid);
-            else if(sel.type==='melon') total += computeMelonBonusForMatch(m, tid, sel);
-          });
-          state.bonusApplied = state.bonusApplied||{};
-          state.bonusApplied[roundIndex] = state.bonusApplied[roundIndex]||{};
-          state.bonusApplied[roundIndex][tid] = total;
-        });
-      }catch(_){}
-      if(typeof orig==='function') orig(roundIndex);
-    };
-  }
-
-  // ---------- Pre-reveal chip render unified ----------
-  const _teamName = (typeof teamName==='function')?teamName:(x=>`Équipe ${x}`);
-  window.bonusChip = function(r, mTeam, rs){
-    const sel = (typeof getBonusSelection==='function')? getBonusSelection(r, mTeam): null;
-    const iAmTeam = (typeof hasClaim==='function')? hasClaim(mTeam): false;
-    const roundFinished = !!(rs && rs.finished);
-    if (typeof isAdmin==='function' && isAdmin() && !roundFinished) return '';
-    const used = !!(state.bonusUsed && state.bonusUsed[r] && state.bonusUsed[r][mTeam]);
-    const canChoose = (!rs?.started && !rs?.finished && !used && iAmTeam);
-    if(!sel) return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
-    if(!roundFinished && !iAmTeam) return '';
-    const lbl = BONUS.labelForType(sel.type||'capitaine');
-    const img = BONUS.imgForType(sel.type||'capitaine');
-    if(!roundFinished){
-      return `<span class="pill blue">${lbl}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
-    }
-    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0;
-    const labelSport = sel.sport==='darts'?'Fléchettes':(sel.sport==='ping'?'Ping':(sel.sport==='palet'?'Palet':''));
-    const extra = (sel.type==='capitaine')? '' : (sel.sport ? ` / ${labelSport}` : '');
-    return `<span class="pill blue">${lbl}${extra} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
-  };
-
-  // Final wire when modal opens
-  document.addEventListener('click', ()=>setTimeout(()=>{ wireCards(); ensureMelonFields(); },0), true);
+  }, true);
 })();
 </script>
 
