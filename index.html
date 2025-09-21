@@ -822,15 +822,28 @@ function bonusChip(r,mTeam,rs){
   if (!roundFinished && !iAmTeam) return '';
 
   // Affichage
-  if (!roundFinished) {
-    // Secret: pilule "Capitaine" + mini image
-    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':'Capitaine')); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':'capitaine.jpg')); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
-  } else {
-    // Révélé à tout le monde
-    const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
-    const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); return `<span class="pill blue">${lblType} ${type==='capitaine' ? labelPlayer+' / '+labelSport : (sel.sport ? ' / '+labelSport : '')} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+if (!roundFinished) {
+  // Secret : nom du bonus + mini image
+  const type  = sel.type || 'capitaine';
+  const __lbl = BONUS.labelForType(type);
+  const __img = BONUS.imgForType(type);
+  return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
+} else {
+  // Révélé à tout le monde
+  const type    = sel.type || 'capitaine';
+  const applied = +(state.bonusApplied?.[r]?.[mTeam] || 0);
+  const lblType = BONUS.labelForType(type);
+  const img     = BONUS.imgForType(type);
+
+  // Suffixe sport uniquement pour Taupe / Main gauche
+  let suffix = '';
+  if ((type === 'taupe' || type === 'lefthand') && sel.sport) {
+    suffix = ' / ' + BONUS.sportLabel(sel.sport);
   }
+
+  return `<span class="pill blue">${lblType}${suffix} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
+}
+}
 }
 
 
