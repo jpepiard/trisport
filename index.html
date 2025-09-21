@@ -791,41 +791,49 @@ function computeCapitaineBonusForMatch(m, tid, player, sport){
   return gain;
 }
 /* Melon d’or — ±2 × différence en POINTS sur le sport choisi (1 manche = 5 pts au ping & fléchettes) */
+
 function computeMelonBonusForMatch(m, tid, sport){
   try{
-    const isA = (m.a === tid), isB = (m.b === tid);
-    if (!isA && !isB) return 0;
-    let diffPts = 0;
+    const isA = (m.a === tid);
+    const isB = (m.b === tid);
+    if(!isA && !isB) return 0;
 
     if (sport === 'darts') {
-      // compter les manches gagnées puis transformer en points (×5)
+      // Manches gagnées -> points (×5)
       let aw=0, bw=0;
       (m.darts||[]).forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
-      const setDiff = isA ? (aw-bw) : (bw-aw);
-      diffPts = setDiff * 5;
+      const myPts  = (isA ? aw : bw) * 5;
+      const oppPts = (isA ? bw : aw) * 5;
+      if (myPts > oppPts) return myPts;
+      if (myPts < oppPts) return -oppPts;
+      return 0;
     } else if (sport === 'ping') {
-      // compter les manches gagnées sur chaque set puis transformer en points (×5)
+      // Manches gagnées par set -> points (×5)
       let aw=0, bw=0;
-      getPingPts(m).forEach(s=>{
+      (getPingPts(m) || []).forEach(s=>{
         const a = (s && s.a!=null) ? +s.a : null;
         const b = (s && s.b!=null) ? +s.b : null;
         if (!isPingValid(a,b)) return;
         if (a>b) aw++; else if (b>a) bw++;
       });
-      const setDiff = isA ? (aw-bw) : (bw-aw);
-      diffPts = setDiff * 5;
-    } else { // palet : déjà en points directs
+      const myPts  = (isA ? aw : bw) * 5;
+      const oppPts = (isA ? bw : aw) * 5;
+      if (myPts > oppPts) return myPts;
+      if (myPts < oppPts) return -oppPts;
+      return 0;
+    } else { // palet
       const a = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
       const b = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
       if (a==null || b==null) return 0;
-      diffPts = isA ? (a-b) : (b-a);
+      const myPF  = isA ? a : b;
+      const oppPF = isA ? b : a;
+      if (myPF > oppPF) return myPF;                 // victoire => +PF
+      if (myPF < oppPF) return - (2 * (11 - myPF));  // défaite => -2×(11−PF équipe)
+      return 0;
     }
-
-    const base = Math.abs(diffPts) * 2;
-    if (base === 0) return 0;
-    return diffPts > 0 ? base : -base; // victoire => +; défaite => -
   }catch(e){ return 0; }
 }
+
 
 
 /* Icônes pour titres de sport */
