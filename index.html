@@ -1306,25 +1306,37 @@ document.addEventListener("click",async(e)=>{
 
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
-function openBonusModal(round,teamId){
-  const rCtl=roundState(round);
-  if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
-  if ((state.bonusUsed?.[round]?.[teamId])) return alert("Ce bonus a déjà été utilisé une fois.");
-  if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
-  bonusCTX.round=round;bonusCTX.teamId=teamId;
-  const sel=getBonusSelection(round,teamId);
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
-  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  id('bonus-player').value=sel?.player||'p1';
-  id('bonus-sport').value=sel?.sport||'darts';
-  id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
-  id('bonus-modal').classList.add('show');
+
+function openBonusModal(round, teamId){
+  const rCtl = roundState(round);
+  if (rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
+  if (state.bonusUsed?.[round]?.[teamId]) return alert("Ce bonus a déjà été utilisé une fois.");
+  if (!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
+
+  bonusCTX.round = round;
+  bonusCTX.teamId = teamId;
+  const sel = getBonusSelection(round, teamId) || {};
+
+  // Prépare et sélectionne la carte
+  if (typeof prepareBonusOptions === 'function') {
+    prepareBonusOptions();
+    selectBonusType(sel.type || 'capitaine');
+  }
+
+  // Préremplissage des champs spécifiques si disponibles
+  const sport = sel.sport || 'darts';
+  if (document.getElementById('taupe-sport'))     document.getElementById('taupe-sport').value = sport;
+  if (document.getElementById('lefthand-sport'))  document.getElementById('lefthand-sport').value = sport;
+  if (document.getElementById('melon-sport'))     document.getElementById('melon-sport').value = sport;
+
+  const modal = document.getElementById('bonus-modal');
+  if (modal) {
+    const ctx = document.getElementById('bonus-context');
+    if (ctx) ctx.textContent = `Équipe : ${teamName(teamId)} — Journée #${round}`;
+    modal.classList.add('show');
+  }
 }
+
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
