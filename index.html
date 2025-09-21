@@ -487,6 +487,18 @@ header .btn, header .chip, header .pill, header .tab{
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
             <img src="img/main gauche.png" alt=""></div>
+
+<div class="bonus-sep"></div>
+
+<!-- Melon d'or -->
+<div class="bonus-card" data-bonus-type="melon">
+  <div class="bonus-illu" aria-hidden="true">
+    <img src="img/melon.png" alt="Melon d'or"></div>
+  <div class="bonus-text">
+    <div class="bonus-title">Melon d'or</div>
+    <div class="help">Nouveau bonus — détails à venir.</div>
+  </div>
+</div>
           <div class="bonus-text">
             <div class="bonus-title">10 pouces 2 mains gauche</div>
             <div class="help">L’adversaire doit jouer un sous‑match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br/>Choisissez le sport concerné.</div>
@@ -1198,12 +1210,10 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 <!-- Bonus Panel Patch: overrides broken functions safely -->
 <script>
 (function(){
-  // Helpers (id/qs/qsa already defined earlier, but guard again)
   const $id  = window.id  || (s => document.getElementById(s));
   const $qs  = window.qs  || (s => document.querySelector(s));
   const $qsa = window.qsa || (s => Array.from(document.querySelectorAll(s)));
 
-  // Safe wrapper movers (no-op if fields missing)
   function ensureParamWrapper(){
     const fields = $id('capitaine-fields');
     if(!fields) return null;
@@ -1242,7 +1252,6 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     return wrap;
   }
 
-  // Show/hide param sections
   function setParamsOpen(cap, tau, left){
     const wC = ensureParamWrapper();
     const wT = ensureTaupeWrapper();
@@ -1252,53 +1261,50 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     if(wL) wL.style.maxHeight = left ? (wL.scrollHeight+'px') : '0px';
   }
 
-  // Clean selectBonusType implementation
   window.selectBonusType = function(t){
     try{
-      window._bonusType = (t==='miroir'||t==='taupe'||t==='lefthand') ? t : 'capitaine';
+      const valid = ['capitaine','miroir','taupe','lefthand','melon'];
+      window._bonusType = valid.includes(t) ? t : 'capitaine';
       const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
-      const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3];
-      [cap,mir,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
-      if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
-      if(mir && window._bonusType==='miroir')    mir.classList.add('selected');
-      if(tau && window._bonusType==='taupe')     tau.classList.add('selected');
-      if(leftc && window._bonusType==='lefthand')leftc.classList.add('selected');
+      const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3], melon=cards[4];
+      [cap,mir,tau,leftc,melon].forEach(c=>c&&c.classList.remove('selected'));
+      if(cap   && window._bonusType==='capitaine') cap.classList.add('selected');
+      if(mir   && window._bonusType==='miroir')    mir.classList.add('selected');
+      if(tau   && window._bonusType==='taupe')     tau.classList.add('selected');
+      if(leftc && window._bonusType==='lefthand')  leftc.classList.add('selected');
+      if(melon && window._bonusType==='melon')     melon.classList.add('selected');
 
       const ctx=$id('bonus-context');
-      if(ctx) ctx.textContent = window._bonusType==='miroir' ?
-        "Miroir : inverse le bonus adverse sur tout le match." :
-        (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
-          (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-            "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet."));
+      if(ctx) ctx.textContent =
+        window._bonusType==='miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
+        window._bonusType==='taupe'    ? "René la taupe : choisissez le sport." :
+        window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
+        window._bonusType==='melon'    ? "Melon d'or : détails à venir." :
+                                          "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.";
 
       setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
     }catch(e){ console.error(e); }
   };
 
-  // Prepare cards (clickable) and move param wrappers under the right cards
   window.prepareBonusOptions = function(){
     try{
       const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
       cards.forEach((c, i)=>{
         c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
-        c.addEventListener('click', ()=>window.selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))));
+        const type = ['capitaine','miroir','taupe','lefthand','melon'][i] || 'capitaine';
+        c.addEventListener('click', ()=>window.selectBonusType(type));
         c.addEventListener('keydown', ev=>{
-          if(ev.key===' '||ev.key==='Enter'){
-            ev.preventDefault();
-            window.selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand')));
-          }
+          if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); window.selectBonusType(type); }
         });
       });
       const cap=cards[0], tau=cards[2], leftc=cards[3];
       const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
       const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
       const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
-      // Init state
       window.selectBonusType(window._bonusType || 'capitaine');
     }catch(e){ console.error(e); }
   };
 
-  // Robust opener used by click on 🎖 Bonus
   window.openBonusModal = function(round, teamId){
     const rCtl = roundState(round);
     if (rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
@@ -1306,26 +1312,44 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     if (!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
     bonusCTX.round = round;
     bonusCTX.teamId = teamId;
-
     const sel = getBonusSelection(round, teamId) || {};
     if (typeof window.prepareBonusOptions === 'function') window.prepareBonusOptions();
     window.selectBonusType(sel.type || 'capitaine');
     if ($id('taupe-sport')) $id('taupe-sport').value = (sel.sport || 'darts');
     if ($id('lefthand-sport')) $id('lefthand-sport').value = (sel.sport || 'darts');
-
     const modal = $id('bonus-modal');
     if (modal) modal.classList.add('show');
   };
 
-  // Event delegation in case per-card listeners didn't attach
+  // Delegate click on [data-bonus] as fallback
   document.addEventListener('click', function(ev){
     const btn = ev.target.closest('[data-bonus]');
     if(!btn) return;
     const teamId = btn.getAttribute('data-team');
-    // Try to infer round: read from CURRENT_ROUND or from any nearest group header if present
-    const r = (typeof CURRENT_ROUND!=='undefined' && CURRENT_ROUND!=null) ? CURRENT_ROUND : (roundState?roundState(1)&&1:1);
+    const r = (typeof CURRENT_ROUND!=='undefined' && CURRENT_ROUND!=null) ? CURRENT_ROUND : 1;
     try{ window.openBonusModal(r, teamId); }catch(e){ console.error(e); }
   }, true);
+})();
+</script>
+<script>
+// Extend bonus chip rendering to support "melon"
+(function(){
+  const orig = window.bonusChip;
+  window.bonusChip = function(round, teamId, rCtl){
+    try{
+      const html = orig ? orig(round, teamId, rCtl) : '';
+      // If original already handled melon, return it
+      if (html && html.includes('melon.png')) return html;
+      // Otherwise, if current selection is melon, swap the icon/label in the returned markup
+      const sel = getBonusSelection(round, teamId);
+      if (sel?.type === 'melon' && html){
+        return html
+          .replace(/(pill blue[^>]*>).*?<span class="mini-bonus"/, `$1Melon d'or : +0<span class="mini-bonus"`)
+          .replace(/img\/(?:capitaine|miroir|taupe|lefthand)\.png/, 'img/melon.png');
+      }
+      return html;
+    }catch(e){ console.error(e); return orig ? orig(round, teamId, rCtl) : ''; }
+  };
 })();
 </script>
 </body>
