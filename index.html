@@ -73,15 +73,31 @@ function selectBonusType(t){
 
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+  const map   = ['capitaine','miroir','taupe','lefthand','melon']; // 5 cartes
+
   cards.forEach((c, i)=>{
-    c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
-    c.addEventListener('click', ()=>selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))));
-    c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
+    c.classList.add('selectable');
+    c.tabIndex = 0;
+    c.setAttribute('role','button');
+
+    const type = map[i] || 'capitaine';
+    c.addEventListener('click', ()=>selectBonusType(type));
+    c.addEventListener('keydown', ev=>{
+      if(ev.key===' '||ev.key==='Enter'){
+        ev.preventDefault();
+        selectBonusType(type);
+      }
+    });
   });
-  const cap=cards[0], tau=cards[2], leftc=cards[3];
-  const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
-  const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
-  const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
+
+  // déplacer/afficher les panneaux de paramètres (Capitaine n’en a plus)
+  const cap = cards[0], tau = cards[2], leftc = cards[3];
+  const wC = ensureParamWrapper();   if (cap   && wC && wC.previousElementSibling!==cap)   cap.appendChild(wC);
+  const wT = ensureTaupeWrapper();   if (tau   && wT && wT.previousElementSibling!==tau)   tau.appendChild(wT);
+  const wL = ensureLeftHandWrapper();if (leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
+
+  // init sélection
+  selectBonusType(window._bonusType || 'capitaine');
 }
 
 </script>
