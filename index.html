@@ -37,6 +37,16 @@ function setParamsOpen(openCap, openTaupe, openLeft){
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
 function selectBonusType(t){
+  // lock guard per category
+  try{
+    const teamId = (window.bonusCTX && window.bonusCTX.teamId);
+    if (teamId && typeof getTeamCategoryLocks==='function'){
+      const locks = getTeamCategoryLocks(teamId);
+      const cat = BONUS_CATEGORY[t];
+      if (cat && locks.has(cat)) return; // blocked
+    }
+  }catch(_){}
+
   // 1) type valide (inclut 'melon')
   window._bonusType = (['capitaine','miroir','taupe','lefthand','melon'].includes(t) ? t : 'capitaine');
 
@@ -103,6 +113,8 @@ function prepareBonusOptions(){
 </script>
 
 <style>
+.bonus-card.disabled{opacity:.45;filter:grayscale(1);pointer-events:none}
+.bonus-card.disabled:after{content:"✖";position:absolute;right:10px;top:10px;opacity:.8}
 .pos{color:#34d399;font-weight:600}
 .neg{color:#f87171;font-weight:600}
 :root{--bg:#0f1220;--border:#2b315f;--text:#e7e9f7;--muted:#8b94b8;--chip:#242b55;--card:#1b2242}
@@ -1365,6 +1377,49 @@ document.addEventListener("click",async(e)=>{
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
 
+
+/* === Bonus categories & locks === */
+const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir' };
+
+function getTeamCategoryLocks(teamId){
+  // Returns a Set of categories already used by this team across finished rounds
+  const locks = new Set();
+  const BA = state.bonusUsed || {}; // per round usage marker
+  const S  = state.bonusSelections || {};
+  Object.keys(BA).forEach(r=>{
+    const used = BA[r] && BA[r][teamId];
+    if(!used) return;
+    const sel = (S[r] && S[r][teamId]) || null;
+    const type = sel && sel.type;
+    const cat = BONUS_CATEGORY[type];
+    if (cat) locks.add(cat);
+  });
+  return locks;
+}
+
+function applyBonusLocks(teamId){
+  try{
+    const locks = getTeamCategoryLocks(teamId);
+    const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+    const map   = ['capitaine','miroir','taupe','lefthand','melon'];
+    cards.forEach((c,i)=>{
+      const type = map[i] || 'capitaine';
+      const cat = BONUS_CATEGORY[type];
+      const locked = !!(cat && locks.has(cat));
+      c.classList.toggle('disabled', locked);
+      c.setAttribute('aria-disabled', locked ? 'true' : 'false');
+      c.title = locked ? "Déjà utilisé cette saison pour cette catégorie" : "";
+    });
+    // If current selection is now locked, reset to first available
+    if (window._bonusType){
+      const curCat = BONUS_CATEGORY[window._bonusType];
+      if (curCat && locks.has(curCat)) {
+        const first = map.find(t => !locks.has(BONUS_CATEGORY[t]));
+        if (first) selectBonusType(first);
+      }
+    }
+  }catch(_){}
+}
 function openBonusModal(round, teamId){
   const rCtl = roundState(round);
   if (rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
@@ -1379,6 +1434,7 @@ function openBonusModal(round, teamId){
   if (typeof prepareBonusOptions === 'function') {
     prepareBonusOptions();
     selectBonusType(sel.type || 'capitaine');
+    if (typeof applyBonusLocks==='function') applyBonusLocks(teamId);
   }
 
   // Préremplissage des champs spécifiques si disponibles
@@ -1398,6 +1454,13 @@ function openBonusModal(round, teamId){
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
+  // Block saving if category already used this season
+  try{
+    const locks = getTeamCategoryLocks(t);
+    const cat = BONUS_CATEGORY[type];
+    if (cat && locks.has(cat)) { alert("Bonus déjà utilisé pour cette catégorie."); return; }
+  }catch(_){}
+
  const type =
   (window._bonusType === 'miroir')   ? 'miroir'   :
   (window._bonusType === 'taupe')    ? 'taupe'    :
