@@ -450,10 +450,15 @@ header .btn, header .chip, header .pill, header .tab{
         <!-- Capitaine -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
-            <img src="img/capitaine.jpg" alt=""></div>
+            <img src="img/capitaine.jpg" alt="">
+          </div>
           <div class="bonus-text">
             <div class="bonus-title">Capitaine</div>
-            <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
+            <div class="help">
+              Aucun réglage.<br>
+              <b>+2 points par manche gagnée</b> (fléchettes & ping, simples et doubles)
+              et <b>+2</b> si <b>palet</b> gagné.
+            </div>
           </div>
         </div>
 
@@ -462,10 +467,14 @@ header .btn, header .chip, header .pill, header .tab{
         <!-- Miroir -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
-            <img src="img/miroir.jpg" alt=""></div>
+            <img src="img/miroir.jpg" alt="">
+          </div>
           <div class="bonus-text">
             <div class="bonus-title">Miroir</div>
-            <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex : si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
+            <div class="help">
+              Inverse le bonus adverse sur <b>tout le match</b>.<br>
+              Ex&nbsp;: si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.
+            </div>
           </div>
         </div>
 
@@ -474,10 +483,14 @@ header .btn, header .chip, header .pill, header .tab{
         <!-- René la taupe -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
-            <img src="img/taupe.png" alt=""></div>
+            <img src="img/taupe.png" alt="">
+          </div>
           <div class="bonus-text">
             <div class="bonus-title">René la taupe</div>
-            <div class="help">Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br/>Si l’adversaire joue <b>Miroir</b>, <i>vous</i> portez les lunettes.</div>
+            <div class="help">
+              Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br>
+              Si l’adversaire joue <b>Miroir</b>, <i>vous</i> portez les lunettes.
+            </div>
           </div>
         </div>
 
@@ -486,47 +499,58 @@ header .btn, header .chip, header .pill, header .tab{
         <!-- 10 pouces 2 mains gauche -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
-            <img src="img/main gauche.png" alt=""></div>
-
-<div class="bonus-sep"></div>
-
-<!-- Melon d'or -->
-<div class="bonus-card" data-bonus-type="melon">
-  <div class="bonus-illu" aria-hidden="true">
-    <img src="img/melon.png" alt="Melon d'or"></div>
-  <div class="bonus-text">
-    <div class="bonus-title">Melon d'or</div>
-    <div class="help">Nouveau bonus — détails à venir.</div>
-  </div>
-</div>
+            <img src="img/main gauche.png" alt="">
+          </div>
           <div class="bonus-text">
             <div class="bonus-title">10 pouces 2 mains gauche</div>
-            <div class="help">L’adversaire doit jouer un sous‑match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br/>Choisissez le sport concerné.</div>
+            <div class="help">
+              L’adversaire doit jouer un sous-match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br>
+              Choisissez le sport concerné.
+            </div>
+          </div>
+        </div>
+
+        <div class="bonus-sep"></div>
+
+        <!-- Melon d'or -->
+        <div class="bonus-card" data-bonus-type="melon">
+          <div class="bonus-illu" aria-hidden="true">
+            <img src="img/melon.png" alt="Melon d'or">
+          </div>
+          <div class="bonus-text">
+            <div class="bonus-title">Melon d'or</div>
+            <div class="help">Nouveau bonus — détails à venir.</div>
           </div>
         </div>
       </div>
 
-      <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
-
-      <!-- Paramètres (insérés sous la carte correspondante) -->
-      <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
-        <div><label>Capitaine (joueur)</label>
-          <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
-        </div>
-        <div><label>Sport</label>
-          <select id="bonus-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
-        </div>
+      <!-- Texte d'aide dynamique -->
+      <div class="help" id="bonus-context">
+        Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.
       </div>
 
+      <!-- Paramètres (insérés sous la carte correspondante) -->
+      <!-- (Capitaine n'a plus de paramètres) -->
+
       <div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
-        <div><label>Sport</label>
-          <select id="taupe-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
+        <div>
+          <label>Sport</label>
+          <select id="taupe-sport">
+            <option value="darts">Fléchettes</option>
+            <option value="ping">Ping</option>
+            <option value="palet">Palet</option>
+          </select>
         </div>
       </div>
 
       <div id="lefthand-fields" class="grid cols-2" style="margin-top:10px">
-        <div><label>Sport</label>
-          <select id="lefthand-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
+        <div>
+          <label>Sport</label>
+          <select id="lefthand-sport">
+            <option value="darts">Fléchettes</option>
+            <option value="ping">Ping</option>
+            <option value="palet">Palet</option>
+          </select>
         </div>
       </div>
 
@@ -537,6 +561,7 @@ header .btn, header .chip, header .pill, header .tab{
     </div>
   </div>
 </div>
+
 
 <script>
 'use strict';
