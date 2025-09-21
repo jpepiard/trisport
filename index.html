@@ -89,9 +89,32 @@ function selectBonusType(t){
 }
 
 
+
 function prepareBonusOptions(){
   const cards = qsa('.bonus-select .bonus-card');
-  const cap = cards[0], tau = cards[2], leftc = cards[3], melon = cards[4];
+  const byType = (t)=>{
+    // Prefer data-bonus-type
+    let el = qs(`.bonus-select .bonus-card[data-bonus-type="${t}"]`);
+    if (el) return el;
+    // Fallback: find by title text
+    const key = t==='capitaine' ? 'capitaine' :
+                t==='miroir'    ? 'miroir' :
+                t==='taupe'     ? 'taupe' :
+                t==='lefthand'  ? 'mains gauche' :
+                                  'melon';
+    return [...cards].find(c => (c.querySelector('.bonus-title')?.textContent || '').toLowerCase().includes(key));
+  };
+
+  const cap   = byType('capitaine');
+  const tau   = byType('taupe');
+  const leftc = byType('lefthand');
+  const melon = byType('melon');
+
+  // add data-bonus-type if missing (helps later)
+  if (cap   && !cap.dataset.bonusType)   cap.dataset.bonusType   = 'capitaine';
+  if (tau   && !tau.dataset.bonusType)   tau.dataset.bonusType   = 'taupe';
+  if (leftc && !leftc.dataset.bonusType) leftc.dataset.bonusType = 'lefthand';
+  if (melon && !melon.dataset.bonusType) melon.dataset.bonusType = 'melon';
 
   const capTxt   = cap   && cap.querySelector('.bonus-text');
   const tauTxt   = tau   && tau.querySelector('.bonus-text');
@@ -107,6 +130,7 @@ function prepareBonusOptions(){
   const sel = getBonusSelection(bonusCTX.round, bonusCTX.teamId) || {};
   window._bonusType = sel.type || 'capitaine';
 }
+
 
 
 </script>
@@ -487,8 +511,8 @@ header .btn, header .chip, header .pill, header .tab{
 <div id="bonus-modal" aria-hidden="true">
   <div class="bonus-panel bonus-dialog">
     <div class="hd">Choisir un bonus</div>
-    <div class="bd">
 
+    <div class="bd">
       <div class="bonus-select">
         <!-- Capitaine -->
         <div class="bonus-card">
@@ -573,7 +597,6 @@ header .btn, header .chip, header .pill, header .tab{
       </div>
 
       <!-- Paramètres (insérés sous la carte correspondante) -->
-      <!-- Capitaine n’a plus de paramètres -->
       <div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
         <div>
           <label>Sport</label>
@@ -593,7 +616,8 @@ header .btn, header .chip, header .pill, header .tab{
             <option value="ping">Ping</option>
             <option value="palet">Palet</option>
           </select>
-        
+        </div>
+      </div>
 
       <div id="melon-fields" class="grid cols-2" style="margin-top:10px">
         <div>
@@ -605,17 +629,14 @@ header .btn, header .chip, header .pill, header .tab{
           </select>
         </div>
       </div>
-</div>
-      </div>
+    </div><!-- /.bd -->
 
-    </div>
     <div class="ft">
       <button type="button" class="btn" id="bonus-cancel">Annuler</button>
       <button type="button" class="btn primary" id="bonus-save">Valider</button>
     </div>
   </div>
 </div>
-
 
 <script>
 'use strict';
