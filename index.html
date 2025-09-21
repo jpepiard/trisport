@@ -1383,6 +1383,23 @@ let bonusCTX={round:null,teamId:null};
 
 
 /* === Bonus categories & locks === */
+function rebuildCategoryLocksFromSelections(){
+  try{
+    const S = state.bonusSelections || {};
+    const teams = (state.teams||[]).map(t=>t.id);
+    state.categoryLocks = {};
+    teams.forEach(tid => { state.categoryLocks[tid] = {}; });
+    Object.keys(S).forEach(r=>{
+      const perTeam = S[r] || {};
+      Object.keys(perTeam).forEach(tid=>{
+        const type = perTeam[tid] && perTeam[tid].type;
+        const cat = BONUS_CATEGORY[type];
+        if (cat) { state.categoryLocks[tid] = state.categoryLocks[tid] || {}; state.categoryLocks[tid][cat] = true; }
+      });
+    });
+  }catch(_){}
+}
+
 const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir' };
 
 function markCategoryLocked(teamId, type){
@@ -1403,6 +1420,7 @@ function getTeamCategoryLocks(teamId){
 }
 
 function applyBonusLocks(teamId){
+  if (typeof rebuildCategoryLocksFromSelections==='function') rebuildCategoryLocksFromSelections();
   try{
     const locks = getTeamCategoryLocks(teamId);
     const round = (window.bonusCTX && window.bonusCTX.round);
