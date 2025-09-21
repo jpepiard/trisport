@@ -109,10 +109,10 @@ function prepareBonusOptions(){
 
   // déplacer/afficher les panneaux de paramètres (Capitaine n’en a plus)
   const cap = cards[0], tau = cards[2], leftc = cards[3], melon = cards[4];
-  const wC = ensureParamWrapper();   if (cap   && wC && wC.previousElementSibling!==cap)   cap.appendChild(wC);
-  const wT = ensureTaupeWrapper();   if (tau   && wT && wT.previousElementSibling!==tau)   tau.appendChild(wT);
-  const wL = ensureLeftHandWrapper();if (leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
-  const wM = ensureMelonWrapper(); if (melon && wM && wM.previousElementSibling!==melon) melon.appendChild(wM);
+  const wC = ensureParamWrapper();   if (cap   && wC && wC.parentElement!==cap)   cap.appendChild(wC);
+  const wT = ensureTaupeWrapper();   if (tau   && wT && wT.parentElement!==tau)   tau.appendChild(wT);
+  const wL = ensureLeftHandWrapper();if (leftc && wL && wL.parentElement!==leftc) leftc.appendChild(wL);
+  const wM = ensureMelonWrapper(); if (melon && wM && wM.parentElement!==melon) melon.appendChild(wM);
 
   // init sélection
   selectBonusType(window._bonusType || 'capitaine');
@@ -602,8 +602,7 @@ header .btn, header .chip, header .pill, header .tab{
             <option value="ping">Ping</option>
             <option value="palet">Palet</option>
           </select>
-        </div>
-		</div>
+        
 
       <div id="melon-fields" class="grid cols-2" style="margin-top:10px">
         <div>
