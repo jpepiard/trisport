@@ -822,16 +822,47 @@ function bonusChip(r,mTeam,rs){
   if (!roundFinished && !iAmTeam) return '';
 
   // Affichage
-  if (!roundFinished) {
-    // Secret: pilule "Capitaine" + mini image
-    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':'Capitaine')); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':'capitaine.jpg')); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
-  } else {
-    // Révélé à tout le monde
-    const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
-    const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); return `<span class="pill blue">${lblType} ${type==='capitaine' ? labelPlayer+' / '+labelSport : (sel.sport ? ' / '+labelSport : '')} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
-  }
+ if (!roundFinished) {
+  // Secret : nom du bonus + mini image
+  const __lbl = sel.type==='miroir'   ? 'Miroir'
+               : sel.type==='taupe'    ? 'René la taupe'
+               : sel.type==='lefthand' ? '10 pouces 2 mains gauche'
+               : sel.type==='melon'    ? "Melon d'or"
+               : 'Capitaine';
+
+  const __img = sel.type==='miroir'   ? 'miroir.jpg'
+               : sel.type==='taupe'    ? 'taupe.png'
+               : sel.type==='lefthand' ? 'main gauche.png'
+               : sel.type==='melon'    ? 'melon.png'
+               : 'capitaine.jpg';
+
+  return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
+} else {
+  // Révélé à tout le monde
+  const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0;
+  const type    = sel.type || 'capitaine';
+
+  const lblType = type==='miroir'   ? 'Miroir'
+                 : type==='taupe'    ? 'René la taupe'
+                 : type==='lefthand' ? '10 pouces 2 mains gauche'
+                 : type==='melon'    ? "Melon d'or"
+                 : 'Capitaine';
+
+  const img = type==='miroir'   ? 'miroir.jpg'
+             : type==='taupe'    ? 'taupe.png'
+             : type==='lefthand' ? 'main gauche.png'
+             : type==='melon'    ? 'melon.png'
+             : 'capitaine.jpg';
+
+  // On n’affiche le sport qu’avec Taupe/Main gauche ; Capitaine n’a plus de paramètres
+  const labelSport = sel.sport === 'darts' ? 'Fléchettes'
+                    : sel.sport === 'ping'  ? 'Ping'
+                    : sel.sport ? 'Palet' : '';
+  const suffix = (type==='taupe' || type==='lefthand') && labelSport ? ' / ' + labelSport : '';
+
+  return `<span class="pill blue">${lblType}${suffix} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
 }
+
 
 
 function renderMatches(){
