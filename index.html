@@ -92,25 +92,28 @@ function selectBonusType(t){
 
 function prepareBonusOptions(){
   const cards = qsa('.bonus-select .bonus-card');
-  const byType = (t)=>{
-    // Prefer data-bonus-type
+
+  // Récupère une carte par type (d’abord data-bonus-type, sinon via le titre)
+  const getCard = (t)=>{
     let el = qs(`.bonus-select .bonus-card[data-bonus-type="${t}"]`);
     if (el) return el;
-    // Fallback: find by title text
-    const key = t==='capitaine' ? 'capitaine' :
-                t==='miroir'    ? 'miroir' :
-                t==='taupe'     ? 'taupe' :
-                t==='lefthand'  ? 'mains gauche' :
-                                  'melon';
-    return [...cards].find(c => (c.querySelector('.bonus-title')?.textContent || '').toLowerCase().includes(key));
+    const titleHas = (c, s)=> (c.querySelector('.bonus-title')?.textContent || '').toLowerCase().includes(s);
+    return [...cards].find(c=>{
+      if (t==='capitaine') return titleHas(c,'capitaine');
+      if (t==='miroir')    return titleHas(c,'miroir');
+      if (t==='taupe')     return titleHas(c,'taupe');
+      if (t==='lefthand')  return titleHas(c,'main gauche') || titleHas(c,'mains gauche') || titleHas(c,'10 pouces');
+      if (t==='melon')     return titleHas(c,'melon');
+      return false;
+    }) || null;
   };
 
-  const cap   = byType('capitaine');
-  const tau   = byType('taupe');
-  const leftc = byType('lefthand');
-  const melon = byType('melon');
+  const cap   = getCard('capitaine');
+  const tau   = getCard('taupe');
+  const leftc = getCard('lefthand');
+  const melon = getCard('melon');
 
-  // add data-bonus-type if missing (helps later)
+  // Ajoute data-bonus-type si absent (ça fiabilise les prochains passages)
   if (cap   && !cap.dataset.bonusType)   cap.dataset.bonusType   = 'capitaine';
   if (tau   && !tau.dataset.bonusType)   tau.dataset.bonusType   = 'taupe';
   if (leftc && !leftc.dataset.bonusType) leftc.dataset.bonusType = 'lefthand';
@@ -121,15 +124,17 @@ function prepareBonusOptions(){
   const leftTxt  = leftc && leftc.querySelector('.bonus-text');
   const melonTxt = melon && melon.querySelector('.bonus-text');
 
-  const wC = ensureParamWrapper();     if (capTxt   && wC && wC.parentElement!==capTxt)   capTxt.appendChild(wC);
-  const wT = ensureTaupeWrapper();     if (tauTxt   && wT && wT.parentElement!==tauTxt)   tauTxt.appendChild(wT);
-  const wL = ensureLeftHandWrapper();  if (leftTxt  && wL && wL.parentElement!==leftTxt)  leftTxt.appendChild(wL);
-  const wM = ensureMelonWrapper();     if (melonTxt && wM && wM.parentElement!==melonTxt) melonTxt.appendChild(wM);
+  // Crée/retourne les wrappers et ATTACHE-LES DANS .bonus-text
+  const wC = ensureParamWrapper();     if (capTxt   && wC && wC.parentElement !== capTxt)   capTxt.appendChild(wC);
+  const wT = ensureTaupeWrapper();     if (tauTxt   && wT && wT.parentElement !== tauTxt)   tauTxt.appendChild(wT);
+  const wL = ensureLeftHandWrapper();  if (leftTxt  && wL && wL.parentElement !== leftTxt)  leftTxt.appendChild(wL);
+  const wM = ensureMelonWrapper();     if (melonTxt && wM && wM.parentElement !== melonTxt) melonTxt.appendChild(wM);
 
-  // init sélection
+  // Initialise la sélection courante (le selectBonusType est appelé depuis openBonusModal)
   const sel = getBonusSelection(bonusCTX.round, bonusCTX.teamId) || {};
   window._bonusType = sel.type || 'capitaine';
 }
+
 
 
 
@@ -629,7 +634,7 @@ header .btn, header .chip, header .pill, header .tab{
           </select>
         </div>
       </div>
-    </div>
+    </div><!-- /.bd -->
 
     <div class="ft">
       <button type="button" class="btn" id="bonus-cancel">Annuler</button>
