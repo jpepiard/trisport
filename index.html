@@ -43,7 +43,10 @@ function selectBonusType(t){
     if (teamId && typeof getTeamCategoryLocks==='function'){
       const locks = getTeamCategoryLocks(teamId);
       const cat = BONUS_CATEGORY[t];
-      if (cat && locks.has(cat)) return; // blocked
+      const round = (window.bonusCTX && window.bonusCTX.round);
+      const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
+      const allowCurrent = !!(currentSel && currentSel.type === t);
+      if (cat && locks.has(cat) && !allowCurrent) return; // blocked
     }
   }catch(_){}
 
@@ -1378,21 +1381,41 @@ document.addEventListener("click",async(e)=>{
 let bonusCTX={round:null,teamId:null};
 
 
+
 /* === Bonus categories & locks === */
 const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir' };
 
+function markCategoryLocked(teamId, type){
+  const cat = BONUS_CATEGORY[type];
+  if (!cat) return;
+  state.categoryLocks = state.categoryLocks || {};
+  state.categoryLocks[teamId] = state.categoryLocks[teamId] || {};
+  state.categoryLocks[teamId][cat] = true;
+  if (typeof saveState==='function') saveState();
+}
+
 function getTeamCategoryLocks(teamId){
-  // Returns a Set of categories already used by this team across finished rounds
+  // Returns a Set of categories already used by this team across selections and finished rounds
   const locks = new Set();
-  const BA = state.bonusUsed || {}; // per round usage marker
+  // 1) explicit locks saved on validation
+  const CL = state.categoryLocks && state.categoryLocks[teamId];
+  if (CL) Object.keys(CL).forEach(cat => { if (CL[cat]) locks.add(cat); });
+  // 2) any existing selections (pending or past) also lock their category
   const S  = state.bonusSelections || {};
-  Object.keys(BA).forEach(r=>{
-    const used = BA[r] && BA[r][teamId];
-    if(!used) return;
-    const sel = (S[r] && S[r][teamId]) || null;
-    const type = sel && sel.type;
-    const cat = BONUS_CATEGORY[type];
+  Object.keys(S).forEach(r=>{
+    const sel = S[r] && S[r][teamId];
+    if (!sel) return;
+    const cat = BONUS_CATEGORY[sel.type];
     if (cat) locks.add(cat);
+  });
+  // 3) safety: finished rounds with usage flags
+  const BU = state.bonusUsed || {};
+  Object.keys(BU).forEach(r=>{
+    if (BU[r] && BU[r][teamId]){
+      const sel = (S[r] && S[r][teamId]) || null;
+      const cat = sel && BONUS_CATEGORY[sel.type];
+      if (cat) locks.add(cat);
+    }
   });
   return locks;
 }
@@ -1400,26 +1423,41 @@ function getTeamCategoryLocks(teamId){
 function applyBonusLocks(teamId){
   try{
     const locks = getTeamCategoryLocks(teamId);
+    const round = (window.bonusCTX && window.bonusCTX.round);
+    const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
+
     const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
     const map   = ['capitaine','miroir','taupe','lefthand','melon'];
     cards.forEach((c,i)=>{
       const type = map[i] || 'capitaine';
       const cat = BONUS_CATEGORY[type];
       const locked = !!(cat && locks.has(cat));
-      c.classList.toggle('disabled', locked);
-      c.setAttribute('aria-disabled', locked ? 'true' : 'false');
-      c.title = locked ? "Déjà utilisé cette saison pour cette catégorie" : "";
+      // Autoriser la carte du type déjà sélectionné pour CETTE journée
+      const allowCurrentType = !!(currentSel && currentSel.type === type);
+      const disable = locked && !allowCurrentType;
+
+      c.classList.toggle('disabled', disable);
+      c.setAttribute('aria-disabled', disable ? 'true' : 'false');
+      c.title = disable ? "Déjà utilisé pour cette catégorie (tournoi)" : "";
     });
-    // If current selection is now locked, reset to first available
+
+    // Si la sélection courante est désormais illégale (catégorie lockée et type différent), forcer un type autorisé
     if (window._bonusType){
       const curCat = BONUS_CATEGORY[window._bonusType];
-      if (curCat && locks.has(curCat)) {
-        const first = map.find(t => !locks.has(BONUS_CATEGORY[t]));
+      const curSelCat = currentSel ? BONUS_CATEGORY[currentSel.type] : null;
+      if (curCat && locks.has(curCat) && (!currentSel || currentSel.type !== window._bonusType)){
+        const first = map.find(t => {
+          const c = BONUS_CATEGORY[t];
+          const isLocked = locks.has(c);
+          const isCurrent = currentSel && currentSel.type === t;
+          return !isLocked || isCurrent;
+        });
         if (first) selectBonusType(first);
       }
     }
   }catch(_){}
 }
+
 function openBonusModal(round, teamId){
   const rCtl = roundState(round);
   if (rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
@@ -1473,14 +1511,22 @@ if (type === 'capitaine' || type === 'melon') {
 } else if (type === 'taupe') {
   const sport = document.getElementById('taupe-sport')?.value || 'darts';
   setBonusSelection(r, t, { type: 'taupe', sport });
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'taupe');
+  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else if (type === 'lefthand') {
   const sport = document.getElementById('lefthand-sport')?.value || 'darts';
   setBonusSelection(r, t, { type: 'lefthand', sport });
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'lefthand');
+  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else if (type === 'miroir') {
   setBonusSelection(r, t, { type: 'miroir' });
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'miroir');
+  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else {
   // garde-fou
   setBonusSelection(r, t, { type: 'capitaine' });
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'capitaine');
+  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 }
 
   id('bonus-modal').classList.remove('show');
