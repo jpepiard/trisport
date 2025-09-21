@@ -624,26 +624,29 @@ header .btn, header .chip, header .pill, header .tab{
 
 // Centralise libellés/images pour les bonus (évite les erreurs de frappe)
 const BONUS = {
-  /** @param {"capitaine"|"miroir"|"taupe"|"lefthand"|string} type */
+  /** @param {"capitaine"|"miroir"|"taupe"|"lefthand"|"melon"|string} type */
   labelForType(type){
     switch(type){
-      case "miroir": return "Miroir";
-      case "taupe": return "René la taupe";
-      case "lefthand": return "Main gauche";
-      default: return "Capitaine";
+      case "miroir":   return "Miroir";
+      case "taupe":    return "René la taupe";
+      case "lefthand": return "10 pouces 2 mains gauche";
+      case "melon":    return "Melon d'or";
+      default:         return "Capitaine";
     }
   },
   imgForType(type){
     switch(type){
-      case "miroir": return "miroir.jpg";
-      case "taupe": return "taupe.png";
+      case "miroir":   return "miroir.jpg";
+      case "taupe":    return "taupe.png";
       case "lefthand": return "main gauche.png";
-      default: return "capitaine.jpg";
+      case "melon":    return "melon.png";
+      default:         return "capitaine.jpg";
     }
   },
-  sportLabel(s){ return s==="darts"?"Fléchettes":(s==="ping"?"Ping":"Palet"); },
-  playerLabel(p){ return p==="p1"?"J1":"J2"; }
+  sportLabel(s){ return s==="darts" ? "Fléchettes" : (s==="ping" ? "Ping" : "Palet"); },
+  playerLabel(p){ return p==="p1" ? "J1" : "J2"; }
 };
+
 // Helpers sûrs pour initialiser les containers imbriqués
 function ensure(obj, key, defFactory){
   if(!obj[key]) obj[key] = defFactory();
