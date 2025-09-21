@@ -37,6 +37,19 @@ function setParamsOpen(openCap, openTaupe, openLeft){
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
 function selectBonusType(t){
+  // lock guard per category
+  try{
+    const teamId = (window.bonusCTX && window.bonusCTX.teamId);
+    if (teamId && typeof getTeamCategoryLocks==='function'){
+      const locks = getTeamCategoryLocks(teamId);
+      const cat = BONUS_CATEGORY[t];
+      const round = (window.bonusCTX && window.bonusCTX.round);
+      const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
+      const allowCurrent = !!(currentSel && currentSel.type === t);
+      if (cat && locks.has(cat) && !allowCurrent) return; // blocked
+    }
+  }catch(_){}
+
   // 1) type valide (inclut 'melon')
   window._bonusType = (['capitaine','miroir','taupe','lefthand','melon'].includes(t) ? t : 'capitaine');
 
@@ -103,6 +116,8 @@ function prepareBonusOptions(){
 </script>
 
 <style>
+.bonus-card.disabled{opacity:.45;filter:grayscale(1);pointer-events:none}
+.bonus-card.disabled:after{content:"✖";position:absolute;right:10px;top:10px;opacity:.8}
 .pos{color:#34d399;font-weight:600}
 .neg{color:#f87171;font-weight:600}
 :root{--bg:#0f1220;--border:#2b315f;--text:#e7e9f7;--muted:#8b94b8;--chip:#242b55;--card:#1b2242}
@@ -1365,6 +1380,84 @@ document.addEventListener("click",async(e)=>{
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
 
+
+
+/* === Bonus categories & locks === */
+function rebuildCategoryLocksFromSelections(){
+  try{
+    const S = state.bonusSelections || {};
+    const teams = (state.teams||[]).map(t=>t.id);
+    state.categoryLocks = {};
+    teams.forEach(tid => { state.categoryLocks[tid] = {}; });
+    Object.keys(S).forEach(r=>{
+      const perTeam = S[r] || {};
+      Object.keys(perTeam).forEach(tid=>{
+        const type = perTeam[tid] && perTeam[tid].type;
+        const cat = BONUS_CATEGORY[type];
+        if (cat) { state.categoryLocks[tid] = state.categoryLocks[tid] || {}; state.categoryLocks[tid][cat] = true; }
+      });
+    });
+  }catch(_){}
+}
+
+const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir' };
+
+function markCategoryLocked(teamId, type){
+  const cat = BONUS_CATEGORY[type];
+  if (!cat) return;
+  state.categoryLocks = state.categoryLocks || {};
+  state.categoryLocks[teamId] = state.categoryLocks[teamId] || {};
+  state.categoryLocks[teamId][cat] = true;
+  if (typeof saveState==='function') saveState();
+}
+
+function getTeamCategoryLocks(teamId){
+  // Returns a Set of categories already validated (locked) by THIS team for the whole tournament
+  const locks = new Set();
+  const CL = state.categoryLocks && state.categoryLocks[teamId];
+  if (CL) Object.keys(CL).forEach(cat => { if (CL[cat]) locks.add(cat); });
+  return locks;
+}
+
+function applyBonusLocks(teamId){
+  if (typeof rebuildCategoryLocksFromSelections==='function') rebuildCategoryLocksFromSelections();
+  try{
+    const locks = getTeamCategoryLocks(teamId);
+    const round = (window.bonusCTX && window.bonusCTX.round);
+    const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
+
+    const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+    const map   = ['capitaine','miroir','taupe','lefthand','melon'];
+    cards.forEach((c,i)=>{
+      const type = map[i] || 'capitaine';
+      const cat = BONUS_CATEGORY[type];
+      const locked = !!(cat && locks.has(cat));
+      // Autoriser la carte du type déjà sélectionné pour CETTE journée
+      const allowCurrentType = !!(currentSel && currentSel.type === type);
+      const disable = locked && !allowCurrentType;
+
+      c.classList.toggle('disabled', disable);
+      c.setAttribute('aria-disabled', disable ? 'true' : 'false');
+      c.title = disable ? "Déjà utilisé pour cette catégorie (tournoi)" : "";
+    });
+
+    // Si la sélection courante est désormais illégale (catégorie lockée et type différent), forcer un type autorisé
+    if (window._bonusType){
+      const curCat = BONUS_CATEGORY[window._bonusType];
+      const curSelCat = currentSel ? BONUS_CATEGORY[currentSel.type] : null;
+      if (curCat && locks.has(curCat) && (!currentSel || currentSel.type !== window._bonusType)){
+        const first = map.find(t => {
+          const c = BONUS_CATEGORY[t];
+          const isLocked = locks.has(c);
+          const isCurrent = currentSel && currentSel.type === t;
+          return !isLocked || isCurrent;
+        });
+        if (first) selectBonusType(first);
+      }
+    }
+  }catch(_){}
+}
+
 function openBonusModal(round, teamId){
   const rCtl = roundState(round);
   if (rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
@@ -1379,6 +1472,7 @@ function openBonusModal(round, teamId){
   if (typeof prepareBonusOptions === 'function') {
     prepareBonusOptions();
     selectBonusType(sel.type || 'capitaine');
+    if (typeof applyBonusLocks==='function') applyBonusLocks(teamId);
   }
 
   // Préremplissage des champs spécifiques si disponibles
@@ -1398,6 +1492,13 @@ function openBonusModal(round, teamId){
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
+  // Block saving if category already used this season
+  try{
+    const locks = getTeamCategoryLocks(t);
+    const cat = BONUS_CATEGORY[type];
+    if (cat && locks.has(cat)) { alert("Bonus déjà utilisé pour cette catégorie."); return; }
+  }catch(_){}
+
  const type =
   (window._bonusType === 'miroir')   ? 'miroir'   :
   (window._bonusType === 'taupe')    ? 'taupe'    :
@@ -1410,14 +1511,22 @@ if (type === 'capitaine' || type === 'melon') {
 } else if (type === 'taupe') {
   const sport = document.getElementById('taupe-sport')?.value || 'darts';
   setBonusSelection(r, t, { type: 'taupe', sport });
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'taupe');
+  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else if (type === 'lefthand') {
   const sport = document.getElementById('lefthand-sport')?.value || 'darts';
   setBonusSelection(r, t, { type: 'lefthand', sport });
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'lefthand');
+  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else if (type === 'miroir') {
   setBonusSelection(r, t, { type: 'miroir' });
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'miroir');
+  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else {
   // garde-fou
   setBonusSelection(r, t, { type: 'capitaine' });
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'capitaine');
+  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 }
 
   id('bonus-modal').classList.remove('show');
