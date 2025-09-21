@@ -1437,24 +1437,32 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     }catch(e){ console.error(e); }
   };
 
-  window.prepareBonusOptions = function(){
-    try{
-      const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
-      cards.forEach((c, i)=>{
-        c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
-        const type = ['capitaine','miroir','taupe','lefthand','melon'][i] || 'capitaine';
-        c.addEventListener('click', ()=>window.selectBonusType(type));
-        c.addEventListener('keydown', ev=>{
-          if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); window.selectBonusType(type); }
-        });
+window.prepareBonusOptions = function(){
+  try{
+    const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
+    cards.forEach((c, i)=>{
+      c.classList.add('selectable'); c.tabIndex = 0; c.setAttribute('role','button');
+      const type = ['capitaine','miroir','taupe','lefthand','melon'][i] || 'capitaine';
+      c.addEventListener('click', ()=>window.selectBonusType(type));
+      c.addEventListener('keydown', ev=>{
+        if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); window.selectBonusType(type); }
       });
-      const cap=cards[0], tau=cards[2], leftc=cards[3];
-      const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
-      const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
-      const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
-      window.selectBonusType(window._bonusType || 'capitaine');
-    }catch(e){ console.error(e); }
-  };
+    });
+
+    const cap   = cards[0],
+          tau   = cards[2],
+          leftc = cards[3],
+          melon = cards[4];
+
+    const wC = ensureParamWrapper();    if (cap   && wC)   cap.querySelector('.bonus-text')?.appendChild(wC);
+    const wT = ensureTaupeWrapper();    if (tau   && wT)   tau.querySelector('.bonus-text')?.appendChild(wT);
+    const wL = ensureLeftHandWrapper(); if (leftc && wL) leftc.querySelector('.bonus-text')?.appendChild(wL);
+    const wM = ensureMelonWrapper();    if (melon && wM) melon.querySelector('.bonus-text')?.appendChild(wM);
+
+    window.selectBonusType(window._bonusType || 'capitaine');
+  }catch(e){ console.error(e); }
+};
+
 
   window.openBonusModal = function(round, teamId){
     const rCtl = roundState(round);
