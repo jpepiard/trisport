@@ -1048,7 +1048,41 @@ function computeLeaderboard(){const stats=baseLeaderboardStats();const rows=Obje
 function renderLeaderboard(){const tbody=qs("#table-classement tbody");tbody.innerHTML="";computeLeaderboard().forEach(r=>{const diff=r.palFor-r.palAg;const avatar=r.avatar?(`<span class="avatar avatar-lg"><img src="${esc(r.avatar)}" alt="avatar"></span>`):(`<span class="avatar avatar-lg"><span class="avatar-initials">${esc(initials(r.name))}</span></span>`);const tr=document.createElement("tr");tr.innerHTML=`<td>${r.rank}</td><td><span class="team-name">${avatar} ${esc(r.name)}</span></td><td><b>${r.points}</b></td><td>${r.dartsW}</td><td>${r.pingW}</td><td><span class="score-compact">${hy(r.palFor,r.palAg)}</span> <span class="muted">(${diff>=0?'+':''}${diff})</span></td><td>${r.bonus}</td><td>${r.malus||0}</td><td>${r.matchesComplete}</td>`;tbody.appendChild(tr)})}
 
 /* ===== H2H ===== */
-function pointsForTeamInMatch(m,tid){const R=state.rules;ensureLengths(m);const isA=m.a===tid,isB=m.b===tid;if(!isA&&!isB)return 0;let pts=0;m.darts.forEach(v=>{if(v===0&&isA)pts+=R.dartsWinPoints;else if(v===1&&isB)pts+=R.dartsWinPoints});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b&&isA)pts+=R.pingWinPoints;else if(b>a&&isB)pts+=R.pingWinPoints}});if(m.palet&&m.palet.a!=null&&m.palet.b!=null)pts+=isA?+m.palet.a:+m.palet.b;return pts}
+
+function pointsForTeamInMatch(m, tid){
+  // Total de points marqués par l'équipe dans ce match (toutes disciplines) + bonus appliqué
+  const isA = (m.a === tid);
+  let pts = 0;
+
+  // Fléchettes : 1 manche gagnée = 5 points
+  if (Array.isArray(m.darts)) {
+    let aw=0, bw=0;
+    m.darts.forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
+    pts += (isA ? aw : bw) * 5;
+  }
+
+  // Ping : 1 manche gagnée = 5 points (on compte les manches gagnées par set)
+  if (typeof getPingPts === 'function') {
+    let aw=0, bw=0;
+    (getPingPts(m) || []).forEach(s=>{
+      const a = (s && s.a!=null) ? +s.a : null;
+      const b = (s && s.b!=null) ? +s.b : null;
+      if (!isPingValid(a,b)) return;
+      if (a>b) aw++; else if (b>a) bw++;
+    });
+    pts += (isA ? aw : bw) * 5;
+  }
+
+  // Palet : score direct
+  if (m.palet && m.palet.a!=null && m.palet.b!=null){
+    pts += isA ? (+m.palet.a||0) : (+m.palet.b||0);
+  }
+
+  // Bonus appliqué sur la journée du match
+  const applied = (state.bonusApplied?.[m.round]?.[tid]) || 0;
+  return pts + applied;
+}
+
 function renderH2H(){const thead=qs("#table-h2h thead"),tbody=qs("#table-h2h tbody");thead.innerHTML="";tbody.innerHTML="";const teams=state.teams.slice();if(!teams.length){tbody.appendChild(help("Ajoutez des équipes pour voir la matrice."));return}const trH=document.createElement("tr");trH.appendChild(document.createElement("th")).textContent="Équipe";teams.forEach(t=>{const th=document.createElement("th");th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>';trH.appendChild(th)});thead.appendChild(trH);const byPair={};state.matches.forEach(m=>{byPair[[m.a,m.b].sort().join("|")]=m});teams.forEach(ti=>{const tr=document.createElement("tr");const th=document.createElement("th");th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>';tr.appendChild(th);teams.forEach(tj=>{const td=document.createElement("td");if(ti.id===tj.id){td.textContent="—";tr.appendChild(td);return}const m=byPair[[ti.id,tj.id].sort().join("|")];if(!m){td.innerHTML='<span class="chip">—</span>';tr.appendChild(td);return}const pI=pointsForTeamInMatch(m,ti.id),pJ=pointsForTeamInMatch(m,tj.id);let cls="h2h-draw",icon="≡";if(pI>pJ){cls="h2h-win";icon="✔"}else if(pI<pJ){cls="h2h-loss";icon="✖"}td.innerHTML='<span class="h2h-pill '+cls+'">'+icon+' <span class="score-compact">'+hy(pI,pJ)+'</span></span>';td.style.cursor="pointer";td.dataset.matchId=m.id;tr.appendChild(td)});tbody.appendChild(tr)});tbody.addEventListener("click",e=>{let n=e.target;while(n&&n!==tbody&&!(n.tagName==="TD"&&n.dataset.matchId))n=n.parentNode;if(!n||n===tbody)return;goto("calendrier");ui.open[n.dataset.matchId]=true;setTimeout(()=>{const card=qs('.match-card[data-id="'+n.dataset.matchId+'"]');if(card){card.setAttribute("aria-expanded","true");card.scrollIntoView({behavior:"smooth",block:"start"})}},0)})}
 
 /* ===== Tabs & clicks ===== */
