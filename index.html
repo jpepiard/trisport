@@ -1395,27 +1395,12 @@ function markCategoryLocked(teamId, type){
 }
 
 function getTeamCategoryLocks(teamId){
-  // Returns a Set of categories already used by this team across selections and finished rounds
+  // Returns a Set of categories already validated (locked) by THIS team for the whole tournament
   const locks = new Set();
-  // 1) explicit locks saved on validation
   const CL = state.categoryLocks && state.categoryLocks[teamId];
   if (CL) Object.keys(CL).forEach(cat => { if (CL[cat]) locks.add(cat); });
-  // 2) any existing selections (pending or past) also lock their category
-  const S  = state.bonusSelections || {};
-  Object.keys(S).forEach(r=>{
-    const sel = S[r] && S[r][teamId];
-    if (!sel) return;
-    const cat = BONUS_CATEGORY[sel.type];
-    if (cat) locks.add(cat);
-  });
-  // 3) safety: finished rounds with usage flags
-  const BU = state.bonusUsed || {};
-  Object.keys(BU).forEach(r=>{
-    if (BU[r] && BU[r][teamId]){
-      const sel = (S[r] && S[r][teamId]) || null;
-      const cat = sel && BONUS_CATEGORY[sel.type];
-      if (cat) locks.add(cat);
-    }
+  return locks;
+}
   });
   return locks;
 }
