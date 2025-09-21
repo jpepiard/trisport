@@ -1101,11 +1101,28 @@ function openBonusModal(round,teamId){
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
-  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
-  if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
-  else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
-  else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
-  else setBonusSelection(r,t,{type:'miroir'});
+ const type =
+  (window._bonusType === 'miroir')   ? 'miroir'   :
+  (window._bonusType === 'taupe')    ? 'taupe'    :
+  (window._bonusType === 'lefthand') ? 'lefthand' :
+  (window._bonusType === 'melon')    ? 'melon'    :
+                                       'capitaine';
+// Nouveau : 'capitaine' et 'melon' n'ont pas de paramètres à lire
+if (type === 'capitaine' || type === 'melon') {
+  setBonusSelection(r, t, { type });
+} else if (type === 'taupe') {
+  const sport = document.getElementById('taupe-sport')?.value || 'darts';
+  setBonusSelection(r, t, { type: 'taupe', sport });
+} else if (type === 'lefthand') {
+  const sport = document.getElementById('lefthand-sport')?.value || 'darts';
+  setBonusSelection(r, t, { type: 'lefthand', sport });
+} else if (type === 'miroir') {
+  setBonusSelection(r, t, { type: 'miroir' });
+} else {
+  // garde-fou
+  setBonusSelection(r, t, { type: 'capitaine' });
+}
+
   id('bonus-modal').classList.remove('show');
   if(typeof renderPills==='function') renderPills();
   if(typeof renderMatches==='function') renderMatches();
