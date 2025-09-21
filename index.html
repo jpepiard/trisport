@@ -496,8 +496,8 @@ header .btn, header .chip, header .pill, header .tab{
 <div id="bonus-modal" aria-hidden="true">
   <div class="bonus-panel bonus-dialog">
     <div class="hd">Choisir un bonus</div>
-    <div class="bd">
 
+    <div class="bd">
       <div class="bonus-select">
         <!-- Capitaine -->
         <div class="bonus-card">
@@ -581,8 +581,7 @@ header .btn, header .chip, header .pill, header .tab{
         Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.
       </div>
 
-      <!-- Paramètres (insérés sous la carte correspondante) -->
-      <!-- Capitaine n’a plus de paramètres -->
+      <!-- Paramètres (déplacés sous leur carte par JS) -->
       <div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
         <div>
           <label>Sport</label>
@@ -615,10 +614,8 @@ header .btn, header .chip, header .pill, header .tab{
           </select>
         </div>
       </div>
-</div>
-      </div>
+    </div> <!-- /.bd -->
 
-    </div>
     <div class="ft">
       <button type="button" class="btn" id="bonus-cancel">Annuler</button>
       <button type="button" class="btn primary" id="bonus-save">Valider</button>
