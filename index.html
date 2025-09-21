@@ -45,18 +45,10 @@ function ensureMelonWrapper(){
 }
 
 function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
-  const wC = ensureParamWrapper();   if (wC){ wC.style.maxHeight = openCap   ? (wC.scrollHeight+'px') : '0px'; }
-  const wT = ensureTaupeWrapper();   if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
-  const wL = ensureLeftHandWrapper();if (wL){ wL.style.maxHeight = openLeft  ? (wL.scrollHeight+'px') : '0px'; }
-  const wM = ensureMelonWrapper();   if (wM){ wM.style.maxHeight = openMelon ? (wM.scrollHeight+'px') : '0px'; }
-}
-  const wT = ensureTaupeWrapper();   if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
-  const wL = ensureLeftHandWrapper();if (wL){ wL.style.maxHeight = openLeft  ? (wL.scrollHeight+'px') : '0px'; }
-  const wM = ensureMelonWrapper();   if (wM){ wM.style.maxHeight = openMelon ? (wM.scrollHeight+'px') : '0px'; }
-}
-  const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
-  const wL = ensureLeftHandWrapper();
-  const wM = ensureMelonWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
+  const wC = ensureParamWrapper();    if (wC){ wC.style.maxHeight = openCap   ? (wC.scrollHeight+'px') : '0px'; }
+  const wT = ensureTaupeWrapper();    if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
+  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft  ? (wL.scrollHeight+'px') : '0px'; }
+  const wM = ensureMelonWrapper();    if (wM){ wM.style.maxHeight = openMelon ? (wM.scrollHeight+'px') : '0px'; }
 }
 function selectBonusType(t){
   // 1) type valide (inclut 'melon')
