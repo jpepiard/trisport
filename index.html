@@ -103,6 +103,8 @@ function prepareBonusOptions(){
 </script>
 
 <style>
+.pos{color:#34d399;font-weight:600}
+.neg{color:#f87171;font-weight:600}
 :root{--bg:#0f1220;--border:#2b315f;--text:#e7e9f7;--muted:#8b94b8;--chip:#242b55;--card:#1b2242}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;background:radial-gradient(1200px 800px at 20% -10%,#1c2040,transparent),radial-gradient(1000px 600px at 120% 0%,#1b2550,transparent),var(--bg);color:var(--text)}
 header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(130%) blur(8px);background:linear-gradient(180deg,rgba(15,18,32,.9),rgba(15,18,32,.6));border-bottom:1px solid var(--border)}
@@ -1058,7 +1060,98 @@ function renderPalet(m){
 /* ===== Classement ===== */
 function baseLeaderboardStats(){const R=state.rules,stats={};state.teams.forEach(t=>stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,pointsBase:0,bonus:0,malus:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0});state.matches.forEach(m=>{const A=stats[m.a],B=stats[m.b];ensureLengths(m);m.darts.forEach(v=>{if(v===0){A.dartsW++;A.pointsBase+=R.dartsWinPoints}else if(v===1){B.dartsW++;B.pointsBase+=R.dartsWinPoints}});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b){A.pingW++;A.pointsBase+=R.pingWinPoints}else if(b>a){B.pingW++;B.pointsBase+=R.pingWinPoints}}});const pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);if(pa!=null&&pb!=null){A.palFor+=pa;B.palFor+=pb;A.palAg+=pb;B.palAg+=pa;A.pointsBase+=pa;B.pointsBase+=pb}if(isMatchComplete(m)){A.matchesComplete++;B.matchesComplete++}});Object.keys(state.bonusApplied||{}).forEach(r=>{const per=state.bonusApplied[r];Object.keys(per).forEach(tid=>{const v=per[tid]||0;if(stats[tid])stats[tid].bonus+=v})});return stats}
 function computeLeaderboard(){const stats=baseLeaderboardStats();const rows=Object.values(stats).map(x=>({teamId:x.teamId,name:x.name,avatar:x.avatar,points:x.pointsBase+x.bonus-x.malus,bonus:x.bonus,malus:x.malus,dartsW:x.dartsW,pingW:x.pingW,palFor:x.palFor,palAg:x.palAg,matchesComplete:x.matchesComplete}));rows.sort((x,y)=>(y.points-x.points)||((y.palFor-y.palAg)-(x.palFor-x.palAg))||((y.dartsW+y.pingW)-(x.dartsW+x.pingW))||x.name.localeCompare(y.name));rows.forEach((r,i)=>r.rank=i+1);return rows}
-function renderLeaderboard(){const tbody=qs("#table-classement tbody");tbody.innerHTML="";computeLeaderboard().forEach(r=>{const diff=r.palFor-r.palAg;const avatar=r.avatar?(`<span class="avatar avatar-lg"><img src="${esc(r.avatar)}" alt="avatar"></span>`):(`<span class="avatar avatar-lg"><span class="avatar-initials">${esc(initials(r.name))}</span></span>`);const tr=document.createElement("tr");tr.innerHTML=`<td>${r.rank}</td><td><span class="team-name">${avatar} ${esc(r.name)}</span></td><td><b>${r.points}</b></td><td>${r.dartsW}</td><td>${r.pingW}</td><td><span class="score-compact">${hy(r.palFor,r.palAg)}</span> <span class="muted">(${diff>=0?'+':''}${diff})</span></td><td>${r.bonus}</td><td>${r.malus||0}</td><td>${r.matchesComplete}</td>`;tbody.appendChild(tr)})}
+
+function renderLeaderboard(){
+  const tbody = qs("#table-classement tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  const teams = state.teams.slice();
+  const rows = teams.map(t => {
+    const tid = t.id;
+    let dartsPF=0, dartsPA=0, pingPF=0, pingPA=0, palPF=0, palPA=0, pts=0, matchesComplete=0;
+
+    state.matches.forEach(m => {
+      if (m.a!==tid && m.b!==tid) return;
+      const isA = (m.a===tid);
+
+      // Points totaux (base + bonus appliqué)
+      if (typeof pointsForTeamInMatch === 'function') {
+        pts += pointsForTeamInMatch(m, tid) || 0;
+      }
+
+      // Stat fléchettes (manches gagnées → points ×5)
+      if (Array.isArray(m.darts)) {
+        let aw=0, bw=0;
+        m.darts.forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
+        dartsPF += (isA ? aw : bw) * 5;
+        dartsPA += (isA ? bw : aw) * 5;
+      }
+
+      // Stat ping (manches gagnées → points ×5)
+      if (typeof getPingPts === 'function') {
+        let aw=0, bw=0;
+        (getPingPts(m) || []).forEach(s=>{
+          const a = (s && s.a!=null) ? +s.a : null;
+          const b = (s && s.b!=null) ? +s.b : null;
+          if (!isPingValid(a,b)) return;
+          if (a>b) aw++; else if (b>a) bw++;
+        });
+        pingPF += (isA ? aw : bw) * 5;
+        pingPA += (isA ? bw : aw) * 5;
+      }
+
+      // Stat palet (PF/PA)
+      if (m.palet && m.palet.a!=null && m.palet.b!=null) {
+        palPF += isA ? (+m.palet.a||0) : (+m.palet.b||0);
+        palPA += isA ? (+m.palet.b||0) : (+m.palet.a||0);
+      }
+
+      // Match complet ?
+      if (typeof isMatchComplete === 'function' && isMatchComplete(m)) matchesComplete++;
+    });
+
+    // Bonus/Malus cumulés (toutes journées)
+    let bonusPos=0, malusNeg=0;
+    const BA = state.bonusApplied || {};
+    Object.keys(BA).forEach(r => {
+      const v = (BA[r] && BA[r][tid]) || 0;
+      if (v>0) bonusPos += v;
+      else if (v<0) malusNeg += (-v);
+    });
+
+    return {
+      id: tid,
+      name: t.name,
+      avatar: t.avatar,
+      points: pts,
+      dartsPF, dartsPA, pingPF, pingPA, palPF, palPA,
+      bonusPos, malusNeg, matchesComplete
+    };
+  });
+
+  rows.sort((a,b)=> b.points - a.points || a.name.localeCompare(b.name));
+
+  rows.forEach((r,i)=>{
+    const avatar = avatarHtml ? avatarHtml(r.id, 22, '') : '';
+    const diffPal = r.palPF - r.palPA;
+    const signPal = diffPal>=0?'+':'';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td><span class="team-name">${avatar} ${esc(r.name||'')}</span></td>
+      <td><b>${r.points}</b></td>
+      <td>${r.dartsPF}</td>
+      <td>${r.pingPF}</td>
+      <td>${r.palPF}-${r.palPA} <span class="muted">(${signPal}${diffPal})</span></td>
+      <td>${r.bonusPos?`<span class="pos">+${r.bonusPos}</span>`:'0'}</td>
+      <td>${r.malusNeg?`<span class="neg">-${r.malusNeg}</span>`:'0'}</td>
+      <td>${r.matchesComplete}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
 
 /* ===== H2H ===== */
 
