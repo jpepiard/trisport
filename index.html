@@ -1401,9 +1401,6 @@ function getTeamCategoryLocks(teamId){
   if (CL) Object.keys(CL).forEach(cat => { if (CL[cat]) locks.add(cat); });
   return locks;
 }
-  });
-  return locks;
-}
 
 function applyBonusLocks(teamId){
   try{
