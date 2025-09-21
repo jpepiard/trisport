@@ -1109,42 +1109,33 @@ document.addEventListener("click",async(e)=>{
 });
 
 /* ===== Modal bonus ===== */
-let bonusCTX={round:null,teamId:null};
-function openBonusModal(round,teamId){
-  const rCtl=roundState(round);
-  if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
-  if ((state.bonusUsed?.[round]?.[teamId])) return alert("Ce bonus a déjà été utilisé une fois.");
-  if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
-  bonusCTX.round=round;bonusCTX.teamId=teamId;
-  const sel=getBonusSelection(round,teamId);
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
-  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  id('bonus-player').value=sel?.player||'p1';
-  id('bonus-sport').value=sel?.sport||'darts';
-  id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
-  id('bonus-modal').classList.add('show');
-}
-id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-id('bonus-save').addEventListener('click', ()=>{
-  const r = bonusCTX.round, t = bonusCTX.teamId;
+let bonusCTX = { round: null, teamId: null };
 
-  const type =
-    (window._bonusType==='miroir')   ? 'miroir'   :
-    (window._bonusType==='taupe')    ? 'taupe'    :
-    (window._bonusType==='lefthand') ? 'lefthand' :
-    (window._bonusType==='melon')    ? 'melon'    :
-                                       'capitaine';
+function openBonusModal(round, teamId){
+  const rCtl = roundState(round);
+  if (rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
+  if (state.bonusUsed?.[round]?.[teamId]) return alert("Ce bonus a déjà été utilisé une fois.");
+  if (!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
+  bonusCTX.round = round; bonusCTX.teamId = teamId;
+  const sel = getBonusSelection(round, teamId) || {};
+  if (typeof prepareBonusOptions === 'function'){ prepareBonusOptions(); selectBonusType(sel.type || 'capitaine'); }
+  if (id('taupe-sport'))    id('taupe-sport').value    = (sel.sport || 'darts');
+  if (id('lefthand-sport')) id('lefthand-sport').value = (sel.sport || 'darts');
+  if (id('bonus-player'))   id('bonus-player').value   = sel.player || 'p1';
+  if (id('bonus-sport'))    id('bonus-sport').value    = sel.sport  || 'darts';
+  if (id('bonus-context'))  id('bonus-context').textContent = `Équipe : ${teamName(teamId)} — Journée #${round}`;
+  id('bonus-modal')?.classList.add('show');
+}
+
+id('bonus-cancel')?.addEventListener('click', () => id('bonus-modal')?.classList.remove('show'));
+id('bonus-save')?.addEventListener('click', () => {
+  const r = bonusCTX.round, t = bonusCTX.teamId;
+  const type = (window._bonusType || id('bonus-type')?.value || 'capitaine');
 
   if (type === 'capitaine') {
-    // plus de joueur/sport pour Capitaine
-    setBonusSelection(r, t, { type: 'capitaine' });
+    setBonusSelection(r, t, { type: 'capitaine', player: (id('bonus-player')?.value || 'p1') });
   } else if (type === 'taupe') {
-    setBonusSelection(r, t, { type: 'taupe',    sport: (id('taupe-sport')?.value || 'darts') });
+    setBonusSelection(r, t, { type: 'taupe', sport: (id('taupe-sport')?.value || 'darts') });
   } else if (type === 'lefthand') {
     setBonusSelection(r, t, { type: 'lefthand', sport: (id('lefthand-sport')?.value || 'darts') });
   } else if (type === 'melon') {
@@ -1158,10 +1149,20 @@ id('bonus-save').addEventListener('click', ()=>{
   if (typeof renderMatches === 'function') renderMatches();
 });
 
-
 /* ===== Boot ===== */
-function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
-document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e) {} });</script>
+function renderAll(){
+  renderTitle();
+  updateWho();
+  renderSetupRecent();
+  renderSetupStats();
+  renderSetupLeague();
+  renderTeams();
+  renderMatches();
+  renderLeaderboard();
+  renderH2H();
+}
+document.addEventListener('DOMContentLoaded', () => { try { renderAll(); } catch(e) {} });
+</script>
 
 <script>
 (function(){
