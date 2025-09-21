@@ -1202,23 +1202,6 @@ function openBonusModal(round,teamId){
   id('bonus-context').textContent = `Équipe : ${teamName(teamId)} — Journée #${round}`;
   id('bonus-modal').classList.add('show');
 }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  
-  if(id('melon-sport')) id('melon-sport').value = (sel?.sport||'darts');
-if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts'); if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  
-  if(id('melon-sport')) id('melon-sport').value = (sel?.sport||'darts');
-if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel?.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel?.sport||'darts');
-  if(id('lefthand-sport')) id('lefthand-sport').value = (sel?.sport||'darts');
-  
-  if(id('melon-sport')) id('melon-sport').value = (sel?.sport||'darts');
-id('bonus-player').value=sel?.player||'p1';
-  id('bonus-sport').value=sel?.sport||'darts';
-  id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
-  id('bonus-modal').classList.add('show');
-}
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
