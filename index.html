@@ -37,34 +37,69 @@ function setParamsOpen(openCap, openTaupe, openLeft){
   const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
 }
 function selectBonusType(t){
+  // 1) type valide (inclut 'melon')
   window._bonusType = (['capitaine','miroir','taupe','lefthand','melon'].includes(t) ? t : 'capitaine');
+
+  // 2) cartes (5 cartes désormais)
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3];
-  [cap,mir,tau,leftc].forEach(c=>c&&c.classList.remove('selected'));
-  if(cap && window._bonusType==='capitaine') cap.classList.add('selected');
-  if(mir && window._bonusType==='miroir') mir.classList.add('selected');
-  if(tau && window._bonusType==='taupe') tau.classList.add('selected');
-  if(leftc && window._bonusType==='lefthand') leftc.classList.add('selected');
-  const ctx=id('bonus-context');
-  if(ctx) ctx.textContent = window._bonusType==='miroir' ?
-    "Miroir : inverse le bonus adverse sur tout le match." :
-    (window._bonusType==='taupe' ? "René la taupe : choisissez le sport." :
-      (window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-        "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet."));
+  const cap   = cards[0],
+        mir   = cards[1],
+        tau   = cards[2],
+        leftc = cards[3],
+        melon = cards[4];
+
+  // 3) reset + sélection
+  [cap, mir, tau, leftc, melon].forEach(c => c && c.classList.remove('selected'));
+  if (cap   && window._bonusType === 'capitaine') cap.classList.add('selected');
+  if (mir   && window._bonusType === 'miroir')    mir.classList.add('selected');
+  if (tau   && window._bonusType === 'taupe')     tau.classList.add('selected');
+  if (leftc && window._bonusType === 'lefthand')  leftc.classList.add('selected');
+  if (melon && window._bonusType === 'melon')     melon.classList.add('selected');
+
+  // 4) texte d’aide
+  const ctx = id('bonus-context');
+  if (ctx) {
+    ctx.textContent =
+      window._bonusType === 'miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
+      window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
+      window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
+      window._bonusType === 'melon'    ? "Melon d'or : détails à venir." :
+                                          "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.";
+  }
+
+  // 5) affichage des paramètres (Capitaine n’a plus de champs)
   setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
 }
+
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+  const map   = ['capitaine','miroir','taupe','lefthand','melon']; // 5 cartes
+
   cards.forEach((c, i)=>{
-    c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
-    c.addEventListener('click', ()=>selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))));
-    c.addEventListener('keydown', ev=>{ if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); selectBonusType(i===0?'capitaine':(i===1?'miroir':(i===2?'taupe':'lefthand'))); } });
+    c.classList.add('selectable');
+    c.tabIndex = 0;
+    c.setAttribute('role','button');
+
+    const type = map[i] || 'capitaine';
+    c.addEventListener('click', ()=>selectBonusType(type));
+    c.addEventListener('keydown', ev=>{
+      if(ev.key===' '||ev.key==='Enter'){
+        ev.preventDefault();
+        selectBonusType(type);
+      }
+    });
   });
-  const cap=cards[0], tau=cards[2], leftc=cards[3];
-  const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
-  const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
-  const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
+
+  // déplacer/afficher les panneaux de paramètres (Capitaine n’en a plus)
+  const cap = cards[0], tau = cards[2], leftc = cards[3];
+  const wC = ensureParamWrapper();   if (cap   && wC && wC.previousElementSibling!==cap)   cap.appendChild(wC);
+  const wT = ensureTaupeWrapper();   if (tau   && wT && wT.previousElementSibling!==tau)   tau.appendChild(wT);
+  const wL = ensureLeftHandWrapper();if (leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
+
+  // init sélection
+  selectBonusType(window._bonusType || 'capitaine');
 }
+
 
 </script>
 
@@ -450,10 +485,15 @@ header .btn, header .chip, header .pill, header .tab{
         <!-- Capitaine -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
-            <img src="img/capitaine.jpg" alt=""></div>
+            <img src="img/capitaine.jpg" alt="">
+          </div>
           <div class="bonus-text">
             <div class="bonus-title">Capitaine</div>
-            <div class="help">Choisissez un joueur (J1/J2) et un sport.<br/>À la fin de la journée : <b>+5 pts par victoire</b> du capitaine dans ce sport (les doubles comptent).</div>
+            <div class="help">
+              Aucun réglage.<br>
+              <b>+2 points par manche gagnée</b> (fléchettes & ping, simples et doubles)
+              et <b>+2</b> si <b>palet</b> gagné.
+            </div>
           </div>
         </div>
 
@@ -462,10 +502,14 @@ header .btn, header .chip, header .pill, header .tab{
         <!-- Miroir -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
-            <img src="img/miroir.jpg" alt=""></div>
+            <img src="img/miroir.jpg" alt="">
+          </div>
           <div class="bonus-text">
             <div class="bonus-title">Miroir</div>
-            <div class="help">Inverse le bonus adverse sur <b>tout le match</b>.<br/>Ex : si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.</div>
+            <div class="help">
+              Inverse le bonus adverse sur <b>tout le match</b>.<br>
+              Ex&nbsp;: si l’adversaire choisit <b>Capitaine</b>, son Capitaine s’applique à votre équipe.
+            </div>
           </div>
         </div>
 
@@ -474,10 +518,14 @@ header .btn, header .chip, header .pill, header .tab{
         <!-- René la taupe -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
-            <img src="img/taupe.png" alt=""></div>
+            <img src="img/taupe.png" alt="">
+          </div>
           <div class="bonus-text">
             <div class="bonus-title">René la taupe</div>
-            <div class="help">Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br/>Si l’adversaire joue <b>Miroir</b>, <i>vous</i> portez les lunettes.</div>
+            <div class="help">
+              Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br>
+              Si l’adversaire joue <b>Miroir</b>, <i>vous</i> portez les lunettes.
+            </div>
           </div>
         </div>
 
@@ -486,47 +534,57 @@ header .btn, header .chip, header .pill, header .tab{
         <!-- 10 pouces 2 mains gauche -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
-            <img src="img/main gauche.png" alt=""></div>
-
-<div class="bonus-sep"></div>
-
-<!-- Melon d'or -->
-<div class="bonus-card" data-bonus-type="melon">
-  <div class="bonus-illu" aria-hidden="true">
-    <img src="img/melon.png" alt="Melon d'or"></div>
-  <div class="bonus-text">
-    <div class="bonus-title">Melon d'or</div>
-    <div class="help">Nouveau bonus — détails à venir.</div>
-  </div>
-</div>
+            <img src="img/main gauche.png" alt="">
+          </div>
           <div class="bonus-text">
             <div class="bonus-title">10 pouces 2 mains gauche</div>
-            <div class="help">L’adversaire doit jouer un sous‑match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br/>Choisissez le sport concerné.</div>
+            <div class="help">
+              L’adversaire doit jouer un sous-match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br>
+              Choisissez le sport concerné.
+            </div>
+          </div>
+        </div>
+
+        <div class="bonus-sep"></div>
+
+        <!-- Melon d'or -->
+        <div class="bonus-card" data-bonus-type="melon">
+          <div class="bonus-illu" aria-hidden="true">
+            <img src="img/melon.png" alt="Melon d'or">
+          </div>
+          <div class="bonus-text">
+            <div class="bonus-title">Melon d'or</div>
+            <div class="help">Nouveau bonus — détails à venir.</div>
           </div>
         </div>
       </div>
 
-      <div class="help" id="bonus-context">Capitaine : choisissez le joueur et le sport concernés.</div>
-
-      <!-- Paramètres (insérés sous la carte correspondante) -->
-      <div id="capitaine-fields" class="grid cols-2" style="margin-top:10px">
-        <div><label>Capitaine (joueur)</label>
-          <select id="bonus-player"><option value="p1">Joueur 1</option><option value="p2">Joueur 2</option></select>
-        </div>
-        <div><label>Sport</label>
-          <select id="bonus-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
-        </div>
+      <!-- Texte d'aide dynamique -->
+      <div class="help" id="bonus-context">
+        Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.
       </div>
 
+      <!-- Paramètres (insérés sous la carte correspondante) -->
+      <!-- Capitaine n’a plus de paramètres -->
       <div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
-        <div><label>Sport</label>
-          <select id="taupe-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
+        <div>
+          <label>Sport</label>
+          <select id="taupe-sport">
+            <option value="darts">Fléchettes</option>
+            <option value="ping">Ping</option>
+            <option value="palet">Palet</option>
+          </select>
         </div>
       </div>
 
       <div id="lefthand-fields" class="grid cols-2" style="margin-top:10px">
-        <div><label>Sport</label>
-          <select id="lefthand-sport"><option value="darts">Fléchettes</option><option value="ping">Ping</option><option value="palet">Palet</option></select>
+        <div>
+          <label>Sport</label>
+          <select id="lefthand-sport">
+            <option value="darts">Fléchettes</option>
+            <option value="ping">Ping</option>
+            <option value="palet">Palet</option>
+          </select>
         </div>
       </div>
 
@@ -1038,17 +1096,34 @@ function openBonusModal(round,teamId){
   id('bonus-modal').classList.add('show');
 }
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
-id('bonus-save').addEventListener('click',()=>{
-  const r=bonusCTX.round, t=bonusCTX.teamId;
-  const type=(window._bonusType==='miroir')?'miroir':(window._bonusType==='taupe'?'taupe':(window._bonusType==='lefthand'?'lefthand':'capitaine'));
-  if(type==='capitaine') setBonusSelection(r,t,{type:'capitaine',player:id('bonus-player').value,sport:id('bonus-sport').value});
-  else if(type==='taupe') setBonusSelection(r,t,{type:'taupe',sport:id('taupe-sport').value||'darts'});
-  else if(type==='lefthand') setBonusSelection(r,t,{type:'lefthand',sport:id('lefthand-sport').value||'darts'});
-  else setBonusSelection(r,t,{type:'miroir'});
-  id('bonus-modal').classList.remove('show');
-  if(typeof renderPills==='function') renderPills();
-  if(typeof renderMatches==='function') renderMatches();
+id('bonus-save').addEventListener('click', ()=>{
+  const r = bonusCTX.round, t = bonusCTX.teamId;
+
+  const type =
+    (window._bonusType==='miroir')   ? 'miroir'   :
+    (window._bonusType==='taupe')    ? 'taupe'    :
+    (window._bonusType==='lefthand') ? 'lefthand' :
+    (window._bonusType==='melon')    ? 'melon'    :
+                                       'capitaine';
+
+  if (type === 'capitaine') {
+    // plus de joueur/sport pour Capitaine
+    setBonusSelection(r, t, { type: 'capitaine' });
+  } else if (type === 'taupe') {
+    setBonusSelection(r, t, { type: 'taupe',    sport: (id('taupe-sport')?.value || 'darts') });
+  } else if (type === 'lefthand') {
+    setBonusSelection(r, t, { type: 'lefthand', sport: (id('lefthand-sport')?.value || 'darts') });
+  } else if (type === 'melon') {
+    setBonusSelection(r, t, { type: 'melon' });
+  } else {
+    setBonusSelection(r, t, { type: 'miroir' });
+  }
+
+  id('bonus-modal')?.classList.remove('show');
+  if (typeof renderPills === 'function') renderPills();
+  if (typeof renderMatches === 'function') renderMatches();
 });
+
 
 /* ===== Boot ===== */
 function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
