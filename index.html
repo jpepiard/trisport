@@ -824,7 +824,21 @@ function bonusChip(r,mTeam,rs){
   // Affichage
   if (!roundFinished) {
     // Secret: pilule "Capitaine" + mini image
-    const __lbl = sel.type==='miroir'?'Miroir':(sel.type==='taupe'?'René la taupe':(sel.type==='lefthand'?'10 pouces 2 mains gauche':'Capitaine')); const __img = sel.type==='miroir'?'miroir.jpg':(sel.type==='taupe'?'taupe.png':(sel.type==='lefthand'?'main gauche.png':'capitaine.jpg')); return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt=""></span></span>`;
+const __lbl =
+  sel.type === 'miroir'   ? 'Miroir' :
+  sel.type === 'taupe'    ? 'René la taupe' :
+  sel.type === 'lefthand' ? '10 pouces 2 mains gauche' :
+  sel.type === 'melon'    ? 'Melon d’or' :
+                            'Capitaine';
+
+const __img =
+  sel.type === 'miroir'   ? 'miroir.jpg' :
+  sel.type === 'taupe'    ? 'taupe.png' :
+  sel.type === 'lefthand' ? 'main gauche.png' :
+  sel.type === 'melon'    ? 'melon.png' :
+                            'capitaine.jpg';
+
+return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt="${__lbl}"></span></span>`;
   } else {
     // Révélé à tout le monde
     const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
