@@ -184,6 +184,23 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .ping-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ping-row input{width:100%}
 
+/* align darts & ping rows */
+.match-card .sport-group .sport-item{
+  display:grid;
+  grid-template-columns: 120px 1fr; /* label | control */
+  align-items:center;
+  gap:12px;
+}
+.match-card .sport-group .sport-item label{
+  margin:0;
+  white-space:nowrap;
+}
+.match-card .sport-group .sport-item select,
+.match-card .sport-group .sport-item input{
+  width:100%;
+}
+
+
 .bonus-illu img{width:100%;height:100%;object-fit:cover;border-radius:12px}
 .pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
 .pill .mini-bonus img{width:100%;height:100%;object-fit:cover}
@@ -968,7 +985,7 @@ function renderPing(m){
   const s = +state.rules.pingSingles || 0;
   const d = +state.rules.pingDoubles || 0;
   const N = s + d;
-  let htmlOut = `<div class="sport-group" style="margin-top:16px">
+  let htmlOut = `<div class="sport-group">`
     <div class="sport-title"><span class="sport-icon">${sportIcon('ping')}</span> Ping-pong</div>`;
   for(let i=0;i<N;i++){
     const v = m.pingPts[i];
@@ -1003,7 +1020,7 @@ function renderPalet(m){
   const a = (m.palet?.a==null?null:+m.palet?.a),
         b = (m.palet?.b==null?null:+m.palet?.b);
   const ok = (a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));
-  return `<div class="sport-group" style="margin-top:16px">
+  return `<div class="sport-group">`
     <div class="sport-title"><span class="sport-icon">${sportIcon('palet')}</span> Palet</div>
     <div class="ping-row">
       <div>
