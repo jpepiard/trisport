@@ -985,7 +985,7 @@ function renderPing(m){
   const s = +state.rules.pingSingles || 0;
   const d = +state.rules.pingDoubles || 0;
   const N = s + d;
-  let htmlOut = `<div class="sport-group">`
+  let htmlOut = `<div class="sport-group">
     <div class="sport-title"><span class="sport-icon">${sportIcon('ping')}</span> Ping-pong</div>`;
   for(let i=0;i<N;i++){
     const v = m.pingPts[i];
