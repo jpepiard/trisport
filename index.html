@@ -1086,8 +1086,27 @@ function renderMatches(){
         const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!(can && canEditScores(m,rCtl));
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
+      // ping (sélecteur vainqueur)
+      qsa('.match-card[data-id="'+m.id+'"] select[data-kind="ping"]').forEach(sel=>{
+        const can = (isAdmin() || hasClaim(m.a) || hasClaim(m.b));
+        sel.disabled = !(can && canEditScores(m, rCtl));
+        sel.addEventListener("change", ()=>{
+          const i  = parseInt(sel.getAttribute("data-index"),10);
+          const vv = sel.value==="" ? null : parseInt(sel.value,10); // 0/1/null
+          const mm = findMatch(m.id);
+          if (!Array.isArray(mm.ping)) mm.ping = [];
+          const total = pingTotal();
+          mm.ping = mm.ping.slice(0,total);
+          while (mm.ping.length < total) mm.ping.push(null);
+          mm.ping[i] = vv;
+          saveState();
+          renderMatches();
+          renderLeaderboard();
+          renderH2H();
+        });
+      });
+
       // ping
-      qsa('.match-card[data-id="'+m.id+'"] 
       // ping (nouveau select vainqueur)
         const can = (isAdmin() || hasClaim(m.a) || hasClaim(m.b));
         sel.disabled = !(can && canEditScores(m, rCtl));
