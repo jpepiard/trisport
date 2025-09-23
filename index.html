@@ -1020,7 +1020,7 @@ function renderPalet(m){
   const a = (m.palet?.a==null?null:+m.palet?.a),
         b = (m.palet?.b==null?null:+m.palet?.b);
   const ok = (a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));
-  return `<div class="sport-group">`
+  return `<div class="sport-group">
     <div class="sport-title"><span class="sport-icon">${sportIcon('palet')}</span> Palet</div>
     <div class="ping-row">
       <div>
