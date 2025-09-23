@@ -31,11 +31,27 @@ function ensureLeftHandWrapper(){
   let wrap=id('lefthand-params'); if(!wrap){ wrap=document.createElement('div'); wrap.id='lefthand-params'; wrap.className='bonus-params'; fields.parentNode.insertBefore(wrap, fields); wrap.appendChild(fields); }
   return wrap;
 }
-function setParamsOpen(openCap, openTaupe, openLeft){
-  const wC = ensureParamWrapper(); if (wC){ wC.style.maxHeight = openCap ? (wC.scrollHeight+'px') : '0px'; }
-  const wT = ensureTaupeWrapper(); if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
-  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft ? (wL.scrollHeight+'px') : '0px'; }
+function ensureMelonWrapper(){
+  const fields = id('melon-fields'); if(!fields) return null;
+  let wrap = id('melon-params');
+  if (!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'melon-params';
+    wrap.className = 'bonus-params';
+    fields.parentNode.insertBefore(wrap, fields);
+    wrap.appendChild(fields);
+  }
+  return wrap;
 }
+
+
+function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
+  const wC = ensureParamWrapper();    if (wC){ wC.style.maxHeight = openCap   ? (wC.scrollHeight+'px') : '0px'; }
+  const wT = ensureTaupeWrapper();    if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
+  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft  ? (wL.scrollHeight+'px') : '0px'; }
+  const wM = ensureMelonWrapper();    if (wM){ wM.style.maxHeight = openMelon ? (wM.scrollHeight+'px') : '0px'; }
+}
+
 function selectBonusType(t){
   // lock guard per category
   try{
@@ -76,12 +92,12 @@ function selectBonusType(t){
       window._bonusType === 'miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
       window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
       window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-      window._bonusType === 'melon'    ? "Melon d'or : détails à venir." :
+      window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport." :
                                           "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.";
   }
 
   // 5) affichage des paramètres (Capitaine n’a plus de champs)
-  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
+  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand', window._bonusType==='melon');
 }
 
 function prepareBonusOptions(){
@@ -104,10 +120,16 @@ function prepareBonusOptions(){
   });
 
   // déplacer/afficher les panneaux de paramètres (Capitaine n’en a plus)
-  const cap = cards[0], tau = cards[2], leftc = cards[3];
-  const wC = ensureParamWrapper();   if (cap   && wC && wC.previousElementSibling!==cap)   cap.appendChild(wC);
-  const wT = ensureTaupeWrapper();   if (tau   && wT && wT.previousElementSibling!==tau)   tau.appendChild(wT);
-  const wL = ensureLeftHandWrapper();if (leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
+  const cap = cards[0], tau = cards[2], leftc = cards[3], melon = cards[4];
+  const capTxt = cap?.querySelector('.bonus-text');
+  const tauTxt = tau?.querySelector('.bonus-text');
+  const leftTxt = leftc?.querySelector('.bonus-text');
+  const melonTxt = melon?.querySelector('.bonus-text');
+
+  const wC = ensureParamWrapper();    if (capTxt   && wC && wC.parentElement   !== capTxt)   capTxt.appendChild(wC);
+  const wT = ensureTaupeWrapper();    if (tauTxt   && wT && wT.parentElement   !== tauTxt)   tauTxt.appendChild(wT);
+  const wL = ensureLeftHandWrapper(); if (leftTxt  && wL && wL.parentElement   !== leftTxt)  leftTxt.appendChild(wL);
+  const wM = ensureMelonWrapper();    if (melonTxt && wM && wM.parentElement !== melonTxt) melonTxt.appendChild(wM);
 
   // init sélection
   selectBonusType(window._bonusType || 'capitaine');
@@ -603,6 +625,17 @@ header .btn, header .chip, header .pill, header .tab{
           </select>
         </div>
       </div>
+      <div id="melon-fields" class="grid cols-2" style="margin-top:10px">
+        <div>
+          <label>Sport</label>
+          <select id="melon-sport">
+            <option value="darts">Fléchettes</option>
+            <option value="ping">Ping</option>
+            <option value="palet">Palet</option>
+          </select>
+        </div>
+      </div>
+
 
     </div>
     <div class="ft">
