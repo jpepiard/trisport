@@ -744,7 +744,7 @@ function updateWho(){const names=Object.keys(session.claims||{}).map(teamName).f
 function renderTitle(){const name=(state.tournamentName||"").trim();document.title=(name?name+" — ":"")+"TriSports — Fléchettes • Ping-pong • Palet";const pill=id("tname-top");if(name){pill.style.display="inline-block";pill.textContent=name}else{pill.style.display="none";pill.textContent=""}}
 function dartsTotal(){return (state.rules?.dartsSingles||0)+(state.rules?.dartsDoubles||0)}
 function pingTotal(){return (state.rules?.pingSingles||0)+(state.rules?.pingDoubles||0)}
-function ensureLengths(m){const dN=dartsTotal(),pN=pingTotal();m.darts=Array.isArray(m.darts)?m.darts.slice(0,dN):[];while(m.darts.length<dN)m.darts.push(null);if(!Array.isArray(m.pingPts))m.pingPts=[];m.pingPts=m.pingPts.slice(0,pN);while(m.pingPts.length<pN)m.pingPts.push({a:null,b:null});}
+function ensureLengths(m){const dN=dartsTotal(), pN=pingTotal();m.darts = Array.isArray(m.darts)? m.darts.slice(0,dN):[]; while(m.darts.length<dN) m.darts.push(null);// Nouveau: tableau des vainqueurs pingm.ping = Array.isArray(m.ping)? m.ping.slice(0,pN):[]; while(m.ping.length<pN) m.ping.push(null);// Legacy: garder pingPts si existant (non utilisé par l'UI mais pour compat)if (!Array.isArray(m.pingPts)) m.pingPts = Array(pN).fill({a:null,b:null});});}
 function _normMatch(m){m=m||{};m.id=m.id||uid();m.a=m.a||"";m.b=m.b||"";ensureLengths(m);m.palet=m.palet||{a:null,b:null};m.palet.a=(m.palet.a==null?null:+m.palet.a);m.palet.b=(m.palet.b==null?null:+m.palet.b);m.round=m.round||1;m.order=m.order||0;return m}
 function normalize(){state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11};state.teams=Array.isArray(state.teams)?state.teams:[];state.matches=Array.isArray(state.matches)?state.matches.map(_normMatch):[];state.protect=state.protect||{};state.protect.teamPassHash=state.protect.teamPassHash||{};state.roundCtl=state.roundCtl||{};state.bonusSelections=state.bonusSelections||{};state.bonusApplied=state.bonusApplied||{};state.bonusUsed=state.bonusUsed||{};state.bonusUsed=state.bonusUsed||{}}
 
@@ -781,12 +781,19 @@ function updateCounts(){id("teams-count").textContent=state.teams.length+" "+(st
 function updateLock(){const pill=id("lock-pill");if(pill)pill.style.display=state.locked?"inline-block":"none";const gen=id("btn-generate");if(gen){gen.disabled=!!state.locked;gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"}}
 
 /* ===== Rencontres & Scores ===== */
-const getPingPts=m=>Array.isArray(m.pingPts)?m.pingPts:Array(pingTotal()).fill({a:null,b:null});
-const isPingValid=(a,b)=>{if(a==null||b==null)return false;if(isNaN(a)||isNaN(b))return false;const max=Math.max(a,b),diff=Math.abs(a-b);return(max>=11)&&(diff>=2)}
+const getPingPts = m => {
+  // Nouveau: si 'm.ping' (vainqueur 0/1) est présent, on le mappe en faux scores {a,b}
+  if (Array.isArray(m.ping)) {
+    return m.ping.map(v => (v===0 ? {a:1,b:0} : (v===1 ? {a:0,b:1} : {a:null,b:null})));
+  }
+  // Legacy: on garde l'ancien tableau de scores si présent
+  return Array.isArray(m.pingPts) ? m.pingPts : Array(pingTotal()).fill({a:null,b:null});
+};
+const isPingValid=(a,b)=>{if(a==null||b==null)return false;// Nouveau mode vainqueur: (1,0) ou (0,1)if((a===1&&b===0)||(a===0&&b===1))return true;// Legacy: scores jusqu'à 11 avec 2 points d'écartif(isNaN(a)||isNaN(b))return false;const max=Math.max(a,b),diff=Math.abs(a-b);return (max>=11)&&(diff>=2)}
 function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:0,ping:0};m.darts.forEach(v=>{if(v===0)aw.darts++;else if(v===1)bw.darts++});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b)aw.ping++;else if(b>a)bw.ping++}});return{aw,bw}}
 function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v===1);const okP=getPingPts(m).every(s=>isPingValid(+s.a,+s.b));const T=+state.rules.paletTarget||11,pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1));return okD&&okP&&okL}
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
-function clearMatch(mid){const m=findMatch(mid);if(!m)return;if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b)))return;if(!confirm("Effacer tous les scores de ce match ?"))return;m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};saveState();renderMatches()}
+function clearMatch(mid){const m=findMatch(mid); if(!m) return;m.darts = Array(dartsTotal()).fill(null);m.ping  = Array(pingTotal()).fill(null);m.pingPts = Array(pingTotal()).fill({a:null,b:null});m.palet = {a:null,b:null};saveState();renderMatches();});m.palet={a:null,b:null};saveState();renderMatches()}
 
 /* ===== Bonus ===== */
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
@@ -1080,7 +1087,28 @@ function renderMatches(){
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
-      qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
+      qsa('.match-card[data-id="'+m.id+'"] 
+      // ping (nouveau select vainqueur)
+      qsa('.match-card[data-id="'+m.id+'"] select[data-kind="ping"]').forEach(sel=>{
+        const can = (isAdmin() || hasClaim(m.a) || hasClaim(m.b));
+        sel.disabled = !(can && canEditScores(m, rCtl));
+        sel.addEventListener("change", ()=>{
+          const i  = parseInt(sel.getAttribute("data-index"),10);
+          const vv = sel.value==="" ? null : parseInt(sel.value,10); // 0/1/null
+          const mm = findMatch(m.id);
+          if (!Array.isArray(mm.ping)) mm.ping = [];
+          // ensure length
+          const total = pingTotal();
+          mm.ping = mm.ping.slice(0,total);
+          while (mm.ping.length < total) mm.ping.push(null);
+          mm.ping[i] = vv;
+          saveState();
+          renderMatches();
+          renderLeaderboard();
+          renderH2H();
+        });
+      });
+input[data-ping]').forEach(inp=>{
         const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
         const mid=m.id,idxSet=parseInt(inp.getAttribute("data-index"),10),which=inp.getAttribute("data-ping");
         const updateNote=()=>{const mm=findMatch(mid),s=mm.pingPts[idxSet],ok=isPingValid(+s.a,+s.b);const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');if(note)note.textContent=ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}
@@ -1128,31 +1156,29 @@ function renderDarts(m){
   return html;
 }
 function renderPing(m){
-  const s = state.rules.pingSingles, N = pingTotal();
+  const sSingles = state.rules.pingSingles || 0;
+  const sDoubles = state.rules.pingDoubles || 0;
+  const total    = sSingles + sDoubles;
+  // ensure m.ping is an array of length total filled with nulls
+  if (!Array.isArray(m.ping)) m.ping = [];
+  m.ping = m.ping.slice(0, total);
+  while (m.ping.length < total) m.ping.push(null);
+
   let html = `<div class="sport-group">
     <div class="sport-title"><span class="sport-icon">${sportIcon('ping')}</span> Ping-pong</div>`;
-  for(let i=0;i<N;i++){
-    const set = m.pingPts[i] || {a:null,b:null};
-    const lab = (i < s ? `Simple ${i+1}` : `Double ${i-s+1}`);
-    const ok = isPingValid(+set.a,+set.b);
-    html += `<div class="sport-item">
-      <label>${lab}</label>
-      <div class="ping-row">
-        <div>
-          <input type="number" min="0" max="99" step="1"
-                 value="${set.a==null?'':set.a}"
-                 data-ping="a" data-index="${i}"
-                 placeholder="${esc(teamName(m.a))}">
-        </div>
-        <div>
-          <input type="number" min="0" max="99" step="1"
-                 value="${set.b==null?'':set.b}"
-                 data-ping="b" data-index="${i}"
-                 placeholder="${esc(teamName(m.b))}">
-        </div>
-      </div>
-      <div class="help" data-note="ping-${m.id}-${i}">${ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}</div>
-    </div>`;
+
+  for (let i=0; i<total; i++){
+    const v = (m.ping[i]===0 || m.ping[i]===1) ? m.ping[i] : "";
+    const label = i < sSingles ? `Simple ${i+1}` : `Double ${i - sSingles + 1}`;
+    html += `
+      <div class="sport-item">
+        <label class="muted">${label}</label>
+        <select data-kind="ping" data-index="\${i}">
+          <option value="">— vainqueur —</option>
+          <option value="0"\${v===0?' selected':''}>Victoire \${esc(teamName(m.a))}</option>
+          <option value="1"\${v===1?' selected':''}>Victoire \${esc(teamName(m.b))}</option>
+        </select>
+      </div>`;
   }
   html += `</div>`;
   return html;
