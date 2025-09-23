@@ -1177,11 +1177,22 @@ function renderMatches(){
         inp.addEventListener("change",commit);inp.addEventListener("blur",commit);inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();inp.blur()}})
       });
 
-      const clr=qs('.match-card[data-id="'+m.id+'"] [data-clear]');if(clr)clr.addEventListener("click",()=>clearMatch(m.id));
-      const head=qs('.match-card[data-id="'+m.id+'"] [data-expand]');if(head)head.addEventListener("click",()=>{const open=el.getAttribute("aria-expanded")==="true";el.setAttribute("aria-expanded",open?"false":"true");ui.open[m.id]=!open});
-      qsa('.match-card[data-id="'+m.id+'"] [data-bonus]').forEach(b=>b.addEventListener('click',()=>openBonusModal(r,b.getAttribute('data-team'))));
+const clr = qs('.match-card[data-id="'+m.id+'"] [data-clear]');
+      if (clr) clr.addEventListener("click", ()=> clearMatch(m.id));
+
+      const head = qs('.match-card[data-id="'+m.id+'"] [data-expand]');
+      if (head) head.addEventListener("click", ()=>{
+        const open = head.getAttribute("aria-expanded")==="true";
+        head.setAttribute("aria-expanded", open ? "false" : "true");
+        ui.open[m.id] = !open;
+      });
+
+      qsa('.match-card[data-id="'+m.id+'"] [data-bonus]').forEach(b => {
+        b.addEventListener('click', ()=> openBonusModal(r, b.getAttribute('data-team')));
+      });
     });
   });
+
   id("stats-matches").textContent=complete+" / "+state.matches.length+" matches complets";
   renderLeaderboard();
 }
