@@ -891,11 +891,42 @@ const __img =
 
 return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt="${__lbl}"></span></span>`;
   } else {
-    // Révélé à tout le monde
-    const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
-    const labelSport = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-    const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0; const type = sel.type || 'capitaine'; const lblType = type==='miroir' ? 'Miroir' : (type==='taupe' ? 'René la taupe' : (type==='lefthand' ? 'Main gauche' : 'Capitaine')); const img = type==='miroir' ? 'miroir.jpg' : (type==='taupe' ? 'taupe.png' : (type==='lefthand' ? 'main gauche.png' : 'capitaine.jpg')); return `<span class="pill blue">${lblType} ${type==='capitaine' ? labelPlayer+' / '+labelSport : (sel.sport ? ' / '+labelSport : '')} : +${applied}<span class="mini-bonus"><img src="img/${img}" alt=""></span></span>`;
-  }
+  // Révélé à tout le monde
+  const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
+  const labelSport  = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
+
+  const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0;
+  const type    = sel.type || 'capitaine';
+
+  const lblType =
+    type === 'miroir'   ? 'Miroir' :
+    type === 'taupe'    ? 'René la taupe' :
+    type === 'lefthand' ? '10 pouces 2 mains gauche' :
+    type === 'melon'    ? "Melon d’or" :
+                          'Capitaine';
+
+  const img =
+    type === 'miroir'   ? 'miroir.jpg' :
+    type === 'taupe'    ? 'taupe.png' :
+    type === 'lefthand' ? 'main gauche.png' :
+    type === 'melon'    ? 'melon.png' :
+                          'capitaine.jpg';
+
+  // signe + classe couleur
+  const sign     = applied > 0 ? '+' : '';
+  const valClass = applied > 0 ? 'pos' : (applied < 0 ? 'neg' : '');
+
+  // texte complémentaire : joueur/sport pour Capitaine, sport pour Taupe/Left/Melon
+  const extra =
+    type === 'capitaine' ? `${labelPlayer} / ${labelSport}` :
+    (['taupe', 'lefthand', 'melon'].includes(type) && sel.sport ? ` / ${labelSport}` : '');
+
+  return `<span class="pill blue">${lblType}${extra} :
+            <span class="${valClass}">${sign}${applied}</span>
+            <span class="mini-bonus"><img src="img/${img}" alt="${lblType}"></span>
+          </span>`;
+}
+
 }
 
 
