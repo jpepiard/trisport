@@ -822,7 +822,18 @@ function isMatchComplete(m){
   return okD && okP && okL;
 }
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
-function clearMatch(mid){const m=findMatch(mid); if(!m) return;m.darts = Array(dartsTotal()).fill(null);m.ping  = Array(pingTotal()).fill(null);m.pingPts = Array(pingTotal()).fill({a:null,b:null});m.palet = {a:null,b:null};saveState();renderMatches();});m.palet={a:null,b:null};saveState();renderMatches()}
+function clearMatch(mid){
+  const m = findMatch(mid);
+  if (!m) return;
+  m.darts = Array(dartsTotal()).fill(null);
+  m.ping  = Array(pingTotal()).fill(null);
+  m.pingPts = Array(pingTotal()).fill({a:null,b:null});
+  m.palet = { a:null, b:null };
+  saveState();
+  renderMatches();
+  renderLeaderboard();
+  renderH2H();
+
 
 /* ===== Bonus ===== */
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
