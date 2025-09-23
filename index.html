@@ -38,22 +38,34 @@ function ensureMelonWrapper(){
     wrap = document.createElement('div');
     wrap.id = 'melon-params';
     wrap.className = 'bonus-params';
-    wrap.style.maxHeight = '0px';
-    wrap.style.overflow = 'hidden';
     fields.parentNode.insertBefore(wrap, fields);
     wrap.appendChild(fields);
   }
   return wrap;
 }
 
+
 function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
-  const wC = ensureParamWrapper();    if (wC){ wC.style.maxHeight = openCap    ? (wC.scrollHeight+'px') : '0px'; }
-  const wT = ensureTaupeWrapper();    if (wT){ wT.style.maxHeight = openTaupe  ? (wT.scrollHeight+'px') : '0px'; }
-  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft   ? (wL.scrollHeight+'px') : '0px'; }
-  const wM = ensureMelonWrapper();    if (wM){ wM.style.maxHeight = openMelon  ? (wM.scrollHeight+'px') : '0px'; }
+  const wC = ensureParamWrapper();    if (wC){ wC.style.maxHeight = openCap   ? (wC.scrollHeight+'px') : '0px'; }
+  const wT = ensureTaupeWrapper();    if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
+  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openLeft  ? (wL.scrollHeight+'px') : '0px'; }
+  const wM = ensureMelonWrapper();    if (wM){ wM.style.maxHeight = openMelon ? (wM.scrollHeight+'px') : '0px'; }
 }
 
 function selectBonusType(t){
+  // lock guard per category
+  try{
+    const teamId = (window.bonusCTX && window.bonusCTX.teamId);
+    if (teamId && typeof getTeamCategoryLocks==='function'){
+      const locks = getTeamCategoryLocks(teamId);
+      const cat = BONUS_CATEGORY[t];
+      const round = (window.bonusCTX && window.bonusCTX.round);
+      const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
+      const allowCurrent = !!(currentSel && currentSel.type === t);
+      if (cat && locks.has(cat) && !allowCurrent) return; // blocked
+    }
+  }catch(_){}
+
   // 1) type valide (inclut 'melon')
   window._bonusType = (['capitaine','miroir','taupe','lefthand','melon'].includes(t) ? t : 'capitaine');
 
@@ -80,7 +92,7 @@ function selectBonusType(t){
       window._bonusType === 'miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
       window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
       window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-      window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport (Fléchettes/Ping : +pts gagnés si victoire ; −pts adverses si défaite. Palet : +PF si victoire ; −2×(11−PF) si défaite)." :
+      window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport." :
                                           "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.";
   }
 
@@ -88,59 +100,48 @@ function selectBonusType(t){
   setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand', window._bonusType==='melon');
 }
 
-
-
 function prepareBonusOptions(){
-  const cards = qsa('.bonus-select .bonus-card');
+  const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+  const map   = ['capitaine','miroir','taupe','lefthand','melon']; // 5 cartes
 
-  // Récupère une carte par type (d’abord data-bonus-type, sinon via le titre)
-  const getCard = (t)=>{
-    let el = qs(`.bonus-select .bonus-card[data-bonus-type="${t}"]`);
-    if (el) return el;
-    const titleHas = (c, s)=> (c.querySelector('.bonus-title')?.textContent || '').toLowerCase().includes(s);
-    return [...cards].find(c=>{
-      if (t==='capitaine') return titleHas(c,'capitaine');
-      if (t==='miroir')    return titleHas(c,'miroir');
-      if (t==='taupe')     return titleHas(c,'taupe');
-      if (t==='lefthand')  return titleHas(c,'main gauche') || titleHas(c,'mains gauche') || titleHas(c,'10 pouces');
-      if (t==='melon')     return titleHas(c,'melon');
-      return false;
-    }) || null;
-  };
+  cards.forEach((c, i)=>{
+    c.classList.add('selectable');
+    c.tabIndex = 0;
+    c.setAttribute('role','button');
 
-  const cap   = getCard('capitaine');
-  const tau   = getCard('taupe');
-  const leftc = getCard('lefthand');
-  const melon = getCard('melon');
+    const type = map[i] || 'capitaine';
+    c.addEventListener('click', ()=>selectBonusType(type));
+    c.addEventListener('keydown', ev=>{
+      if(ev.key===' '||ev.key==='Enter'){
+        ev.preventDefault();
+        selectBonusType(type);
+      }
+    });
+  });
 
-  // Ajoute data-bonus-type si absent (ça fiabilise les prochains passages)
-  if (cap   && !cap.dataset.bonusType)   cap.dataset.bonusType   = 'capitaine';
-  if (tau   && !tau.dataset.bonusType)   tau.dataset.bonusType   = 'taupe';
-  if (leftc && !leftc.dataset.bonusType) leftc.dataset.bonusType = 'lefthand';
-  if (melon && !melon.dataset.bonusType) melon.dataset.bonusType = 'melon';
+  // déplacer/afficher les panneaux de paramètres (Capitaine n’en a plus)
+  const cap = cards[0], tau = cards[2], leftc = cards[3], melon = cards[4];
+  const capTxt = cap?.querySelector('.bonus-text');
+  const tauTxt = tau?.querySelector('.bonus-text');
+  const leftTxt = leftc?.querySelector('.bonus-text');
+  const melonTxt = melon?.querySelector('.bonus-text');
 
-  const capTxt   = cap   && cap.querySelector('.bonus-text');
-  const tauTxt   = tau   && tau.querySelector('.bonus-text');
-  const leftTxt  = leftc && leftc.querySelector('.bonus-text');
-  const melonTxt = melon && melon.querySelector('.bonus-text');
+  const wC = ensureParamWrapper();    if (capTxt   && wC && wC.parentElement   !== capTxt)   capTxt.appendChild(wC);
+  const wT = ensureTaupeWrapper();    if (tauTxt   && wT && wT.parentElement   !== tauTxt)   tauTxt.appendChild(wT);
+  const wL = ensureLeftHandWrapper(); if (leftTxt  && wL && wL.parentElement   !== leftTxt)  leftTxt.appendChild(wL);
+  const wM = ensureMelonWrapper();    if (melonTxt && wM && wM.parentElement !== melonTxt) melonTxt.appendChild(wM);
 
-  // Crée/retourne les wrappers et ATTACHE-LES DANS .bonus-text
-  const wC = ensureParamWrapper();     if (capTxt   && wC && wC.parentElement !== capTxt)   capTxt.appendChild(wC);
-  const wT = ensureTaupeWrapper();     if (tauTxt   && wT && wT.parentElement !== tauTxt)   tauTxt.appendChild(wT);
-  const wL = ensureLeftHandWrapper();  if (leftTxt  && wL && wL.parentElement !== leftTxt)  leftTxt.appendChild(wL);
-  const wM = ensureMelonWrapper();     if (melonTxt && wM && wM.parentElement !== melonTxt) melonTxt.appendChild(wM);
-
-  // Initialise la sélection courante (le selectBonusType est appelé depuis openBonusModal)
-  const sel = getBonusSelection(bonusCTX.round, bonusCTX.teamId) || {};
-  window._bonusType = sel.type || 'capitaine';
+  // init sélection
+  selectBonusType(window._bonusType || 'capitaine');
 }
-
-
-
 
 </script>
 
 <style>
+.bonus-card.disabled{opacity:.45;filter:grayscale(1);pointer-events:none}
+.bonus-card.disabled:after{content:"✖";position:absolute;right:10px;top:10px;opacity:.8}
+.pos{color:#34d399;font-weight:600}
+.neg{color:#f87171;font-weight:600}
 :root{--bg:#0f1220;--border:#2b315f;--text:#e7e9f7;--muted:#8b94b8;--chip:#242b55;--card:#1b2242}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;background:radial-gradient(1200px 800px at 20% -10%,#1c2040,transparent),radial-gradient(1000px 600px at 120% 0%,#1b2550,transparent),var(--bg);color:var(--text)}
 header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(130%) blur(8px);background:linear-gradient(180deg,rgba(15,18,32,.9),rgba(15,18,32,.6));border-bottom:1px solid var(--border)}
@@ -221,10 +222,6 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .sport-item label{display:block;margin:0 0 6px;color:var(--muted)}
 .ping-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ping-row input{width:100%}
-/* align darts & ping rows */
-.match-card .sport-group .sport-item{display:grid;grid-template-columns:120px 1fr;align-items:center;gap:12px}
-.match-card .sport-group .sport-item label{white-space:nowrap}
-.match-card .sport-group .sport-item select{width:100%}
 
 .bonus-illu img{width:100%;height:100%;object-fit:cover;border-radius:12px}
 .pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
@@ -520,8 +517,8 @@ header .btn, header .chip, header .pill, header .tab{
 <div id="bonus-modal" aria-hidden="true">
   <div class="bonus-panel bonus-dialog">
     <div class="hd">Choisir un bonus</div>
-
     <div class="bd">
+
       <div class="bonus-select">
         <!-- Capitaine -->
         <div class="bonus-card">
@@ -595,7 +592,7 @@ header .btn, header .chip, header .pill, header .tab{
           </div>
           <div class="bonus-text">
             <div class="bonus-title">Melon d'or</div>
-            <div class="help">Choisissez le sport à appliquer pour Melon d'or.</div>
+            <div class="help">Nouveau bonus — détails à venir.</div>
           </div>
         </div>
       </div>
@@ -606,6 +603,7 @@ header .btn, header .chip, header .pill, header .tab{
       </div>
 
       <!-- Paramètres (insérés sous la carte correspondante) -->
+      <!-- Capitaine n’a plus de paramètres -->
       <div id="taupe-fields" class="grid cols-2" style="margin-top:10px">
         <div>
           <label>Sport</label>
@@ -627,7 +625,6 @@ header .btn, header .chip, header .pill, header .tab{
           </select>
         </div>
       </div>
-
       <div id="melon-fields" class="grid cols-2" style="margin-top:10px">
         <div>
           <label>Sport</label>
@@ -638,14 +635,16 @@ header .btn, header .chip, header .pill, header .tab{
           </select>
         </div>
       </div>
-    </div><!-- /.bd -->
 
+
+    </div>
     <div class="ft">
       <button type="button" class="btn" id="bonus-cancel">Annuler</button>
       <button type="button" class="btn primary" id="bonus-save">Valider</button>
     </div>
   </div>
 </div>
+
 
 <script>
 'use strict';
@@ -839,6 +838,99 @@ function computeCapitaineBonusForMatch(m, tid, player, sport){
   }
   return gain;
 }
+/* Melon d’or — ±2 × différence en POINTS sur le sport choisi (1 manche = 5 pts au ping & fléchettes) */
+
+function computeMelonBonusForMatch(m, tid, sport){
+  try{
+    const isA = (m.a === tid);
+    const isB = (m.b === tid);
+    if(!isA && !isB) return 0;
+
+    if (sport === 'darts') {
+      // Manches gagnées -> points (×5)
+      let aw=0, bw=0;
+      (m.darts||[]).forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
+      const myPts  = (isA ? aw : bw) * 5;
+      const oppPts = (isA ? bw : aw) * 5;
+      if (myPts > oppPts) return myPts;
+      if (myPts < oppPts) return -oppPts;
+      return 0;
+    } else if (sport === 'ping') {
+      // Manches gagnées par set -> points (×5)
+      let aw=0, bw=0;
+      (getPingPts(m) || []).forEach(s=>{
+        const a = (s && s.a!=null) ? +s.a : null;
+        const b = (s && s.b!=null) ? +s.b : null;
+        if (!isPingValid(a,b)) return;
+        if (a>b) aw++; else if (b>a) bw++;
+      });
+      const myPts  = (isA ? aw : bw) * 5;
+      const oppPts = (isA ? bw : aw) * 5;
+      if (myPts > oppPts) return myPts;
+      if (myPts < oppPts) return -oppPts;
+      return 0;
+    } else { // palet
+      const a = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
+      const b = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
+      if (a==null || b==null) return 0;
+      const myPF  = isA ? a : b;
+      const oppPF = isA ? b : a;
+      if (myPF > oppPF) return myPF;                 // victoire => +PF
+      if (myPF < oppPF) return - (2 * (11 - myPF));  // défaite => -2×(11−PF équipe)
+      return 0;
+    }
+  }catch(e){ return 0; }
+}
+/* === Recompute all bonuses for finished rounds (used when admin edits scores after closure) === */
+function recomputeAllBonuses(){
+  try{
+    const rounds = (state.matches || []).map(m=>m.round).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+    state.bonusApplied = state.bonusApplied || {};
+    rounds.forEach(r=>{
+      const rs = roundState(r);
+      if (!rs || !rs.finished) return;
+      const matches = (state.matches || []).filter(m=>m.round===r);
+      const sels = (state.bonusSelections && state.bonusSelections[r]) || {};
+      // reset applied
+      state.bonusApplied[r] = state.bonusApplied[r] || {};
+      Object.keys(sels).forEach(tid=>{ state.bonusApplied[r][tid]=0; });
+
+      Object.keys(sels).forEach(tid=>{
+        const sel = sels[tid]; if (!sel) return;
+        let total = 0;
+        if (sel.type === 'capitaine'){
+          matches.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
+        } else if (sel.type === 'melon'){
+          const m = matches.find(x=>x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (oppSel && oppSel.type === 'miroir'){
+              total = 0; // sera ajouté côté Miroir
+            } else {
+              const sport = sel.sport || 'darts';
+              total = computeMelonBonusForMatch(m, tid, sport);
+            }
+          }
+        } else if (sel.type === 'miroir'){
+          const m = matches.find(x=>x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (oppSel && oppSel.type === 'melon'){
+              const sport = oppSel.sport || 'darts';
+              total = computeMelonBonusForMatch(m, tid, sport);
+            }
+          }
+        }
+        state.bonusApplied[r][tid] = total;
+      });
+    });
+  }catch(e){ /* noop */ }
+}
+
+
+
 
 /* Icônes pour titres de sport */
 function sportIcon(name){
@@ -890,7 +982,7 @@ const __img =
                             'capitaine.jpg';
 
 return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt="${__lbl}"></span></span>`;
-} else {
+  } else {
   // Révélé à tout le monde
   const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
   const labelSport  = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
@@ -931,6 +1023,7 @@ return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/$
 
 
 function renderMatches(){
+  if (typeof recomputeAllBonuses==='function') recomputeAllBonuses();
   const list=id("match-list");list.innerHTML="";
   if(!state.matches.length){list.appendChild(help("Aucune rencontre planifiée."));id("stats-matches").textContent="0 / 0 matches complets";id("round-status").textContent="—";id("btn-start-round").style.display="none";id("btn-end-round").style.display="none";return}
   const groups={};state.matches.forEach(m=>(groups[m.round]=groups[m.round]||[]).push(m));
@@ -986,28 +1079,16 @@ function renderMatches(){
         const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!(can && canEditScores(m,rCtl));
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
-      
       // ping
-      qsa('.match-card[data-id="'+m.id+'"] select[data-kind="ping"]').forEach(sel=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!(can && canEditScores(m,rCtl));
-        const mid=m.id;
-        sel.addEventListener("change",()=>{
-          const idx = parseInt(sel.getAttribute("data-index"),10);
-          const v = sel.value; // "", "0", "1"
-          const mm = findMatch(mid);
-          if (!mm) return;
-          if (v===""){
-            mm.pingPts[idx] = {a:null,b:null};
-          } else if (v==="0"){
-            mm.pingPts[idx] = {a:11,b:9};  // A vainqueur
-          } else if (v==="1"){
-            mm.pingPts[idx] = {a:9,b:11};  // B vainqueur
-          }
-          saveState();
-          renderMatches(); renderLeaderboard(); renderH2H();
-        });
+      qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
+        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
+        const mid=m.id,idxSet=parseInt(inp.getAttribute("data-index"),10),which=inp.getAttribute("data-ping");
+        const updateNote=()=>{const mm=findMatch(mid),s=mm.pingPts[idxSet],ok=isPingValid(+s.a,+s.b);const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');if(note)note.textContent=ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}
+        inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);const mm=findMatch(mid);mm.pingPts[idxSet][which]=v;saveState();updateNote()});
+        const commit=()=>{const mm=findMatch(mid);const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);mm.pingPts[idxSet][which]=v;saveState();renderMatches();renderLeaderboard();renderH2H()};
+        inp.addEventListener("change",commit);inp.addEventListener("blur",commit);inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();inp.blur()}})
       });
-// palet
+      // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
         const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
         const mid=m.id,which=inp.getAttribute("data-palet");
@@ -1046,35 +1127,36 @@ function renderDarts(m){
   html += `</div>`;
   return html;
 }
-
 function renderPing(m){
-  const s = +state.rules.pingSingles || 0;
-  const d = +state.rules.pingDoubles || 0;
-  const N = s + d;
-  let out = `<div class="sport-group">
+  const s = state.rules.pingSingles, N = pingTotal();
+  let html = `<div class="sport-group">
     <div class="sport-title"><span class="sport-icon">${sportIcon('ping')}</span> Ping-pong</div>`;
   for(let i=0;i<N;i++){
-    const v = m.pingPts[i] || {a:null,b:null};
+    const set = m.pingPts[i] || {a:null,b:null};
     const lab = (i < s ? `Simple ${i+1}` : `Double ${i-s+1}`);
-    let selVal = "";
-    if (v && typeof v === 'object' && v.a!=null && v.b!=null){
-      selVal = (+v.a > +v.b) ? "0" : "1";
-    } else if (v===0 || v===1){
-      selVal = String(v);
-    }
-    out += `<div class="sport-item">
+    const ok = isPingValid(+set.a,+set.b);
+    html += `<div class="sport-item">
       <label>${lab}</label>
-      <select data-kind="ping" data-index="${i}">
-        <option value="" ${selVal===""?'selected':''}>Non joué</option>
-        <option value="0" ${selVal==="0"?'selected':''}>Victoire ${esc(teamName(m.a))}</option>
-        <option value="1" ${selVal==="1"?'selected':''}>Victoire ${esc(teamName(m.b))}</option>
-      </select>
+      <div class="ping-row">
+        <div>
+          <input type="number" min="0" max="99" step="1"
+                 value="${set.a==null?'':set.a}"
+                 data-ping="a" data-index="${i}"
+                 placeholder="${esc(teamName(m.a))}">
+        </div>
+        <div>
+          <input type="number" min="0" max="99" step="1"
+                 value="${set.b==null?'':set.b}"
+                 data-ping="b" data-index="${i}"
+                 placeholder="${esc(teamName(m.b))}">
+        </div>
+      </div>
+      <div class="help" data-note="ping-${m.id}-${i}">${ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}</div>
     </div>`;
   }
-  out += `</div>`;
-  return out;
+  html += `</div>`;
+  return html;
 }
-
 function renderPalet(m){
   const T = +state.rules.paletTarget || 11;
   const a = (m.palet?.a==null?null:+m.palet?.a),
@@ -1101,10 +1183,136 @@ function renderPalet(m){
 /* ===== Classement ===== */
 function baseLeaderboardStats(){const R=state.rules,stats={};state.teams.forEach(t=>stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,pointsBase:0,bonus:0,malus:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0});state.matches.forEach(m=>{const A=stats[m.a],B=stats[m.b];ensureLengths(m);m.darts.forEach(v=>{if(v===0){A.dartsW++;A.pointsBase+=R.dartsWinPoints}else if(v===1){B.dartsW++;B.pointsBase+=R.dartsWinPoints}});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b){A.pingW++;A.pointsBase+=R.pingWinPoints}else if(b>a){B.pingW++;B.pointsBase+=R.pingWinPoints}}});const pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);if(pa!=null&&pb!=null){A.palFor+=pa;B.palFor+=pb;A.palAg+=pb;B.palAg+=pa;A.pointsBase+=pa;B.pointsBase+=pb}if(isMatchComplete(m)){A.matchesComplete++;B.matchesComplete++}});Object.keys(state.bonusApplied||{}).forEach(r=>{const per=state.bonusApplied[r];Object.keys(per).forEach(tid=>{const v=per[tid]||0;if(stats[tid])stats[tid].bonus+=v})});return stats}
 function computeLeaderboard(){const stats=baseLeaderboardStats();const rows=Object.values(stats).map(x=>({teamId:x.teamId,name:x.name,avatar:x.avatar,points:x.pointsBase+x.bonus-x.malus,bonus:x.bonus,malus:x.malus,dartsW:x.dartsW,pingW:x.pingW,palFor:x.palFor,palAg:x.palAg,matchesComplete:x.matchesComplete}));rows.sort((x,y)=>(y.points-x.points)||((y.palFor-y.palAg)-(x.palFor-x.palAg))||((y.dartsW+y.pingW)-(x.dartsW+x.pingW))||x.name.localeCompare(y.name));rows.forEach((r,i)=>r.rank=i+1);return rows}
-function renderLeaderboard(){const tbody=qs("#table-classement tbody");tbody.innerHTML="";computeLeaderboard().forEach(r=>{const diff=r.palFor-r.palAg;const avatar=r.avatar?(`<span class="avatar avatar-lg"><img src="${esc(r.avatar)}" alt="avatar"></span>`):(`<span class="avatar avatar-lg"><span class="avatar-initials">${esc(initials(r.name))}</span></span>`);const tr=document.createElement("tr");tr.innerHTML=`<td>${r.rank}</td><td><span class="team-name">${avatar} ${esc(r.name)}</span></td><td><b>${r.points}</b></td><td>${r.dartsW}</td><td>${r.pingW}</td><td><span class="score-compact">${hy(r.palFor,r.palAg)}</span> <span class="muted">(${diff>=0?'+':''}${diff})</span></td><td>${r.bonus}</td><td>${r.malus||0}</td><td>${r.matchesComplete}</td>`;tbody.appendChild(tr)})}
+
+function renderLeaderboard(){
+  if (typeof recomputeAllBonuses==='function') recomputeAllBonuses();
+  const tbody = qs("#table-classement tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  const teams = state.teams.slice();
+  const rows = teams.map(t => {
+    const tid = t.id;
+    let dartsPF=0, dartsPA=0, pingPF=0, pingPA=0, palPF=0, palPA=0, pts=0, matchesComplete=0;
+
+    state.matches.forEach(m => {
+      if (m.a!==tid && m.b!==tid) return;
+      const isA = (m.a===tid);
+
+      // Points totaux (base + bonus appliqué)
+      if (typeof pointsForTeamInMatch === 'function') {
+        pts += pointsForTeamInMatch(m, tid) || 0;
+      }
+
+      // Stat fléchettes (manches gagnées → points ×5)
+      if (Array.isArray(m.darts)) {
+        let aw=0, bw=0;
+        m.darts.forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
+        dartsPF += (isA ? aw : bw) * 5;
+        dartsPA += (isA ? bw : aw) * 5;
+      }
+
+      // Stat ping (manches gagnées → points ×5)
+      if (typeof getPingPts === 'function') {
+        let aw=0, bw=0;
+        (getPingPts(m) || []).forEach(s=>{
+          const a = (s && s.a!=null) ? +s.a : null;
+          const b = (s && s.b!=null) ? +s.b : null;
+          if (!isPingValid(a,b)) return;
+          if (a>b) aw++; else if (b>a) bw++;
+        });
+        pingPF += (isA ? aw : bw) * 5;
+        pingPA += (isA ? bw : aw) * 5;
+      }
+
+      // Stat palet (PF/PA)
+      if (m.palet && m.palet.a!=null && m.palet.b!=null) {
+        palPF += isA ? (+m.palet.a||0) : (+m.palet.b||0);
+        palPA += isA ? (+m.palet.b||0) : (+m.palet.a||0);
+      }
+
+      // Match complet ?
+      if (typeof isMatchComplete === 'function' && isMatchComplete(m)) matchesComplete++;
+    });
+
+    // Bonus/Malus cumulés (toutes journées)
+    let bonusPos=0, malusNeg=0;
+    const BA = state.bonusApplied || {};
+    Object.keys(BA).forEach(r => {
+      const v = (BA[r] && BA[r][tid]) || 0;
+      if (v>0) bonusPos += v;
+      else if (v<0) malusNeg += (-v);
+    });
+
+    return {
+      id: tid,
+      name: t.name,
+      avatar: t.avatar,
+      points: pts,
+      dartsPF, dartsPA, pingPF, pingPA, palPF, palPA,
+      bonusPos, malusNeg, matchesComplete
+    };
+  });
+
+  rows.sort((a,b)=> b.points - a.points || a.name.localeCompare(b.name));
+
+  rows.forEach((r,i)=>{
+    const avatar = avatarHtml ? avatarHtml(r.id, 22, '') : '';
+    const diffPal = r.palPF - r.palPA;
+    const signPal = diffPal>=0?'+':'';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td><span class="team-name">${avatar} ${esc(r.name||'')}</span></td>
+      <td><b>${r.points}</b></td>
+      <td>${r.dartsPF}</td>
+      <td>${r.pingPF}</td>
+      <td>${r.palPF}-${r.palPA} <span class="muted">(${signPal}${diffPal})</span></td>
+      <td>${r.bonusPos?`<span class="pos">+${r.bonusPos}</span>`:'0'}</td>
+      <td>${r.malusNeg?`<span class="neg">-${r.malusNeg}</span>`:'0'}</td>
+      <td>${r.matchesComplete}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
 
 /* ===== H2H ===== */
-function pointsForTeamInMatch(m,tid){const R=state.rules;ensureLengths(m);const isA=m.a===tid,isB=m.b===tid;if(!isA&&!isB)return 0;let pts=0;m.darts.forEach(v=>{if(v===0&&isA)pts+=R.dartsWinPoints;else if(v===1&&isB)pts+=R.dartsWinPoints});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b&&isA)pts+=R.pingWinPoints;else if(b>a&&isB)pts+=R.pingWinPoints}});if(m.palet&&m.palet.a!=null&&m.palet.b!=null)pts+=isA?+m.palet.a:+m.palet.b;return pts}
+
+function pointsForTeamInMatch(m, tid){
+  // Total de points marqués par l'équipe dans ce match (toutes disciplines) + bonus appliqué
+  const isA = (m.a === tid);
+  let pts = 0;
+
+  // Fléchettes : 1 manche gagnée = 5 points
+  if (Array.isArray(m.darts)) {
+    let aw=0, bw=0;
+    m.darts.forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
+    pts += (isA ? aw : bw) * 5;
+  }
+
+  // Ping : 1 manche gagnée = 5 points (on compte les manches gagnées par set)
+  if (typeof getPingPts === 'function') {
+    let aw=0, bw=0;
+    (getPingPts(m) || []).forEach(s=>{
+      const a = (s && s.a!=null) ? +s.a : null;
+      const b = (s && s.b!=null) ? +s.b : null;
+      if (!isPingValid(a,b)) return;
+      if (a>b) aw++; else if (b>a) bw++;
+    });
+    pts += (isA ? aw : bw) * 5;
+  }
+
+  // Palet : score direct
+  if (m.palet && m.palet.a!=null && m.palet.b!=null){
+    pts += isA ? (+m.palet.a||0) : (+m.palet.b||0);
+  }
+
+  // Bonus appliqué sur la journée du match
+  const applied = (state.bonusApplied?.[m.round]?.[tid]) || 0;
+  return pts + applied;
+}
+
 function renderH2H(){const thead=qs("#table-h2h thead"),tbody=qs("#table-h2h tbody");thead.innerHTML="";tbody.innerHTML="";const teams=state.teams.slice();if(!teams.length){tbody.appendChild(help("Ajoutez des équipes pour voir la matrice."));return}const trH=document.createElement("tr");trH.appendChild(document.createElement("th")).textContent="Équipe";teams.forEach(t=>{const th=document.createElement("th");th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>';trH.appendChild(th)});thead.appendChild(trH);const byPair={};state.matches.forEach(m=>{byPair[[m.a,m.b].sort().join("|")]=m});teams.forEach(ti=>{const tr=document.createElement("tr");const th=document.createElement("th");th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>';tr.appendChild(th);teams.forEach(tj=>{const td=document.createElement("td");if(ti.id===tj.id){td.textContent="—";tr.appendChild(td);return}const m=byPair[[ti.id,tj.id].sort().join("|")];if(!m){td.innerHTML='<span class="chip">—</span>';tr.appendChild(td);return}const pI=pointsForTeamInMatch(m,ti.id),pJ=pointsForTeamInMatch(m,tj.id);let cls="h2h-draw",icon="≡";if(pI>pJ){cls="h2h-win";icon="✔"}else if(pI<pJ){cls="h2h-loss";icon="✖"}td.innerHTML='<span class="h2h-pill '+cls+'">'+icon+' <span class="score-compact">'+hy(pI,pJ)+'</span></span>';td.style.cursor="pointer";td.dataset.matchId=m.id;tr.appendChild(td)});tbody.appendChild(tr)});tbody.addEventListener("click",e=>{let n=e.target;while(n&&n!==tbody&&!(n.tagName==="TD"&&n.dataset.matchId))n=n.parentNode;if(!n||n===tbody)return;goto("calendrier");ui.open[n.dataset.matchId]=true;setTimeout(()=>{const card=qs('.match-card[data-id="'+n.dataset.matchId+'"]');if(card){card.setAttribute("aria-expanded","true");card.scrollIntoView({behavior:"smooth",block:"start"})}},0)})}
 
 /* ===== Tabs & clicks ===== */
@@ -1157,13 +1365,49 @@ document.addEventListener("click",async(e)=>{
       const incomplets = matchesOfRound.filter(m => !isMatchComplete(m));
       if (incomplets.length) { alert(`Impossible de terminer la journée #${r} : ${incomplets.length} match(s) incomplet(s).`); return; }
 
+      
+      
       const sels = state.bonusSelections[r] || {};
       Object.keys(sels).forEach(tid=>{
         const sel = sels[tid]; if (!sel) return;
         if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
         let total = 0;
-        matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
-        setBonusApplied(r, tid, total); state.bonusUsed=state.bonusUsed||{}; state.bonusUsed[r]=state.bonusUsed[r]||{}; state.bonusUsed[r][tid]=true; markTeamBonusUsed(tid);
+
+        if (sel.type === 'capitaine') {
+          matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
+        } else if (sel.type === 'melon') {
+          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (oppSel && oppSel.type === 'miroir') {
+              // Melon se retourne : rien pour l'équipe Melon, Miroir prendra le total dans sa propre branche
+              total = 0;
+            } else {
+              const sport = sel.sport || 'darts';
+              total = computeMelonBonusForMatch(m, tid, sport);
+            }
+          }
+        } else if (sel.type === 'miroir') {
+          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (oppSel && oppSel.type === 'melon') {
+              // Miroir récupère le Melon d’or de l’adversaire, même sport
+              const sport = oppSel.sport || 'darts';
+              total = computeMelonBonusForMatch(m, tid, sport);
+            } else {
+              total = 0;
+            }
+          }
+        } else {
+          total = 0; // autres
+        }
+
+        setBonusApplied(r, tid, total); 
+        state.bonusUsed = state.bonusUsed || {}; state.bonusUsed[r] = state.bonusUsed[r] || {}; state.bonusUsed[r][tid]=true; 
+        markTeamBonusUsed(tid);
       });
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
@@ -1187,24 +1431,125 @@ document.addEventListener("click",async(e)=>{
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
 
-function openBonusModal(round,teamId){
-  const rCtl=roundState(round);
-  if(rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
-  if ((state.bonusUsed?.[round]?.[teamId])) return alert("Ce bonus a déjà été utilisé une fois.");
-  if(!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
-  bonusCTX.round=round;bonusCTX.teamId=teamId;
-  const sel=getBonusSelection(round,teamId)||{};
-  if(typeof prepareBonusOptions==='function'){ prepareBonusOptions(); selectBonusType(sel.type||'capitaine'); }
-  if(id('taupe-sport')) id('taupe-sport').value = (sel.sport||'darts');
-  if(id('lefthand-sport')) id('lefthand-sport').value = (sel.sport||'darts');
-  if(id('melon-sport')) id('melon-sport').value = (sel.sport||'darts');
-  id('bonus-context').textContent=`Équipe : ${teamName(teamId)} — Journée #${round}`;
-  id('bonus-modal').classList.add('show');
+
+
+/* === Bonus categories & locks === */
+function rebuildCategoryLocksFromSelections(){
+  try{
+    const S = state.bonusSelections || {};
+    const teams = (state.teams||[]).map(t=>t.id);
+    state.categoryLocks = {};
+    teams.forEach(tid => { state.categoryLocks[tid] = {}; });
+    Object.keys(S).forEach(r=>{
+      const perTeam = S[r] || {};
+      Object.keys(perTeam).forEach(tid=>{
+        const type = perTeam[tid] && perTeam[tid].type;
+        const cat = BONUS_CATEGORY[type];
+        if (cat) { state.categoryLocks[tid] = state.categoryLocks[tid] || {}; state.categoryLocks[tid][cat] = true; }
+      });
+    });
+  }catch(_){}
+}
+
+const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir' };
+
+function markCategoryLocked(teamId, type){
+  const cat = BONUS_CATEGORY[type];
+  if (!cat) return;
+  state.categoryLocks = state.categoryLocks || {};
+  state.categoryLocks[teamId] = state.categoryLocks[teamId] || {};
+  state.categoryLocks[teamId][cat] = true;
+  if (typeof saveState==='function') saveState();
+}
+
+function getTeamCategoryLocks(teamId){
+  // Returns a Set of categories already validated (locked) by THIS team for the whole tournament
+  const locks = new Set();
+  const CL = state.categoryLocks && state.categoryLocks[teamId];
+  if (CL) Object.keys(CL).forEach(cat => { if (CL[cat]) locks.add(cat); });
+  return locks;
+}
+
+function applyBonusLocks(teamId){
+  if (typeof rebuildCategoryLocksFromSelections==='function') rebuildCategoryLocksFromSelections();
+  try{
+    const locks = getTeamCategoryLocks(teamId);
+    const round = (window.bonusCTX && window.bonusCTX.round);
+    const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
+
+    const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+    const map   = ['capitaine','miroir','taupe','lefthand','melon'];
+    cards.forEach((c,i)=>{
+      const type = map[i] || 'capitaine';
+      const cat = BONUS_CATEGORY[type];
+      const locked = !!(cat && locks.has(cat));
+      // Autoriser la carte du type déjà sélectionné pour CETTE journée
+      const allowCurrentType = !!(currentSel && currentSel.type === type);
+      const disable = locked && !allowCurrentType;
+
+      c.classList.toggle('disabled', disable);
+      c.setAttribute('aria-disabled', disable ? 'true' : 'false');
+      c.title = disable ? "Déjà utilisé pour cette catégorie (tournoi)" : "";
+    });
+
+    // Si la sélection courante est désormais illégale (catégorie lockée et type différent), forcer un type autorisé
+    if (window._bonusType){
+      const curCat = BONUS_CATEGORY[window._bonusType];
+      const curSelCat = currentSel ? BONUS_CATEGORY[currentSel.type] : null;
+      if (curCat && locks.has(curCat) && (!currentSel || currentSel.type !== window._bonusType)){
+        const first = map.find(t => {
+          const c = BONUS_CATEGORY[t];
+          const isLocked = locks.has(c);
+          const isCurrent = currentSel && currentSel.type === t;
+          return !isLocked || isCurrent;
+        });
+        if (first) selectBonusType(first);
+      }
+    }
+  }catch(_){}
+}
+
+function openBonusModal(round, teamId){
+  const rCtl = roundState(round);
+  if (rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
+  if (state.bonusUsed?.[round]?.[teamId]) return alert("Ce bonus a déjà été utilisé une fois.");
+  if (!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
+
+  bonusCTX.round = round;
+  bonusCTX.teamId = teamId;
+  const sel = getBonusSelection(round, teamId) || {};
+
+  // Prépare et sélectionne la carte
+  if (typeof prepareBonusOptions === 'function') {
+    prepareBonusOptions();
+    selectBonusType(sel.type || 'capitaine');
+    if (typeof applyBonusLocks==='function') applyBonusLocks(teamId);
+  }
+
+  // Préremplissage des champs spécifiques si disponibles
+  const sport = sel.sport || 'darts';
+  if (document.getElementById('taupe-sport'))     document.getElementById('taupe-sport').value = sport;
+  if (document.getElementById('lefthand-sport'))  document.getElementById('lefthand-sport').value = sport;
+  if (document.getElementById('melon-sport'))     document.getElementById('melon-sport').value = sport;
+
+  const modal = document.getElementById('bonus-modal');
+  if (modal) {
+    const ctx = document.getElementById('bonus-context');
+    if (ctx) ctx.textContent = `Équipe : ${teamName(teamId)} — Journée #${round}`;
+    modal.classList.add('show');
+  }
 }
 
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
+  // Block saving if category already used this season
+  try{
+    const locks = getTeamCategoryLocks(t);
+    const cat = BONUS_CATEGORY[type];
+    if (cat && locks.has(cat)) { alert("Bonus déjà utilisé pour cette catégorie."); return; }
+  }catch(_){}
+
  const type =
   (window._bonusType === 'miroir')   ? 'miroir'   :
   (window._bonusType === 'taupe')    ? 'taupe'    :
@@ -1212,33 +1557,26 @@ id('bonus-save').addEventListener('click',()=>{
   (window._bonusType === 'melon')    ? 'melon'    :
                                        'capitaine';
 // Nouveau : 'capitaine' et 'melon' n'ont pas de paramètres à lire
-if (type === 'capitaine') {
-  setBonusSelection(r, t, { type: 'capitaine' });
-  if (typeof markCategoryLocked==='function') markCategoryLocked(t,'capitaine');
-  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
-} else if (type === 'melon') {
-  const sport = document.getElementById('melon-sport')?.value || 'darts';
-  setBonusSelection(r, t, { type: 'melon', sport });
-  if (typeof markCategoryLocked==='function') markCategoryLocked(t,'melon');
-  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
+if (type === 'capitaine' || type === 'melon') {
+  setBonusSelection(r, t, { type });
 } else if (type === 'taupe') {
   const sport = document.getElementById('taupe-sport')?.value || 'darts';
   setBonusSelection(r, t, { type: 'taupe', sport });
-  if (typeof markCategoryLocked==='function') markCategoryLocked(t,'taupe');
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'taupe');
   if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else if (type === 'lefthand') {
   const sport = document.getElementById('lefthand-sport')?.value || 'darts';
   setBonusSelection(r, t, { type: 'lefthand', sport });
-  if (typeof markCategoryLocked==='function') markCategoryLocked(t,'lefthand');
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'lefthand');
   if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else if (type === 'miroir') {
   setBonusSelection(r, t, { type: 'miroir' });
-  if (typeof markCategoryLocked==='function') markCategoryLocked(t,'miroir');
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'miroir');
   if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else {
   // garde-fou
   setBonusSelection(r, t, { type: 'capitaine' });
-  if (typeof markCategoryLocked==='function') markCategoryLocked(t,'capitaine');
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'capitaine');
   if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 }
 
@@ -1404,150 +1742,6 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 })();
 </script>
 
-<!-- Bonus Panel Patch: overrides broken functions safely -->
-<script>
-(function(){
-  const $id  = window.id  || (s => document.getElementById(s));
-  const $qs  = window.qs  || (s => document.querySelector(s));
-  const $qsa = window.qsa || (s => Array.from(document.querySelectorAll(s)));
 
-  function ensureParamWrapper(){
-    const fields = $id('capitaine-fields');
-    if(!fields) return null;
-    let wrap = $id('cap-params');
-    if(!wrap){
-      wrap = document.createElement('div');
-      wrap.id = 'cap-params';
-      wrap.className = 'bonus-params';
-      fields.parentNode.insertBefore(wrap, fields);
-      wrap.appendChild(fields);
-    }
-    return wrap;
-  }
-  function ensureTaupeWrapper(){
-    const fields = $id('taupe-fields'); if(!fields) return null;
-    let wrap = $id('taupe-params');
-    if(!wrap){
-      wrap = document.createElement('div');
-      wrap.id = 'taupe-params';
-      wrap.className = 'bonus-params';
-      fields.parentNode.insertBefore(wrap, fields);
-      wrap.appendChild(fields);
-    }
-    return wrap;
-  }
-  function ensureLeftHandWrapper(){
-    const fields = $id('lefthand-fields'); if(!fields) return null;
-    let wrap = $id('lefthand-params');
-    if(!wrap){
-      wrap = document.createElement('div');
-      wrap.id = 'lefthand-params';
-      wrap.className = 'bonus-params';
-      fields.parentNode.insertBefore(wrap, fields);
-      wrap.appendChild(fields);
-    }
-    return wrap;
-  }
-
-  function setParamsOpen(cap, tau, left){
-    const wC = ensureParamWrapper();
-    const wT = ensureTaupeWrapper();
-    const wL = ensureLeftHandWrapper();
-    if(wC) wC.style.maxHeight = cap  ? (wC.scrollHeight+'px') : '0px';
-    if(wT) wT.style.maxHeight = tau  ? (wT.scrollHeight+'px') : '0px';
-    if(wL) wL.style.maxHeight = left ? (wL.scrollHeight+'px') : '0px';
-  }
-
-  window.selectBonusType = function(t){
-    try{
-      const valid = ['capitaine','miroir','taupe','lefthand','melon'];
-      window._bonusType = valid.includes(t) ? t : 'capitaine';
-      const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
-      const cap=cards[0], mir=cards[1], tau=cards[2], leftc=cards[3], melon=cards[4];
-      [cap,mir,tau,leftc,melon].forEach(c=>c&&c.classList.remove('selected'));
-      if(cap   && window._bonusType==='capitaine') cap.classList.add('selected');
-      if(mir   && window._bonusType==='miroir')    mir.classList.add('selected');
-      if(tau   && window._bonusType==='taupe')     tau.classList.add('selected');
-      if(leftc && window._bonusType==='lefthand')  leftc.classList.add('selected');
-      if(melon && window._bonusType==='melon')     melon.classList.add('selected');
-
-      const ctx=$id('bonus-context');
-      if(ctx) ctx.textContent =
-        window._bonusType==='miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
-        window._bonusType==='taupe'    ? "René la taupe : choisissez le sport." :
-        window._bonusType==='lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
-        window._bonusType==='melon'    ? "Melon d'or : détails à venir." :
-                                          "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.";
-
-      setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand');
-    }catch(e){ console.error(e); }
-  };
-
-  window.prepareBonusOptions = function(){
-    try{
-      const cards = Array.from(document.querySelectorAll('.bonus-select .bonus-card'));
-      cards.forEach((c, i)=>{
-        c.classList.add('selectable'); c.tabIndex=0; c.setAttribute('role','button');
-        const type = ['capitaine','miroir','taupe','lefthand','melon'][i] || 'capitaine';
-        c.addEventListener('click', ()=>window.selectBonusType(type));
-        c.addEventListener('keydown', ev=>{
-          if(ev.key===' '||ev.key==='Enter'){ ev.preventDefault(); window.selectBonusType(type); }
-        });
-      });
-      const cap=cards[0], tau=cards[2], leftc=cards[3];
-      const wC=ensureParamWrapper(); if(cap && wC && wC.previousElementSibling!==cap) cap.appendChild(wC);
-      const wT=ensureTaupeWrapper(); if(tau && wT && wT.previousElementSibling!==tau) tau.appendChild(wT);
-      const wL=ensureLeftHandWrapper(); if(leftc && wL && wL.previousElementSibling!==leftc) leftc.appendChild(wL);
-      window.selectBonusType(window._bonusType || 'capitaine');
-    }catch(e){ console.error(e); }
-  };
-
-  window.openBonusModal = function(round, teamId){
-    const rCtl = roundState(round);
-    if (rCtl.started) return alert("La journée a démarré : bonus verrouillés.");
-    if (state.bonusUsed?.[round]?.[teamId]) return alert("Ce bonus a déjà été utilisé une fois.");
-    if (!hasClaim(teamId)) return alert("Connectez-vous à cette équipe pour choisir son bonus.");
-    bonusCTX.round = round;
-    bonusCTX.teamId = teamId;
-    const sel = getBonusSelection(round, teamId) || {};
-    if (typeof window.prepareBonusOptions === 'function') window.prepareBonusOptions();
-    window.selectBonusType(sel.type || 'capitaine');
-    if ($id('taupe-sport')) $id('taupe-sport').value = (sel.sport || 'darts');
-    if ($id('lefthand-sport')) $id('lefthand-sport').value = (sel.sport || 'darts');
-    const modal = $id('bonus-modal');
-    if (modal) modal.classList.add('show');
-  };
-
-  // Delegate click on [data-bonus] as fallback
-  document.addEventListener('click', function(ev){
-    const btn = ev.target.closest('[data-bonus]');
-    if(!btn) return;
-    const teamId = btn.getAttribute('data-team');
-    const r = (typeof CURRENT_ROUND!=='undefined' && CURRENT_ROUND!=null) ? CURRENT_ROUND : 1;
-    try{ window.openBonusModal(r, teamId); }catch(e){ console.error(e); }
-  }, true);
-})();
-</script>
-<script>
-// Extend bonus chip rendering to support "melon"
-(function(){
-  const orig = window.bonusChip;
-  window.bonusChip = function(round, teamId, rCtl){
-    try{
-      const html = orig ? orig(round, teamId, rCtl) : '';
-      // If original already handled melon, return it
-      if (html && html.includes('melon.png')) return html;
-      // Otherwise, if current selection is melon, swap the icon/label in the returned markup
-      const sel = getBonusSelection(round, teamId);
-      if (sel?.type === 'melon' && html){
-        return html
-          .replace(/(pill blue[^>]*>).*?<span class="mini-bonus"/, `$1Melon d'or : +0<span class="mini-bonus"`)
-          .replace(/img\/(?:capitaine|miroir|taupe|lefthand)\.png/, 'img/melon.png');
-      }
-      return html;
-    }catch(e){ console.error(e); return orig ? orig(round, teamId, rCtl) : ''; }
-  };
-})();
-</script>
 </body>
 </html>
