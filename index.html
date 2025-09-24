@@ -1570,8 +1570,11 @@ id('bonus-save').addEventListener('click',()=>{
   (window._bonusType === 'melon')    ? 'melon'    :
                                        'capitaine';
 // Nouveau : 'capitaine' et 'melon' n'ont pas de paramètres à lire
-if (type === 'capitaine' || type === 'melon') {
+if (type === 'capitaine') {
   setBonusSelection(r, t, { type });
+} else if (type === 'melon') {
+  const sport = document.getElementById('melon-sport')?.value || 'darts';
+  setBonusSelection(r, t, { type: 'melon', sport });
 } else if (type === 'taupe') {
   const sport = document.getElementById('taupe-sport')?.value || 'darts';
   setBonusSelection(r, t, { type: 'taupe', sport });
