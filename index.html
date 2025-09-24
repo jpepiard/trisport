@@ -91,7 +91,7 @@ function selectBonusType(t){
     ctx.textContent =
       window._bonusType === 'miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
       window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
-      window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
+      window._bonusType === 'lefthand' ? "Main gauche : choisissez le sport." :
       window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport." :
                                           "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.";
   }
@@ -231,6 +231,13 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .match-card .hd .bonus-row{display:flex;gap:10px;flex-wrap:nowrap}
 @media (max-width: 520px){
   .match-card .hd .bonus-row{gap:8px}
+}
+
+/* Keep bonuses on a single row, below scores, without affecting team names */
+.match-card .hd .bonus-row{display:flex;gap:10px;flex-wrap:nowrap;width:100%;justify-content:flex-start}
+.match-card .hd .pill.bonus{font-size:.92em;padding:6px 10px}
+@media (max-width:640px){
+  .match-card .hd .pill.bonus{font-size:.9em;padding:5px 9px}
 }
 </style>
 
@@ -575,13 +582,13 @@ header .btn, header .chip, header .pill, header .tab{
 
         <div class="bonus-sep"></div>
 
-        <!-- 10 pouces 2 mains gauche -->
+        <!-- Main gauche -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
             <img src="img/main gauche.png" alt="">
           </div>
           <div class="bonus-text">
-            <div class="bonus-title">10 pouces 2 mains gauche</div>
+            <div class="bonus-title">Main gauche</div>
             <div class="help">
               L’adversaire doit jouer un sous-match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br>
               Choisissez le sport concerné.
@@ -685,7 +692,7 @@ const BONUS = {
     switch(type){
       case "miroir":   return "Miroir";
       case "taupe":    return "René la taupe";
-      case "lefthand": return "10 pouces 2 mains gauche";
+      case "lefthand": return "Main gauche";
       case "melon":    return "Melon d'or";
       default:         return "Capitaine";
     }
@@ -976,7 +983,7 @@ function bonusChip(r,mTeam,rs){
 const __lbl =
   sel.type === 'miroir'   ? 'Miroir' :
   sel.type === 'taupe'    ? 'René la taupe' :
-  sel.type === 'lefthand' ? '10 pouces 2 mains gauche' :
+  sel.type === 'lefthand' ? 'Main gauche' :
   sel.type === 'melon'    ? 'Melon d’or' :
                             'Capitaine';
 
@@ -987,7 +994,7 @@ const __img =
   sel.type === 'melon'    ? 'melon.png' :
                             'capitaine.jpg';
 
-return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt="${__lbl}"></span></span>`;
+return `<span class="pill blue bonus">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt="${__lbl}"></span></span>`;
   } else {
   // Révélé à tout le monde
   const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
@@ -999,7 +1006,7 @@ return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/$
   const lblType =
     type === 'miroir'   ? 'Miroir' :
     type === 'taupe'    ? 'René la taupe' :
-    type === 'lefthand' ? '10 pouces 2 mains gauche' :
+    type === 'lefthand' ? 'Main gauche' :
     type === 'melon'    ? "Melon d’or" :
                           'Capitaine';
 
@@ -1019,7 +1026,7 @@ return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/$
     type === 'capitaine' ? `${labelPlayer} / ${labelSport}` :
     (['taupe', 'lefthand', 'melon'].includes(type) && sel.sport ? ` / ${labelSport}` : '');
 
-  return `<span class="pill blue">${lblType}${extra} :
+  return `<span class="pill blue bonus">${lblType}${extra} :
             <span class="${valClass}">${sign}${applied}</span>
             <span class="mini-bonus"><img src="img/${img}" alt="${lblType}"></span>
           </span>`;
