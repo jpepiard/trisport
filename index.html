@@ -1144,6 +1144,8 @@ function renderPing(m){
   const sSingles = state.rules.pingSingles || 0;
   const sDoubles = state.rules.pingDoubles || 0;
   const total = sSingles + sDoubles;
+  const rCtl = roundState(m.round || 1); // état de la journée
+
   if (!Array.isArray(m.ping)) m.ping = [];
   m.ping = m.ping.slice(0, total);
   while (m.ping.length < total) m.ping.push(null);
@@ -1152,7 +1154,9 @@ function renderPing(m){
     + '<div class="sport-title"><span class="sport-icon">' + sportIcon('ping') + '</span> Ping-pong</div>';
 
   for (let i=0; i<total; i++){
-    const v = (m.ping[i]===0 || m.ping[i]===1) ? m.ping[i] : null;
+    // Valeur affichée : par défaut "Non joué". Si la journée n'est pas démarrée, on force l'affichage à "Non joué".
+    const raw = (m.ping[i]===0 || m.ping[i]===1) ? m.ping[i] : null;
+    const v = (rCtl && !rCtl.started) ? null : raw;
     const label = (i < sSingles) ? ('Simple ' + (i+1)) : ('Double ' + (i - sSingles + 1));
     html += '<div class="sport-item">'
       + '<label class="muted">' + label + '</label>'
