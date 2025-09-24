@@ -373,6 +373,28 @@ header .btn, header .chip, header .pill, header .tab{
 }
 </style>
 
+
+<style id="matchcard-animations">
+/* Smooth expand/collapse for match cards */
+.match-card .bd{
+  /* default open state */
+  transition: max-height .28s ease, opacity .2s ease, padding .2s ease;
+  will-change: max-height, opacity;
+}
+/* Closed state visual without display:none (to allow animation) */
+.match-card[aria-expanded="false"] .bd{
+  max-height: 0 !important;
+  overflow: hidden;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  opacity: .0;
+}
+/* When JS finishes opening, we can reset to 'auto' via inline style */
+@media (prefers-reduced-motion: reduce){
+  .match-card .bd{ transition: none; }
+}
+</style>
+
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -1818,6 +1840,112 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 })();
 </script>
 
+
+
+<script id="matchcard-animations-js">
+(function(){
+  function getPanel(card){
+    return card && card.querySelector('.bd');
+  }
+  function animateOpen(card){
+    const panel = getPanel(card);
+    if(!panel) return;
+    // Ensure visible style before measuring
+    panel.style.display = 'block';
+    // From current height (0 or set) to scrollHeight
+    panel.style.maxHeight = panel.scrollHeight + 'px';
+    panel.style.opacity = '1';
+    panel.style.paddingTop = '';
+    panel.style.paddingBottom = '';
+    function onEnd(e){
+      if(e.propertyName === 'max-height'){
+        panel.style.maxHeight = 'none'; // natural height
+        panel.removeEventListener('transitionend', onEnd);
+      }
+    }
+    panel.addEventListener('transitionend', onEnd);
+  }
+  function animateClose(card){
+    const panel = getPanel(card);
+    if(!panel) return;
+    // If currently 'none', set to current measured height for transition start
+    if(getComputedStyle(panel).maxHeight === 'none'){
+      panel.style.maxHeight = panel.scrollHeight + 'px';
+    }
+    // Force reflow to apply starting height
+    panel.getBoundingClientRect();
+    // Then animate to 0
+    panel.style.maxHeight = '0px';
+    panel.style.opacity = '0';
+    panel.style.paddingTop = '0px';
+    panel.style.paddingBottom = '0px';
+  }
+
+  // Observe aria-expanded changes to trigger animation
+  const cards = Array.from(document.querySelectorAll('.match-card'));
+  const obs = new MutationObserver((mutations)=>{
+    mutations.forEach(m=>{
+      if(m.type === 'attributes' && m.attributeName === 'aria-expanded'){
+        const card = m.target;
+        const isOpen = card.getAttribute('aria-expanded') === 'true';
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+          // No animation, just set styles minimally
+          const p = getPanel(card);
+          if(!p) return;
+          if(isOpen){
+            p.style.maxHeight = 'none'; p.style.opacity = '1'; p.style.paddingTop=''; p.style.paddingBottom=''; p.style.display='block';
+          }else{
+            p.style.maxHeight = '0px'; p.style.opacity = '0'; p.style.paddingTop='0'; p.style.paddingBottom='0'; p.style.display='block';
+          }
+          return;
+        }
+        if (isOpen) animateOpen(card); else animateClose(card);
+      }
+    });
+  });
+  cards.forEach(card=>{
+    obs.observe(card, { attributes:true, attributeFilter:['aria-expanded'] });
+    // Make header clickable/toggleable if not already
+    const hd = card.querySelector('.hd');
+    if(hd){
+      hd.style.cursor = 'pointer';
+      hd.setAttribute('tabindex','0');
+      hd.setAttribute('role','button');
+      const toggle = (ev)=>{
+        if(ev && ev.type==='keydown' && !(ev.key==='Enter' || ev.key===' ')) return;
+        const open = card.getAttribute('aria-expanded') !== 'true';
+        card.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if(ev) ev.preventDefault();
+      };
+      hd.addEventListener('click', toggle);
+      hd.addEventListener('keydown', toggle);
+    }
+    // Initialize panel style according to current state
+    const isOpen = card.getAttribute('aria-expanded') === 'true';
+    const p = getPanel(card);
+    if(p){
+      if(isOpen){
+        p.style.maxHeight = 'none';
+        p.style.opacity = '1';
+      }else{
+        p.style.maxHeight = '0px';
+        p.style.opacity = '0';
+        p.style.paddingTop='0';
+        p.style.paddingBottom='0';
+        p.style.display='block';
+      }
+    }
+  });
+
+  // Hook into "Tout replier" button if present
+  const collapseBtn = document.getElementById('btn-collapse');
+  if(collapseBtn){
+    collapseBtn.addEventListener('click', ()=>{
+      document.querySelectorAll('.match-card[aria-expanded="true"]').forEach(c=>c.setAttribute('aria-expanded','false'));
+    });
+  }
+})();
+</script>
 
 </body>
 </html>
