@@ -226,6 +226,12 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .bonus-illu img{width:100%;height:100%;object-fit:cover;border-radius:12px}
 .pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
 .pill .mini-bonus img{width:100%;height:100%;object-fit:cover}
+
+/* Group both bonuses on a single line under the scores */
+.match-card .hd .bonus-row{display:flex;gap:10px;flex-wrap:nowrap}
+@media (max-width: 520px){
+  .match-card .hd .bonus-row{gap:8px}
+}
 </style>
 
 <!-- Firebase compat -->
@@ -1059,7 +1065,7 @@ function renderMatches(){
           <span class="chip">🏓 Ping: <span class="score-compact">${hy(wins.aw.ping*5,wins.bw.ping*5)}</span></span>
           ${palChip}
           ${done?'<span class="pill green">✅ Complet</span>':'<span class="pill yellow">⏳ Incomplet</span>'}
-          <span class="flex-break"></span> ${bonusA} ${bonusB}
+          <span class="flex-break"></span><div class="bonus-row">${bonusA} ${bonusB}</div>
           <span class="chip">▶</span>
         </div></div>
         <div class="bd">
