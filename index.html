@@ -955,46 +955,22 @@ function bonusChip(r,mTeam,rs){
   // Admin : ne voit rien avant la fin de journée
   if (isAdmin() && !roundFinished) return '';
 
-  // Rien choisi → afficher un bouton uniquement pour l'équipe concernée, avant le début.
+  // Rien choisi → afficher "Pas de bonus" pour tout le monde, + bouton si l'équipe peut encore choisir
   const canChoose = (!rs.started && !rs.finished && !(state.bonusUsed?.[r]?.[mTeam]) && iAmTeam);
   if (!sel) {
-    return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
+    const none = `<span class="pill">Pas de bonus</span>`;
+    return canChoose ? (none + ' ' + `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>`) : none;
   }
 
   // Déjà choisi : avant fin, visible UNIQUEMENT pour l'équipe concernée
   if (!roundFinished && !iAmTeam) return '';
 
-  // Affichage
-  if (!roundFinished) {
-    // Secret: pilule "Capitaine" + mini image
-const __lbl =
-  sel.type === 'miroir'   ? 'Miroir' :
-  sel.type === 'taupe'    ? 'René la taupe' :
-  sel.type === 'lefthand' ? '10 pouces 2 mains gauche' :
-  sel.type === 'melon'    ? 'Melon d’or' :
-                            'Capitaine';
-
-const __img =
-  sel.type === 'miroir'   ? 'miroir.jpg' :
-  sel.type === 'taupe'    ? 'taupe.png' :
-  sel.type === 'lefthand' ? 'main gauche.png' :
-  sel.type === 'melon'    ? 'melon.png' :
-                            'capitaine.jpg';
-
-return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt="${__lbl}"></span></span>`;
-  } else {
-  // Révélé à tout le monde
-  const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
-  const labelSport  = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-
-  const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0;
-  const type    = sel.type || 'capitaine';
-
+  const type = sel.type || 'capitaine';
   const lblType =
     type === 'miroir'   ? 'Miroir' :
     type === 'taupe'    ? 'René la taupe' :
     type === 'lefthand' ? '10 pouces 2 mains gauche' :
-    type === 'melon'    ? "Melon d’or" :
+    type === 'melon'    ? 'Melon d\'or' :
                           'Capitaine';
 
   const img =
@@ -1004,21 +980,40 @@ return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/$
     type === 'melon'    ? 'melon.png' :
                           'capitaine.jpg';
 
-  // signe + classe couleur
-  const sign     = applied > 0 ? '+' : '';
-  const valClass = applied > 0 ? 'pos' : (applied < 0 ? 'neg' : '');
+  // Libellés sport & joueur si disponibles
+  const labelSport = sel.sport ? BONUS.sportLabel(sel.sport) : null;
+  const labelPlayer = sel.player === 'p1' ? 'J1' : (sel.player === 'p2' ? 'J2' : null);
 
-  // texte complémentaire : joueur/sport pour Capitaine, sport pour Taupe/Left/Melon
-  const extra =
-    type === 'capitaine' ? `${labelPlayer} / ${labelSport}` :
-    (['taupe', 'lefthand', 'melon'].includes(type) && sel.sport ? ` / ${labelSport}` : '');
+  if (!roundFinished) {
+    // Avant la fin : on affiche la pastille au camp qui a choisi — avec le sport s'il existe
+    const parts = [lblType];
+    if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
+    if (labelSport && ['taupe','lefthand','melon'].includes(type)) parts.push(labelSport);
+    const __lbl = parts.join(' / ');
+    const __img =
+      type === 'miroir'   ? 'miroir.jpg' :
+      type === 'taupe'    ? 'taupe.png' :
+      type === 'lefthand' ? 'main gauche.png' :
+      type === 'melon'    ? 'melon.png' :
+                            'capitaine.jpg';
 
-  return `<span class="pill blue">${lblType}${extra} :
+    return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt="${__lbl}"></span></span>`;
+  } else {
+    // Révélé à tout le monde avec le SPORT appliqué
+    const match = (state.matches||[]).find(x=>x.round===r && (x.a===mTeam || x.b===mTeam));
+    const applied = match ? Math.abs(bonusForMatch(match, mTeam, sel)) : 0;
+    const sign = applied>=0 ? '+' : '−';
+    const valClass = applied>=0 ? 'pos' : 'neg';
+
+    const extra =
+      type === 'capitaine' ? (labelPlayer ? ` / ${labelPlayer}` : '') :
+      (['taupe','lefthand','melon'].includes(type) && labelSport ? ` / ${labelSport}` : '');
+
+    return `<span class="pill blue">${lblType}${extra} :
             <span class="${valClass}">${sign}${applied}</span>
             <span class="mini-bonus"><img src="img/${img}" alt="${lblType}"></span>
           </span>`;
-}
-
+  }
 }
 
 
