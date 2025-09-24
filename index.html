@@ -433,6 +433,106 @@ header .btn, header .chip, header .pill, header .tab{
 .btn.danger:hover{ box-shadow: 0 8px 18px rgba(239,68,68,.25), 0 0 0 1px rgba(239,68,68,.25) inset; }
 </style>
 
+
+<style id="type-fluid">
+:root{ --font: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial; }
+html{ font-family: var(--font); }
+h1,h2,h3{ line-height:1.2; }
+h1{ font-size:clamp(22px,2.2vw,28px); }
+h2{ font-size:clamp(18px,1.8vw,22px); }
+h3{ font-size:clamp(16px,1.6vw,18px); }
+.card .hd strong{ font-weight:800; letter-spacing:.2px; }
+</style>
+
+
+<style id="elevation-system">
+:root{
+  --elev-1: 0 6px 16px rgba(0,0,0,.25);
+  --elev-2: 0 10px 28px rgba(0,0,0,.32);
+  --elev-inset: 0 0 0 1px rgba(75,139,255,.15) inset;
+}
+.card, .match-card, .bonus-dialog{ box-shadow: var(--elev-1); }
+.card:hover, .match-card:hover{ box-shadow: var(--elev-2); transition: box-shadow .18s ease; }
+</style>
+
+
+<style id="bg-noise">
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:-1;
+  background:
+    radial-gradient(1200px 800px at 20% -10%,#1c2040,transparent),
+    radial-gradient(1000px 600px at 120% 0%,#1b2550,transparent);
+  opacity:.9;
+}
+body::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:-1;
+  background-image: linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+  background-size: 24px 24px; opacity:.25; mix-blend-mode:overlay;
+}
+</style>
+
+
+<style id="tables-polish">
+table{ border-collapse:separate; border-spacing:0; }
+#table-classement thead th{
+  position:sticky; top:0; z-index:1;
+  background:#171d3a; backdrop-filter:saturate(120%) blur(4px);
+}
+#table-classement tbody tr:nth-child(odd){ background:rgba(255,255,255,.02); }
+#table-classement tbody tr:hover{ background:rgba(122,162,255,.06); }
+#table-classement td, #table-classement th{ border-bottom:1px solid var(--border); }
+</style>
+
+
+<style id="pill-icons">
+.pill{ display:inline-flex; align-items:center; gap:6px; }
+.pill .icon{ width:1em; height:1em; opacity:.9; }
+</style>
+
+
+<style id="avatar-rings">
+.avatar{ transition: box-shadow .18s ease, transform .12s ease; }
+.avatar:hover{ transform: translateY(-1px); }
+.avatar.win{ box-shadow: 0 0 0 2px rgba(34,197,94,.45), 0 0 0 5px rgba(34,197,94,.15); }
+.avatar.lose{ box-shadow: 0 0 0 2px rgba(239,68,68,.45), 0 0 0 5px rgba(239,68,68,.12); }
+</style>
+
+
+<style id="empty-states">
+.empty{
+  display:grid; place-items:center; padding:28px;
+  color:var(--muted); border:1px dashed var(--border); border-radius:14px;
+  background:linear-gradient(180deg,#151b39,#121632);
+}
+.empty .emoji{ font-size:22px; margin-bottom:6px; opacity:.9; }
+</style>
+
+
+<style id="roundchip-upgrade">
+.round-chip{ font-weight:800; letter-spacing:.2px; }
+.round-chip.green{ box-shadow: 0 0 0 1px rgba(34,197,94,.25) inset; }
+.round-chip.yellow{ box-shadow: 0 0 0 1px rgba(234,179,8,.25) inset; }
+.round-chip.red{ box-shadow: 0 0 0 1px rgba(239,68,68,.25) inset; }
+</style>
+
+
+<style id="skeletons">
+@keyframes pulse{ 0%,100%{opacity:.5} 50%{opacity:1} }
+.skel{ background:linear-gradient(90deg,#1a2146, #20295a, #1a2146);
+       background-size:200% 100%; animation:pulse 1.2s ease-in-out infinite; border-radius:8px; }
+.skel.sm{ height:12px; } .skel.md{ height:16px; } .skel.lg{ height:24px; }
+</style>
+
+
+<style id="theme-toggle-base">
+@media (prefers-color-scheme: light){
+  :root{ --bg:#f6f7fb; --text:#0f1220; --muted:#5a6286; --border:#d8dcf0; --chip:#e9ecf8; --card:#ffffff; }
+  body{ color:var(--text); background:#f6f7fb; }
+  .card, .match-card{ background:linear-gradient(180deg,#fff,#f7f8fe); border-color:var(--border); }
+}
+</style>
+
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -452,6 +552,7 @@ header .btn, header .chip, header .pill, header .tab{
       <span id="tname-top" class="pill" style="display:none"></span>
       <span id="whoami-top" class="pill">visiteur</span>
       <button type="button" class="btn small" id="btn-fullscreen">⛶ Plein écran</button>
+      <button class="btn small" id="toggle-theme"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>Thème</button>
     </div>
   </div>
 </header>
@@ -2086,6 +2187,15 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 })();
 </script>
 
+
+
+<script id="theme-toggle-js">
+document.getElementById('toggle-theme')?.addEventListener('click', ()=>{
+  const L='light'; const root=document.documentElement;
+  const isLight = root.dataset.theme===L;
+  if (isLight) delete root.dataset.theme; else root.dataset.theme=L;
+});
+</script>
 
 </body>
 </html>
