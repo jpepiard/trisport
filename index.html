@@ -955,11 +955,13 @@ function bonusChip(r,mTeam,rs){
   // Admin : ne voit rien avant la fin de journée
   if (isAdmin() && !roundFinished) return '';
 
-  // Rien choisi → afficher "Pas de bonus" pour tout le monde, + bouton si l'équipe peut encore choisir
-  const canChoose = (!rs.started && !rs.finished && !(state.bonusUsed?.[r]?.[mTeam]) && iAmTeam);
-  if (!sel) {
-    const none = `<span class="pill">Pas de bonus</span>`;
-    return canChoose ? (none + ' ' + `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>`) : none;
+  // Rien choisi →
+  if (!roundFinished) {
+    // Avant la fin : montrer uniquement un bouton à l'équipe concernée, sinon rien
+    return (iAmTeam && canChoose) ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
+  }
+  // Après la fin : afficher la pilule "Pas de bonus"
+  return `<span class="pill">Pas de bonus</span>`;
   }
 
   // Déjà choisi : avant fin, visible UNIQUEMENT pour l'équipe concernée
