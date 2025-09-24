@@ -947,7 +947,7 @@ function setRoundStatusPillClasses(pill,rs){
   else if(rs.started) pill.classList.add('yellow');
   else pill.classList.add('red');
 }
-function bonusChip(r,mTeam,rs){
+function bonusChip(r, mTeam, rs){
   const sel = getBonusSelection(r, mTeam);
   const iAmTeam = hasClaim(mTeam);
   const roundFinished = !!rs.finished;
@@ -955,16 +955,21 @@ function bonusChip(r,mTeam,rs){
   // Admin : ne voit rien avant la fin de journée
   if (isAdmin() && !roundFinished) return '';
 
-  // Rien choisi →
-  if (!roundFinished) {
-    // Avant la fin : montrer uniquement un bouton à l'équipe concernée, sinon rien
-    return (iAmTeam && canChoose) ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
-  }
-  // Après la fin : afficher la pilule "Pas de bonus"
-  return `<span class="pill">Pas de bonus</span>`;
+  // Aucune sélection
+  const bonusUsed = (state.bonusUsed?.[r]?.[mTeam]) || false;
+  const canChoose = (!rs.started && !rs.finished && !bonusUsed && iAmTeam);
+  if (!sel) {
+    if (!roundFinished) {
+      // Avant la fin : seulement un bouton pour l'équipe connectée ; rien pour l'adversaire
+      return canChoose ? (
+        '<button type="button" class="bonus-btn" data-bonus data-team="' + mTeam + '">🎖 Bonus</button>'
+      ) : '';
+    }
+    // Après la fin : pilule Pas de bonus
+    return '<span class="pill">Pas de bonus</span>';
   }
 
-  // Déjà choisi : avant fin, visible UNIQUEMENT pour l'équipe concernée
+  // Déjà choisi : avant fin, visible uniquement par l'équipe concernée
   if (!roundFinished && !iAmTeam) return '';
 
   const type = sel.type || 'capitaine';
@@ -982,43 +987,33 @@ function bonusChip(r,mTeam,rs){
     type === 'melon'    ? 'melon.png' :
                           'capitaine.jpg';
 
-  // Libellés sport & joueur si disponibles
   const labelSport = sel.sport ? BONUS.sportLabel(sel.sport) : null;
   const labelPlayer = sel.player === 'p1' ? 'J1' : (sel.player === 'p2' ? 'J2' : null);
 
   if (!roundFinished) {
-    // Avant la fin : on affiche la pastille au camp qui a choisi — avec le sport s'il existe
-    const parts = [lblType];
+    // Pastille côté équipe qui a choisi (avant la fin)
+    var parts = [lblType];
     if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
-    if (labelSport && ['taupe','lefthand','melon'].includes(type)) parts.push(labelSport);
-    const __lbl = parts.join(' / ');
-    const __img =
-      type === 'miroir'   ? 'miroir.jpg' :
-      type === 'taupe'    ? 'taupe.png' :
-      type === 'lefthand' ? 'main gauche.png' :
-      type === 'melon'    ? 'melon.png' :
-                            'capitaine.jpg';
-
-    return `<span class="pill blue">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt="${__lbl}"></span></span>`;
+    if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
+    var __lbl = parts.join(' / ');
+    return '<span class="pill blue">' + __lbl +
+           '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' +
+           '</span>';
   } else {
-    // Révélé à tout le monde avec le SPORT appliqué
-    const match = (state.matches||[]).find(x=>x.round===r && (x.a===mTeam || x.b===mTeam));
+    // Révélé à tous une fois fini, avec points appliqués
     const applied = Math.abs((state.bonusApplied?.[r]?.[mTeam]) || 0);
-    const sign = applied>=0 ? '+' : '−';
-    const valClass = applied>=0 ? 'pos' : 'neg';
-
-    const extra =
-      type === 'capitaine' ? (labelPlayer ? ` / ${labelPlayer}` : '') :
-      (['taupe','lefthand','melon'].includes(type) && labelSport ? ` / ${labelSport}` : '');
-
-    return `<span class="pill blue">${lblType}${extra} :
-            <span class="${valClass}">${sign}${applied}</span>
-            <span class="mini-bonus"><img src="img/${img}" alt="${lblType}"></span>
-          </span>`;
+    const sign = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? '+' : '−';
+    const valClass = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? 'pos' : 'neg';
+    const extra = (
+      type === 'capitaine' ? (labelPlayer ? (' / ' + labelPlayer) : '') :
+      ((type==='taupe' || type==='lefthand' || type==='melon') && labelSport ? (' / ' + labelSport) : '')
+    );
+    return '<span class="pill blue">' + lblType + extra + ' : ' +
+           '<span class="' + valClass + '">' + sign + applied + '</span>' +
+           '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
+           '</span>';
   }
 }
-
-
 function renderMatches(){
   if (typeof recomputeAllBonuses==='function') recomputeAllBonuses();
   const list=id("match-list");list.innerHTML="";
