@@ -395,6 +395,44 @@ header .btn, header .chip, header .pill, header .tab{
 }
 </style>
 
+
+<style id="standings-and-buttons-animations">
+/* === Apparition des lignes du classement === */
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#table-classement tbody tr {
+  animation: slideUpFade .28s ease both;
+}
+#table-classement tbody tr:nth-child(1){ animation-delay: .00s; }
+#table-classement tbody tr:nth-child(2){ animation-delay: .03s; }
+#table-classement tbody tr:nth-child(3){ animation-delay: .06s; }
+#table-classement tbody tr:nth-child(4){ animation-delay: .09s; }
+#table-classement tbody tr:nth-child(5){ animation-delay: .12s; }
+#table-classement tbody tr:nth-child(6){ animation-delay: .15s; }
+/* réduit l'effet si l'utilisateur préfère moins d'animation */
+@media (prefers-reduced-motion: reduce){
+  #table-classement tbody tr{ animation: none !important; }
+}
+
+/* === Micro-transitions sur les boutons === */
+.btn{
+  transition: background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, transform .06s ease;
+  will-change: transform, box-shadow;
+}
+.btn:hover{
+  box-shadow: 0 6px 14px rgba(0,0,0,.25), 0 0 0 1px rgba(122,162,255,.15) inset;
+}
+.btn:active{
+  transform: translateY(1px) scale(.995);
+  box-shadow: 0 3px 10px rgba(0,0,0,.25), 0 0 0 1px rgba(122,162,255,.12) inset;
+}
+.btn.small:active{ transform: translateY(1px) scale(.997); }
+.btn.primary:hover{ box-shadow: 0 8px 18px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.25) inset; }
+.btn.danger:hover{ box-shadow: 0 8px 18px rgba(239,68,68,.25), 0 0 0 1px rgba(239,68,68,.25) inset; }
+</style>
+
 </head>
 <body>
 <div id="js-ok">JS non chargé</div>
@@ -1944,6 +1982,107 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
       document.querySelectorAll('.match-card[aria-expanded="true"]').forEach(c=>c.setAttribute('aria-expanded','false'));
     });
   }
+})();
+</script>
+
+
+<script id="standings-count-anim">
+(function(){
+  const TBL = document.getElementById('table-classement');
+  if(!TBL) return;
+
+  const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DURATION = isReduced ? 0 : 600;
+
+  function numFromText(t){
+    if(!t) return null;
+    const m = (''+t).replace(',', '.').match(/-?\d+(?:\.\d+)?/);
+    return m ? parseFloat(m[0]) : null;
+  }
+  function formatLike(orig, n){
+    // conserve éventuels signes + / - et espaces autour
+    const hasPlus = /^\s*\+/.test(orig);
+    const hasMinus = /^\s*-/.test(orig);
+    const s = (n<0?'':'') + Math.round(n).toString();
+    if (hasMinus) return s; // s inclut déjà le - si n<0
+    if (hasPlus) return (n>=0? '+' : '') + Math.round(n).toString();
+    return Math.round(n).toString();
+  }
+  function animateCount(cell, from, to){
+    if (DURATION === 0){ cell.textContent = formatLike(cell.textContent, to); return; }
+    const start = performance.now();
+    function step(now){
+      const p = Math.min(1, (now - start) / DURATION);
+      // easing out cubic
+      const eased = 1 - Math.pow(1 - p, 3);
+      const val = from + (to - from) * eased;
+      cell.textContent = formatLike(cell.textContent, val);
+      if (p < 1) requestAnimationFrame(step);
+      else cell.textContent = formatLike(cell.textContent, to);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // Observe text changes inside tbody
+  const tbody = TBL.querySelector('tbody');
+  if(!tbody) return;
+
+  // Initialize prev values
+  Array.from(tbody.querySelectorAll('tr')).forEach(tr=>{
+    const pts = tr.children[2]; // Points
+    const bon = tr.children[6]; // Bonus
+    const mal = tr.children[7]; // Malus
+    if (pts) pts.dataset.prev = pts.textContent.trim();
+    if (bon) bon.dataset.prev = bon.textContent.trim();
+    if (mal) mal.dataset.prev = mal.textContent.trim();
+  });
+
+  const mo = new MutationObserver((ms)=>{
+    for (const m of ms){
+      if (m.type === 'characterData'){
+        const cell = m.target.parentElement;
+        if (!cell || !cell.parentElement) continue;
+        const tr = cell.parentElement;
+        const colIndex = Array.from(tr.children).indexOf(cell);
+        if (![2,6,7].includes(colIndex)) continue; // only Points, Bonus, Malus
+        const prevText = cell.dataset.prev || '';
+        const newText = cell.textContent.trim();
+        const from = numFromText(prevText);
+        const to = numFromText(newText);
+        if (from==null || to==null) { cell.dataset.prev = newText; continue; }
+        if (from === to) { cell.dataset.prev = newText; continue; }
+        // Set back to prev then animate to new
+        cell.textContent = prevText;
+        animateCount(cell, from, to);
+        cell.dataset.prev = newText;
+      }
+      if (m.type === 'childList'){
+        // New rows added -> set staggered animation and initialize prev
+        m.addedNodes.forEach(node=>{
+          if(node.nodeType===1 && node.matches && node.matches('tr')){
+            const tr = node;
+            tr.style.animation = 'slideUpFade .28s ease both';
+            const idx = Array.from(tr.parentElement.children).indexOf(tr);
+            tr.style.animationDelay = (Math.min(6, idx) * 0.03).toFixed(2) + 's';
+            const pts = tr.children[2]; const bon = tr.children[6]; const mal = tr.children[7];
+            if (pts) pts.dataset.prev = pts.textContent.trim();
+            if (bon) bon.dataset.prev = bon.textContent.trim();
+            if (mal) mal.dataset.prev = mal.textContent.trim();
+          }
+        });
+      }
+    }
+  });
+  mo.observe(tbody, { subtree:true, characterData:true, childList:true });
+
+  // If user clicks refresh buttons, we rely on external code to update the table;
+  // observer will animate the resulting changes. No conflicting logic needed.
+  // (Optional: add a tiny pulse on table while refreshing)
+  function pulse(){ TBL.style.boxShadow='0 0 0 1px rgba(122,162,255,.25) inset'; setTimeout(()=>TBL.style.boxShadow='', 250); }
+  const r1 = document.getElementById('btn-refresh-standings');
+  const r2 = document.getElementById('btn-refresh-standings-2');
+  r1 && r1.addEventListener('click', pulse);
+  r2 && r2.addEventListener('click', pulse);
 })();
 </script>
 
