@@ -1,4 +1,3 @@
-<!-- Fallback: original file (icons not injected) -->
 <!doctype html>
 <html lang="fr">
 <head>
@@ -321,6 +320,57 @@ header .btn, header .chip, header .pill, header .tab{
 #cap-params,
 #capitaine-params .grid,
 #capitaine-params .row { display: none !important; }
+</style>
+
+
+<style id="tabs-contrast-upgrade">
+:root{
+  --accent: #7aa2ff;
+  --accent-strong: #9ab4ff;
+}
+.tab{
+  position: relative;
+  font-weight: 600;
+  letter-spacing: .2px;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
+}
+.tab:hover{
+  border-color: var(--accent);
+  color: #e9edff;
+  box-shadow: 0 0 0 1px rgba(122,162,255,.15) inset;
+}
+.tab[aria-selected="true"]{
+  color: #f4f6ff;
+  background: linear-gradient(180deg, #2a3aa6, #1f2b86);
+  border-color: #4b5bd7;
+  box-shadow:
+    0 6px 16px rgba(75,139,255,.25),
+    0 0 0 1px rgba(75,139,255,.35) inset;
+}
+.tab[aria-selected="true"]::after{
+  content: "";
+  position: absolute;
+  left: 10px; right: 10px; bottom: -6px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-strong), transparent);
+}
+.tab:focus-visible{
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(15,18,32,1),
+    0 0 0 4px rgba(122,162,255,.8);
+}
+@media (prefers-contrast: more){
+  .tab[aria-selected="true"]{
+    background: #2431a0;
+    border-color: #9ab4ff;
+  }
+  .tab[aria-selected="true"]::after{ height: 4px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .tab{ transition: none; }
+}
 </style>
 
 </head>
