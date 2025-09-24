@@ -1080,14 +1080,27 @@ function renderMatches(){
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
-      qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
-        const mid=m.id,idxSet=parseInt(inp.getAttribute("data-index"),10),which=inp.getAttribute("data-ping");
-        const updateNote=()=>{const mm=findMatch(mid),s=mm.pingPts[idxSet],ok=isPingValid(+s.a,+s.b);const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');if(note)note.textContent=ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}
-        inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);const mm=findMatch(mid);mm.pingPts[idxSet][which]=v;saveState();updateNote()});
-        const commit=()=>{const mm=findMatch(mid);const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);mm.pingPts[idxSet][which]=v;saveState();renderMatches();renderLeaderboard();renderH2H()};
-        inp.addEventListener("change",commit);inp.addEventListener("blur",commit);inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();inp.blur()}})
+      
+      // ping (vainqueur A/B)
+      qsa('.match-card[data-id="'+m.id+'"] select[data-kind="ping"]').forEach(sel=>{
+        const can = (isAdmin() || hasClaim(m.a) || hasClaim(m.b));
+        sel.disabled = !(can && canEditScores(m, rCtl));
+        sel.addEventListener("change", ()=>{
+          const i  = parseInt(sel.getAttribute("data-index"),10);
+          const vv = sel.value==="" ? null : parseInt(sel.value,10);
+          const mm = findMatch(m.id);
+          if (!Array.isArray(mm.ping)) mm.ping = [];
+          const total = pingTotal();
+          mm.ping = mm.ping.slice(0,total);
+          while (mm.ping.length < total) mm.ping.push(null);
+          mm.ping[i] = vv;
+          saveState();
+          renderMatches();
+          renderLeaderboard();
+          renderH2H();
+        });
       });
+
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
         const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
@@ -1144,9 +1157,9 @@ function renderPing(m){
     html += '<div class="sport-item">'
       + '<label class="muted">' + label + '</label>'
       + '<select data-kind="ping" data-index="' + i + '">'
-      + '<option value="" ' + (v===null ? 'selected' : '') + '>— vainqueur —</option>'
-      + '<option value="0" ' + (v===0 ? 'selected' : '') + '>' + esc(teamName(m.a)) + '</option>'
-      + '<option value="1" ' + (v===1 ? 'selected' : '') + '>' + esc(teamName(m.b)) + '</option>'
+      + '<option value="" ' + (v===null ? 'selected' : '') + '>Non joué</option>'
+      + '<option value="0" ' + (v===0 ? 'selected' : '') + '>Victoire ' + esc(teamName(m.a)) + '</option>'
+      + '<option value="1" ' + (v===1 ? 'selected' : '') + '>Victoire ' + esc(teamName(m.b)) + '</option>'
       + '</select>'
       + '</div>';
   }
