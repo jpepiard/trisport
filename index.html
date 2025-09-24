@@ -1151,7 +1151,7 @@ function renderPing(m){
   for (let i=0; i<total; i++){
     // Valeur affichée : par défaut "Non joué". Si la journée n'est pas démarrée, on force l'affichage à "Non joué".
     const raw = (m.ping[i]===0 || m.ping[i]===1) ? m.ping[i] : null;
-    const v = (rCtl && !rCtl.started) ? null : raw;
+    const v = raw;
     const label = (i < sSingles) ? ('Simple ' + (i+1)) : ('Double ' + (i - sSingles + 1));
     html += '<div class="sport-item">'
       + '<label class="muted">' + label + '</label>'
@@ -1356,7 +1356,24 @@ document.addEventListener("click",async(e)=>{
     case "btn-cloud-delete":{if(!isAdmin())return alert("Suppression cloud réservée à l’admin.");const code=state.cloudId||cloud.id;if(!code)return alert("Aucun code actif.");if(!confirm("Supprimer définitivement ce tournoi du cloud ?"))return;deleteCloud(code).then(()=>{setIndex(getIndex().filter(e=>e.id!==code));unsubscribeCloud();resetState();renderSetupRecent();renderAll();history.replaceState(null,"",location.pathname);alert("Tournoi supprimé.");goto('setup')});break}
 
     /* ---- Réinitialiser scores => réinitialise aussi BONUS + journées ---- */
-    case "btn-reset-scores":{state.bonusSelections={};state.bonusApplied={};state.bonusUsed={};(state.teams||[]).forEach(t=>{if(t)t.bonusCapitaineUsed=false});if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);saveState();renderAll();goto("calendrier");break}
+    case "btn-reset-scores":{
+      if (!isAdmin()) return alert("Réservé à l’admin.");
+      if (!confirm("Réinitialiser les SCORES et les BONUS ?")) return;
+      (state.matches || []).forEach(m=>{
+        m.darts = Array(dartsTotal()).fill(null);
+        m.ping  = Array(pingTotal()).fill(null);
+        m.pingPts = Array(pingTotal()).fill({a:null,b:null});
+        m.palet = { a:null, b:null };
+      });
+      state.roundCtl = {};
+      state.bonusSelections = {};
+      state.bonusApplied = {};
+      state.bonusUsed = {};
+      (state.teams||[]).forEach(t=>{ if(t) t.bonusCapitaineUsed=false; });
+      saveState();
+      renderAll();
+      goto("calendrier");
+      break}
 
     case "btn-unlock":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Déverrouiller le calendrier ?"))return;state.locked=false;saveState();renderTeams();renderMatches();updateLock();break}
 
