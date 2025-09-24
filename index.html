@@ -91,7 +91,7 @@ function selectBonusType(t){
     ctx.textContent =
       window._bonusType === 'miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
       window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
-      window._bonusType === 'lefthand' ? "Main gauche : choisissez le sport." :
+      window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
       window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport." :
                                           "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.";
   }
@@ -226,19 +226,6 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .bonus-illu img{width:100%;height:100%;object-fit:cover;border-radius:12px}
 .pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
 .pill .mini-bonus img{width:100%;height:100%;object-fit:cover}
-
-/* Group both bonuses on a single line under the scores */
-.match-card .hd .bonus-row{display:flex;gap:10px;flex-wrap:nowrap}
-@media (max-width: 520px){
-  .match-card .hd .bonus-row{gap:8px}
-}
-
-/* Keep bonuses on a single row, below scores, without affecting team names */
-.match-card .hd .bonus-row{display:flex;gap:10px;flex-wrap:nowrap;width:100%;justify-content:flex-start}
-.match-card .hd .pill.bonus{font-size:.92em;padding:6px 10px}
-@media (max-width:640px){
-  .match-card .hd .pill.bonus{font-size:.9em;padding:5px 9px}
-}
 </style>
 
 <!-- Firebase compat -->
@@ -582,13 +569,13 @@ header .btn, header .chip, header .pill, header .tab{
 
         <div class="bonus-sep"></div>
 
-        <!-- Main gauche -->
+        <!-- 10 pouces 2 mains gauche -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
             <img src="img/main gauche.png" alt="">
           </div>
           <div class="bonus-text">
-            <div class="bonus-title">Main gauche</div>
+            <div class="bonus-title">10 pouces 2 mains gauche</div>
             <div class="help">
               L’adversaire doit jouer un sous-match avec sa <b>mauvaise main</b> (droitier → main gauche, gaucher → main droite).<br>
               Choisissez le sport concerné.
@@ -692,7 +679,7 @@ const BONUS = {
     switch(type){
       case "miroir":   return "Miroir";
       case "taupe":    return "René la taupe";
-      case "lefthand": return "Main gauche";
+      case "lefthand": return "10 pouces 2 mains gauche";
       case "melon":    return "Melon d'or";
       default:         return "Capitaine";
     }
@@ -794,8 +781,8 @@ function updateCounts(){id("teams-count").textContent=state.teams.length+" "+(st
 function updateLock(){const pill=id("lock-pill");if(pill)pill.style.display=state.locked?"inline-block":"none";const gen=id("btn-generate");if(gen){gen.disabled=!!state.locked;gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"}}
 
 /* ===== Rencontres & Scores ===== */
-const getPingPts=m=>Array.isArray(m.pingPts)?m.pingPts:Array(pingTotal()).fill({a:null,b:null});
-const isPingValid=(a,b)=>{if(a==null||b==null)return false;if(isNaN(a)||isNaN(b))return false;const max=Math.max(a,b),diff=Math.abs(a-b);return(max>=11)&&(diff>=2)}
+const getPingPts = m => { return Array.isArray(m.ping) ? m.ping.map(v => (v===0?{a:1,b:0} : (v===1?{a:0,b:1}:{a:null,b:null}))) : (Array.isArray(m.pingPts)?m.pingPts:Array(pingTotal()).fill({a:null,b:null})); };
+const isPingValid=(a,b)=>{ if(a==null||b==null) return false; if((a===1&&b===0)||(a===0&&b===1)) return true; if(isNaN(a)||isNaN(b)) return false; const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
 function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:0,ping:0};m.darts.forEach(v=>{if(v===0)aw.darts++;else if(v===1)bw.darts++});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b)aw.ping++;else if(b>a)bw.ping++}});return{aw,bw}}
 function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v===1);const okP=getPingPts(m).every(s=>isPingValid(+s.a,+s.b));const T=+state.rules.paletTarget||11,pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1));return okD&&okP&&okL}
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
@@ -960,7 +947,7 @@ function setRoundStatusPillClasses(pill,rs){
   else if(rs.started) pill.classList.add('yellow');
   else pill.classList.add('red');
 }
-function bonusChip(r,mTeam,rs){
+function bonusChip(r, mTeam, rs){
   const sel = getBonusSelection(r, mTeam);
   const iAmTeam = hasClaim(mTeam);
   const roundFinished = !!rs.finished;
@@ -968,46 +955,29 @@ function bonusChip(r,mTeam,rs){
   // Admin : ne voit rien avant la fin de journée
   if (isAdmin() && !roundFinished) return '';
 
-  // Rien choisi → afficher un bouton uniquement pour l'équipe concernée, avant le début.
-  const canChoose = (!rs.started && !rs.finished && !(state.bonusUsed?.[r]?.[mTeam]) && iAmTeam);
+  // Aucune sélection
+  const bonusUsed = (state.bonusUsed?.[r]?.[mTeam]) || false;
+  const canChoose = (!rs.started && !rs.finished && !bonusUsed && iAmTeam);
   if (!sel) {
-    return canChoose ? `<button type="button" class="bonus-btn" data-bonus data-team="${mTeam}">🎖 Bonus</button>` : '';
+    if (!roundFinished) {
+      // Avant la fin : seulement un bouton pour l'équipe connectée ; rien pour l'adversaire
+      return canChoose ? (
+        '<button type="button" class="bonus-btn" data-bonus data-team="' + mTeam + '">🎖 Bonus</button>'
+      ) : '';
+    }
+    // Après la fin : pilule Pas de bonus
+    return '<span class="pill">Pas de bonus</span>';
   }
 
-  // Déjà choisi : avant fin, visible UNIQUEMENT pour l'équipe concernée
+  // Déjà choisi : avant fin, visible uniquement par l'équipe concernée
   if (!roundFinished && !iAmTeam) return '';
 
-  // Affichage
-  if (!roundFinished) {
-    // Secret: pilule "Capitaine" + mini image
-const __lbl =
-  sel.type === 'miroir'   ? 'Miroir' :
-  sel.type === 'taupe'    ? 'René la taupe' :
-  sel.type === 'lefthand' ? 'Main gauche' :
-  sel.type === 'melon'    ? 'Melon d’or' :
-                            'Capitaine';
-
-const __img =
-  sel.type === 'miroir'   ? 'miroir.jpg' :
-  sel.type === 'taupe'    ? 'taupe.png' :
-  sel.type === 'lefthand' ? 'main gauche.png' :
-  sel.type === 'melon'    ? 'melon.png' :
-                            'capitaine.jpg';
-
-return `<span class="pill blue bonus">${__lbl}<span class="mini-bonus"><img src="img/${__img}" alt="${__lbl}"></span></span>`;
-  } else {
-  // Révélé à tout le monde
-  const labelPlayer = sel.player === 'p1' ? 'J1' : 'J2';
-  const labelSport  = sel.sport === 'darts' ? 'Fléchettes' : (sel.sport === 'ping' ? 'Ping' : 'Palet');
-
-  const applied = (state.bonusApplied?.[r]?.[mTeam]) || 0;
-  const type    = sel.type || 'capitaine';
-
+  const type = sel.type || 'capitaine';
   const lblType =
     type === 'miroir'   ? 'Miroir' :
     type === 'taupe'    ? 'René la taupe' :
-    type === 'lefthand' ? 'Main gauche' :
-    type === 'melon'    ? "Melon d’or" :
+    type === 'lefthand' ? '10 pouces 2 mains gauche' :
+    type === 'melon'    ? 'Melon d\'or' :
                           'Capitaine';
 
   const img =
@@ -1017,24 +987,33 @@ return `<span class="pill blue bonus">${__lbl}<span class="mini-bonus"><img src=
     type === 'melon'    ? 'melon.png' :
                           'capitaine.jpg';
 
-  // signe + classe couleur
-  const sign     = applied > 0 ? '+' : '';
-  const valClass = applied > 0 ? 'pos' : (applied < 0 ? 'neg' : '');
+  const labelSport = sel.sport ? BONUS.sportLabel(sel.sport) : null;
+  const labelPlayer = sel.player === 'p1' ? 'J1' : (sel.player === 'p2' ? 'J2' : null);
 
-  // texte complémentaire : joueur/sport pour Capitaine, sport pour Taupe/Left/Melon
-  const extra =
-    type === 'capitaine' ? `${labelPlayer} / ${labelSport}` :
-    (['taupe', 'lefthand', 'melon'].includes(type) && sel.sport ? ` / ${labelSport}` : '');
-
-  return `<span class="pill blue bonus">${lblType}${extra} :
-            <span class="${valClass}">${sign}${applied}</span>
-            <span class="mini-bonus"><img src="img/${img}" alt="${lblType}"></span>
-          </span>`;
+  if (!roundFinished) {
+    // Pastille côté équipe qui a choisi (avant la fin)
+    var parts = [lblType];
+    if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
+    if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
+    var __lbl = parts.join(' / ');
+    return '<span class="pill blue">' + __lbl +
+           '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' +
+           '</span>';
+  } else {
+    // Révélé à tous une fois fini, avec points appliqués
+    const applied = Math.abs((state.bonusApplied?.[r]?.[mTeam]) || 0);
+    const sign = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? '+' : '−';
+    const valClass = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? 'pos' : 'neg';
+    const extra = (
+      type === 'capitaine' ? (labelPlayer ? (' / ' + labelPlayer) : '') :
+      ((type==='taupe' || type==='lefthand' || type==='melon') && labelSport ? (' / ' + labelSport) : '')
+    );
+    return '<span class="pill blue">' + lblType + extra + ' : ' +
+           '<span class="' + valClass + '">' + sign + applied + '</span>' +
+           '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
+           '</span>';
+  }
 }
-
-}
-
-
 function renderMatches(){
   if (typeof recomputeAllBonuses==='function') recomputeAllBonuses();
   const list=id("match-list");list.innerHTML="";
@@ -1072,7 +1051,7 @@ function renderMatches(){
           <span class="chip">🏓 Ping: <span class="score-compact">${hy(wins.aw.ping*5,wins.bw.ping*5)}</span></span>
           ${palChip}
           ${done?'<span class="pill green">✅ Complet</span>':'<span class="pill yellow">⏳ Incomplet</span>'}
-          <span class="flex-break"></span><div class="bonus-row">${bonusA} ${bonusB}</div>
+          ${bonusA} ${bonusB}
           <span class="chip">▶</span>
         </div></div>
         <div class="bd">
@@ -1093,14 +1072,27 @@ function renderMatches(){
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
-      qsa('.match-card[data-id="'+m.id+'"] input[data-ping]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
-        const mid=m.id,idxSet=parseInt(inp.getAttribute("data-index"),10),which=inp.getAttribute("data-ping");
-        const updateNote=()=>{const mm=findMatch(mid),s=mm.pingPts[idxSet],ok=isPingValid(+s.a,+s.b);const note=qs('.match-card[data-id="'+mid+'"] [data-note="ping-'+mid+'-'+idxSet+'"]');if(note)note.textContent=ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}
-        inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);const mm=findMatch(mid);mm.pingPts[idxSet][which]=v;saveState();updateNote()});
-        const commit=()=>{const mm=findMatch(mid);const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,99);mm.pingPts[idxSet][which]=v;saveState();renderMatches();renderLeaderboard();renderH2H()};
-        inp.addEventListener("change",commit);inp.addEventListener("blur",commit);inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();inp.blur()}})
+      
+      // ping (vainqueur A/B)
+      qsa('.match-card[data-id="'+m.id+'"] select[data-kind="ping"]').forEach(sel=>{
+        const can = (isAdmin() || hasClaim(m.a) || hasClaim(m.b));
+        sel.disabled = !(can && canEditScores(m, rCtl));
+        sel.addEventListener("change", ()=>{
+          const i  = parseInt(sel.getAttribute("data-index"),10);
+          const vv = sel.value==="" ? null : parseInt(sel.value,10);
+          const mm = findMatch(m.id);
+          if (!Array.isArray(mm.ping)) mm.ping = [];
+          const total = pingTotal();
+          mm.ping = mm.ping.slice(0,total);
+          while (mm.ping.length < total) mm.ping.push(null);
+          mm.ping[i] = vv;
+          saveState();
+          renderMatches();
+          renderLeaderboard();
+          renderH2H();
+        });
       });
+
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
         const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
@@ -1123,51 +1115,51 @@ function renderMatches(){
 /* ---- Rendu des 3 sports (relookés) ---- */
 function renderDarts(m){
   const s = state.rules.dartsSingles, N = dartsTotal();
-  let html = `<div class="sport-group">
-    <div class="sport-title"><span class="sport-icon">${sportIcon('darts')}</span> Fléchettes</div>`;
-  for(let i=0;i<N;i++){
+  let html = '<div class="sport-group">'
+    + '<div class="sport-title"><span class="sport-icon">' + sportIcon('darts') + '</span> Fléchettes</div>';
+  for (let i=0; i<N; i++){
     const v = m.darts[i];
-    const lab = (i < s ? `Simple ${i+1}` : `Double ${i-s+1}`);
-    html += `<div class="sport-item">
-      <label>${lab}</label>
-      <select data-kind="darts" data-index="${i}">
-        <option value="" ${v===null?'selected':''}>Non joué</option>
-        <option value="0" ${v===0?'selected':''}>Victoire ${esc(teamName(m.a))}</option>
-        <option value="1" ${v===1?'selected':''}>Victoire ${esc(teamName(m.b))}</option>
-      </select>
-    </div>`;
+    const lab = (i < s ? ('Simple ' + (i+1)) : ('Double ' + (i - s + 1)));
+    html += '<div class="sport-item">'
+      + '<label>' + lab + '</label>'
+      + '<select data-kind="darts" data-index="' + i + '">'
+      + '<option value="" ' + (v===null ? 'selected' : '') + '>Non joué</option>'
+      + '<option value="0" ' + (v===0 ? 'selected' : '') + '>Victoire ' + esc(teamName(m.a)) + '</option>'
+      + '<option value="1" ' + (v===1 ? 'selected' : '') + '>Victoire ' + esc(teamName(m.b)) + '</option>'
+      + '</select>'
+      + '</div>';
   }
-  html += `</div>`;
+  html += '</div>';
   return html;
 }
 function renderPing(m){
-  const s = state.rules.pingSingles, N = pingTotal();
-  let html = `<div class="sport-group">
-    <div class="sport-title"><span class="sport-icon">${sportIcon('ping')}</span> Ping-pong</div>`;
-  for(let i=0;i<N;i++){
-    const set = m.pingPts[i] || {a:null,b:null};
-    const lab = (i < s ? `Simple ${i+1}` : `Double ${i-s+1}`);
-    const ok = isPingValid(+set.a,+set.b);
-    html += `<div class="sport-item">
-      <label>${lab}</label>
-      <div class="ping-row">
-        <div>
-          <input type="number" min="0" max="99" step="1"
-                 value="${set.a==null?'':set.a}"
-                 data-ping="a" data-index="${i}"
-                 placeholder="${esc(teamName(m.a))}">
-        </div>
-        <div>
-          <input type="number" min="0" max="99" step="1"
-                 value="${set.b==null?'':set.b}"
-                 data-ping="b" data-index="${i}"
-                 placeholder="${esc(teamName(m.b))}">
-        </div>
-      </div>
-      <div class="help" data-note="ping-${m.id}-${i}">${ok?'✔️ Score valide':'Saisissez deux scores (11+ et écart ≥ 2).'}</div>
-    </div>`;
+  const sSingles = state.rules.pingSingles || 0;
+  const sDoubles = state.rules.pingDoubles || 0;
+  const total = sSingles + sDoubles;
+  const rCtl = roundState(m.round || 1); // état de la journée
+
+  if (!Array.isArray(m.ping)) m.ping = [];
+  m.ping = m.ping.slice(0, total);
+  while (m.ping.length < total) m.ping.push(null);
+
+  let html = '<div class="sport-group">'
+    + '<div class="sport-title"><span class="sport-icon">' + sportIcon('ping') + '</span> Ping-pong</div>';
+
+  for (let i=0; i<total; i++){
+    // Valeur affichée : par défaut "Non joué". Si la journée n'est pas démarrée, on force l'affichage à "Non joué".
+    const raw = (m.ping[i]===0 || m.ping[i]===1) ? m.ping[i] : null;
+    const v = raw;
+    const label = (i < sSingles) ? ('Simple ' + (i+1)) : ('Double ' + (i - sSingles + 1));
+    html += '<div class="sport-item">'
+      + '<label class="muted">' + label + '</label>'
+      + '<select data-kind="ping" data-index="' + i + '">'
+      + '<option value="" ' + (v===null ? 'selected' : '') + '>Non joué</option>'
+      + '<option value="0" ' + (v===0 ? 'selected' : '') + '>Victoire ' + esc(teamName(m.a)) + '</option>'
+      + '<option value="1" ' + (v===1 ? 'selected' : '') + '>Victoire ' + esc(teamName(m.b)) + '</option>'
+      + '</select>'
+      + '</div>';
   }
-  html += `</div>`;
+  html += '</div>';
   return html;
 }
 function renderPalet(m){
@@ -1361,7 +1353,24 @@ document.addEventListener("click",async(e)=>{
     case "btn-cloud-delete":{if(!isAdmin())return alert("Suppression cloud réservée à l’admin.");const code=state.cloudId||cloud.id;if(!code)return alert("Aucun code actif.");if(!confirm("Supprimer définitivement ce tournoi du cloud ?"))return;deleteCloud(code).then(()=>{setIndex(getIndex().filter(e=>e.id!==code));unsubscribeCloud();resetState();renderSetupRecent();renderAll();history.replaceState(null,"",location.pathname);alert("Tournoi supprimé.");goto('setup')});break}
 
     /* ---- Réinitialiser scores => réinitialise aussi BONUS + journées ---- */
-    case "btn-reset-scores":{state.bonusSelections={};state.bonusApplied={};state.bonusUsed={};(state.teams||[]).forEach(t=>{if(t)t.bonusCapitaineUsed=false});if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Réinitialiser les SCORES et les BONUS ?"))return;state.matches.forEach(m=>{m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null}});state.roundCtl={};state.bonusSelections={};state.bonusApplied={};state.teams.forEach(t=>t.bonusCapitaineUsed=false);saveState();renderAll();goto("calendrier");break}
+    case "btn-reset-scores":{
+      if (!isAdmin()) return alert("Réservé à l’admin.");
+      if (!confirm("Réinitialiser les SCORES et les BONUS ?")) return;
+      (state.matches || []).forEach(m=>{
+        m.darts = Array(dartsTotal()).fill(null);
+        m.ping  = Array(pingTotal()).fill(null);
+        m.pingPts = Array(pingTotal()).fill({a:null,b:null});
+        m.palet = { a:null, b:null };
+      });
+      state.roundCtl = {};
+      state.bonusSelections = {};
+      state.bonusApplied = {};
+      state.bonusUsed = {};
+      (state.teams||[]).forEach(t=>{ if(t) t.bonusCapitaineUsed=false; });
+      saveState();
+      renderAll();
+      goto("calendrier");
+      break}
 
     case "btn-unlock":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Déverrouiller le calendrier ?"))return;state.locked=false;saveState();renderTeams();renderMatches();updateLock();break}
 
@@ -1570,8 +1579,11 @@ id('bonus-save').addEventListener('click',()=>{
   (window._bonusType === 'melon')    ? 'melon'    :
                                        'capitaine';
 // Nouveau : 'capitaine' et 'melon' n'ont pas de paramètres à lire
-if (type === 'capitaine' || type === 'melon') {
+if (type === 'capitaine') {
   setBonusSelection(r, t, { type });
+} else if (type === 'melon') {
+  const sport = document.getElementById('melon-sport')?.value || 'darts';
+  setBonusSelection(r, t, { type: 'melon', sport });
 } else if (type === 'taupe') {
   const sport = document.getElementById('taupe-sport')?.value || 'darts';
   setBonusSelection(r, t, { type: 'taupe', sport });
