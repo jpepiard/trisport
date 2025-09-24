@@ -1986,6 +1986,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 
 
+
 <script id="standings-count-anim">
 (function(){
   const TBL = document.getElementById('table-classement');
@@ -2000,91 +2001,91 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     return m ? parseFloat(m[0]) : null;
   }
   function formatLike(orig, n){
-    // conserve éventuels signes + / - et espaces autour
     const hasPlus = /^\s*\+/.test(orig);
-    const hasMinus = /^\s*-/.test(orig);
-    const s = (n<0?'':'') + Math.round(n).toString();
-    if (hasMinus) return s; // s inclut déjà le - si n<0
-    if (hasPlus) return (n>=0? '+' : '') + Math.round(n).toString();
-    return Math.round(n).toString();
+    const s = Math.round(n).toString();
+    return hasPlus ? (n>=0? '+' : '') + Math.round(n).toString() : s;
   }
   function animateCount(cell, from, to){
     if (DURATION === 0){ cell.textContent = formatLike(cell.textContent, to); return; }
     const start = performance.now();
     function step(now){
       const p = Math.min(1, (now - start) / DURATION);
-      // easing out cubic
       const eased = 1 - Math.pow(1 - p, 3);
       const val = from + (to - from) * eased;
-      cell.textContent = formatLike(cell.textContent, val);
-      if (p < 1) requestAnimationFrame(step);
-      else cell.textContent = formatLike(cell.textContent, to);
+      if (cell && cell.isConnected){
+        cell.textContent = formatLike(cell.textContent, val);
+      }
+      if (p < 1 && cell && cell.isConnected) requestAnimationFrame(step);
+      else if (cell && cell.isConnected) cell.textContent = formatLike(cell.textContent, to);
     }
     requestAnimationFrame(step);
   }
 
-  // Observe text changes inside tbody
   const tbody = TBL.querySelector('tbody');
   if(!tbody) return;
 
-  // Initialize prev values
-  Array.from(tbody.querySelectorAll('tr')).forEach(tr=>{
-    const pts = tr.children[2]; // Points
-    const bon = tr.children[6]; // Bonus
-    const mal = tr.children[7]; // Malus
+  function initRow(tr){
+    if (!tr || !tr.children) return;
+    const pts = tr.children[2];
+    const bon = tr.children[6];
+    const mal = tr.children[7];
     if (pts) pts.dataset.prev = pts.textContent.trim();
     if (bon) bon.dataset.prev = bon.textContent.trim();
     if (mal) mal.dataset.prev = mal.textContent.trim();
-  });
+  }
+
+  Array.from(tbody.querySelectorAll('tr')).forEach(initRow);
 
   const mo = new MutationObserver((ms)=>{
-    for (const m of ms){
+    ms.forEach(m=>{
       if (m.type === 'characterData'){
-        const cell = m.target.parentElement;
-        if (!cell || !cell.parentElement) continue;
-        const tr = cell.parentElement;
-        const colIndex = Array.from(tr.children).indexOf(cell);
-        if (![2,6,7].includes(colIndex)) continue; // only Points, Bonus, Malus
-        const prevText = cell.dataset.prev || '';
-        const newText = cell.textContent.trim();
+        const parent = m.target && m.target.parentElement ? m.target.parentElement : null;
+        if (!parent || !parent.parentElement) return;
+        const tr = parent.parentElement;
+        if (!tr || !tr.children) return;
+        const colIndex = Array.from(tr.children).indexOf(parent);
+        if (![2,6,7].includes(colIndex)) return;
+        const prevText = parent.dataset.prev || '';
+        const newText = parent.textContent.trim();
         const from = numFromText(prevText);
         const to = numFromText(newText);
-        if (from==null || to==null) { cell.dataset.prev = newText; continue; }
-        if (from === to) { cell.dataset.prev = newText; continue; }
-        // Set back to prev then animate to new
-        cell.textContent = prevText;
-        animateCount(cell, from, to);
-        cell.dataset.prev = newText;
+        if (from==null || to==null || from===to){ parent.dataset.prev = newText; return; }
+        parent.textContent = prevText;
+        animateCount(parent, from, to);
+        parent.dataset.prev = newText;
       }
       if (m.type === 'childList'){
-        // New rows added -> set staggered animation and initialize prev
         m.addedNodes.forEach(node=>{
-          if(node.nodeType===1 && node.matches && node.matches('tr')){
+          if(!(node && node.nodeType===1)) return;
+          if (node.matches && node.matches('tr')){
             const tr = node;
             tr.style.animation = 'slideUpFade .28s ease both';
-            const idx = Array.from(tr.parentElement.children).indexOf(tr);
-            tr.style.animationDelay = (Math.min(6, idx) * 0.03).toFixed(2) + 's';
-            const pts = tr.children[2]; const bon = tr.children[6]; const mal = tr.children[7];
-            if (pts) pts.dataset.prev = pts.textContent.trim();
-            if (bon) bon.dataset.prev = bon.textContent.trim();
-            if (mal) mal.dataset.prev = mal.textContent.trim();
+            const parent = tr.parentElement || (m.target && m.target.nodeType===1 ? m.target : null);
+            if (parent && parent.children){
+              const idx = Array.from(parent.children).indexOf(tr);
+              tr.style.animationDelay = (Math.min(6, Math.max(0, idx)) * 0.03).toFixed(2) + 's';
+            }
+            initRow(tr);
+          }else{
+            node.querySelectorAll && node.querySelectorAll('tr').forEach(initRow);
           }
         });
       }
-    }
+    });
   });
   mo.observe(tbody, { subtree:true, characterData:true, childList:true });
 
-  // If user clicks refresh buttons, we rely on external code to update the table;
-  // observer will animate the resulting changes. No conflicting logic needed.
-  // (Optional: add a tiny pulse on table while refreshing)
-  function pulse(){ TBL.style.boxShadow='0 0 0 1px rgba(122,162,255,.25) inset'; setTimeout(()=>TBL.style.boxShadow='', 250); }
+  function pulse(){
+    TBL.style.boxShadow='0 0 0 1px rgba(122,162,255,.25) inset';
+    setTimeout(()=>{ if (TBL) TBL.style.boxShadow=''; }, 250);
+  }
   const r1 = document.getElementById('btn-refresh-standings');
   const r2 = document.getElementById('btn-refresh-standings-2');
   r1 && r1.addEventListener('click', pulse);
   r2 && r2.addEventListener('click', pulse);
 })();
 </script>
+
 
 </body>
 </html>
