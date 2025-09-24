@@ -781,8 +781,8 @@ function updateCounts(){id("teams-count").textContent=state.teams.length+" "+(st
 function updateLock(){const pill=id("lock-pill");if(pill)pill.style.display=state.locked?"inline-block":"none";const gen=id("btn-generate");if(gen){gen.disabled=!!state.locked;gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"}}
 
 /* ===== Rencontres & Scores ===== */
-const getPingPts=m=>Array.isArray(m.pingPts)?m.pingPts:Array(pingTotal()).fill({a:null,b:null});
-const isPingValid=(a,b)=>{if(a==null||b==null)return false;if(isNaN(a)||isNaN(b))return false;const max=Math.max(a,b),diff=Math.abs(a-b);return(max>=11)&&(diff>=2)}
+const getPingPts = m => { return Array.isArray(m.ping) ? m.ping.map(v => (v===0?{a:1,b:0} : (v===1?{a:0,b:1}:{a:null,b:null}))) : (Array.isArray(m.pingPts)?m.pingPts:Array(pingTotal()).fill({a:null,b:null})); };
+const isPingValid=(a,b)=>{ if(a==null||b==null) return false; if((a===1&&b===0)||(a===0&&b===1)) return true; if(isNaN(a)||isNaN(b)) return false; const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
 function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:0,ping:0};m.darts.forEach(v=>{if(v===0)aw.darts++;else if(v===1)bw.darts++});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b)aw.ping++;else if(b>a)bw.ping++}});return{aw,bw}}
 function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v===1);const okP=getPingPts(m).every(s=>isPingValid(+s.a,+s.b));const T=+state.rules.paletTarget||11,pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1));return okD&&okP&&okL}
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
