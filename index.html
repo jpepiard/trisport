@@ -433,70 +433,7 @@ header .btn, header .chip, header .pill, header .tab{
 .btn.danger:hover{ box-shadow: 0 8px 18px rgba(239,68,68,.25), 0 0 0 1px rgba(239,68,68,.25) inset; }
 </style>
 
-/* ===== Classement : header sticky ===== */
-#table-classement thead th{
-  position: sticky;
-  top: 0;                     /* colle au haut du conteneur scrollable */
-  z-index: 2;
-  background: linear-gradient(180deg,#171d3a,#121632); /* même esprit que les cards */
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 2px 0 rgba(0,0,0,.25);
-}
 
-/* ===== Zébrage + hover ===== */
-#table-classement tbody tr:nth-child(odd){ background: rgba(36,43,85,.35); }
-#table-classement tbody tr:nth-child(even){ background: rgba(36,43,85,.18); }
-#table-classement tbody tr:hover{ background: rgba(122,162,255,.12); }
-
-/* ===== Podium sur la colonne # (1re colonne) ===== */
-#table-classement tbody td:first-child{
-  font-weight: 800;
-  text-align: center;
-  border-left: 3px solid transparent;   /* base, remplacée pour top 3 */
-  width: 56px;                           /* un peu plus large pour le badge */
-}
-
-/* 1er — Or */
-#table-classement tbody tr:nth-child(1) td:first-child{
-  color: #fff7cc;
-  background:
-    radial-gradient(18px 18px at 50% 50%, #ffdf70, #caa535 60%, transparent 61%);
-  border-left-color: #d4af37;
-  box-shadow: inset 0 0 0 1px rgba(212,175,55,.25);
-}
-/* 2e — Argent */
-#table-classement tbody tr:nth-child(2) td:first-child{
-  color: #e9eef7;
-  background:
-    radial-gradient(18px 18px at 50% 50%, #dfe5ee, #a8b0bb 60%, transparent 61%);
-  border-left-color: #c0c0c0;
-  box-shadow: inset 0 0 0 1px rgba(192,192,192,.25);
-}
-/* 3e — Bronze */
-#table-classement tbody tr:nth-child(3) td:first-child{
-  color: #ffe9d2;
-  background:
-    radial-gradient(18px 18px at 50% 50%, #f6caa2, #b37742 60%, transparent 61%);
-  border-left-color: #cd7f32;
-  box-shadow: inset 0 0 0 1px rgba(205,127,50,.25);
-}
-
-/* Petit badge médaille à droite du rang (optionnel) */
-#table-classement tbody tr:nth-child(-n+3) td:first-child::after{
-  content: "●";
-  display: inline-block;
-  margin-left: 6px;
-  font-size: 10px;
-  vertical-align: baseline;
-  filter: saturate(120%);
-}
-#table-classement tbody tr:nth-child(1) td:first-child::after{ color:#d4af37; } /* or */
-#table-classement tbody tr:nth-child(2) td:first-child::after{ color:#c0c0c0; } /* argent */
-#table-classement tbody tr:nth-child(3) td:first-child::after{ color:#cd7f32; } /* bronze */
-
-/* Améliore la lisibilité de la colonne équipe sur hover */
-#table-classement tbody tr:hover td:nth-child(2) .team-name{ filter: saturate(120%); }
-</style>
 
 
 <body>
