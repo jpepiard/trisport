@@ -1,0 +1,231 @@
+
+/* =========================================================
+   TriSports — Style Upgrade (add-on)
+   Drop-in stylesheet to enhance aesthetics & UX without
+   modifying existing HTML structure.
+   ---------------------------------------------------------
+   Usage: <link rel="stylesheet" href="style-upgrade.css">
+   Safe to remove; overrides are additive and scoped.
+   ======================================================= */
+
+/* Optional modern font (falls back gracefully) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+:root{
+  --elev-1: 0 6px 16px rgba(0,0,0,.25);
+  --elev-2: 0 10px 24px rgba(0,0,0,.32);
+  --accent-2: #34d399;           /* secondary accent (mint) */
+  --accent-3: #f59e0b;           /* tertiary accent (amber) */
+  --card-grad: linear-gradient(180deg,#181e42,#141936);
+}
+
+/* Typography refinements */
+body{
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+.card .hd{
+  font-size: 18px;
+  letter-spacing: .2px;
+}
+.help{
+  line-height: 1.45;
+}
+
+/* Card elevation & hover */
+.card{
+  background: var(--card-grad);
+  border-radius: 18px;
+  box-shadow: var(--elev-1);
+  transition: box-shadow .18s ease, transform .12s ease, border-color .18s ease, background .25s ease;
+}
+.card:hover{
+  box-shadow: var(--elev-2);
+  transform: translateY(-1px);
+}
+.match-card{
+  background: linear-gradient(180deg,#171d3a,#131834);
+  border-radius: 16px;
+  transition: box-shadow .18s ease, transform .12s ease, border-color .18s ease;
+}
+.match-card:hover{
+  box-shadow: var(--elev-1);
+  transform: translateY(-1px);
+}
+
+/* Buttons — clearer hover/active and subtle focus */
+.btn{
+  position: relative;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: .2px;
+}
+.btn.primary{
+  background: linear-gradient(180deg,#3342b0,#253086);
+  border-color: #5566e0;
+}
+.btn.primary:hover{ filter: brightness(1.06); }
+.btn.danger:hover { filter: brightness(1.06); }
+.btn:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(15,18,32,1), 0 0 0 4px rgba(122,162,255,.8);
+  z-index: 1;
+}
+
+/* Tabs — underline slide & stronger selected state
+   (works with existing [aria-selected]) */
+.tabs{ gap: 10px; }
+.tab{
+  position: relative;
+  overflow: hidden;
+}
+.tab::after{
+  content:"";
+  position:absolute;
+  left:10px; right:10px; bottom:-6px;
+  height:3px;
+  border-radius:3px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transform: translateY(6px);
+  opacity: 0;
+  transition: transform .22s ease, opacity .22s ease;
+}
+.tab[aria-selected="true"]::after{
+  transform: translateY(0);
+  opacity: 1;
+}
+.tab:hover{ transform: translateY(-1px); }
+
+/* Secondary accent highlights for interactive chips/pills */
+.chip, .pill{
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+.chip:hover, .pill:hover{
+  border-color: var(--accent-2);
+  color: #d9ffef;
+  background: rgba(52, 211, 153, .08);
+}
+
+/* Table readability: zebra rows & sticky header */
+table{ border-collapse: separate; border-spacing: 0; }
+#table-classement thead th{
+  position: sticky; top: 0; z-index: 1;
+  background: #151a39;
+}
+#table-classement tbody tr:nth-child(even){
+  background: rgba(255,255,255,.02);
+}
+#table-classement tbody tr:hover{
+  background: rgba(122,162,255,.08);
+}
+/* Podium badges for ranking column (#) */
+#table-classement tbody tr td:first-child{
+  font-weight: 700;
+}
+#table-classement tbody tr:nth-child(1) td:first-child{
+  background: linear-gradient(90deg,#c2902f22,transparent);
+  color: #facc15;
+}
+#table-classement tbody tr:nth-child(2) td:first-child{
+  background: linear-gradient(90deg,#9aa4b322,transparent);
+  color: #e5e7eb;
+}
+#table-classement tbody tr:nth-child(3) td:first-child{
+  background: linear-gradient(90deg,#8b5cf622,transparent);
+  color: #c084fc;
+}
+
+/* H2H pills: slightly bigger & bolder */
+.h2h-pill{
+  font-size: 12.5px;
+  letter-spacing: .2px;
+}
+
+/* Avatars — gentle pop on update/hover */
+.avatar{
+  transition: transform .12s ease, box-shadow .18s ease;
+}
+.avatar:hover{
+  transform: scale(1.03);
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+}
+
+/* Bonus modal — entrance animation */
+#bonus-modal.show .bonus-dialog{
+  animation: modalIn .18s ease both;
+}
+@keyframes modalIn{
+  from{ transform: translateY(6px); opacity: 0; }
+  to  { transform: translateY(0);   opacity: 1; }
+}
+
+/* Bonus cards — clearer selected state */
+.bonus-dialog .bonus-card{
+  border: 2px dashed #4b5bd7;
+  background: #101636;
+}
+.bonus-dialog .bonus-card.selectable:hover{
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(122,162,255,.25);
+}
+.bonus-dialog .bonus-card.selected{
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px rgba(122,162,255,.35), 0 6px 18px rgba(75,139,255,.18);
+}
+
+/* Match list grid — breathing room */
+#match-list.grid{
+  gap: 14px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 640px){
+  .card .bd{ padding: 14px; }
+  .card .hd{ padding: 12px 14px; font-size: 17px; }
+  .btn{ width: 100%; }
+  .tabs{ gap: 6px; }
+  .tab{ padding-inline: 12px; }
+  #table-classement, #table-h2h{
+    font-size: 14px;
+  }
+}
+
+/* Ultra-compact header keeps visuals but reduces chrome */
+header .container{
+  gap: 12px !important;
+}
+header .tabs .tab{
+  padding-block: 8px !important;
+}
+
+/* Subtle focus ring for inputs */
+input[type=text], input[type=number], select{
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+input[type=text]:focus, input[type=number]:focus, select:focus{
+  outline: none;
+  border-color: #6b7bff;
+  box-shadow: 0 0 0 3px rgba(107,123,255,.18);
+}
+
+/* Compact separators inside bonus list */
+.bonus-sep{
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+  margin: 8px 0;
+}
+
+/* Utility: scale-in animation for dynamic inserts (avatars, rows, etc.) */
+@keyframes scaleIn {
+  from { transform: scale(.98); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+.scale-in{
+  animation: scaleIn .18s ease both;
+}
+
+/* Ping set validity hint (only visual; requires the class on cells) */
+.set-valid   { background: rgba(34,197,94,.08); }
+.set-invalid { background: rgba(239,68,68,.08); }
