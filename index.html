@@ -962,7 +962,46 @@ function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){cons
 function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
 
 /* Capitaine — calcul robuste */
-function computeCapitaineBonusForMatch(m, tid, player, sport){
+<script>
+function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
+  try{
+    let wins = 0;
+    const isA = (match.a === teamId), isB = (match.b === teamId);
+    if (!isA && !isB) return 0;
+
+    // Fléchettes : +2 par manche gagnée
+    if (Array.isArray(match.darts)) {
+      match.darts.forEach(v=>{
+        if (v===0 && isA) wins++;
+        else if (v===1 && isB) wins++;
+      });
+    }
+
+    // Ping : +2 par set gagné (en s’appuyant sur getPingPts + isPingValid)
+    const sets = (typeof getPingPts==='function') ? (getPingPts(match) || []) : [];
+    sets.forEach(s=>{
+      const a = (s && s.a!=null) ? +s.a : null;
+      const b = (s && s.b!=null) ? +s.b : null;
+      if (!isPingValid(a,b)) return;
+      if (a>b && isA) wins++;
+      else if (b>a && isB) wins++;
+    });
+
+    // Palet : +2 si l’équipe remporte le palet (atteint la cible et > adverse)
+    const R = (window.state && state.rules) || {};
+    const target = +(R.paletTarget ?? 11);
+    const pa = (match.palet && match.palet.a!=null) ? +match.palet.a : null;
+    const pb = (match.palet && match.palet.b!=null) ? +match.palet.b : null;
+    if (pa!=null && pb!=null){
+      if (pa>=target && pa>pb && isA) wins++;
+      else if (pb>=target && pb>pa && isB) wins++;
+    }
+
+    return 2 * wins;
+  }catch(e){ return 0; }
+}
+</script>
+
   let gain = 0;
   const isA = (m.a === tid), isB = (m.b === tid);
   if (!isA && !isB) return 0;
