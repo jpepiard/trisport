@@ -169,3 +169,46 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 @media (prefers-reduced-motion: reduce){
   *{ transition: none !important; animation: none !important; }
 }
+
+/* === Classement — demandes spécifiques (hiding + visu upgrade) ========= */
+/* 1) Cacher les pilules "4 équipes" et "3 matchs par équipe" */
+#classement .hd #teams-count,
+#classement .hd #rounds-count{ display:none !important; }
+
+/* 2) Retirer les petites médailles or/argent/bronze dans la colonne # */
+#table-classement tbody tr:nth-child(-n+3) td:first-child::after{ content: none !important; }
+#table-classement tbody tr:nth-child(1) td:first-child,
+#table-classement tbody tr:nth-child(2) td:first-child,
+#table-classement tbody tr:nth-child(3) td:first-child{
+  background: none !important;
+  border-left-color: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+}
+
+/* 3) Amélioration visuelle globale du tableau de classement */
+/*   - lignes "cartes" espacées (border-spacing)
+     - hover doux + coins arrondis
+     - barrette de couleur fine pour top 3 (sans médailles)
+*/
+#table-classement{ border-collapse: separate !important; border-spacing: 0 8px !important; }
+#table-classement thead th{ border-bottom: none; background: linear-gradient(180deg,#171d3a,#121632); }
+#table-classement tbody tr{ background: linear-gradient(180deg, #151b39, #121632); }
+#table-classement tbody td{ border-bottom: none; }
+#table-classement tbody td:first-child{ border-top-left-radius: 12px; border-bottom-left-radius: 12px; width:56px; text-align:center; font-weight:800; }
+#table-classement tbody td:last-child{ border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+#table-classement tbody tr{ box-shadow: 0 1px 0 rgba(0,0,0,.18) inset, 0 0 0 1px rgba(255,255,255,.02); }
+#table-classement tbody tr:hover{ background: linear-gradient(180deg,#141a36,#10142f); box-shadow: 0 0 0 1px var(--accent-muted) inset, 0 10px 22px rgba(0,0,0,.25); }
+
+/* Barrette fine à gauche pour top 3 (sans icônes) */
+#table-classement tbody tr:nth-child(1){ box-shadow: inset 4px 0 0 0 #d4af37, 0 1px 0 rgba(0,0,0,.18) inset, 0 0 0 1px rgba(255,255,255,.02); }
+#table-classement tbody tr:nth-child(2){ box-shadow: inset 4px 0 0 0 #c0c0c0, 0 1px 0 rgba(0,0,0,.18) inset, 0 0 0 1px rgba(255,255,255,.02); }
+#table-classement tbody tr:nth-child(3){ box-shadow: inset 4px 0 0 0 #cd7f32, 0 1px 0 rgba(0,0,0,.18) inset, 0 0 0 1px rgba(255,255,255,.02); }
+
+/* Valeurs numériques un peu plus stables visuellement */
+#table-classement tbody td, #table-classement thead th{ font-variant-numeric: tabular-nums; }
+
+/* Bonus/Malus : nuances lisibles (si non déjà présentes) */
+#table-classement .pos{ color: var(--success); font-weight:700; }
+#table-classement .neg{ color: #f87171; font-weight:700; }
+
