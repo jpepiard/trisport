@@ -962,7 +962,7 @@ function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){cons
 function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
 
 /* Capitaine — calcul robuste */
-<script>
+
 function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
   try{
     let wins = 0;
