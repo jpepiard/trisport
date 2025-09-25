@@ -1013,7 +1013,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
 } else {
         gain += BONUS_VAL;
       }
-    });
+    
   } else if (sport === 'ping') {
     const sSingles = state.rules.pingSingles || 0;
     getPingPts(m).forEach((s,i)=>{
