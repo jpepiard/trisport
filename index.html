@@ -916,7 +916,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
     const isA = (match.a === teamId), isB = (match.b === teamId);
     if (!isA && !isB) return 0;
 
-    // Fléchettes : +2 par manche gagnée
+    // Darts
     if (Array.isArray(match.darts)) {
       match.darts.forEach(v=>{
         if (v===0 && isA) wins++;
@@ -924,7 +924,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
       });
     }
 
-    // Ping : +2 par set gagné (supporte pingPts ou mapping depuis ping)
+    // Ping
     const getPingPts = (m) => {
       if (Array.isArray(m.ping)) {
         return m.ping.map(v => (v===0?{a:1,b:0} : (v===1?{a:0,b:1}:{a:null,b:null})));
@@ -946,7 +946,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
       else if (b>a && isB) wins++;
     });
 
-    // Palet : +2 si l’équipe remporte le palet
+    // Palet
     const R = (window.state && state.rules) || {};
     const target = +(R.paletTarget ?? 11);
     const pa = (match.palet && match.palet.a!=null) ? +match.palet.a : null;
