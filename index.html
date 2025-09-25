@@ -916,7 +916,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
     const isA = (match.a === teamId), isB = (match.b === teamId);
     if (!isA && !isB) return 0;
 
-    // Fléchettes : +2 par manche gagnée
+    // Fléchettes
     if (Array.isArray(match.darts)) {
       match.darts.forEach(v=>{
         if (v===0 && isA) wins++;
@@ -924,51 +924,10 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
       });
     }
 
-    // Ping : +2 par set gagné (supporte pingPts ou mapping depuis ping)
-    const getPingPts = (m) => {
-      if (Array.isArray(m.ping)) {
-        return m.ping.map(v => (v===0?{a:1,b:0} : (v===1?{a:0,b:1}:{a:null,b:null})));
-      }
-      return Array.isArray(m.pingPts) ? m.pingPts : [];
-    };
-    const isPingValid = (a,b) => {
-      if(a==null||b==null) return false;
-      if((a===1&&b===0)||(a===0&&b===1)) return true;
-      if(isNaN(a)||isNaN(b)) return false;
-      const max=Math.max(a,b), diff=Math.abs(a-b);
-      return (max>=11)&&(diff>=2);
-    };
-    (getPingPts(match) || []).forEach(s=>{
-      const a = (s && s.a!=null) ? +s.a : null;
-      const b = (s && s.b!=null) ? +s.b : null;
-      if (!isPingValid(a,b)) return;
-      if (a>b && isA) wins++;
-      else if (b>a && isB) wins++;
-    });
-
-    // Palet : +2 si l’équipe remporte le palet
-    const R = (window.state && state.rules) || {};
-    const target = +(R.paletTarget ?? 11);
-    const pa = (match.palet && match.palet.a!=null) ? +match.palet.a : null;
-    const pb = (match.palet && match.palet.b!=null) ? +match.palet.b : null;
-    if (pa!=null && pb!=null){
-      if (pa>=target && pa>pb && isA) wins++;
-      else if (pb>=target && pb>pa && isB) wins++;
-    }
-
-    return 2 * wins;
-  }catch(e){ return 0; }
-}
-);
-    }
-
-    // Ping
-    const getPingPts = (m) => {
-      if (Array.isArray(m.ping)) {
-        return m.ping.map(v => (v===0?{a:1,b:0} : (v===1?{a:0,b:1}:{a:null,b:null})));
-      }
-      return Array.isArray(m.pingPts) ? m.pingPts : [];
-    };
+    // Ping (0/1 ou score valide ≥11 avec 2 pts d’écart)
+    const getPingPts = (m) => Array.isArray(m.ping)
+      ? m.ping.map(v => (v===0?{a:1,b:0} : (v===1?{a:0,b:1}:{a:null,b:null})))
+      : (Array.isArray(m.pingPts) ? m.pingPts : []);
     const isPingValid = (a,b) => {
       if(a==null||b==null) return false;
       if((a===1&&b===0)||(a===0&&b===1)) return true;
@@ -985,8 +944,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
     });
 
     // Palet
-    const R = (window.state && state.rules) || {};
-    const target = +(R.paletTarget ?? 11);
+    const target = +((window.state && state.rules && state.rules.paletTarget) ?? 11);
     const pa = (match.palet && match.palet.a!=null) ? +match.palet.a : null;
     const pb = (match.palet && match.palet.b!=null) ? +match.palet.b : null;
     if (pa!=null && pb!=null){
@@ -997,8 +955,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
     return 2 * wins;
   }catch(e){ return 0; }
 }
-});
-  }
+
 /* Melon d’or — ±2 × différence en POINTS sur le sport choisi (1 manche = 5 pts au ping & fléchettes) */
 
 function computeMelonBonusForMatch(m, tid, sport){
