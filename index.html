@@ -1262,6 +1262,23 @@ function bonusChip(r, mTeam, rs){
        '</span>';
   }
 }
+
+// === In-place update of the match completeness chip ===
+function updateMatchCompleteness(mid){
+  try{
+    const m = (state.matches || []).find(x=>x.id===mid);
+    if(!m) return;
+    const card = document.querySelector('.match-card[data-id="'+mid+'"]');
+    if(!card) return;
+    const chip = card.querySelector('.state-chip');
+    if(!chip) return;
+    const done = !!isMatchComplete(m);
+    chip.textContent = done ? 'Complet' : 'Incomplet';
+    chip.classList.remove('ok','warn');
+    chip.classList.add(done ? 'ok' : 'warn');
+    card.setAttribute('data-complete', done ? 'true' : 'false');
+  }catch(e){/* no-op */}
+}
 function renderMatches(){
   if (typeof recomputeAllBonuses==='function') recomputeAllBonuses();
   const list=id("match-list");list.innerHTML="";
@@ -1350,7 +1367,7 @@ function renderMatches(){
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
         const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!(can && canEditScores(m,rCtl));
-        sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
+        sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
       
@@ -1380,7 +1397,7 @@ function renderMatches(){
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;saveState();updateNote()});
-        const commit=()=>{const mm=findMatch(mid);const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);mm.palet[which]=v;saveState();renderMatches();renderLeaderboard();renderH2H()};
+        const commit=()=>{const mm=findMatch(mid);const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);mm.palet[which]=v;saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()};
         inp.addEventListener("change",commit);inp.addEventListener("blur",commit);inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();inp.blur()}})
       });
 
