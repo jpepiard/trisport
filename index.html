@@ -1208,10 +1208,7 @@ function bonusChip(r, mTeam, rs){
       type === 'capitaine' ? (labelPlayer ? (' / ' + labelPlayer) : '') :
       ((type==='taupe' || type==='lefthand' || type==='melon') && labelSport ? (' / ' + labelSport) : '')
     );
-    return '<span class="pill blue">' + lblType + extra + ' : ' +
-           '<span class="' + valClass + '">' + sign + applied + '</span>' +
-           '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
-           '</span>';
+    return '<span class="pill bonus-flashy" title="' + (( (type==='taupe'||type==='lefthand'||type==='melon') && labelSport ? (lblType + ' — Sport : ' + labelSport) : lblType )) + '">Bonus ' +'<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +'<span class="' + valClass + '\">' + sign + applied + '</span>' +'</span>';
   }
 }
 function renderMatches(){
