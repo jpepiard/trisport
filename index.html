@@ -1395,7 +1395,8 @@ function renderMatches(){
           while (mm.ping.length < total) mm.ping.push(null);
           mm.ping[i] = vv;
           saveState();
-          renderMatches();
+              updateMatchCompleteness(m.id);
+renderMatches();
           renderLeaderboard();
           renderH2H();
         });
