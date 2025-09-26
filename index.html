@@ -1234,7 +1234,7 @@ function renderMatches(){
       const el=document.createElement("div");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
       const bonusA=bonusChip(r,m.a,rCtl), bonusB=bonusChip(r,m.b,rCtl);
       el.innerHTML = `
-  <div class="hd" data-expand>
+    <div class="hd" data-expand>
     <div class="scorewrap">
       <!-- Rail gauche : #Journée -->
       <div class="left-rail">
@@ -1275,8 +1275,7 @@ function renderMatches(){
         </div>
       </div>
     </div>
-  </div>
-
+  </div>`;
 
       list.appendChild(el);
 
