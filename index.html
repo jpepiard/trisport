@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>TriSports — Maquette 2</title>
+<title>TriSports — Maquette 3</title>
 <link rel="stylesheet" href="trisports-theme-pack.css"/>
 <style>
 :root{--bg:#0f1220;--border:#2b315f;--text:#e7e9f7;--muted:#8b94b8;--chip:#242b55;--card:#1b2242}
@@ -27,7 +27,7 @@
 </head>
 <body>
 <header class="card" style="margin:10px 0">
-  <div class="hd"><strong>TriSports — Maquette 2</strong><span class="pill">démo de mise en page</span></div>
+  <div class="hd"><strong>TriSports — Maquette 3</strong><span class="pill">démo de mise en page</span></div>
 </header>
 <main class="container">
   <div class="card">
@@ -35,20 +35,31 @@
     <div class="bd">
 
 <style>
-.face{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.subgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.subgrid .box{background:#111636;border:1px solid var(--border);border-radius:12px;padding:12px}
+.sport-matrix table{width:100%;border-collapse:collapse}
+.sport-matrix th, .sport-matrix td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left}
+.sport-matrix thead th{color:#8b94b8}
+.bonus-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 </style>
 
-<div class="match-card open">
-  <div class="hd face">
+<div class="match-card sport-matrix open">
+  <div class="hd">
     <div class="team"><span class="avatar">A</span><strong>Alpha</strong></div>
     <div class="score-compact">12&nbsp;–&nbsp;9</div>
     <div class="team"><strong>Beta</strong><span class="avatar">B</span></div>
   </div>
-  <div class="bd subgrid">
-    <div class="box"><div class="pill blue">🎖 Capitaine</div><div style="margin-top:6px" class="pill green">Fléchettes&nbsp;: 5 pts</div></div>
-    <div class="box"><div class="pill yellow">🪞 Miroir</div><div style="margin-top:6px" class="pill">Ping&nbsp;: 6 pts</div></div>
+  <div class="bd">
+    <table>
+      <thead><tr><th>Discipline</th><th>Alpha</th><th>Beta</th></tr></thead>
+      <tbody>
+        <tr><td>🎯 Fléchettes</td><td>5 pts</td><td>3 pts</td></tr>
+        <tr><td>🏓 Ping</td><td>4 pts</td><td>6 pts</td></tr>
+        <tr><td>🪙 Palet</td><td>3 pts</td><td>0 pts</td></tr>
+      </tbody>
+    </table>
+    <div class="bonus-grid">
+      <div><span class="pill blue">🎖 Capitaine</span></div>
+      <div><span class="pill yellow">🪞 Miroir</span></div>
+    </div>
   </div>
 </div>
 
