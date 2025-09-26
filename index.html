@@ -923,6 +923,41 @@ function renderManageList(){renderSetupRecent()}
 /* ===== État ===== */
 let state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};
 let ui={open:{},h2h:false}; let session={admin:false,claims:{}};
+// === Session persistence (admin & team claims) ===
+(function(){
+  const SESSION_KEY = 'trisports.session.v1';
+  const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 jours
+
+  function loadPersisted(){
+    try{
+      const raw = localStorage.getItem(SESSION_KEY);
+      if(!raw) return;
+      const obj = JSON.parse(raw);
+      if(!obj || !obj.t || (Date.now() - obj.t) > MAX_AGE_MS) return;
+      if (typeof obj.admin === 'boolean') session.admin = obj.admin;
+      if (obj.claims && typeof obj.claims === 'object') session.claims = obj.claims;
+    }catch(e){ /* ignore */ }
+  }
+
+  function persistNow(){
+    try{
+      const payload = { t: Date.now(), admin: !!session.admin, claims: session.claims || {} };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+    }catch(e){ /* ignore */ }
+  }
+
+  // Load once on boot
+  loadPersisted();
+
+  // Persist on unload and also whenever we detect a change
+  window.addEventListener('beforeunload', persistNow);
+
+  // Optional helper APIs for your code
+  window.persistSessionNow = persistNow;
+  window.clearSessionPersistence = function(){
+    try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+  };
+})();
 function isAdmin(){return !!session.admin} function hasClaim(tid){return !!session.claims[tid]}
 // === Droits de saisie des scores selon l'état de la journée ===
 function _iAmTeamOf(m){ return hasClaim(m.a) || hasClaim(m.b); }
@@ -946,6 +981,12 @@ function normalize(){state.rules=state.rules||{dartsSingles:2,dartsDoubles:1,dar
 /* ===== Firebase ===== */
 const cloud={enabled:false,db:null,id:null,ref:null,timer:null}; const hasFB=!!(window.firebase&&window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey);
 function initFB(){try{if(!hasFB)return null;if(!firebase.apps||firebase.apps.length===0)firebase.initializeApp(window.FIREBASE_CONFIG);return firebase.database()}catch(_){return null}}
+// If Firebase Auth is present, ensure local persistence
+try{
+  if (window.firebase && firebase.auth){
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+  }
+}catch(e){}
 function setCloudTxt(t){id("cloud-status").textContent=t;id("cloud-status-2").textContent=t}
 function unsubscribeCloud(){try{if(cloud.ref)cloud.ref.off('value')}catch(_){ }cloud.ref=null;cloud.enabled=false;cloud.id=null;setCloudTxt('hors ligne')}
 function resetState(){state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingles:2,dartsDoubles:1,dartsWinPoints:5,pingSingles:2,pingDoubles:1,pingWinPoints:5,paletTarget:11},teams:[],matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};try{localStorage.removeItem(STORAGE_KEY)}catch(_){}} 
