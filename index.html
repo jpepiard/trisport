@@ -499,8 +499,9 @@ header .btn, header .chip, header .pill, header .tab{
 </style>
 <style id="chevron-toggle">
 /* Chevron d’ouverture/fermeture */
+.hd{ position:relative; }
 .hd .chev{
-  margin-left:auto;
+  position:absolute; right:12px; top:12px;
   display:inline-block;
   width:1.25em;
   text-align:center;
@@ -1230,7 +1231,7 @@ function renderMatches(){
 
   let complete=0, idx=0;
   rounds.forEach(r=>{
-    const hdr=help("Journée "+r);hdr.style.fontWeight="600";hdr.style.margin="8px 0";list.appendChild(hdr);
+    const hdr=document.createElement("div");hdr.className="round-head";hdr.innerHTML=`<span class="round-title">Journée ${r}</span> <span class="chip round-chip ${badgeClass}">#${r}</span>`;list.appendChild(hdr);
     const roundWrap=document.createElement("div");roundWrap.className="round-grid";list.appendChild(roundWrap);
     const rCtl=roundState(r);
     const badgeClass = rCtl.finished ? 'green' : (rCtl.started ? 'yellow' : 'red');
@@ -2244,7 +2245,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 /* Score core */
 .scorewrap .score{
   font-weight: 900 !important;
-  font-size: 46px !important;
+  font-size: 36px !important;
   letter-spacing: 2px;
   min-width: 120px;
 }
@@ -2301,5 +2302,14 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 
 /* Réduire les marges globales du panneau */
 .match-card .bd{padding:8px 10px}
+</style>
+
+<style id="round-head-style">
+.round-head{display:flex;align-items:center;gap:10px;margin:18px 0 10px 0;padding-top:8px;border-top:1px solid rgba(255,255,255,.08)}
+.round-head .round-title{font-weight:700;font-size:18px}
+/* Séparation visuelle forte entre journées */
+.round-grid{margin-bottom:26px;padding-bottom:8px}
+/* Masquer la pastille #n dans chaque match (on ne la veut qu'en tête de journée) */
+.scorewrap .left-rail .round-chip{display:none !important;}
 </style>
 
