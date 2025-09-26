@@ -10,8 +10,7 @@
     }catch(_){ return false; }
   }
 
-  if (!window || !window.state) { console.warn('[ligue] state manquant, en attente…'); }
-
+  
   function safeNum(n){ return (n==null || isNaN(+n)) ? null : +n; }
 
   function dartsScore(m){
@@ -163,10 +162,16 @@
     }catch(e){ console.error('[ligue] render error', e); }
   };
 
-  // Option : activer automatiquement si demandé
-  if (window.useLigueLayoutAuto) {
-    const start = () => window.renderMatchesLigue && window.renderMatchesLigue();
-    // petite attente pour laisser l'app charger puis on tente, et on ré-essaie après chaque seconde 3 fois
-    setTimeout(start, 50); setTimeout(start, 400); setTimeout(start, 1200);
+  // Option : activer automatiquement si demandé (boucle douce jusqu'à readiness)
+  function autoStart(tries){
+    tries = tries || 0;
+    if (!window.useLigueLayoutAuto) return;
+    if (typeof stateReady === 'function' && stateReady()){
+      if (window.renderMatchesLigue) window.renderMatchesLigue();
+      return;
+    }
+    if (tries > 40) return; // ~20s max
+    setTimeout(()=>autoStart(tries+1), tries < 10 ? 200 : 1000);
   }
+  autoStart(0);
 })();
