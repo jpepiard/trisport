@@ -2377,3 +2377,25 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .round-grid{ margin-bottom: 14px; padding-bottom: 6px; }
 </style>
 
+<style id="match-cards-equal-width">
+/* Forcer des largeurs identiques pour chaque carte dans la grille */
+.round-grid{
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.round-grid > .match-card{
+  width: 100%;
+  min-width: 0;           /* évite que du contenu force la colonne */
+  margin: 0 !important;   /* pas de marge parasite */
+  box-sizing: border-box;
+}
+/* s'assurer que le contenu interne ne crée pas une largeur différente */
+.round-grid > .match-card .scorewrap{
+  width: 100%;
+  box-sizing: border-box;
+}
+/* Mobile: 1 colonne = pleine largeur */
+@media (max-width: 900px){
+  .round-grid{ grid-template-columns: 1fr; }
+}
+</style>
+
