@@ -1200,7 +1200,7 @@ function bonusChip(r, mTeam, rs){
     if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
     if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
     var __lbl = parts.join(' / ');
-    return '<span class="pill blue">' + (sportEmoji?('Bonus '+sportEmoji):__lbl) +
+    return '<span class="pill blue">' + (sportEmoji?('Bonus' + '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' + '<span class="sport-emo">'+sportEmoji+'</span>') : __lbl) +
            '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' +
            '</span>';
   } else {
@@ -1214,8 +1214,9 @@ function bonusChip(r, mTeam, rs){
     );
     return '<span class="pill bonus-flashy ' + valClass + '" ' +
        (sportEmoji?('data-tip="' + (lblType + ' — Sport : ' + labelSport) + '"') : ('data-tip="' + lblType + '"')) +
-       '>Bonus' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
+       '>Bonus' +
        '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
+       (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
        '<span class="' + valClass + '\">' + sign + applied + '</span>' +
        '</span>';
   }
@@ -2580,5 +2581,11 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .pill.bonus-flashy .mini-bonus{ width: 14px; height: 14px; margin: 0 4px; vertical-align: -2px; }
 .pill .sport-emo{ margin: 0 4px 0 3px; font-size: 13px; vertical-align: -1px; }
 .pill.bonus-flashy .pos, .pill.bonus-flashy .neg{ margin-left: 3px; }
+</style>
+
+<style id="bonus-pill-order-tight">
+.pill.bonus-flashy, .pill.blue{ display:inline-flex; align-items:center; gap:4px; }
+.pill.bonus-flashy .mini-bonus, .pill.blue .mini-bonus{ margin:0 2px; }
+.pill .sport-emo{ margin:0 2px; }
 </style>
 
