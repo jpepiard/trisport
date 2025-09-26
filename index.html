@@ -2412,3 +2412,21 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .pill.bonus-flashy:hover{ filter: brightness(1.1); box-shadow: 0 8px 22px rgba(0,140,255,.35), 0 0 0 1px rgba(120,200,255,.6) inset; }
 </style>
 
+<style id="bonus-flashy-2">
+.pill.bonus-flashy{
+  background: linear-gradient(180deg, rgba(255,215,0,.22), rgba(255,170,25,.18));
+  border: 1px solid rgba(255,200,60,.7);
+  box-shadow: 0 8px 22px rgba(255,170,25,.35), 0 0 0 1px rgba(255,200,60,.6) inset;
+  font-weight: 800;
+}
+.pill.bonus-flashy .pos{ color: #5CF08A; font-weight: 900; margin-left: 6px; }
+.pill.bonus-flashy .neg{ color: #FF6B6B; font-weight: 900; margin-left: 6px; }
+.pill.bonus-flashy .mini-bonus{ width: 18px; height: 18px; border-radius: 50%; overflow: hidden; vertical-align: -3px; margin: 0 6px; }
+</style>
+
+<style id="equal-visual-heights">
+.scorewrap .teams-row{ align-items:center; min-height: 84px; }
+.scorewrap .score{ font-size: clamp(28px, 3.2vw, 34px) !important; line-height:1; }
+.scorewrap .team .name{ font-size: clamp(15px, 1.4vw, 18px); }
+</style>
+
