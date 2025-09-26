@@ -227,6 +227,19 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
 .pill .mini-bonus img{width:100%;height:100%;object-fit:cover}
 </style>
+<style id="round-grid-css">
+.round-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:12px;
+}
+@media (max-width: 900px){
+  .round-grid{ grid-template-columns: 1fr; }
+}
+/* que les items ne rajoutent pas de marge verticale excessive dans la grille */
+.round-grid .match-card{ margin:0; }
+</style>
+
 
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1166,6 +1179,7 @@ function renderMatches(){
   let complete=0, idx=0;
   rounds.forEach(r=>{
     const hdr=help("Journée "+r);hdr.style.fontWeight="600";hdr.style.margin="8px 0";list.appendChild(hdr);
+    const roundWrap=document.createElement("div");roundWrap.className="round-grid";list.appendChild(roundWrap);
     const rCtl=roundState(r);
     const badgeClass = rCtl.finished ? 'green' : (rCtl.started ? 'yellow' : 'red');
 
@@ -1229,7 +1243,7 @@ function renderMatches(){
             <div>${(isAdmin()||hasClaim(m.a)||hasClaim(m.b))?`<button type="button" class="btn small" data-clear="${m.id}">Effacer ce match</button>`:''}</div>
           </div>
         </div>`;
-      list.appendChild(el);
+      roundWrap.appendChild(el);
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
