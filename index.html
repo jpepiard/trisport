@@ -2399,3 +2399,16 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 }
 </style>
 
+<style id="bonus-flashy-pill">
+.pill.bonus-flashy{
+  background: linear-gradient(180deg, rgba(80,180,255,.25), rgba(80,180,255,.15));
+  border: 1px solid rgba(120,200,255,.45);
+  box-shadow: 0 6px 18px rgba(0,120,255,.25), 0 0 0 1px rgba(0,120,255,.25) inset;
+  font-weight: 800;
+}
+.pill.bonus-flashy .pos{ color: #5CF08A; font-weight: 800; margin-left: 6px; }
+.pill.bonus-flashy .neg{ color: #FF6B6B; font-weight: 800; margin-left: 6px; }
+.pill.bonus-flashy .mini-bonus{ width: 18px; height: 18px; border-radius: 50%; overflow: hidden; vertical-align: -3px; margin-left: 6px; }
+.pill.bonus-flashy:hover{ filter: brightness(1.1); box-shadow: 0 8px 22px rgba(0,140,255,.35), 0 0 0 1px rgba(120,200,255,.6) inset; }
+</style>
+
