@@ -2153,4 +2153,33 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 
 
 </body>
-</html>
+</html
+<style id="scoreline-googleish">
+.scorewrap .teams-row{
+  display:grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items:center;
+  gap:16px;
+  width:100%;
+}
+.scorewrap .team{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-width:0;
+}
+.scorewrap .team .avatar{ width:64px; height:64px; }
+.scorewrap .team .name{ font-weight:700; font-size:18px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.scorewrap .team .bonus-line{ font-size:12px; opacity:.8; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+.scorewrap .score{
+  font-variant-numeric: tabular-nums;
+  font-size:44px;
+  line-height:1;
+  font-weight:800;
+  letter-spacing:.5px;
+}
+.scorewrap .sports-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; padding-top:6px; }
+</style>
+>
