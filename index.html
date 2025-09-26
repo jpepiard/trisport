@@ -1024,13 +1024,15 @@ function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v
 // UI completeness stricter check
 function uiIsComplete(m){
   try{
-    ensureLengths(m);
-    const okD = Array.isArray(m.darts) && m.darts.every(v=>v===0||v===1);
-    const okP = Array.isArray(m.ping) && m.ping.every(v=>v===0||v===1);
+    const dN = dartsTotal();
+    const pN = pingTotal();
+    const okD = Array.isArray(m.darts) && m.darts.length===dN && m.darts.every(v=>v===0||v===1);
+    const okP = Array.isArray(m.ping)  && m.ping.length===pN  && m.ping.every(v=>v===0||v===1);
     const a = m.palet?.a, b = m.palet?.b;
-    const okL = (typeof a === 'number' && typeof b === 'number');
-    return okD && okP && okL;
-  }catch(e){ return false; }
+    const okL = Number.isInteger(a) && Number.isInteger(b);
+    return !!(okD && okP && okL);
+  }catch(_){ return false; }
+}catch(e){ return false; }
 }
 
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
@@ -1276,16 +1278,26 @@ function bonusChip(r, mTeam, rs){
 // === In-place update of the match completeness chip ===
 function updateMatchCompleteness(mid){
   try{
-    const m = (state.matches || []).find(x=>x.id===mid);
-    if(!m) return;
     const card = document.querySelector('.match-card[data-id="'+mid+'"]');
     if(!card) return;
     const chip = card.querySelector('.state-chip');
     if(!chip) return;
-    const done = !!uiIsComplete(m); /* strict UI check */
+
+    // DOM-based checks (robuste, pas d'ambiguité d'état)
+    const okD = [...card.querySelectorAll('select[data-kind="darts"]')].every(s=>s.value!=="");
+    const okP = [...card.querySelectorAll('select[data-kind="ping"]')].every(s=>s.value!=="");
+    const palInputs = [...card.querySelectorAll('input[type="number"]')];
+    const okL = palInputs.length>=2 && palInputs.slice(0,2).every(i=>i.value!=="");
+
+    const done = !!(okD && okP && okL);
+
     chip.textContent = done ? 'Complet' : 'Incomplet';
     chip.classList.remove('ok','warn');
-    chip.classList.add(done ? 'ok' : 'warn'); if(!done){ chip.classList.add('pulse'); setTimeout(()=>chip.classList.remove('pulse'), 700);}
+    chip.classList.add(done ? 'ok' : 'warn');
+    if(!done){ chip.classList.add('pulse'); setTimeout(()=>chip.classList.remove('pulse'), 700); }
+    card.setAttribute('data-complete', done ? 'true' : 'false');
+  }catch(e){/* no-op */}
+}
     card.setAttribute('data-complete', done ? 'true' : 'false');
   }catch(e){/* no-op */}
 }
@@ -1390,13 +1402,12 @@ function renderMatches(){
           const vv = sel.value==="" ? null : parseInt(sel.value,10);
           const mm = findMatch(m.id);
           if (!Array.isArray(mm.ping)) mm.ping = [];
-          const total =  3;
+          const total = pingTotal();
           mm.ping = mm.ping.slice(0,total);
           while (mm.ping.length < total) mm.ping.push(null);
           mm.ping[i] = vv;
           saveState();
-          updateMatchCompleteness(m.id);
-renderMatches();
+          renderMatches();
           renderLeaderboard();
           renderH2H();
         });
