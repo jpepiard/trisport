@@ -1214,7 +1214,7 @@ function bonusChip(r, mTeam, rs){
     );
     return '<span class="pill bonus-flashy ' + valClass + '" ' +
        (sportEmoji?('data-tip="' + (lblType + ' — Sport : ' + labelSport) + '"') : ('data-tip="' + lblType + '"')) +
-       '>' + 'Bonus ' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
+       '>Bonus' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
        '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
        '<span class="' + valClass + '\">' + sign + applied + '</span>' +
        '</span>';
@@ -2335,7 +2335,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .scorewrap .team .name{
   font-size: clamp(14px, 2vw, 18px);  /* s’adapte selon la largeur */
   max-width: 12ch;                    /* borne pour éviter les débordements */
-  white-space: nowrap;
+  white-space: nowrap; max-width: calc(100vw - 32px);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -2449,7 +2449,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   position: absolute;
   left: 50%; transform: translateX(-50%);
   bottom: calc(100% + 8px);
-  white-space: nowrap;
+  white-space: nowrap; max-width: calc(100vw - 32px);
   background: #0f141e; color:#fff; font-weight:700;
   border: 1px solid rgba(255,255,255,.28);
   padding: 6px 8px;
@@ -2566,5 +2566,19 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 
 <style id="bonus-sport-emoji-css">
 .pill .sport-emo{ margin: 0 6px 0 4px; font-size: 14px; line-height: 0; vertical-align: -1px; }
+</style>
+
+<style id="tooltip-visibility-fix">
+.match-card, .scorewrap, .round-grid { overflow: visible !important; }
+.pill.bonus-flashy{ position:relative; z-index: 50; }
+.pill.bonus-flashy[data-tip]::after,
+.pill.bonus-flashy[data-tip]::before{ z-index: 1000; }
+</style>
+
+<style id="bonus-pill-compact">
+.pill.bonus-flashy{ padding: 4px 8px; white-space: nowrap; font-size: 13px; }
+.pill.bonus-flashy .mini-bonus{ width: 14px; height: 14px; margin: 0 4px; vertical-align: -2px; }
+.pill .sport-emo{ margin: 0 4px 0 3px; font-size: 13px; vertical-align: -1px; }
+.pill.bonus-flashy .pos, .pill.bonus-flashy .neg{ margin-left: 3px; }
 </style>
 
