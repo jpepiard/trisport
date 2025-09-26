@@ -1024,17 +1024,13 @@ function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v
 // UI completeness stricter check
 function uiIsComplete(m){
   try{
-    // Do NOT pad/normalize here: we want a strict check of what the UI actually has.
-    const dN = dartsTotal();
-    const pN = pingTotal();
-    const okD = Array.isArray(m.darts) && m.darts.length===dN && m.darts.every(v=>v===0||v===1);
-    const okP = Array.isArray(m.ping)  && m.ping.length===pN  && m.ping.every(v=>v===0||v===1);
+    ensureLengths(m);
+    const okD = Array.isArray(m.darts) && m.darts.every(v=>v===0||v===1);
+    const okP = Array.isArray(m.ping) && m.ping.every(v=>v===0||v===1);
     const a = m.palet?.a, b = m.palet?.b;
-    const okL = Number.isInteger(a) && Number.isInteger(b);
-    return !!(okD && okP && okL);
-  }catch(_){
-    return false;
-  }
+    const okL = (typeof a === 'number' && typeof b === 'number');
+    return okD && okP && okL;
+  }catch(e){ return false; }
 }
 
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
@@ -1394,12 +1390,13 @@ function renderMatches(){
           const vv = sel.value==="" ? null : parseInt(sel.value,10);
           const mm = findMatch(m.id);
           if (!Array.isArray(mm.ping)) mm.ping = [];
-          const total = pingTotal();
+          const total =  3;
           mm.ping = mm.ping.slice(0,total);
           while (mm.ping.length < total) mm.ping.push(null);
           mm.ping[i] = vv;
           saveState();
-          renderMatches();
+          updateMatchCompleteness(m.id);
+renderMatches();
           renderLeaderboard();
           renderH2H();
         });
