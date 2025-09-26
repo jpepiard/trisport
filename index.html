@@ -465,6 +465,44 @@ header .btn, header .chip, header .pill, header .tab{
   display:flex; gap:6px; align-items:center; flex-wrap:wrap;
   justify-content:center; padding:8px 0 6px;
 }
+
+/* ===== En-tête match : rail gauche + centre ===== */
+.scorewrap{
+  display:grid;
+  grid-template-columns: 72px 1fr; /* rail gauche, contenu centre */
+  gap:12px; align-items:center;
+  padding:10px 0;
+}
+.left-rail{ display:flex; align-items:center; }
+.left-rail .round-chip{
+  font-weight:800; border-radius:999px; padding:6px 10px;
+  background:var(--surface-2); border:1px solid var(--border);
+}
+
+.centerlane{ display:flex; flex-direction:column; align-items:center; gap:6px; width:100%; }
+
+.teams-row{
+  display:grid; grid-template-columns: 1fr auto 1fr; gap:12px; align-items:center; width:100%;
+}
+.team{ display:flex; align-items:center; gap:8px; min-width:0; }
+.team.right{ flex-direction:row-reverse; text-align:right; }
+.team .avatar{ width:48px; height:48px; }
+.team .name{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.score{ font-variant-numeric:tabular-nums; font-size:40px; line-height:1; font-weight:800; }
+
+.bonus-row{
+  display:grid; grid-template-columns: 1fr 1fr; width:100%; gap:8px;
+  font-size:12px; color:var(--muted);
+}
+.bonus-row .left{ justify-self:start; }
+.bonus-row .right{ justify-self:end; text-align:right; }
+
+.sports-row{
+  display:flex; gap:8px; flex-wrap:wrap; justify-content:center; padding-top:4px;
+}
+.sports-row .chip{ font-size:13px; }
+
 </style>
 
 <link rel="stylesheet" href="trisports-theme-pack.css" />
@@ -1197,43 +1235,48 @@ function renderMatches(){
       const bonusA=bonusChip(r,m.a,rCtl), bonusB=bonusChip(r,m.b,rCtl);
       el.innerHTML = `
   <div class="hd" data-expand>
-    <div class="scoreline">
-      <div class="team left">
-        ${avatarHtml(m.a,'sm')}
-        <div class="name">${esc(teamName(m.a))}</div>
+    <div class="scorewrap">
+      <!-- Rail gauche : #Journée -->
+      <div class="left-rail">
+        <span class="round-chip">#${r}</span>
       </div>
 
-      <div class="center">
-        <div class="score score-compact">${(wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0))} - ${(wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0))}</div>
-        <div class="meta">Journée #${r}</div>
-      </div>
+      <!-- Centre : équipes, score général, bonus & scores par sport -->
+      <div class="centerlane">
+        <div class="teams-row">
+          <div class="team left">
+            ${avatarHtml(m.a,'sm')}
+            <div class="name">${esc(teamName(m.a))}</div>
+          </div>
 
-      <div class="team right">
-        ${avatarHtml(m.b,'sm')}
-        <div class="name">${esc(teamName(m.b))}</div>
-      </div>
-    </div>
+          <div class="score">
+            ${ (wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0)) }
+            &nbsp;-&nbsp;
+            ${ (wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0)) }
+          </div>
 
-    <div class="meta-row">
-      <span class="chip round-chip ${badgeClass}">#${++idx}</span>
-      <span class="chip">🎯 Fléchettes: <span class="score-compact">${hy(wins.aw.darts*5, wins.bw.darts*5)}</span></span>
-      <span class="chip">🏓 Ping: <span class="score-compact">${hy(wins.aw.ping*5, wins.bw.ping*5)}</span></span>
-      ${palChip}
-      ${done ? '<span class="pill green">✅ Terminé</span>' : '<span class="pill yellow">⏳ En cours</span>'}
-      ${bonusA} ${bonusB}
+          <div class="team right">
+            ${avatarHtml(m.b,'sm')}
+            <div class="name">${esc(teamName(m.b))}</div>
+          </div>
+        </div>
+
+        <!-- Bonus sous chaque équipe -->
+        <div class="bonus-row">
+          <div class="left">${bonusA || ''}</div>
+          <div class="right">${bonusB || ''}</div>
+        </div>
+
+        <!-- Scores par sport sous le score général -->
+        <div class="sports-row">
+          <span class="chip">🎯 ${hy(wins.aw.darts*5, wins.bw.darts*5)}</span>
+          <span class="chip">🏓 ${hy(wins.aw.ping*5, wins.bw.ping*5)}</span>
+          ${ m.palet ? `<span class="chip">🥏 ${hy(m.palet.a||0, m.palet.b||0)}</span>` : '' }
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="bd">
-    <div class="match-two-col">
-      ${renderDarts(m)}${renderPing(m)}
-    </div>
-    ${renderPalet(m)}
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">
-      <div class="help">La saisie nécessite d’être connecté·e à une des deux équipes (ou admin).</div>
-      <div>${(isAdmin()||hasClaim(m.a)||hasClaim(m.b))?`<button type="button" class="btn small" data-clear="${m.id}">Effacer ce match</button>`:''}</div>
-    </div>
-  </div>`;
 
       list.appendChild(el);
 
