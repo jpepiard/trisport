@@ -1231,10 +1231,10 @@ function renderMatches(){
 
   let complete=0, idx=0;
   rounds.forEach(r=>{
-    const hdr=document.createElement("div");hdr.className="round-head";hdr.innerHTML=`<span class="round-title">Journée ${r}</span> <span class="chip round-chip ${badgeClass}">#${r}</span>`;list.appendChild(hdr);
-    const roundWrap=document.createElement("div");roundWrap.className="round-grid";list.appendChild(roundWrap);
     const rCtl=roundState(r);
-    const badgeClass = rCtl.finished ? 'green' : (rCtl.started ? 'yellow' : 'red');
+    const badgeClass = rCtl.finished ? 'green' : (rCtl.started ? 'yellow' : 'red');const hdr=document.createElement("div");hdr.className="round-head";hdr.innerHTML=`<span class="round-title">Journée ${r}</span> <span class="chip round-chip ${badgeClass}">#${r}</span>`;list.appendChild(hdr);
+    const roundWrap=document.createElement("div");roundWrap.className="round-grid";list.appendChild(roundWrap);
+    
 
     groups[r].forEach(m=>{
       ensureLengths(m);
