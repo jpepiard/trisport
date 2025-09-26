@@ -2343,3 +2343,37 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 }
 </style>
 
+<style id="match-cards-equalized">
+/* === 1) Tailles identiques des cartes par ligne === */
+.round-grid{
+  /* chaque ligne prend la hauteur du match le plus grand */
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+}
+.round-grid .match-card{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.round-grid .match-card .hd{ /* en-tête */
+  padding-bottom: 10px;
+}
+.round-grid .match-card .bd{ /* contenu extensible */
+  margin-top: auto;   /* pousse le bas pour équilibrer */
+}
+
+/* === 2) Pilule Complet/Incomplet ne chevauche pas les scores des sports === */
+.scorewrap .state-chip{
+  display: inline-block;
+  margin-top: 10px;   /* sous la ligne des pastilles de sports */
+}
+/* assure une vraie ligne pour les pastilles sport -> puis la pilule état sous la ligne */
+.scorewrap .meta, .scorewrap .sub{
+  margin-bottom: 2px;
+}
+
+/* === 3) Densifier l'espacement entre journées === */
+.round-head{ margin: 12px 0 6px 0; padding-top: 6px; }
+.round-grid{ margin-bottom: 14px; padding-bottom: 6px; }
+</style>
+
