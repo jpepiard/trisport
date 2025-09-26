@@ -1024,13 +1024,18 @@ function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v
 // UI completeness stricter check
 function uiIsComplete(m){
   try{
-    ensureLengths(m);
-    const okD = Array.isArray(m.darts) && m.darts.every(v=>v===0||v===1);
-    const okP = Array.isArray(m.ping) && m.ping.every(v=>v===0||v===1);
+    // Do NOT pad/normalize here: we want a strict check of what the UI actually has.
+    const dN = dartsTotal();
+    const pN = pingTotal();
+    const okD = Array.isArray(m.darts) && m.darts.length===dN && m.darts.every(v=>v===0||v===1);
+    const okP = Array.isArray(m.ping)  && m.ping.length===pN  && m.ping.every(v=>v===0||v===1);
     const a = m.palet?.a, b = m.palet?.b;
-    const okL = (typeof a === 'number' && typeof b === 'number');
-    return okD && okP && okL;
-  }catch(e){ return false; }
+    const okL = Number.isInteger(a) && Number.isInteger(b);
+    return !!(okD && okP && okL);
+  }catch(_){
+    return false;
+  }
+}catch(e){ return false; }
 }
 
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
@@ -1315,7 +1320,7 @@ function renderMatches(){
       ensureLengths(m);
       const wins=computeSetWins(m),pal=m.palet,palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"—";
       const palChip = `<span class="chip">🥏 Palet: <span class="score-compact">${palScore}</span></span>`;
-      const done = uiIsComplete(m);if(done)complete++;
+      const done=isMatchComplete(m);if(done)complete++;
       const el=document.createElement("div");el.setAttribute("data-id",m.id);el.setAttribute("data-complete",uiIsComplete(m)?"true":"false");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
       const bonusA=bonusChip(r,m.a,rCtl), bonusB=bonusChip(r,m.b,rCtl);
       el.innerHTML=`<div class="hd" data-expand>
@@ -1394,7 +1399,7 @@ function renderMatches(){
           mm.ping = mm.ping.slice(0,total);
           while (mm.ping.length < total) mm.ping.push(null);
           mm.ping[i] = vv;
-          saveState();updateMatchCompleteness(m.id);
+          saveState();
           renderMatches();
           renderLeaderboard();
           renderH2H();
