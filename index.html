@@ -1021,6 +1021,18 @@ const getPingPts = m => { return Array.isArray(m.ping) ? m.ping.map(v => (v===0?
 const isPingValid=(a,b)=>{ if(a==null||b==null) return false; if((a===1&&b===0)||(a===0&&b===1)) return true; if(isNaN(a)||isNaN(b)) return false; const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
 function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:0,ping:0};m.darts.forEach(v=>{if(v===0)aw.darts++;else if(v===1)bw.darts++});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b)aw.ping++;else if(b>a)bw.ping++}});return{aw,bw}}
 function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v===1);const okP=getPingPts(m).every(s=>isPingValid(+s.a,+s.b));const T=+state.rules.paletTarget||11,pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1));return okD&&okP&&okL}
+// UI completeness stricter check
+function uiIsComplete(m){
+  try{
+    ensureLengths(m);
+    const okD = Array.isArray(m.darts) && m.darts.every(v=>v===0||v===1);
+    const okP = Array.isArray(m.ping) && m.ping.every(v=>v===0||v===1);
+    const a = m.palet?.a, b = m.palet?.b;
+    const okL = (typeof a === 'number' && typeof b === 'number');
+    return okD && okP && okL;
+  }catch(e){ return false; }
+}
+
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
 function clearMatch(mid){const m=findMatch(mid);if(!m)return;if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b)))return;if(!confirm("Effacer tous les scores de ce match ?"))return;m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};saveState();renderMatches()}
 
@@ -1241,9 +1253,7 @@ function bonusChip(r, mTeam, rs){
     if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
     if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
     var __lbl = parts.join(' / ');
-    return '<span class="pill blue">' + (sportEmoji?('Bonus' + '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' + '<span class="sport-emo">'+sportEmoji+'</span>') : __lbl) +
-           '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' +
-           '</span>';
+    return '<span class="pill blue">Bonus' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') + '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' + '</span>';
   } else {
     // Révélé à tous une fois fini, avec points appliqués
     const applied = Math.abs((state.bonusApplied?.[r]?.[mTeam]) || 0);
@@ -1272,7 +1282,7 @@ function updateMatchCompleteness(mid){
     if(!card) return;
     const chip = card.querySelector('.state-chip');
     if(!chip) return;
-    const done = !!isMatchComplete(m);
+    const done = !!uiIsComplete(m);
     chip.textContent = done ? 'Complet' : 'Incomplet';
     chip.classList.remove('ok','warn');
     chip.classList.add(done ? 'ok' : 'warn');
@@ -1306,7 +1316,7 @@ function renderMatches(){
       const wins=computeSetWins(m),pal=m.palet,palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"—";
       const palChip = `<span class="chip">🥏 Palet: <span class="score-compact">${palScore}</span></span>`;
       const done=isMatchComplete(m);if(done)complete++;
-      const el=document.createElement("div");el.setAttribute("data-id",m.id);el.setAttribute("data-complete",isMatchComplete(m)?"true":"false");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
+      const el=document.createElement("div");el.setAttribute("data-id",m.id);el.setAttribute("data-complete",uiIsComplete(m)?"true":"false");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
       const bonusA=bonusChip(r,m.a,rCtl), bonusB=bonusChip(r,m.b,rCtl);
       el.innerHTML=`<div class="hd" data-expand>
     <div class="scorewrap">
@@ -1343,8 +1353,8 @@ function renderMatches(){
       
       <!-- État de complétude -->
       <div class="right-rail">
-        <span class="chip state-chip ${isMatchComplete(m)?'ok':'warn'}">
-          ${isMatchComplete(m)?'Complet':'Incomplet'}
+        <span class="chip state-chip ${uiIsComplete(m)?'ok':'warn'}">
+          ${uiIsComplete(m)?'Complet':'Incomplet'}
         </span>
       </div>
 
