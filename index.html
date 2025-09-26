@@ -2313,3 +2313,33 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .scorewrap .left-rail .round-chip{display:none !important;}
 </style>
 
+<style id="round-grid-divider-and-names">
+/* Filet vertical entre les 2 colonnes */
+.round-grid{ position:relative; }
+.round-grid::before{
+  content:"";
+  position:absolute; top:0; bottom:0; left:50%;
+  width:1px;
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.08), rgba(255,255,255,.04));
+  transform: translateX(-0.5px);
+  pointer-events:none;
+}
+@media (max-width: 900px){
+  .round-grid::before{ display:none; }
+}
+
+/* Noms d'équipe adaptatifs + ellipsis */
+.scorewrap .team{ min-width:0; }
+.scorewrap .team .name{
+  font-size: clamp(14px, 2vw, 18px);  /* s’adapte selon la largeur */
+  max-width: 12ch;                    /* borne pour éviter les débordements */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Si l’espace est plus large (grand écran), autoriser un peu plus */
+@media (min-width: 1400px){
+  .scorewrap .team .name{ max-width: 16ch; font-size: clamp(14px, 1.6vw, 20px); }
+}
+</style>
+
