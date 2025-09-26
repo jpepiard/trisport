@@ -1208,7 +1208,12 @@ function bonusChip(r, mTeam, rs){
       type === 'capitaine' ? (labelPlayer ? (' / ' + labelPlayer) : '') :
       ((type==='taupe' || type==='lefthand' || type==='melon') && labelSport ? (' / ' + labelSport) : '')
     );
-    return '<span class="pill bonus-flashy" title="' + (( (type==='taupe'||type==='lefthand'||type==='melon') && labelSport ? (lblType + ' — Sport : ' + labelSport) : lblType )) + '">Bonus ' +'<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +'<span class="' + valClass + '\">' + sign + applied + '</span>' +'</span>';
+    return '<span class="pill bonus-flashy ' + valClass + '" ' +
+       'data-tip="' + ( (type==='taupe'||type==='lefthand'||type==='melon') && labelSport ? (lblType + ' — Sport : ' + labelSport) : lblType ) + '"' +
+       '>' + 'Bonus ' +
+       '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
+       '<span class="' + valClass + '\">' + sign + applied + '</span>' +
+       '</span>';
   }
 }
 function renderMatches(){
@@ -2425,5 +2430,57 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .scorewrap .teams-row{ align-items:center; min-height: 84px; }
 .scorewrap .score{ font-size: clamp(28px, 3.2vw, 34px) !important; line-height:1; }
 .scorewrap .team .name{ font-size: clamp(15px, 1.4vw, 18px); }
+</style>
+
+<style id="bonus-flashy-anim-tooltip">
+/* Pop-in animation */
+@keyframes bonusPop { 
+  0% { transform: scale(.85); opacity: .0; filter: saturate(0.8) blur(.2px); } 
+  60% { transform: scale(1.04); opacity: 1; } 
+  100% { transform: scale(1); opacity: 1; } 
+}
+.pill.bonus-flashy{ animation: bonusPop .26s ease-out; position: relative; z-index: 0; }
+
+/* Color variants */
+.pill.bonus-flashy.pos{
+  background: linear-gradient(180deg, rgba(40,200,120,.22), rgba(40,200,120,.14));
+  border: 1px solid rgba(60,220,140,.55);
+  box-shadow: 0 8px 22px rgba(40,200,120,.28), 0 0 0 1px rgba(60,220,140,.55) inset;
+}
+.pill.bonus-flashy.neg{
+  background: linear-gradient(180deg, rgba(255,120,120,.22), rgba(255,120,120,.14));
+  border: 1px solid rgba(255,110,110,.55);
+  box-shadow: 0 8px 22px rgba(255,120,120,.30), 0 0 0 1px rgba(255,110,110,.55) inset;
+}
+
+/* Custom tooltip bubble */
+.pill.bonus-flashy[data-tip]::after{
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(100% + 8px);
+  white-space: nowrap;
+  background: rgba(15,20,30,.95);
+  border: 1px solid rgba(255,255,255,.18);
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 8px;
+  opacity: 0; pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease;
+  transform-origin: bottom center;
+  box-shadow: 0 8px 18px rgba(0,0,0,.35);
+}
+.pill.bonus-flashy[data-tip]::before{
+  content: "";
+  position: absolute;
+  left: 50%; transform: translateX(-50%);
+  bottom: 100%;
+  border: 6px solid transparent;
+  border-top-color: rgba(15,20,30,.95);
+  opacity: 0; pointer-events: none;
+  transition: opacity .12s ease;
+}
+.pill.bonus-flashy:hover::after,
+.pill.bonus-flashy:hover::before{ opacity: 1; }
 </style>
 
