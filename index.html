@@ -333,6 +333,12 @@ header .brand[data-mode="images"] > h1{ display:none !important; }
 }
 
 </style>
+<style id="brand-hide-text">
+/* Hide the text title and fallback 'T' bubble in header brand */
+header .brand > .logo,
+header .brand > h1 { display: none !important; }
+</style>
+
 <style id="header-compact-keepimage">
 
 /* ===== Ultra-compact header — keep logo/title sizes ===== */
@@ -2201,3 +2207,69 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </body>
 </html
 <style id="scoreline-googleish">
+<style id="rencontres-polish">
+/* Card container */
+.matches, .calendar, .journees, .games { gap: 20px; }
+.scorewrap, .match, .match-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.25);
+}
+
+/* Header line */
+.scorewrap .teams-row{
+  grid-template-columns: 1.2fr auto 1.2fr !important;
+  gap: 20px !important;
+}
+
+/* Team cell */
+.scorewrap .team{ gap: 12px !important; }
+.scorewrap .team .avatar, .scorewrap .team .avatar img{
+  width: 56px !important; height: 56px !important; border-radius: 50%;
+}
+
+/* Team name */
+.scorewrap .team .name{ font-size: 20px; font-weight: 700; line-height: 1.1; }
+
+/* Score core */
+.scorewrap .score{
+  font-weight: 900 !important;
+  font-size: 46px !important;
+  letter-spacing: 2px;
+  min-width: 120px;
+}
+
+/* Little sport pills below */
+.scorewrap .meta, .scorewrap .sub {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+}
+.scorewrap .pill{
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  opacity: .95;
+  border-radius: 999px !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset;
+}
+
+/* Action row (play / expand) */
+.scorewrap .actions{ display:flex; align-items:center; gap:10px; margin-top:8px; }
+.scorewrap .actions .btn, .scorewrap .actions button{
+  border-radius: 999px;
+}
+
+/* Collapsed details panel */
+.scorewrap [aria-expanded="true"] + .details,
+.match-card[aria-expanded="true"] .details {
+  max-height: 600px; transition: max-height .35s ease;
+}
+.scorewrap [aria-expanded="false"] + .details,
+.match-card[aria-expanded="false"] .details {
+  max-height: 0; overflow: hidden; transition: max-height .25s ease;
+}
+
+/* Hover polish */
+.scorewrap:hover{ transform: translateY(-1px); transition: transform .15s ease; }
+</style>
+
