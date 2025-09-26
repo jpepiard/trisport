@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>TriSports — Maquette 1</title>
+<title>TriSports — Maquette 2</title>
 <link rel="stylesheet" href="trisports-theme-pack.css"/>
 <style>
 :root{--bg:#0f1220;--border:#2b315f;--text:#e7e9f7;--muted:#8b94b8;--chip:#242b55;--card:#1b2242}
@@ -27,7 +27,7 @@
 </head>
 <body>
 <header class="card" style="margin:10px 0">
-  <div class="hd"><strong>TriSports — Maquette 1</strong><span class="pill">démo de mise en page</span></div>
+  <div class="hd"><strong>TriSports — Maquette 2</strong><span class="pill">démo de mise en page</span></div>
 </header>
 <main class="container">
   <div class="card">
@@ -35,32 +35,20 @@
     <div class="bd">
 
 <style>
-.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
-.team-side{background:#111636;border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;justify-content:space-between}
-.team-meta{display:flex;align-items:center;gap:10px}
-.team-score{font-weight:800;font-size:18px}
-.team-bonus{margin-left:auto;margin-right:0}
+.face{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.subgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.subgrid .box{background:#111636;border:1px solid var(--border);border-radius:12px;padding:12px}
 </style>
 
 <div class="match-card open">
-  <div class="hd">
-    <div class="team"><span class="avatar">A</span><span>Alpha</span></div>
+  <div class="hd face">
+    <div class="team"><span class="avatar">A</span><strong>Alpha</strong></div>
     <div class="score-compact">12&nbsp;–&nbsp;9</div>
-    <div class="team"><span>Beta</span><span class="avatar">B</span></div>
+    <div class="team"><strong>Beta</strong><span class="avatar">B</span></div>
   </div>
-  <div class="bd">
-    <div class="two-col">
-      <div class="team-side">
-        <div class="team-meta"><span class="avatar">A</span><strong>Alpha</strong></div>
-        <div class="team-score">12</div>
-        <div class="team-bonus"><span class="pill blue">🎖 Capitaine</span></div>
-      </div>
-      <div class="team-side">
-        <div class="team-meta"><span class="avatar">B</span><strong>Beta</strong></div>
-        <div class="team-score">9</div>
-        <div class="team-bonus"><span class="pill yellow">🪞 Miroir</span></div>
-      </div>
-    </div>
+  <div class="bd subgrid">
+    <div class="box"><div class="pill blue">🎖 Capitaine</div><div style="margin-top:6px" class="pill green">Fléchettes&nbsp;: 5 pts</div></div>
+    <div class="box"><div class="pill yellow">🪞 Miroir</div><div style="margin-top:6px" class="pill">Ping&nbsp;: 6 pts</div></div>
   </div>
 </div>
 
