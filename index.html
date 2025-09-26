@@ -1261,7 +1261,7 @@ function renderMatches(){
             <div class="bonus-line">${bonusA || ''}</div>
           </div>
 
-          <div class="score"><span class="scorebox a">${(wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0))}</span><span class="dash">-</span><span class="scorebox b">${(wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0))}</span></div>
+          <div class="score"><span class="scorebox a">${(wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0))}</span><span class="scorebox b">${(wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0))}</span></div>
 
           <div class="team right">
             ${avatarHtml(m.b,'sm').replace('class="avatar','class="avatar')}
@@ -2410,17 +2410,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .pill.bonus-flashy:hover{ filter: brightness(1.1); box-shadow: 0 8px 22px rgba(0,140,255,.35), 0 0 0 1px rgba(120,200,255,.6) inset; }
 </style>
 
-<style id="bonus-flashy-2">
-.pill.bonus-flashy{
-  background: linear-gradient(180deg, rgba(255,215,0,.22), rgba(255,170,25,.18));
-  border: 1px solid rgba(255,200,60,.7);
-  box-shadow: 0 8px 22px rgba(255,170,25,.35), 0 0 0 1px rgba(255,200,60,.6) inset;
-  font-weight: 800;
-}
-.pill.bonus-flashy .pos{ color: #5CF08A; font-weight: 900; margin-left: 6px; }
-.pill.bonus-flashy .neg{ color: #FF6B6B; font-weight: 900; margin-left: 6px; }
-.pill.bonus-flashy .mini-bonus{ width: 18px; height: 18px; border-radius: 50%; overflow: hidden; vertical-align: -3px; margin: 0 6px; }
-</style>
+
 
 <style id="equal-visual-heights">
 .scorewrap .teams-row{ align-items:center; min-height: 84px; }
@@ -2509,5 +2499,43 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 
 /* Ajuste la taille des chiffres dans la boîte */
 .score .scorebox{ font-size: clamp(22px, 3.2vw, 34px); line-height:1; }
+</style>
+
+<style id="scoreboxes-tight-font">
+/* Fonts proches d'un tableau de score */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:wght@700&display=swap');
+
+.score{ display:flex; align-items:center; gap:0; justify-content:center; }
+.score .scorebox{
+  background: linear-gradient(180deg, #fff, #f2f2f2);
+  color:#111;
+  padding: 10px 18px;
+  min-width: 62px;
+  text-align:center;
+  font-weight: 900;
+  font-family: 'Anton','Roboto Condensed','Impact','Arial Narrow',sans-serif;
+  letter-spacing: .5px;
+  font-size: clamp(26px, 3.6vw, 40px);
+  line-height: 1;
+}
+.score .scorebox.a{ border-radius: 10px 0 0 10px; }
+.score .scorebox.b{ border-radius: 0 10px 10px 0; }
+/* couture centrale comme sur la photo */
+.score .scorebox.b{ box-shadow: inset 1px 0 0 0 rgba(0,0,0,.25); }
+.score .scorebox.a{ box-shadow: inset -1px 0 0 0 rgba(0,0,0,.12); }
+</style>
+
+<style id="bonus-flashy-blue-variant">
+.pill.bonus-flashy{
+  background: linear-gradient(180deg, rgba(60,120,255,.22), rgba(60,120,255,.14));
+  border: 1px solid rgba(110,160,255,.55);
+  box-shadow: 0 8px 22px rgba(60,120,255,.28), 0 0 0 1px rgba(110,160,255,.55) inset;
+  font-weight: 800; position:relative;
+}
+/* halo/bord coloré selon pos/neg */
+.pill.bonus-flashy.pos{ border-color: rgba(60,220,140,.85); box-shadow: 0 8px 22px rgba(40,200,120,.28), 0 0 0 2px rgba(60,220,140,.55) inset; }
+.pill.bonus-flashy.neg{ border-color: rgba(255,110,110,.9); box-shadow: 0 8px 22px rgba(255,120,120,.30), 0 0 0 2px rgba(255,110,110,.55) inset; }
+.pill.bonus-flashy .pos{ color: #5CF08A; font-weight: 900; margin-left: 6px; }
+.pill.bonus-flashy .neg{ color: #FF6B6B; font-weight: 900; margin-left: 6px; }
 </style>
 
