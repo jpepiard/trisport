@@ -1197,12 +1197,13 @@ function renderMatches(){
         <span class="chip round-chip ${badgeClass}">#${r}</span>
       </div>
 
-      <!-- Centre : équipes + score général + bonus + scores par sport -->
-      <div class="centerlane">
+      <!-- Centre : équipes verticales + score général + scores par sport -->
+      <div class="centerlane" style="width:100%">
         <div class="teams-row">
           <div class="team left">
-            ${avatarHtml(m.a,'sm')}
+            ${avatarHtml(m.a,'sm').replace('class="avatar','class="avatar')}
             <div class="name">${esc(teamName(m.a))}</div>
+            <div class="bonus-line">${bonusA || ''}</div>
           </div>
 
           <div class="score">
@@ -1212,14 +1213,10 @@ function renderMatches(){
           </div>
 
           <div class="team right">
-            ${avatarHtml(m.b,'sm')}
+            ${avatarHtml(m.b,'sm').replace('class="avatar','class="avatar')}
             <div class="name">${esc(teamName(m.b))}</div>
+            <div class="bonus-line">${bonusB || ''}</div>
           </div>
-        </div>
-
-        <div class="bonus-row">
-          <div class="left">${bonusA || ''}</div>
-          <div class="right">${bonusB || ''}</div>
         </div>
 
         <div class="sports-row">
