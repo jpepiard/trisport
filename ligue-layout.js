@@ -3,7 +3,6 @@
    - state.matches (array), state.rules, teamName(tid), avatarHtml(tid,size), id(x)
 */
 (function(){
-  if (!window || !window.state) { console.warn('[ligue] state manquant, en attente…'); }
 
   function safeNum(n){ return (n==null || isNaN(+n)) ? null : +n; }
 
