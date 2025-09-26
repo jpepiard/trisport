@@ -1188,6 +1188,10 @@ function bonusChip(r, mTeam, rs){
                           'capitaine.jpg';
 
   const labelSport = sel.sport ? BONUS.sportLabel(sel.sport) : null;
+  const sportEmoji = (labelSport === 'Fléchettes' ? '🎯' :
+                     labelSport === 'Ping'        ? '🏓' :
+                     labelSport === 'Palet'       ? '🥏' : '');
+
   const labelPlayer = sel.player === 'p1' ? 'J1' : (sel.player === 'p2' ? 'J2' : null);
 
   if (!roundFinished) {
@@ -1196,7 +1200,7 @@ function bonusChip(r, mTeam, rs){
     if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
     if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
     var __lbl = parts.join(' / ');
-    return '<span class="pill blue">' + __lbl +
+    return '<span class="pill blue">' + (sportEmoji?('Bonus '+sportEmoji):__lbl) +
            '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' +
            '</span>';
   } else {
@@ -1209,8 +1213,8 @@ function bonusChip(r, mTeam, rs){
       ((type==='taupe' || type==='lefthand' || type==='melon') && labelSport ? (' / ' + labelSport) : '')
     );
     return '<span class="pill bonus-flashy ' + valClass + '" ' +
-       'data-tip="' + ( (type==='taupe'||type==='lefthand'||type==='melon') && labelSport ? (lblType + ' — Sport : ' + labelSport) : lblType ) + '"' +
-       '>' + 'Bonus ' +
+       (sportEmoji?('data-tip="' + (lblType + ' — Sport : ' + labelSport) + '"') : ('data-tip="' + lblType + '"')) +
+       '>' + 'Bonus ' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
        '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
        '<span class="' + valClass + '\">' + sign + applied + '</span>' +
        '</span>';
@@ -2547,5 +2551,20 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   transform: translateX(-0.5px);
   border-radius: 1px;
 }
+</style>
+
+<style id="score-seam-simple">
+/* Simple filet noir au centre du bloc score */
+.score .scorebox.a, .score .scorebox.b{ box-shadow: none !important; }
+.score{ position:relative; }
+.score::before{
+  content:""; position:absolute; top:10%; bottom:10%; left:50%;
+  width:2px; background:#000; transform: translateX(-1px);
+  border-radius: 1px;
+}
+</style>
+
+<style id="bonus-sport-emoji-css">
+.pill .sport-emo{ margin: 0 6px 0 4px; font-size: 14px; line-height: 0; vertical-align: -1px; }
 </style>
 
