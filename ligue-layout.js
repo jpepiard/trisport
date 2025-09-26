@@ -3,14 +3,8 @@
    - state.matches (array), state.rules, teamName(tid), avatarHtml(tid,size), id(x)
 */
 (function(){
-  function stateReady(){
-    try{
-      const s = window.state;
-      return s && Array.isArray(s.matches) && Array.isArray(s.teams);
-    }catch(_){ return false; }
-  }
+  if (!window || !window.state) { console.warn('[ligue] state manquant, en attente…'); }
 
-  
   function safeNum(n){ return (n==null || isNaN(+n)) ? null : +n; }
 
   function dartsScore(m){
@@ -131,47 +125,17 @@
   window.renderMatchesLigue = function(){
     try{
       const wrap = document.getElementById('match-list');
-      if (!stateReady()){
-        if (wrap){ wrap.innerHTML = ''; const d=document.createElement('div'); d.className='help'; d.textContent='Chargement des données…'; wrap.appendChild(d); }
-        return;
-      }
       if (!wrap) return;
       wrap.innerHTML = '';
-      const ms = (window.state.matches||[]).slice().sort((a,b)=> ((a.round||0)-(b.round||0)) || ((a.order||0)-(b.order||0)));
-      if (!ms.length){
-        const tcount = (window.state.teams||[]).length;
-        const msg = tcount<2 ? "Aucune rencontre : ajoute au moins 2 équipes (onglet Équipes), puis clique sur ‘Générer le calendrier’." : "Aucune rencontre pour l’instant. Cliquez sur “Générer le calendrier” dans l’onglet Équipes.";
-
-        const helper = document.createElement('div');
-        helper.className = 'help';
-        helper.style.padding = '10px';
-        helper.textContent = msg;
-        const btn = document.getElementById('btn-generate');
-        if (btn){
-          const cta = document.createElement('button');
-          cta.className = 'btn small';
-          cta.style.marginLeft = '8px';
-          cta.textContent = 'Générer le calendrier';
-          cta.addEventListener('click', ()=> btn.click());
-          helper.appendChild(cta);
-        }
-        wrap.appendChild(helper);
-        return;
-      }
+      const ms = ((window.state && window.state.matches) ? window.state.matches : []).slice().sort((a,b)=> (a.round-b.round) || (a.order-b.order));
       ms.forEach(m=>{ wrap.insertAdjacentHTML('beforeend', renderCardLigue(m)); });
     }catch(e){ console.error('[ligue] render error', e); }
   };
 
-  // Option : activer automatiquement si demandé (boucle douce jusqu'à readiness)
-  function autoStart(tries){
-    tries = tries || 0;
-    if (!window.useLigueLayoutAuto) return;
-    if (typeof stateReady === 'function' && stateReady()){
-      if (window.renderMatchesLigue) window.renderMatchesLigue();
-      return;
-    }
-    if (tries > 40) return; // ~20s max
-    setTimeout(()=>autoStart(tries+1), tries < 10 ? 200 : 1000);
+  // Option : activer automatiquement si demandé
+  if (window.useLigueLayoutAuto) {
+    const start = () => window.renderMatchesLigue && window.renderMatchesLigue();
+    // petite attente pour laisser l'app charger puis on tente, et on ré-essaie après chaque seconde 3 fois
+    setTimeout(start, 50); setTimeout(start, 400); setTimeout(start, 1200);
   }
-  autoStart(0);
 })();
