@@ -1261,11 +1261,7 @@ function renderMatches(){
             <div class="bonus-line">${bonusA || ''}</div>
           </div>
 
-          <div class="score">
-            ${(wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0))}
-            &nbsp;-&nbsp;
-            ${(wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0))}
-          </div>
+          <div class="score"><span class="scorebox a">${(wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0))}</span><span class="dash">-</span><span class="scorebox b">${(wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0))}</span></div>
 
           <div class="team right">
             ${avatarHtml(m.b,'sm').replace('class="avatar','class="avatar')}
@@ -2482,5 +2478,36 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 }
 .pill.bonus-flashy:hover::after,
 .pill.bonus-flashy:hover::before{ opacity: 1; }
+</style>
+
+<style id="score-boxes-and-tooltip-align">
+/* Score en boîtes blanches */
+.score{ display:flex; align-items:center; gap:10px; justify-content:center; }
+.score .dash{ font-weight:900; opacity:.85; }
+.score .scorebox{
+  background: linear-gradient(180deg, #fff, #f1f1f1);
+  color:#111;
+  border-radius:12px;
+  padding: 6px 14px;
+  min-width: 54px;
+  text-align:center;
+  font-weight: 900;
+  box-shadow: 0 3px 10px rgba(0,0,0,.15), 0 0 0 1px rgba(0,0,0,.05) inset;
+}
+
+/* Tooltip alignment per column */
+.round-grid{ position:relative; }
+.round-grid > .match-card:nth-child(odd) .pill.bonus-flashy[data-tip]::after{ left: 12px; transform: none; }
+.round-grid > .match-card:nth-child(odd) .pill.bonus-flashy[data-tip]::before{ left: 22px; transform: none; }
+.round-grid > .match-card:nth-child(even) .pill.bonus-flashy[data-tip]::after{ left:auto; right: 12px; transform: none; }
+.round-grid > .match-card:nth-child(even) .pill.bonus-flashy[data-tip]::before{ left:auto; right: 22px; transform: none; }
+/* On mobile, centre le tooltip */
+@media (max-width: 900px){
+  .round-grid > .match-card .pill.bonus-flashy[data-tip]::after{ left:50%; right:auto; transform: translateX(-50%); }
+  .round-grid > .match-card .pill.bonus-flashy[data-tip]::before{ left:50%; right:auto; transform: translateX(-50%); }
+}
+
+/* Ajuste la taille des chiffres dans la boîte */
+.score .scorebox{ font-size: clamp(22px, 3.2vw, 34px); line-height:1; }
 </style>
 
