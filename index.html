@@ -1,259 +1,83 @@
 <!doctype html>
-<html lang="fr" data-theme="dark">
+<html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TriSports — Tournoi</title>
-  <!-- SEO & Social -->
-  <meta name="description" content="Tournois TriSports : fléchettes, ping-pong & palet — crée, organise et tiens le classement en temps réel.">
-  <meta name="theme-color" content="#1b2242" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta property="og:title" content="TriSports — Tournoi">
-  <meta property="og:description" content="Organise un tournoi multi-sports et suis les scores en direct.">
-  <meta property="og:image" content="img/preview.jpg">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-
-  <!-- Preconnects (si Firebase/Google utilisés) -->
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://firebaseinstallations.googleapis.com" crossorigin>
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="trisports-theme-pack.css">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TriSports — Maquette 1</title>
+<link rel="stylesheet" href="trisports-theme-pack.css"/>
+<style>
+:root{--bg:#0f1220;--border:#2b315f;--text:#e7e9f7;--muted:#8b94b8;--chip:#242b55;--card:#1b2242}
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;background:radial-gradient(1200px 800px at 20% -10%,#1c2040,transparent),radial-gradient(1000px 600px at 120% 0%,#1b2550,transparent),var(--bg);color:var(--text)}
+.container{max-width:1100px;margin:0 auto;padding:20px 14px}
+.card{background:linear-gradient(180deg,#171d3a,#121632);border:1px solid var(--border);border-radius:16px}
+.card .hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.card .bd{padding:16px}
+.pill{padding:4px 8px;border-radius:999px;background:#0f1331;border:1px solid var(--border);color:#8b94b8;font-size:12px}
+.pill.blue{border-color:#3b82f6;color:#bfdbfe;background:rgba(59,130,246,.10)}
+.pill.yellow{border-color:#eab308;color:#fde68a;background:rgba(234,179,8,.10)}
+.pill.green{border-color:#22c55e;color:#a7f3d0;background:rgba(34,197,94,.10)}
+.match-card{border-radius:14px;border:1px solid var(--border);background:var(--card);overflow:hidden;box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;margin-bottom:12px}
+.match-card .hd{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}
+.match-card .bd{padding:14px}
+.team{display:flex;align-items:center;gap:8px}
+.avatar{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:#0f1331;display:inline-flex;align-items:center;justify-content:center;color:#cbd5ff;font-weight:700;font-size:14px;flex:0 0 auto}
+.score-compact{font-variant-numeric:tabular-nums}
+/* Layout-specific below */
+</style>
 </head>
 <body>
-  <header>
-    <div class="bar">
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <h1>TriSports — Tournoi</h1>
+<header class="card" style="margin:10px 0">
+  <div class="hd"><strong>TriSports — Maquette 1</strong><span class="pill">démo de mise en page</span></div>
+</header>
+<main class="container">
+  <div class="card">
+    <div class="hd"><strong>Rencontres</strong><span class="pill">Journée 1</span></div>
+    <div class="bd">
+
+<style>
+.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.team-side{background:#111636;border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;justify-content:space-between}
+.team-meta{display:flex;align-items:center;gap:10px}
+.team-score{font-weight:800;font-size:18px}
+.team-bonus{margin-left:auto;margin-right:0}
+</style>
+
+<div class="match-card open">
+  <div class="hd">
+    <div class="team"><span class="avatar">A</span><span>Alpha</span></div>
+    <div class="score-compact">12&nbsp;–&nbsp;9</div>
+    <div class="team"><span>Beta</span><span class="avatar">B</span></div>
+  </div>
+  <div class="bd">
+    <div class="two-col">
+      <div class="team-side">
+        <div class="team-meta"><span class="avatar">A</span><strong>Alpha</strong></div>
+        <div class="team-score">12</div>
+        <div class="team-bonus"><span class="pill blue">🎖 Capitaine</span></div>
       </div>
-      <div class="actions">
-        <button class="btn small" id="btn-theme" title="Basculer clair/sombre" aria-pressed="false">☀️/🌙</button>
-        <button class="btn small ghost" id="btn-full">Plein écran</button>
-        <button class="btn primary" id="btn-cloud">Cloud</button>
-      </div>
-    </div>
-  </header>
-
-  <main class="container">
-    <div class="grid" role="application">
-      <aside class="card">
-        <h2>Navigation</h2>
-        <nav class="tabs" role="tablist" aria-label="Sections" id="tabs">
-          <button class="tab" role="tab" id="tab-setup" aria-selected="true" aria-controls="panel-setup">Tournoi</button>
-          <button class="tab" role="tab" id="tab-equipes" aria-selected="false" aria-controls="panel-equipes">Équipes</button>
-          <button class="tab" role="tab" id="tab-rencontres" aria-selected="false" aria-controls="panel-rencontres">Rencontres</button>
-          <button class="tab" role="tab" id="tab-classement" aria-selected="false" aria-controls="panel-classement">Classement</button>
-          <button class="tab" role="tab" id="tab-bonus" aria-selected="false" aria-controls="panel-bonus">Bonus</button>
-        </nav>
-      </aside>
-
-      <section class="panels">
-        <section id="panel-setup" role="tabpanel" aria-labelledby="tab-setup" class="card active">
-          <h2>Paramètres du tournoi</h2>
-          <div class="row">
-            <label>Nom <input type="text" placeholder="TriSports Cup"></label>
-            <label>Date <input type="date"></label>
-            <span class="spacer"></span>
-            <button class="btn">Exporter</button>
-            <button class="btn ghost">Options</button>
-          </div>
-        </section>
-
-        <section id="panel-equipes" role="tabpanel" aria-labelledby="tab-equipes" class="card">
-          <h2>Équipes</h2>
-          <p class="muted">Ajoute, édite et ordonne les équipes du tournoi.</p>
-          <div class="row"><button class="btn">+ Ajouter une équipe</button></div>
-        </section>
-
-        <section id="panel-rencontres" role="tabpanel" aria-labelledby="tab-rencontres" class="card">
-          <h2>Rencontres</h2>
-          <p class="muted">Planifie et suit les matchs (fléchettes, ping-pong, palet).</p>
-          <div class="row"><button class="btn">+ Nouvelle rencontre</button></div>
-        </section>
-
-        <section id="panel-classement" role="tabpanel" aria-labelledby="tab-classement" class="card">
-          <h2>Classement</h2>
-          <table aria-describedby="classement-help">
-            <thead><tr><th>#</th><th>Équipe</th><th>Pts</th><th>V</th><th>D</th></tr></thead>
-            <tbody>
-              <tr><td>1</td><td>Orion</td><td>9</td><td>3</td><td>0</td></tr>
-              <tr><td>2</td><td>Éclipse</td><td>6</td><td>2</td><td>1</td></tr>
-              <tr><td>3</td><td>Nova</td><td>3</td><td>1</td><td>2</td></tr>
-            </tbody>
-          </table>
-          <p id="classement-help" class="muted">Classement général cumulé tous sports.</p>
-        </section>
-
-        <section id="panel-bonus" role="tabpanel" aria-labelledby="tab-bonus" class="card">
-          <div class="row">
-            <h2 class="spacer">Bonus</h2>
-            <button class="btn" id="bonus-open">Choisir un bonus</button>
-          </div>
-          <p class="muted">Ajoute des modificateurs amusants pour pimenter les matchs.</p>
-        </section>
-      </section>
-    </div>
-  </main>
-
-  <!-- Toast d’état (aria-live) -->
-  <div class="toast" role="status" aria-live="polite" id="toast" hidden>État synchronisé.</div>
-
-  <!-- MODAL BONUS accessible -->
-  <div class="modal" id="bonus-modal" role="dialog" aria-modal="true" aria-labelledby="bonus-title" hidden>
-    <div class="bonus-dialog card">
-      <div class="row" style="margin-bottom:8px">
-        <h2 id="bonus-title" class="spacer">Choisir un bonus</h2>
-        <button class="btn ghost" id="bonus-cancel" aria-label="Fermer le modal">Fermer ✕</button>
-      </div>
-      <div class="bonus-grid">
-        <button class="bonus-card" data-bonus="main-gauche">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/main-gauche.png" alt="" width="40" height="40" loading="lazy" decoding="async">
-          </div>
-          <div>
-            <div><strong>Main faible</strong></div>
-            <div class="muted">Le joueur utilise sa main non dominante.</div>
-          </div>
-        </button>
-        <button class="bonus-card" data-bonus="miroir">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/miroir.png" alt="" width="40" height="40" loading="lazy" decoding="async">
-          </div>
-          <div>
-            <div><strong>Effet miroir</strong></div>
-            <div class="muted">Le coup doit être symétrique au précédent.</div>
-          </div>
-        </button>
-        <button class="bonus-card" data-bonus="capitaine">
-          <div class="bonus-illu" aria-hidden="true">
-            <img src="img/capitaine.png" alt="" width="40" height="40" loading="lazy" decoding="async">
-          </div>
-          <div>
-            <div><strong>Capitaine ×2</strong></div>
-            <div class="muted">Les points du capitaine comptent double.</div>
-          </div>
-        </button>
-      </div>
-      <div class="row" style="margin-top:12px">
-        <span class="muted">Sélectionne un bonus pour l’appliquer au prochain match.</span>
-        <span class="spacer"></span>
-        <button class="btn primary" id="bonus-apply">Appliquer</button>
+      <div class="team-side">
+        <div class="team-meta"><span class="avatar">B</span><strong>Beta</strong></div>
+        <div class="team-score">9</div>
+        <div class="team-bonus"><span class="pill yellow">🪞 Miroir</span></div>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-  // --- Thème clair/sombre ----------------------------------------------------
-  (function(){
-    const html = document.documentElement;
-    const key = 'trisports_theme';
-    const btn = document.getElementById('btn-theme');
-    const saved = localStorage.getItem(key);
-    if(saved){
-      if(saved==='light') html.setAttribute('data-theme','light');
-      else html.removeAttribute('data-theme');
-      btn?.setAttribute('aria-pressed', saved==='light');
-    }
-    btn?.addEventListener('click',()=>{
-      const next = html.getAttribute('data-theme')==='light' ? 'dark' : 'light';
-      if(next==='dark') html.removeAttribute('data-theme'); else html.setAttribute('data-theme','light');
-      localStorage.setItem(key,next);
-      btn.setAttribute('aria-pressed', next==='light');
-    });
-  })();
-
-  // --- Plein écran -----------------------------------------------------------
-  document.getElementById('btn-full')?.addEventListener('click',()=>{
-    const el = document.documentElement;
-    if(!document.fullscreenElement){ el.requestFullscreen?.(); }
-    else{ document.exitFullscreen?.(); }
+    </div>
+  </div>
+</main>
+<script>
+// simple expand/collapse
+document.querySelectorAll('.match-card .hd').forEach(h=>{
+  h.addEventListener('click', ()=>{
+    const card = h.parentElement;
+    card.classList.toggle('open');
+    const bd = card.querySelector('.bd');
+    if(!bd) return;
+    bd.style.display = bd.style.display === 'none' ? 'block' : 'none';
   });
-
-  // --- Tabs accessibles (ARIA + clavier) ------------------------------------
-  (function(){
-    const list = document.getElementById('tabs');
-    const tabs = Array.from(list?.querySelectorAll('[role="tab"]')||[]);
-    const panels = tabs.map(t=> document.getElementById(t.getAttribute('aria-controls')));
-
-    function setActive(i){
-      tabs.forEach((t,idx)=>{
-        const selected = idx===i;
-        t.setAttribute('aria-selected', selected);
-        t.tabIndex = selected?0:-1;
-        panels[idx]?.classList.toggle('active', selected);
-      });
-      tabs[i]?.focus();
-    }
-    tabs.forEach((t,i)=>{
-      t.addEventListener('click',()=> setActive(i));
-      t.addEventListener('keydown',(e)=>{
-        const key = e.key;
-        if(key==='ArrowRight') setActive((i+1)%tabs.length);
-        else if(key==='ArrowLeft') setActive((i-1+tabs.length)%tabs.length);
-        else if(key==='Home') setActive(0);
-        else if(key==='End') setActive(tabs.length-1);
-      });
-    });
-  })();
-
-  // --- Modal Bonus accessible (focus trap + ESC) ----------------------------
-  (function(){
-    const modal = document.getElementById('bonus-modal');
-    const openBtn = document.getElementById('bonus-open');
-    const cancelBtn = document.getElementById('bonus-cancel');
-    const applyBtn = document.getElementById('bonus-apply');
-    const cards = ()=> Array.from(modal.querySelectorAll('.bonus-card'));
-    let lastFocus=null, chosen=null;
-
-    function open(){
-      lastFocus=document.activeElement; modal.hidden=false; modal.classList.add('show');
-      cards()[0]?.focus();
-      document.addEventListener('keydown', onKey);
-    }
-    function close(){
-      modal.classList.remove('show'); modal.hidden=true; document.removeEventListener('keydown', onKey);
-      lastFocus?.focus();
-    }
-    function onKey(e){
-      if(e.key==='Escape') return close();
-      if(e.key==='Tab'){
-        const focusables = cards().concat([document.getElementById('bonus-apply'), document.getElementById('bonus-cancel')]);
-        const idx = focusables.indexOf(document.activeElement);
-        const next = (idx + (e.shiftKey?-1:1) + focusables.length) % focusables.length;
-        focusables[next]?.focus(); e.preventDefault();
-      }
-    }
-    openBtn?.addEventListener('click', open);
-    cancelBtn?.addEventListener('click', close);
-
-    modal.addEventListener('click', (e)=>{ if(e.target===modal) close(); });
-    modal.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && document.activeElement.classList.contains('bonus-card')){ chosen=document.activeElement.dataset.bonus; }});
-    modal.addEventListener('focusin', (e)=>{ if(e.target.classList?.contains('bonus-card')) chosen=e.target.dataset.bonus; });
-
-    applyBtn?.addEventListener('click', ()=>{
-      close();
-      const toast = document.getElementById('toast');
-      if(chosen){ toast.textContent = `Bonus appliqué : ${chosen}`; }
-      else{ toast.textContent = `Aucun bonus sélectionné`; }
-      toast.hidden=false; setTimeout(()=> toast.hidden=true, 2500);
-    });
-  })();
-
-  // --- (Optionnel) Chargement différé Firebase au clic Cloud -----------------
-  (function(){
-    const cloudBtn = document.getElementById('btn-cloud');
-    let loaded=false;
-    cloudBtn?.addEventListener('click', async ()=>{
-      if(loaded) return; loaded=true;
-      // Exemple: charge Firebase on-demand (remplace par tes modules réels)
-      // const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js');
-      // ... init + auth ...
-      const toast = document.getElementById('toast');
-      toast.textContent = 'Module Cloud initialisé'; toast.hidden=false; setTimeout(()=> toast.hidden=true, 2200);
-    });
-  })();
-  </script>
+});
+</script>
 </body>
 </html>
