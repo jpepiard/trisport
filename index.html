@@ -66,6 +66,10 @@ function ensureMelonWrapper(){
   if (!wrap){
     wrap = document.createElement('div');
     wrap.id = 'melon-params';
+    wrap.setAttribute('role','region');
+    wrap.setAttribute('aria-live','polite');
+    wrap.setAttribute('aria-label','Paramètres Melon d’or');
+
     wrap.className = 'bonus-params';
     fields.parentNode.insertBefore(wrap, fields);
     wrap.appendChild(fields);
@@ -114,7 +118,19 @@ function selectBonusType(t){
   if (leftc && window._bonusType === 'lefthand')  leftc.classList.add('selected');
   if (melon && window._bonusType === 'melon')     melon.classList.add('selected');
 
-  // 4) texte d’aide
+  
+  // 3bis) a11y state
+  [cap, mir, tau, leftc, melon].forEach((c,i)=>{
+    if(!c) return;
+    const pressed =
+      (i===0 && window._bonusType==='capitaine') ||
+      (i===1 && window._bonusType==='miroir')    ||
+      (i===2 && window._bonusType==='taupe')     ||
+      (i===3 && window._bonusType==='lefthand')  ||
+      (i===4 && window._bonusType==='melon');
+    c.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+  });
+// 4) texte d’aide
   const ctx = id('bonus-context');
   if (ctx) {
     ctx.textContent =
@@ -137,6 +153,7 @@ function prepareBonusOptions(){
     c.classList.add('selectable');
     c.tabIndex = 0;
     c.setAttribute('role','button');
+    c.setAttribute('aria-pressed','false');
 
     const type = map[i] || 'capitaine';
     c.addEventListener('click', ()=>selectBonusType(type));
@@ -301,8 +318,8 @@ header, .topbar, .app-header{
 header .brand{ display:flex; align-items:center; gap:12px; }
 
 /* Hide old text-based logo/title if present */
-header .brand > .logo{ display:none !important; }
-header .brand > h1{ display:none !important; }
+header .brand[data-mode="images"] > .logo{ display:none !important; }
+header .brand[data-mode="images"] > h1{ display:none !important; }
 
 /* Our real images */
 .brand-logo{ width:64px; height:64px; border-radius:14px; display:block; }
@@ -743,7 +760,7 @@ header .btn, header .chip, header .pill, header .tab{
         <!-- 10 pouces 2 mains gauche -->
         <div class="bonus-card">
           <div class="bonus-illu" aria-hidden="true">
-            <img src="img/main gauche.png" alt="">
+            <img src="img/main-gauche.png" alt="">
           </div>
           <div class="bonus-text">
             <div class="bonus-title">10 pouces 2 mains gauche</div>
@@ -859,7 +876,7 @@ const BONUS = {
     switch(type){
       case "miroir":   return "miroir.jpg";
       case "taupe":    return "taupe.png";
-      case "lefthand": return "main gauche.png";
+      case "lefthand": return "main-gauche.png";
       case "melon":    return "melon.png";
       default:         return "capitaine.jpg";
     }
@@ -1159,7 +1176,7 @@ function bonusChip(r, mTeam, rs){
   const img =
     type === 'miroir'   ? 'miroir.jpg' :
     type === 'taupe'    ? 'taupe.png' :
-    type === 'lefthand' ? 'main gauche.png' :
+    type === 'lefthand' ? 'main-gauche.png' :
     type === 'melon'    ? 'melon.png' :
                           'capitaine.jpg';
 
