@@ -1689,7 +1689,7 @@ document.addEventListener("click",async(e)=>{
 
     case "btn-unlock":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Déverrouiller le calendrier ?"))return;state.locked=false;saveState();renderTeams();renderMatches();updateLock();break}
 
-    case "btn-start-round":{if(!isAdmin())return;const r=CURRENT_ROUND,rs=roundState(r);if(rs.started||rs.finished)return;rs.started=true;saveState();renderMatches();showToast("Journée #"+r+" démarrée — bonus verrouillés."); setTimeout(function(){ try{ showEarlyRevealModalIfAny(r); }catch(_){} }, 0);break}
+    case "btn-start-round":{if(!isAdmin())return;const r=CURRENT_ROUND,rs=roundState(r);if(rs.started||rs.finished)return;rs.started=true;saveState();renderMatches();showToast("Journée #"+r+" démarrée — bonus verrouillés."); break}
 
     /* ---- Fin de journée : blocage si incomplet + bonus appliqués ---- */
     case "btn-end-round": {
@@ -2359,9 +2359,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
       danger: true
     };
 
-    showConfirm(cfg).then(function(ok){
-      if(!ok) return;
-      // Allow a single pass-through click to trigger the app's existing handler
+    showConfirm(cfg).then(function(ok){ if(!ok) return; if(isStart){ try{ if(window.showEarlyRevealModalIfAny){ setTimeout(function(){ showEarlyRevealModalIfAny(window.CURRENT_ROUND); }, 0); } }catch(_){} } // Allow a single pass-through click to trigger the app's existing handler
       pass = true;
       btn.click();
     });
