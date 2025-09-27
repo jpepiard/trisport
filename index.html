@@ -970,7 +970,24 @@ const isPingValid=(a,b)=>{ if(a==null||b==null) return false; if((a===1&&b===0)|
 function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:0,ping:0};m.darts.forEach(v=>{if(v===0)aw.darts++;else if(v===1)bw.darts++});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b)aw.ping++;else if(b>a)bw.ping++}});return{aw,bw}}
 function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v===1);const okP=getPingPts(m).every(s=>isPingValid(+s.a,+s.b));const T=+state.rules.paletTarget||11,pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1));return okD&&okP&&okL}
 // UI completeness stricter check
-function uiIsComplete(m){ return isMatchComplete(m); }
+function uiIsComplete(m){
+  const dN = dartsTotal();
+
+  // Fléchettes : longueur exacte + valeurs 0/1
+  const okD = Array.isArray(m.darts) &&
+              m.darts.length === dN &&
+              m.darts.every(v => v === 0 || v === 1);
+
+  // Ping : TOUJOURS 3 sets (S1, S2, D1) et 0/1 partout
+  const okP = Array.isArray(m.ping) &&
+              m.ping.length === 3 &&
+              m.ping.every(v => v === 0 || v === 1);
+
+  // Palet : deux entiers
+  const okL = Number.isInteger(m.palet?.a) && Number.isInteger(m.palet?.b);
+
+  return okD && okP && okL;
+}
 
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
 function clearMatch(mid){const m=findMatch(mid);if(!m)return;if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b)))return;if(!confirm("Effacer tous les scores de ce match ?"))return;m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};saveState();renderMatches()}
@@ -1320,7 +1337,7 @@ function renderMatches(){
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
         const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!(can && canEditScores(m,rCtl));
-        sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
+        sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
       
@@ -1333,18 +1350,13 @@ function renderMatches(){
           const vv = sel.value==="" ? null : parseInt(sel.value,10);
           const mm = findMatch(m.id);
           if (!Array.isArray(mm.ping)) mm.ping = [];
-          const TOTAL = pingTotal();
+          const TOTAL = 3;
           
           while(mm.ping.length < TOTAL) mm.ping.push(null);
           mm.ping[i] = vv;
+saveState();
+updateMatchCompleteness(m.id);
 
-          // IMPORTANT: keep pingPts in sync so 'Non joué' clears any previous score-based validity
-          if (!Array.isArray(mm.pingPts)) mm.pingPts = Array(TOTAL).fill({a:null,b:null});
-          if (i < mm.pingPts.length) mm.pingPts[i] = {a:null,b:null};
-
-          saveState();
-
-          // Avoid transient flicker; full render will rebuild chips consistently
           renderMatches();
           renderLeaderboard();
           renderH2H();
@@ -1357,7 +1369,7 @@ function renderMatches(){
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;saveState();updateNote()});
-        const commit=()=>{const mm=findMatch(mid);const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);mm.palet[which]=v;saveState();renderMatches();renderLeaderboard();renderH2H()};
+        const commit=()=>{const mm=findMatch(mid);const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);mm.palet[which]=v;saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()};
         inp.addEventListener("change",commit);inp.addEventListener("blur",commit);inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();inp.blur()}})
       });
 
@@ -2225,13 +2237,12 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 <script id="points-column-script-medallion-hook">
 (function(){
-  function enhancePointsMedallion(){
+  function wrapPoints(){
     var t = document.getElementById('table-classement');
     if(!t) return;
     var cells = t.querySelectorAll('tbody td:nth-child(3)');
     cells.forEach(function(td){
       var v = (td.textContent || "").trim();
-      // If it already contains our span, update it; else wrap.
       var span = td.querySelector('span.points-medal');
       if (span) {
         span.textContent = v;
@@ -2244,87 +2255,65 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
       }
     });
   }
-
-  // Monkey-patch renderLeaderboard to run our enhancement after each render
-  var patched = false;
-  function patchRender(){
-    if (patched) return;
-    var original = window.renderLeaderboard;
-    if (typeof original === 'function'){
+  function patch(){
+    var orig = window.renderLeaderboard;
+    if (typeof orig === 'function'){
       window.renderLeaderboard = function(){
-        var ret = original.apply(this, arguments);
-        // After the DOM is updated, enhance
-        requestAnimationFrame(enhancePointsMedallion);
-        return ret;
+        var r = orig.apply(this, arguments);
+        requestAnimationFrame(wrapPoints);
+        return r;
       };
-      patched = true;
-      // Run once in case the table is already present
-      requestAnimationFrame(enhancePointsMedallion);
+      requestAnimationFrame(wrapPoints);
     } else {
-      // Retry shortly until renderLeaderboard exists
-      setTimeout(patchRender, 100);
+      setTimeout(patch, 120);
     }
   }
-
-  // Also re-apply when the "Classement" tab is shown
   document.addEventListener('click', function(ev){
-    var btn = ev.target.closest?.('.tab[data-tab="classement"]');
-    if (btn){ requestAnimationFrame(function(){ setTimeout(enhancePointsMedallion, 0); }); }
+    var btn = ev.target.closest && ev.target.closest('.tab[data-tab="classement"]');
+    if (btn){ requestAnimationFrame(function(){ setTimeout(wrapPoints, 0); }); }
   });
-
-  // Kick off
-  patchRender();
+  patch();
 })();
 </script></body>
-<style id="points-column-emphasis">
-/* === Standings refinements: centered layout + subtle points pill + vertical separators === */
-
-/* Center all headers and cells */
+<style id="standings-points-emphasis">
+/* === Standings: centered + subtle points pill + grouped vertical separators === */
 #table-classement thead th{ text-align:center; }
 #table-classement tbody td{ text-align:center; }
 
-/* Ensure team cell content is centered as well */
-#table-classement tbody td:nth-child(2) .team-name{
-  justify-content: center;
-}
+#table-classement tbody td:nth-child(2) .team-name{ justify-content:center; }
 
-/* Vertical separators (thin white liseret) */
-#table-classement thead th:not(:last-child),
-#table-classement tbody td:not(:last-child){
-  border-right: 1px solid rgba(255,255,255,.10);
-}
+/* No separators in headers */
+#table-classement thead th{ border-right:none !important; border-left:none !important; }
 
-/* Points column: subtle slim pill instead of big medallion */
+/* Sports group boundaries: Fléchettes(4) | Ping(5) | Palet(6) */
+#table-classement tbody td:nth-child(4){ border-left: 1px solid rgba(255,255,255,.10); }
+#table-classement tbody td:nth-child(6){ border-right:1px solid rgba(255,255,255,.10); }
+
+/* Bonus/Malus group boundaries: Bonus(7) | Malus(8) */
+#table-classement tbody td:nth-child(7){ border-left: 1px solid rgba(255,255,255,.10); }
+#table-classement tbody td:nth-child(8){ border-right:1px solid rgba(255,255,255,.10); }
+
+/* Subtle slim pill for Points (col 3) */
 #table-classement thead th:nth-child(3){ text-align:center; }
-#table-classement tbody td:nth-child(3){
-  position: relative;
-  font-weight: 900;
-}
-
-/* Slim pill */
+#table-classement tbody td:nth-child(3){ position:relative; font-weight:900; }
 #table-classement tbody td:nth-child(3) > span.points-medal{
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 44px; height: 32px; padding: 0 10px; border-radius: 999px;
-  font-size: 16px; font-weight: 800; letter-spacing: .2px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.18);
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:44px; height:30px; padding:0 10px; border-radius:999px;
+  font-size:16px; font-weight:800; letter-spacing:.2px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.22);
 }
-
-/* Hover: slightly raise contrast, still subtle */
 #table-classement tbody tr:hover td:nth-child(3) > span.points-medal{
-  background: rgba(255,255,255,.06);
-  border-color: rgba(255,255,255,.22);
+  background:rgba(255,255,255,.06);
+  border-color:rgba(255,255,255,.22);
 }
-
-/* Mobile fine-tune */
-@media (max-width: 520px){
+@media (max-width:520px){
   #table-classement tbody td:nth-child(3) > span.points-medal{
-    min-width: 40px; height: 30px; padding: 0 8px; font-size: 15px;
+    min-width:40px; height:28px; padding:0 8px; font-size:15px;
   }
 }
-</style>
-</head></html>
+</style></head></html>
 <style id="rencontres-polish">
 /* Card container */
 .matches, .calendar, .journees, .games { gap: 20px; }
