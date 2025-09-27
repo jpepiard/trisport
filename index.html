@@ -2313,6 +2313,27 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     min-width:40px; height:28px; padding:0 8px; font-size:15px;
   }
 }
+</style><style id="round-spacing-tight">
+/* === Rencontres — espacement réduit entre journées ===================== */
+/* Réduit les marges empilées des groupes de journée */
+#calendrier .round-head{
+  margin: 8px 0 !important;
+  padding-top: 4px !important;
+  border-top: 1px solid rgba(255,255,255,.06) !important;
+}
+#calendrier .round-grid{
+  margin-bottom: 12px !important;
+  padding-bottom: 4px !important;
+  gap: 10px !important; /* resserre légèrement l'espace entre matches dans une même journée */
+}
+#calendrier .round-grid:last-child{
+  margin-bottom: 6px !important;
+}
+
+/* Optionnel : réduire la gouttière globale de la liste si applicable */
+#calendrier #match-list.grid{
+  gap: 10px !important;
+}
 </style></head></html>
 <style id="rencontres-polish">
 /* Card container */
