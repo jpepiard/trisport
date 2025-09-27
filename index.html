@@ -2226,62 +2226,34 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </body>
 
 <style id="points-column-emphasis">
-/* === Classement — mise en valeur de la colonne Points ===================== */
-/* Cible la 3e colonne (#, Équipe, Points) */
-#table-classement thead th:nth-child(3){
-  text-align: right;
-  font-weight: 800;
-  letter-spacing: .2px;
-}
-
+#table-classement thead th:nth-child(3){ text-align:right; font-weight:800; letter-spacing:.2px; }
 #table-classement tbody td:nth-child(3){
-  text-align: right;
-  font-weight: 900;
-  font-size: 18px;
-  letter-spacing: .2px;
-  position: relative;
-  /* halo doux + léger contraste */
-  background: linear-gradient(180deg, rgba(122,162,255,.10), rgba(122,162,255,.06));
-  box-shadow:
-    inset 0 0 0 1px rgba(122,162,255,.20),
-    inset 0 10px 18px rgba(0,0,0,.12);
-  /* arrondir légèrement la “carte” de la cellule sans casser les coins de ligne */
-  border-radius: 10px;
+  text-align:right; font-weight:900; font-size:18px; letter-spacing:.2px;
+  padding-right:14px; position:relative;
 }
-
-/* Atténuer le surlignage sur survol (reste visible) */
-#table-classement tbody tr:hover td:nth-child(3){
-  background: linear-gradient(180deg, rgba(122,162,255,.14), rgba(122,162,255,.08));
-  box-shadow:
-    inset 0 0 0 1px rgba(122,162,255,.28),
-    inset 0 10px 20px rgba(0,0,0,.14);
-}
-
-/* Top 3 : renfort visuel (sans crier) */
-#table-classement tbody tr:nth-child(1) td:nth-child(3){
-  box-shadow:
-    inset 0 0 0 1px rgba(212,175,55,.35),
-    inset 0 10px 18px rgba(0,0,0,.12);
-}
-#table-classement tbody tr:nth-child(2) td:nth-child(3){
-  box-shadow:
-    inset 0 0 0 1px rgba(192,192,192,.35),
-    inset 0 10px 18px rgba(0,0,0,.12);
-}
-#table-classement tbody tr:nth-child(3) td:nth-child(3){
-  box-shadow:
-    inset 0 0 0 1px rgba(205,127,50,.35),
-    inset 0 10px 18px rgba(0,0,0,.12);
-}
-
-/* Mobile : réduire légèrement le boost pour garder la lisibilité */
-@media (max-width: 520px){
-  #table-classement tbody td:nth-child(3){
-    font-size: 16px;
-  }
+#table-classement tbody td:nth-child(3)::after{
+  content: attr(data-pts); /* on remplit via JS ci-dessous */
+  display:inline-block; min-width:52px; text-align:center; margin-left:8px;
+  padding:4px 10px; border-radius:999px;
+  background:linear-gradient(180deg,#2a3aa6,#1f2b86);
+  box-shadow:0 10px 22px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.35) inset;
+  border:1px solid #4b5bd7; font-weight:900;
 }
 </style>
-</head></html>
+<script>
+/* À appeler après renderLeaderboard() */
+(function(){
+  const rows=[...document.querySelectorAll('#table-classement tbody tr')];
+  rows.forEach(tr=>{
+    const td=tr.querySelector('td:nth-child(3)'); // Points
+    if(!td) return;
+    td.setAttribute('data-pts', td.textContent.trim());
+    // masque le texte brut, on garde seulement la pastille
+    td.style.color='transparent';
+  });
+})();
+</script>
+
 <style id="rencontres-polish">
 /* Card container */
 .matches, .calendar, .journees, .games { gap: 20px; }
