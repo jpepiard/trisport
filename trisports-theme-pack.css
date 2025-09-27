@@ -411,22 +411,444 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 }
 
 
-/* ===== Compact bonus pill height ===== */
-.pill.bonus-flashy.pos,
-.pill.bonus-flashy.neg{
-  padding: 2px 9px !important;   /* slightly shorter */
-  line-height: 1 !important;
+/* ===== Revealed bonus/malus pills — same style as in-progress, keep colors ===== */
+.match-card .pill.green,
+.match-card .pill.red{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  color: #f7fbff !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,.35);
+  transform: translateZ(0);
 }
 
-/* Ensure mini-bonus + emoji align with compact height */
-.pill.bonus-flashy.pos .mini-bonus,
-.pill.bonus-flashy.neg .mini-bonus{ transform: scale(1.18) !important; }
-.pill.bonus-flashy.pos .sport-emo,
-.pill.bonus-flashy.neg .sport-emo{ vertical-align: -5px !important; }
+/* GREEN (bonus) */
+.match-card .pill.green{
+  border: 1px solid rgba(34,197,94,.6);
+  background: linear-gradient(135deg, #0e9f6e 0%, #0b7d58 100%);
+  box-shadow:
+    0 0 8px rgba(34,197,94,.35),
+    0 0 18px rgba(15,133,92,.25),
+    inset 0 0 6px rgba(255,255,255,.06);
+  animation: neonPulseGreen 2.4s ease-in-out infinite;
+}
+@keyframes neonPulseGreen{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 10px rgba(34,197,94,.55); }
+  50%     { filter: brightness(1.12); box-shadow: 0 0 20px rgba(34,220,120,.85); }
+}
 
-/* Winner gold ring visibility */
+/* RED (malus) */
+.match-card .pill.red{
+  border: 1px solid rgba(239,68,68,.6);
+  background: linear-gradient(135deg, #c02626 0%, #8a1f1f 100%);
+  box-shadow:
+    0 0 8px rgba(239,68,68,.35),
+    0 0 18px rgba(139,32,32,.25),
+    inset 0 0 6px rgba(255,255,255,.06);
+  animation: neonPulseRed 2.4s ease-in-out infinite;
+}
+@keyframes neonPulseRed{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 10px rgba(239,68,68,.55); }
+  50%     { filter: brightness(1.12); box-shadow: 0 0 20px rgba(255,92,92,.85); }
+}
+
+/* Keep the same inner alignment for icon/emoji as blue pill */
+.match-card .pill.green .mini-bonus img,
+.match-card .pill.red .mini-bonus img{
+  width: 22px; height: 22px; border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transition: transform .15s ease;
+}
+.match-card .pill.green:hover .mini-bonus img,
+.match-card .pill.red:hover .mini-bonus img{ transform: scale(1.08) rotate(-2deg); }
+
+/* Emoji align (same rule as earlier) */
+.match-card .pill.green .sport-emo,
+.match-card .pill.red .sport-emo{
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1;
+  margin: 0 4px;
+  vertical-align: -4px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .match-card .pill.green,
+  .match-card .pill.red{ animation: none !important; }
+}
+
+
+
+/* ===== Override: revealed bonus pills adopt in-progress flashy style but keep green/red ===== */
+/* Base (already defined for .pill.bonus-flashy). Here, specialize by result: */
+.pill.bonus-flashy.pos, .match-card .pill.bonus-flashy.pos{
+  border: 1px solid rgba(34,197,94,.6);
+  background: linear-gradient(135deg, #0e9f6e 0%, #0b7d58 100%);
+  box-shadow:
+    0 0 8px rgba(34,197,94,.35),
+    0 0 18px rgba(15,133,92,.25),
+    inset 0 0 6px rgba(255,255,255,.06);
+  color: #f7fbff !important;
+  animation: neonPulseGreen 2.4s ease-in-out infinite;
+}
+.pill.bonus-flashy.neg, .match-card .pill.bonus-flashy.neg{
+  border: 1px solid rgba(239,68,68,.6);
+  background: linear-gradient(135deg, #c02626 0%, #8a1f1f 100%);
+  box-shadow:
+    0 0 8px rgba(239,68,68,.35),
+    0 0 18px rgba(139,32,32,.25),
+    inset 0 0 6px rgba(255,255,255,.06);
+  color: #f7fbff !important;
+  animation: neonPulseRed 2.4s ease-in-out infinite;
+}
+
+/* Ensure emoji/icon alignment stays consistent */
+.pill.bonus-flashy.pos .sport-emo,
+.pill.bonus-flashy.neg .sport-emo{
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1;
+  margin: 0 4px;
+  vertical-align: -4px;
+}
+.pill.bonus-flashy.pos .mini-bonus img,
+.pill.bonus-flashy.neg .mini-bonus img{
+  width: 22px; height: 22px; border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transition: transform .15s ease;
+}
+.pill.bonus-flashy.pos:hover .mini-bonus img,
+.pill.bonus-flashy.neg:hover .mini-bonus img{ transform: scale(1.08) rotate(-2deg); }
+
+@keyframes neonPulseGreen{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 10px rgba(34,197,94,.55); }
+  50%     { filter: brightness(1.12); box-shadow: 0 0 20px rgba(34,220,120,.85); }
+}
+@keyframes neonPulseRed{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 10px rgba(239,68,68,.55); }
+  50%     { filter: brightness(1.12); box-shadow: 0 0 20px rgba(255,92,92,.85); }
+}
+@media (prefers-reduced-motion: reduce){
+  .pill.bonus-flashy.pos,
+  .pill.bonus-flashy.neg{ animation: none !important; }
+}
+
+
+
+/* ===== Bonus pills (revealed) — larger icons/emoji, tighter spacing, brighter border (no height change) ===== */
+.pill.bonus-flashy.pos,
+.pill.bonus-flashy.neg{
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;                 /* closer spacing */
+  padding: 4px 10px;        /* keep height */
+  line-height: 1;           /* compact baseline */
+  letter-spacing: .15px;
+  /* Brighter border look without changing size */
+  border-color: currentColor; /* overridden below per color */
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.06) inset,     /* inner crisp edge */
+    0 0 12px rgba(0,0,0,.22),                  /* soft float */
+    inset 0 0 10px rgba(255,255,255,.08);      /* glossy core */
+}
+
+/* Specific color accents + extra ring to emphasize border without adding height */
+.pill.bonus-flashy.pos{
+  color: #e8fff4;
+  border-color: rgba(34,197,94,.85);
+  box-shadow:
+    0 0 0 1px rgba(34,197,94,.65) inset,       /* vivid inner ring */
+    0 0 0 2px rgba(34,197,94,.25),             /* outer ring (visual border) */
+    0 0 14px rgba(34,197,94,.35),
+    inset 0 0 10px rgba(255,255,255,.08);
+}
+.pill.bonus-flashy.neg{
+  color: #ffecec;
+  border-color: rgba(239,68,68,.85);
+  box-shadow:
+    0 0 0 1px rgba(239,68,68,.65) inset,       /* vivid inner ring */
+    0 0 0 2px rgba(239,68,68,.25),             /* outer ring (visual border) */
+    0 0 14px rgba(239,68,68,.35),
+    inset 0 0 10px rgba(255,255,255,.08);
+}
+
+/* Larger mini bonus image but keep height by aligning tightly */
+.pill.bonus-flashy.pos .mini-bonus img,
+.pill.bonus-flashy.neg .mini-bonus img{
+  width: 24px;   /* was ~22 */
+  height: 24px;
+  border-radius: 6px;
+  margin: 0 2px;                /* reduce side margins */
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Larger emoji + slightly higher baseline; small margins so elements sit closer */
+.pill.bonus-flashy.pos .sport-emo,
+.pill.bonus-flashy.neg .sport-emo{
+  display: inline-block;
+  font-size: 20px;   /* was 18 */
+  line-height: 1;
+  margin: 0 2px;     /* tighter */
+  vertical-align: -5px;
+}
+
+
+
+/* ===== Bonus pill tweaks: bigger image (no height change), higher emoji, tighter spacing ===== */
+.pill.bonus-flashy.pos .mini-bonus,
+.pill.bonus-flashy.neg .mini-bonus{
+  overflow: visible !important;         /* allow scaled image to exceed container */
+  width: 18px;                           /* keep layout size small */
+  height: 18px;
+  margin: 0 1px;                         /* closer to emoji */
+  transform: scale(1.33);                /* visually larger without affecting layout height */
+  transform-origin: center;
+}
+
+.pill.bonus-flashy.pos .mini-bonus img,
+.pill.bonus-flashy.neg .mini-bonus img{
+  width: 18px;                           /* match container (scaled above) */
+  height: 18px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+}
+
+/* Emoji higher and closer */
+.pill.bonus-flashy.pos .sport-emo,
+.pill.bonus-flashy.neg .sport-emo{
+  font-size: 20px;       /* keep larger look */
+  line-height: 1;
+  margin: 0 1px;         /* tighter spacing to image */
+  vertical-align: -7px;  /* higher */
+}
+
+/* ===== Remove hover translation on match cards ===== */
+.match-card:hover{
+  transform: none !important;
+}
+
+
+
+/* === Tweaks v2: smaller bonus image, shorter pill, softer halo, no card translation === */
+
+/* 1) Pill height a bit smaller (revealed flashy pills) */
+.pill.bonus-flashy.pos,
+.pill.bonus-flashy.neg{
+  padding: 3px 10px;            /* was 4px => shorter pill */
+  line-height: 1;
+}
+
+/* 2) Bonus image slightly reduced (keep layout height) */
+.pill.bonus-flashy.pos .mini-bonus,
+.pill.bonus-flashy.neg .mini-bonus{
+  transform: scale(1.22);       /* was 1.33 */
+}
+.pill.bonus-flashy.pos .mini-bonus img,
+.pill.bonus-flashy.neg .mini-bonus img{
+  width: 18px; height: 18px;
+}
+
+/* 3) Emoji a touch lower to match reduced height */
+.pill.bonus-flashy.pos .sport-emo,
+.pill.bonus-flashy.neg .sport-emo{
+  font-size: 20px;
+  vertical-align: -6px;         /* was -7px */
+  margin: 0 1px;
+}
+
+/* 4) Softer halos on bonus/malus pills */
+.pill.bonus-flashy.pos{
+  box-shadow:
+    0 0 0 1px rgba(34,197,94,.45) inset,
+    0 0 0 1px rgba(34,197,94,.18),
+    0 0 10px rgba(34,197,94,.22),
+    inset 0 0 6px rgba(255,255,255,.06);
+}
+.pill.bonus-flashy.neg{
+  box-shadow:
+    0 0 0 1px rgba(239,68,68,.45) inset,
+    0 0 0 1px rgba(239,68,68,.18),
+    0 0 10px rgba(239,68,68,.22),
+    inset 0 0 6px rgba(255,255,255,.06);
+}
+
+/* Softer pulse */
+@keyframes neonPulseGreen{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 8px rgba(34,197,94,.35); }
+  50%     { filter: brightness(1.06); box-shadow: 0 0 12px rgba(34,220,120,.45); }
+}
+@keyframes neonPulseRed{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 8px rgba(239,68,68,.35); }
+  50%     { filter: brightness(1.06); box-shadow: 0 0 12px rgba(255,92,92,.45); }
+}
+
+/* 5) Remove match-card hover translation everywhere */
+.match-card{ transform: none !important; transition: box-shadow .18s ease !important; }
+.match-card:hover{ transform: none !important; }
+
+
+
+/* ===== Bonus pill hover popover ===== */
+.pill.bonus-flashy{ position: relative; }
+.pill.bonus-flashy .bonus-pop{
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: 280px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 14px 28px rgba(0,0,0,.45);
+  opacity: 0;
+  transform: translateY(6px) scale(.98);
+  transform-origin: bottom left;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+  z-index: 30;
+}
+.pill.bonus-flashy .bonus-pop::after{
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 100%;
+  width: 10px; height: 10px;
+  transform: rotate(45deg);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.pill.bonus-flashy:hover .bonus-pop{ opacity: 1; transform: translateY(0) scale(1); }
+
+.pill.bonus-flashy .bonus-pop img{
+  width: 80px; height: 80px; border-radius: 10px; display: block; margin-bottom: 8px;
+}
+.pill.bonus-flashy .bonus-pop strong{ display: block; margin-bottom: 2px; }
+.pill.bonus-flashy .bonus-pop .desc{ font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+
+
+/* ===== Bonus popover: opaque, text to the right of image, higher contrast ===== */
+.pill.bonus-flashy .bonus-pop{
+  background: #0f1331 !important;         /* opaque dark */
+  color: #e7e9f7 !important;
+  border: 1px solid #2b315f !important;
+  width: 360px !important;
+  box-shadow: 0 18px 36px rgba(0,0,0,.55) !important;
+  z-index: 999 !important;
+
+  /* layout side-by-side */
+  display: grid !important;
+  grid-template-columns: 88px 1fr !important;
+  gap: 10px !important;
+  align-items: start !important;
+}
+
+.pill.bonus-flashy .bonus-pop img{
+  width: 84px !important;
+  height: 84px !important;
+  border-radius: 10px !important;
+  grid-column: 1 !important;
+}
+
+.pill.bonus-flashy .bonus-pop strong,
+.pill.bonus-flashy .bonus-pop .muted,
+.pill.bonus-flashy .bonus-pop .desc{
+  grid-column: 2 !important;
+}
+
+.pill.bonus-flashy .bonus-pop strong{ margin-top: 2px !important; }
+.pill.bonus-flashy .bonus-pop .muted{ color: #9aa3c7 !important; }
+.pill.bonus-flashy .bonus-pop .desc{ color: #b6bce0 !important; }
+
+
+
+/* ===== Bonus popover v2: centered above pill, solid, clean layout ===== */
+.pill.bonus-flashy{ position: relative; }
+.pill.bonus-flashy .bonus-pop{
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translate(-50%, 6px) scale(.98);
+  transform-origin: bottom center;
+  width: 360px;
+  background: #0f1331;
+  color: #e7e9f7;
+  border: 1px solid #2b315f;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 18px 36px rgba(0,0,0,.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease, transform .16s ease;
+  z-index: 9999;
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+.pill.bonus-flashy:hover .bonus-pop{ opacity: 1; transform: translate(-50%, 0) scale(1); }
+
+.pill.bonus-flashy .bonus-pop::after{
+  content: "";
+  position: absolute;
+  left: 50%; transform: translateX(-50%) rotate(45deg);
+  top: 100%;
+  width: 12px; height: 12px;
+  background: #0f1331;
+  border-bottom: 1px solid #2b315f;
+  border-right: 1px solid #2b315f;
+}
+
+.pill.bonus-flashy .bonus-pop img{
+  width: 88px; height: 88px; border-radius: 10px; grid-column: 1;
+}
+.pill.bonus-flashy .bonus-pop strong{ grid-column: 2; font-weight: 800; margin-top: 2px; }
+.pill.bonus-flashy .bonus-pop .muted{ grid-column: 2; color: #9aa3c7; margin-top: 2px; }
+.pill.bonus-flashy .bonus-pop .desc{ grid-column: 2; color: #c4c9e8; margin-top: 6px; font-size: 13px; line-height: 1.35; }
+
+
+
+/* ===== Compact bonus pill vFINAL (2px vertical) + alignment fixes ===== */
+.pill.bonus-flashy.pos,
+.pill.bonus-flashy.neg{
+  padding: 2px 9px !important;   /* exact requested height reduction */
+  line-height: 1 !important;
+  gap: 3px !important;
+}
+/* keep the chip visually big without changing height */
+.pill.bonus-flashy.pos .mini-bonus,
+.pill.bonus-flashy.neg .mini-bonus{
+  width: 18px; height: 18px; overflow: visible;
+  transform: scale(1.18);                /* mild enlargement */
+  transform-origin: center;
+  margin: 0 1px;
+}
+.pill.bonus-flashy.pos .mini-bonus img,
+.pill.bonus-flashy.neg .mini-bonus img{ width:18px; height:18px; border-radius:6px; }
+
+.pill.bonus-flashy.pos .sport-emo,
+.pill.bonus-flashy.neg .sport-emo{
+  font-size: 19px;
+  line-height: 1;
+  vertical-align: -5px;        /* centered with the reduced height */
+  margin: 0 1px;
+}
+
+/* ===== Winner avatar gold ring — strong specificity ===== */
+.match-card .team .avatar.is-winner-gold,
 .match-card .avatar.is-winner-gold{
   border: 2px solid #d4af37 !important;
   box-shadow: 0 0 0 2px rgba(212,175,55,.65), 0 0 16px rgba(212,175,55,.35) !important;
 }
-
