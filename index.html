@@ -495,7 +495,7 @@ header .btn, header .chip, header .pill, header .tab{
 /* rendre l'en-tête cliquable */
 .match-card .hd{ cursor:pointer; }
 </style>
-<link href="trisports-theme-pack.cleaned.css" rel="stylesheet"/>
+<link href="trisports-theme-pack.css" rel="stylesheet"/>
 <body>
 <header>
 <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
@@ -2884,3 +2884,200 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 @keyframes chipWarnPulse { 0%{ box-shadow:0 0 0 0 rgba(255,180,0,.0);} 50%{ box-shadow:0 0 0 6px rgba(255,180,0,.22);} 100%{ box-shadow:0 0 0 0 rgba(255,180,0,.0);} }
 .chip.warn.pulse{ animation: chipWarnPulse .6s ease-out 1; }
 </style>
+\n
+<style id="ts-popover-styles">
+/* Accessible Popover (progressive enhancement)
+   Upgrades any element with [data-popover] or legacy [data-tip]. */
+.ts-popover {
+  position: fixed;
+  inset: auto auto 0 0;
+  max-width: min(92vw, 460px);
+  background: #111;
+  color: #fff;
+  font: 500 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.36), 0 0 0 1px rgba(255,255,255,.06) inset;
+  opacity: 0;
+  transform: translateY(4px) scale(.98);
+  pointer-events: none;
+  z-index: 1000;
+  transition: opacity .14s ease, transform .14s ease;
+}
+.ts-popover[data-state="open"]{
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.ts-popover[data-placement^="top"] .ts-popover__arrow{ transform: rotate(180deg); }
+.ts-popover[data-placement^="left"] .ts-popover__arrow{ transform: rotate(-90deg); }
+.ts-popover[data-placement^="right"] .ts-popover__arrow{ transform: rotate(90deg); }
+
+.ts-popover__arrow {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -7px;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.25));
+}
+.ts-popover__arrow::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:#111;
+  transform: rotate(45deg);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset;
+}
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce){
+  .ts-popover{ transition: none; }
+}
+
+/* Trigger helpers (optional) */
+[aria-haspopup="dialog"][data-popover-state="open"],
+[aria-haspopup="tooltip"][data-popover-state="open"]{
+  outline: 2px solid rgba(120,160,255,.6);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+</style>
+
+<style id="ts-popover-override-legacy">
+.pill.bonus-flashy[data-has-js-popover]::after,
+.pill.bonus-flashy[data-has-js-popover]::before{ display:none !important; content:none !important; }
+</style>
+
+<script id="ts-popover-script">
+(function(){
+  const PADDING = 12; // viewport padding
+  let current = null;
+  const popover = document.createElement('div');
+  popover.className = 'ts-popover';
+  popover.setAttribute('role', 'tooltip');
+  popover.innerHTML = '<div class="ts-popover__content"></div><div class="ts-popover__arrow" aria-hidden="true"></div>';
+  const contentEl = popover.querySelector('.ts-popover__content');
+  document.addEventListener('DOMContentLoaded', () => {
+    // Upgrade legacy [data-tip] to [data-popover]
+    document.querySelectorAll('[data-tip]').forEach(el => {
+      if(!el.hasAttribute('data-popover')){
+        el.setAttribute('data-popover', el.getAttribute('data-tip'));
+      }
+      // Remove legacy CSS-only tooltip by disabling ::after/::before via marker
+      el.setAttribute('data-has-js-popover', 'true');
+    });
+
+    // Attach events
+    const triggers = Array.from(document.querySelectorAll('[data-popover]'));
+    if (!triggers.length) return;
+    document.body.appendChild(popover);
+
+    const open = (el, viaClick=false) => {
+      if (current === el) return;
+      close();
+      current = el;
+      const text = el.getAttribute('data-popover');
+      if (!text) { current = null; return; }
+      contentEl.textContent = text;
+      // ARIA
+      let id = el.getAttribute('aria-describedby');
+      if (!id) {
+        id = 'ts-popover-' + Math.random().toString(36).slice(2);
+        popover.id = id;
+        el.setAttribute('aria-describedby', id);
+      } else {
+        popover.id = id;
+      }
+      el.setAttribute('data-popover-state','open');
+      place(el);
+      popover.setAttribute('data-state','open');
+      // If opened by click/touch, trap dismissal with outside click
+      if (viaClick) {
+        setTimeout(()=>document.addEventListener('pointerdown', onDocPointerDown, { once:true }), 0);
+      }
+    };
+
+    const close = () => {
+      if (!current) return;
+      current.removeAttribute('data-popover-state');
+      current = null;
+      popover.removeAttribute('data-state');
+    };
+
+    const onDocPointerDown = (e) => {
+      if (!popover.contains(e.target) && (!current || !current.contains(e.target))) {
+        close();
+      }
+    };
+
+    const place = (el) => {
+      const rect = el.getBoundingClientRect();
+      const vw = document.documentElement.clientWidth;
+      const vh = document.documentElement.clientHeight;
+      const popW = Math.min(460, vw - PADDING*2);
+      popover.style.maxWidth = popW + 'px';
+      popover.style.left = '0px'; // reset to compute
+      popover.style.top = '0px';
+
+      // Preferred placement: above for dense UI; fallback below
+      const margin = 10;
+      const aboveY = rect.top - margin;
+      const belowY = rect.bottom + margin;
+      const spaceAbove = aboveY;
+      const spaceBelow = vh - belowY;
+      const placeAbove = spaceAbove > 80 || spaceAbove > spaceBelow;
+
+      // Horizontal center by default
+      let left = rect.left + rect.width/2 - popW/2;
+      // Clamp within viewport
+      left = Math.max(PADDING, Math.min(left, vw - PADDING - popW));
+      let top;
+      if (placeAbove) {
+        top = Math.max(PADDING, rect.top - popover.offsetHeight - margin);
+        popover.setAttribute('data-placement','top');
+      } else {
+        top = Math.min(vh - PADDING - popover.offsetHeight, rect.bottom + margin);
+        popover.setAttribute('data-placement','bottom');
+      }
+      popover.style.transformOrigin = placeAbove ? 'center bottom' : 'center top';
+      popover.style.left = left + 'px';
+      popover.style.top = top + 'px';
+
+      // Arrow X based on trigger center
+      const arrow = popover.querySelector('.ts-popover__arrow');
+      const centerX = rect.left + rect.width/2;
+      const arrowLeft = Math.max(14, Math.min(popW - 14, centerX - left));
+      arrow.style.left = arrowLeft + 'px';
+      arrow.style.top = placeAbove ? (popover.offsetHeight - 7) + 'px' : (-7) + 'px';
+    };
+
+    // Hover/focus show, leave/blur hide
+    const show = (e) => open(e.currentTarget, e.type === 'click');
+    const hide = () => close();
+
+    triggers.forEach(el => {
+      el.setAttribute('tabindex', el.tabIndex >= 0 ? el.tabIndex : 0);
+      el.setAttribute('aria-haspopup','tooltip');
+      el.addEventListener('mouseenter', show);
+      el.addEventListener('focusin', show);
+      el.addEventListener('mouseleave', hide);
+      el.addEventListener('focusout', hide);
+      el.addEventListener('click', (e)=>{
+        // Toggle on click/touch
+        if (current === el) { close(); }
+        else { open(el, true); }
+      });
+    });
+
+    window.addEventListener('resize', () => { if (current) place(current); });
+    window.addEventListener('scroll', () => { if (current) place(current); }, true);
+
+    // Esc to close
+    document.addEventListener('keydown', (e)=>{
+      if (e.key === 'Escape') close();
+    });
+  });
+})();
+</script>
