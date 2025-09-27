@@ -637,3 +637,62 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
   transform: none !important;
 }
 
+
+
+/* === Tweaks v2: smaller bonus image, shorter pill, softer halo, no card translation === */
+
+/* 1) Pill height a bit smaller (revealed flashy pills) */
+.pill.bonus-flashy.pos,
+.pill.bonus-flashy.neg{
+  padding: 3px 10px;            /* was 4px => shorter pill */
+  line-height: 1;
+}
+
+/* 2) Bonus image slightly reduced (keep layout height) */
+.pill.bonus-flashy.pos .mini-bonus,
+.pill.bonus-flashy.neg .mini-bonus{
+  transform: scale(1.22);       /* was 1.33 */
+}
+.pill.bonus-flashy.pos .mini-bonus img,
+.pill.bonus-flashy.neg .mini-bonus img{
+  width: 18px; height: 18px;
+}
+
+/* 3) Emoji a touch lower to match reduced height */
+.pill.bonus-flashy.pos .sport-emo,
+.pill.bonus-flashy.neg .sport-emo{
+  font-size: 20px;
+  vertical-align: -6px;         /* was -7px */
+  margin: 0 1px;
+}
+
+/* 4) Softer halos on bonus/malus pills */
+.pill.bonus-flashy.pos{
+  box-shadow:
+    0 0 0 1px rgba(34,197,94,.45) inset,
+    0 0 0 1px rgba(34,197,94,.18),
+    0 0 10px rgba(34,197,94,.22),
+    inset 0 0 6px rgba(255,255,255,.06);
+}
+.pill.bonus-flashy.neg{
+  box-shadow:
+    0 0 0 1px rgba(239,68,68,.45) inset,
+    0 0 0 1px rgba(239,68,68,.18),
+    0 0 10px rgba(239,68,68,.22),
+    inset 0 0 6px rgba(255,255,255,.06);
+}
+
+/* Softer pulse */
+@keyframes neonPulseGreen{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 8px rgba(34,197,94,.35); }
+  50%     { filter: brightness(1.06); box-shadow: 0 0 12px rgba(34,220,120,.45); }
+}
+@keyframes neonPulseRed{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 8px rgba(239,68,68,.35); }
+  50%     { filter: brightness(1.06); box-shadow: 0 0 12px rgba(255,92,92,.45); }
+}
+
+/* 5) Remove match-card hover translation everywhere */
+.match-card{ transform: none !important; transition: box-shadow .18s ease !important; }
+.match-card:hover{ transform: none !important; }
+
