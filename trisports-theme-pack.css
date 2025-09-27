@@ -292,3 +292,67 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 
 .pill .mini-bonus { order: 1; }
 .pill .sport-emo { order: 2; }
+
+
+/* === Neon effect for all bonus UI elements ============================== */
+:root{
+  --neon-cyan: #00e5ff;
+  --neon-green: #00ffa3;
+}
+/* Reusable class */
+.bonus-neon {
+  position: relative;
+  color: #fff !important;
+  border: 2px solid rgba(0, 255, 255, .55) !important;
+  background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-green) 100%) !important;
+  text-shadow: 0 0 6px rgba(0,255,255,.8);
+  box-shadow:
+    0 0 8px rgba(0,255,255,.5),
+    0 0 18px rgba(0,255,255,.35),
+    0 0 32px rgba(0,255,255,.25),
+    inset 0 0 12px rgba(255,255,255,.15) !important;
+  animation: neonPulse 1.8s ease-in-out infinite;
+}
+/* Soft glow on hover */
+.bonus-neon:hover {
+  box-shadow:
+    0 0 10px rgba(0,255,255,.6),
+    0 0 22px rgba(0,255,255,.45),
+    0 0 40px rgba(0,255,255,.35),
+    inset 0 0 14px rgba(255,255,255,.2) !important;
+  filter: saturate(1.08);
+}
+/* Stronger glow when selected (for bonus cards) */
+.bonus-dialog .bonus-card.bonus-neon.selected {
+  border-color: var(--neon-cyan) !important;
+  box-shadow:
+    0 0 12px rgba(0,255,255,.8),
+    0 0 28px rgba(0,255,255,.6),
+    0 0 56px rgba(0,255,255,.45),
+    inset 0 0 16px rgba(255,255,255,.25) !important;
+}
+/* Micro highlight overlay */
+.bonus-neon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 20% -10%, rgba(255,255,255,.35), transparent 35%);
+  pointer-events: none;
+}
+@keyframes neonPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.12); }
+}
+
+/* Apply neon to existing "flashy" bonus pills automatically */
+.pill.blue,
+.pill.bonus-flashy {
+  border-width: 2px;
+  color: #fff !important;
+  text-shadow: 0 0 6px rgba(0,255,255,.8);
+  box-shadow:
+    0 0 8px rgba(0, 200, 255, .45) inset,
+    0 0 10px rgba(0,255,255,.45);
+}
