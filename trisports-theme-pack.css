@@ -818,3 +818,52 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .pill.bonus-flashy .bonus-pop .muted{ grid-column: 2; color: #9aa3c7; margin-top: 2px; }
 .pill.bonus-flashy .bonus-pop .desc{ grid-column: 2; color: #c4c9e8; margin-top: 6px; font-size: 13px; line-height: 1.35; }
 
+
+
+/* ===== Bonus popover v3: fully opaque, on top of everything, text aligned with image ===== */
+.pill.bonus-flashy{ position: relative; z-index: 1; }
+.pill.bonus-flashy .bonus-pop{
+  background: #0b1028 !important;      /* deep opaque */
+  color: #e9ecff !important;
+  border: 1px solid #313a78 !important;
+  box-shadow: 0 22px 44px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.04) inset !important;
+  z-index: 99999 !important;            /* above everything */
+  opacity: 0;                           /* only the popover fades, not content */
+  pointer-events: none;
+  width: 380px !important;
+  padding: 12px !important;
+  display: grid !important;
+  grid-template-columns: 92px 1fr !important;
+  gap: 12px !important;
+  align-items: start !important;
+  transform: translate(-50%, 6px) scale(.98);
+  transform-origin: bottom center;
+}
+.pill.bonus-flashy:hover .bonus-pop{
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.pill.bonus-flashy .bonus-pop img{
+  width: 92px !important; height: 92px !important; border-radius: 12px !important;
+  grid-column: 1 !important; align-self: start !important;
+}
+/* Text block perfectly aligned to image top */
+.pill.bonus-flashy .bonus-pop strong,
+.pill.bonus-flashy .bonus-pop .muted,
+.pill.bonus-flashy .bonus-pop .desc{
+  grid-column: 2 !important; align-self: start !important;
+  margin-top: 0 !important;
+}
+.pill.bonus-flashy .bonus-pop strong{ font-weight: 800 !important; line-height: 1.15 !important; }
+.pill.bonus-flashy .bonus-pop .muted{ color: #a8b3e0 !important; line-height: 1.15 !important; }
+.pill.bonus-flashy .bonus-pop .desc{ color: #cdd3f2 !important; font-size: 13px !important; line-height: 1.35 !important; }
+
+/* Centered arrow under the popover */
+.pill.bonus-flashy .bonus-pop::after{
+  background: #0b1028 !important;
+  border-bottom-color: #313a78 !important;
+  border-right-color: #313a78 !important;
+  left: 50% !important; transform: translateX(-50%) rotate(45deg) !important;
+}
+
