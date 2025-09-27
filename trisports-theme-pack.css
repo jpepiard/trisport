@@ -802,19 +802,19 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .scorewrap .score { position: relative; z-index: 1; }
 
 /* Bonus popover — v2 centrée au-dessus de la pilule (canonique) */
-.pill.bonus-flashy{ position: relative; z-index: 10001; }
+.pill.bonus-flashy{ position: relative; z-index: 20001; }
 .pill.bonus-flashy .bonus-pop{
   position: absolute;
   left: 50%;
   transform: translate(-50%, 6px) scale(.98);
   transform-origin: top center;
   width: 360px; max-width: calc(100vw - 32px);
-  background: #0f1331; color:#e7e9f7;
+  background: rgba(8,10,24,0.98); color:#fff;
   border: 1px solid #2b315f; border-radius: 12px; padding: 12px;
   box-shadow: 0 18px 36px rgba(0,0,0,.55);
   opacity: 0; pointer-events: none;
   transition: opacity .16s ease, transform .16s ease;
-  z-index: 200;
+  z-index: 20002;
   display:grid; grid-template-columns:88px 1fr; gap:12px; align-items:start;
 }
 .pill.bonus-flashy:hover .bonus-pop{ opacity:1; transform:translate(-50%,0) scale(1); }
@@ -851,3 +851,6 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
   border-top: none; border-left: none;
   border-bottom:1px solid #2b315f; border-right:1px solid #2b315f;
 }
+
+/* bonus-pop readability */
+.pill.bonus-flashy .bonus-pop{ backdrop-filter: blur(2px) saturate(1) brightness(0.95); }

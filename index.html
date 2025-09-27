@@ -2467,18 +2467,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
       popRect = pop.getBoundingClientRect();
       overlapsVertically = !(popRect.bottom < scoreRect.top || popRect.top > scoreRect.bottom);
     }
-    var overlapsHoriz = !(popRect.right < scoreRect.left || popRect.left > scoreRect.right);
-    if (overlapsHoriz){
-      
-      var margin = 16;
-      var dx = 0;
-      // compute exact shift needed to fully clear the score horizontally
-      var needLeft = (popRect.right) - (scoreRect.left - margin);   // move left by this if > 0
-      var needRight = (scoreRect.right + margin) - (popRect.left);  // move right by this if > 0
-
-      if (needLeft > 0 && needRight <= 0){
-        dx = -needLeft;
-      } else if (needRight > 0 && needLeft <= 0){
+    var overlapsHoriz = true; if (overlapsHoriz){ pop.style.setProperty('--x-offset','0px'); } else if (needRight > 0 && needLeft <= 0){
         dx = needRight;
       } else {
         var scoreCenter = (scoreRect.left + scoreRect.right)/2;
