@@ -2225,35 +2225,18 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 </body>
 
-<style id="points-column-emphasis">
+<style id="points-column-emphasis">/* Right accent bar for Points column */
 #table-classement thead th:nth-child(3){ text-align:right; font-weight:800; letter-spacing:.2px; }
 #table-classement tbody td:nth-child(3){
-  text-align:right; font-weight:900; font-size:18px; letter-spacing:.2px;
-  padding-right:14px; position:relative;
+  text-align:right; font-weight:900; font-size:18px; letter-spacing:.2px; position:relative;
+  padding-right:16px;
 }
 #table-classement tbody td:nth-child(3)::after{
-  content: attr(data-pts); /* on remplit via JS ci-dessous */
-  display:inline-block; min-width:52px; text-align:center; margin-left:8px;
-  padding:4px 10px; border-radius:999px;
-  background:linear-gradient(180deg,#2a3aa6,#1f2b86);
-  box-shadow:0 10px 22px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.35) inset;
-  border:1px solid #4b5bd7; font-weight:900;
+  content:""; position:absolute; right:6px; top:8px; bottom:8px; width:6px; border-radius:6px;
+  background:linear-gradient(180deg,#9ab4ff,#2a3aa6);
+  box-shadow:0 0 0 1px rgba(75,139,255,.35) inset, 0 6px 14px rgba(0,0,0,.25);
 }
-</style>
-<script>
-/* À appeler après renderLeaderboard() */
-(function(){
-  const rows=[...document.querySelectorAll('#table-classement tbody tr')];
-  rows.forEach(tr=>{
-    const td=tr.querySelector('td:nth-child(3)'); // Points
-    if(!td) return;
-    td.setAttribute('data-pts', td.textContent.trim());
-    // masque le texte brut, on garde seulement la pastille
-    td.style.color='transparent';
-  });
-})();
-</script>
-
+#table-classement tbody tr:hover td:nth-child(3)::after{ filter:saturate(120%); }</style></head></html>
 <style id="rencontres-polish">
 /* Card container */
 .matches, .calendar, .journees, .games { gap: 20px; }
