@@ -602,3 +602,38 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
   vertical-align: -5px;
 }
 
+
+
+/* ===== Bonus pill tweaks: bigger image (no height change), higher emoji, tighter spacing ===== */
+.pill.bonus-flashy.pos .mini-bonus,
+.pill.bonus-flashy.neg .mini-bonus{
+  overflow: visible !important;         /* allow scaled image to exceed container */
+  width: 18px;                           /* keep layout size small */
+  height: 18px;
+  margin: 0 1px;                         /* closer to emoji */
+  transform: scale(1.33);                /* visually larger without affecting layout height */
+  transform-origin: center;
+}
+
+.pill.bonus-flashy.pos .mini-bonus img,
+.pill.bonus-flashy.neg .mini-bonus img{
+  width: 18px;                           /* match container (scaled above) */
+  height: 18px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+}
+
+/* Emoji higher and closer */
+.pill.bonus-flashy.pos .sport-emo,
+.pill.bonus-flashy.neg .sport-emo{
+  font-size: 20px;       /* keep larger look */
+  line-height: 1;
+  margin: 0 1px;         /* tighter spacing to image */
+  vertical-align: -7px;  /* higher */
+}
+
+/* ===== Remove hover translation on match cards ===== */
+.match-card:hover{
+  transform: none !important;
+}
+
