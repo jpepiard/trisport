@@ -958,3 +958,63 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .pill.bonus-flashy .bonus-pop .muted{ color: rgba(255,255,255,0.78) !important; }
 .pill.bonus-flashy .bonus-pop .desc{ color: rgba(255,255,255,0.92) !important; }
 .pill.bonus-flashy .bonus-pop::after{ background: rgba(10,14,40,0.96) !important; border-color: rgba(255,255,255,0.08) !important; }
+
+
+/* ==============================
+   Popover BELOW the bonus pill + auto-size + darker background
+   ============================== */
+.pill.bonus-flashy { position: relative !important; z-index: 10001 !important; }
+
+/* Base popover */
+.pill.bonus-flashy .bonus-pop{
+  position: absolute !important;
+  top: calc(100% + 10px) !important;   /* BELOW the pill */
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+
+  /* Auto-size to content */
+  width: max-content !important;
+  max-width: min(520px, 92vw) !important;
+  padding: 14px 16px !important;
+
+  /* Readability */
+  background: rgba(5, 8, 26, 0.98) !important; /* darker */
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 18px 36px rgba(0,0,0,.55) !important;
+
+  /* Typography */
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+
+  /* Layout auto; let content dictate height */
+  display: block !important;
+  z-index: 200000 !important;
+}
+
+/* Title / small / description helpers */
+.pill.bonus-flashy .bonus-pop strong{ display:block !important; font-weight:800 !important; margin-bottom: 4px !important; color:#fff !important; }
+.pill.bonus-flashy .bonus-pop .muted{ display:block !important; color: rgba(255,255,255,0.78) !important; margin-bottom: 4px !important; }
+.pill.bonus-flashy .bonus-pop .desc{ display:block !important; color: rgba(255,255,255,0.92) !important; }
+
+/* Up-pointing arrow (since popover is below) */
+.pill.bonus-flashy .bonus-pop::before{
+  content:"" !important;
+  position:absolute !important;
+  left:50% !important;
+  transform: translateX(-50%) rotate(45deg) !important;
+  bottom: 100% !important;
+  width:12px !important; height:12px !important;
+  background: rgba(5, 8, 26, 0.98) !important;
+  border-top:1px solid rgba(255,255,255,0.08) !important;
+  border-left:1px solid rgba(255,255,255,0.08) !important;
+}
+
+/* Show on hover */
+.pill.bonus-flashy:hover .bonus-pop{ visibility: visible !important; opacity: 1 !important; }
+.pill.bonus-flashy .bonus-pop{ visibility: hidden !important; opacity: 0 !important; transition: opacity .15s ease, transform .15s ease !important; }
+.pill.bonus-flashy:hover .bonus-pop{ transform: translateX(-50%) !important; }
+
+/* Ensure containers don't clip the popover */
+.match-card, .scorewrap, .round-grid { overflow: visible !important; }
