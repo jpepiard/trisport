@@ -411,39 +411,75 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 }
 
 
-/* ===== Overrides — Bonus pill darker blue + slower/flashier halo + emoji align ===== */
-.match-card .pill.blue {
+/* ===== Revealed bonus/malus pills — same style as in-progress, keep colors ===== */
+.match-card .pill.green,
+.match-card .pill.red{
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-
+  font-weight: 700;
+  letter-spacing: .2px;
   color: #f7fbff !important;
-  border: 1px solid rgba(28,107,224,.55);
-  background: linear-gradient(135deg, #1c44b8 0%, #133080 100%); /* bleu plus foncé */
-  text-shadow: 0 0 2px rgba(0,0,0,.45);
+  text-shadow: 0 1px 1px rgba(0,0,0,.35);
+  transform: translateZ(0);
+}
 
+/* GREEN (bonus) */
+.match-card .pill.green{
+  border: 1px solid rgba(34,197,94,.6);
+  background: linear-gradient(135deg, #0e9f6e 0%, #0b7d58 100%);
   box-shadow:
-    0 0 8px rgba(30,120,255,.35),
-    0 0 18px rgba(0,80,200,.25),
+    0 0 8px rgba(34,197,94,.35),
+    0 0 18px rgba(15,133,92,.25),
     inset 0 0 6px rgba(255,255,255,.06);
-
-  animation: neonPulseBlue 2.4s ease-in-out infinite; /* halo plus lent et flashy */
+  animation: neonPulseGreen 2.4s ease-in-out infinite;
+}
+@keyframes neonPulseGreen{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 10px rgba(34,197,94,.55); }
+  50%     { filter: brightness(1.12); box-shadow: 0 0 20px rgba(34,220,120,.85); }
 }
 
-/* Halo flashy et plus lent */
-@keyframes neonPulseBlue {
-  0%, 100% { filter: brightness(1); box-shadow: 0 0 10px rgba(0,160,255,.55); }
-  50%      { filter: brightness(1.15); box-shadow: 0 0 20px rgba(0,200,255,.85); }
+/* RED (malus) */
+.match-card .pill.red{
+  border: 1px solid rgba(239,68,68,.6);
+  background: linear-gradient(135deg, #c02626 0%, #8a1f1f 100%);
+  box-shadow:
+    0 0 8px rgba(239,68,68,.35),
+    0 0 18px rgba(139,32,32,.25),
+    inset 0 0 6px rgba(255,255,255,.06);
+  animation: neonPulseRed 2.4s ease-in-out infinite;
+}
+@keyframes neonPulseRed{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 10px rgba(239,68,68,.55); }
+  50%     { filter: brightness(1.12); box-shadow: 0 0 20px rgba(255,92,92,.85); }
 }
 
-/* Emoji sport aligné un peu plus haut */
-.pill .sport-emo {
+/* Keep the same inner alignment for icon/emoji as blue pill */
+.match-card .pill.green .mini-bonus img,
+.match-card .pill.red .mini-bonus img{
+  width: 22px; height: 22px; border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transition: transform .15s ease;
+}
+.match-card .pill.green:hover .mini-bonus img,
+.match-card .pill.red:hover .mini-bonus img{ transform: scale(1.08) rotate(-2deg); }
+
+/* Emoji align (same rule as earlier) */
+.match-card .pill.green .sport-emo,
+.match-card .pill.red .sport-emo{
   display: inline-block;
   font-size: 18px;
   line-height: 1;
   margin: 0 4px;
-  vertical-align: -4px; /* remonté pour meilleur alignement */
+  vertical-align: -4px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .match-card .pill.green,
+  .match-card .pill.red{ animation: none !important; }
 }
 
