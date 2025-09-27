@@ -294,65 +294,92 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .pill .sport-emo { order: 2; }
 
 
-/* === Neon effect for all bonus UI elements ============================== */
+/* === Neon bonus pill (scoped to match cards only) ======================= */
+/* Applies to the blue bonus pill inside .match-card only */
 :root{
   --neon-cyan: #00e5ff;
   --neon-green: #00ffa3;
 }
-/* Reusable class */
-.bonus-neon {
+.match-card .pill.blue{
   position: relative;
   color: #fff !important;
-  border: 2px solid rgba(0, 255, 255, .55) !important;
-  background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-green) 100%) !important;
+  border: 2px solid rgba(0, 255, 255, .6);
+  background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-green) 100%);
   text-shadow: 0 0 6px rgba(0,255,255,.8);
   box-shadow:
     0 0 8px rgba(0,255,255,.5),
     0 0 18px rgba(0,255,255,.35),
     0 0 32px rgba(0,255,255,.25),
-    inset 0 0 12px rgba(255,255,255,.15) !important;
+    inset 0 0 12px rgba(255,255,255,.15);
   animation: neonPulse 1.8s ease-in-out infinite;
 }
-/* Soft glow on hover */
-.bonus-neon:hover {
+
+/* Blinking/expanding halo around the pill */
+.match-card .pill.blue::before{
+  content:"";
+  position:absolute;
+  inset:-6px;                /* controls halo thickness */
+  border-radius:999px;
+  pointer-events:none;
   box-shadow:
-    0 0 10px rgba(0,255,255,.6),
-    0 0 22px rgba(0,255,255,.45),
-    0 0 40px rgba(0,255,255,.35),
-    inset 0 0 14px rgba(255,255,255,.2) !important;
-  filter: saturate(1.08);
-}
-/* Stronger glow when selected (for bonus cards) */
-.bonus-dialog .bonus-card.bonus-neon.selected {
-  border-color: var(--neon-cyan) !important;
-  box-shadow:
-    0 0 12px rgba(0,255,255,.8),
-    0 0 28px rgba(0,255,255,.6),
-    0 0 56px rgba(0,255,255,.45),
-    inset 0 0 16px rgba(255,255,255,.25) !important;
-}
-/* Micro highlight overlay */
-.bonus-neon::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    radial-gradient(circle at 20% -10%, rgba(255,255,255,.35), transparent 35%);
-  pointer-events: none;
-}
-@keyframes neonPulse {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.12); }
+    0 0 0 0 rgba(0,255,255,.55),
+    0 0 24px rgba(0,255,255,.45);
+  animation: neonHalo 1.6s ease-in-out infinite;
+  opacity:.75;
 }
 
-/* Apply neon to existing "flashy" bonus pills automatically */
-.pill.blue,
-.pill.bonus-flashy {
-  border-width: 2px;
-  color: #fff !important;
-  text-shadow: 0 0 6px rgba(0,255,255,.8);
+/* Subtle glossy highlight */
+.match-card .pill.blue::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:
+    radial-gradient(circle at 18% -10%, rgba(255,255,255,.35), transparent 35%);
+  pointer-events:none;
+}
+
+/* Hover = stronger glow */
+.match-card .pill.blue:hover{
   box-shadow:
-    0 0 8px rgba(0, 200, 255, .45) inset,
-    0 0 10px rgba(0,255,255,.45);
+    0 0 12px rgba(0,255,255,.7),
+    0 0 28px rgba(0,255,255,.5),
+    0 0 56px rgba(0,255,255,.35),
+    inset 0 0 16px rgba(255,255,255,.22);
+  filter: saturate(1.08);
+}
+
+@keyframes neonPulse{
+  0%, 100%{ filter: brightness(1); }
+  50%{ filter: brightness(1.12); }
+}
+
+@keyframes neonHalo{
+  0%{
+    transform: scale(1);
+    opacity:.75;
+    box-shadow:
+      0 0 0 0 rgba(0,255,255,.55),
+      0 0 24px rgba(0,255,255,.45);
+  }
+  70%{
+    transform: scale(1.22);
+    opacity:0;
+    box-shadow:
+      0 0 0 14px rgba(0,255,255,0),
+      0 0 40px rgba(0,255,255,.0);
+  }
+  100%{
+    transform: scale(1.22);
+    opacity:0;
+    box-shadow:
+      0 0 0 14px rgba(0,255,255,0),
+      0 0 40px rgba(0,255,255,0);
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .match-card .pill.blue{ animation: none; }
+  .match-card .pill.blue::before{ animation: none; opacity:.45; }
 }
