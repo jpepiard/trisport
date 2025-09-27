@@ -1372,7 +1372,7 @@ function renderMatches(){
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
         const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!(can && canEditScores(m,rCtl));
-        sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()});
+        sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
       
@@ -1389,9 +1389,14 @@ function renderMatches(){
           
           while(mm.ping.length < TOTAL) mm.ping.push(null);
           mm.ping[i] = vv;
-saveState();
-updateMatchCompleteness(m.id);
 
+          // IMPORTANT: keep pingPts in sync so 'Non joué' clears any previous score-based validity
+          if (!Array.isArray(mm.pingPts)) mm.pingPts = Array(TOTAL).fill({a:null,b:null});
+          if (i < mm.pingPts.length) mm.pingPts[i] = {a:null,b:null};
+
+          saveState();
+
+          // Avoid transient flicker; full render will rebuild chips consistently
           renderMatches();
           renderLeaderboard();
           renderH2H();
@@ -1404,7 +1409,7 @@ updateMatchCompleteness(m.id);
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;saveState();updateNote()});
-        const commit=()=>{const mm=findMatch(mid);const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);mm.palet[which]=v;saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()};
+        const commit=()=>{const mm=findMatch(mid);const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);mm.palet[which]=v;saveState();renderMatches();renderLeaderboard();renderH2H()};
         inp.addEventListener("change",commit);inp.addEventListener("blur",commit);inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();inp.blur()}})
       });
 
