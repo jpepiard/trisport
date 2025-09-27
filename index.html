@@ -497,8 +497,8 @@ header .btn, header .chip, header .pill, header .tab{
 </style>
 <link href="trisports-theme-pack.css" rel="stylesheet"/>
 <body>
-<div id="js-ok">JS non chargé</div>
-<script>(function(){const p=document.getElementById('js-ok');if(p){p.textContent='JS chargé ✅';p.style.background='#14532d';}})();</script>
+
+
 <header>
 <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
 <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
@@ -511,7 +511,7 @@ header .btn, header .chip, header .pill, header .tab{
 </nav>
 <div style="display:flex;align-items:center;gap:8px">
 <span class="pill" id="tname-top" style="display:none"></span>
-<span class="pill" id="whoami-top">visiteur</span>
+<span class="pill" id="whoami-top" style="">visiteur</span>
 <button class="btn small" id="btn-fullscreen" type="button">⛶ Plein écran</button>
 </div>
 </div>
@@ -2352,6 +2352,13 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     clearTimeout(el._t);
     el._t = setTimeout(function(){ el.classList.remove('show'); }, timeout);
   };
+})();
+</script><script id="boot-title-who">
+(function(){
+  try{
+    if (typeof renderTitle === 'function') renderTitle();
+    if (typeof updateWho === 'function')  updateWho();
+  }catch(e){ /* silent */ }
 })();
 </script></body>
 <style id="pretty-confirm-modal">
