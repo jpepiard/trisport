@@ -85,15 +85,6 @@ function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
   const wM = ensureMelonWrapper();    if (wM){ wM.style.maxHeight = openMelon ? (wM.scrollHeight+'px') : '0px'; }
 }
 
-
-/** Nouvelle API : ouvre/ferme par type pour éviter les erreurs d'ordre d'arguments */
-function setParamsOpenByType(openTypes = new Set()){
-  const wC = ensureParamWrapper();    if (wC){ wC.style.maxHeight = openTypes.has('capitaine') ? (wC.scrollHeight+'px') : '0px'; }
-  const wT = ensureTaupeWrapper();    if (wT){ wT.style.maxHeight = openTypes.has('taupe')     ? (wT.scrollHeight+'px') : '0px'; }
-  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openTypes.has('lefthand')  ? (wL.scrollHeight+'px') : '0px'; }
-  const wM = ensureMelonWrapper();    if (wM){ wM.style.maxHeight = openTypes.has('melon')     ? (wM.scrollHeight+'px') : '0px'; }
-}
-
 function selectBonusType(t){
   // lock guard per category
   try{
@@ -151,7 +142,7 @@ function selectBonusType(t){
   }
 
   // 5) affichage des paramètres (Capitaine n’a plus de champs)
-  setParamsOpenByType(new Set([window._bonusType]));
+  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand', window._bonusType==='melon');
 }
 
 function prepareBonusOptions(){
@@ -1031,24 +1022,7 @@ const isPingValid=(a,b)=>{ if(a==null||b==null) return false; if((a===1&&b===0)|
 function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:0,ping:0};m.darts.forEach(v=>{if(v===0)aw.darts++;else if(v===1)bw.darts++});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b)aw.ping++;else if(b>a)bw.ping++}});return{aw,bw}}
 function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v===1);const okP=getPingPts(m).every(s=>isPingValid(+s.a,+s.b));const T=+state.rules.paletTarget||11,pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1));return okD&&okP&&okL}
 // UI completeness stricter check
-function uiIsComplete(m){
-  const dN = dartsTotal();
-
-  // Fléchettes : longueur exacte + valeurs 0/1
-  const okD = Array.isArray(m.darts) &&
-              m.darts.length === dN &&
-              m.darts.every(v => v === 0 || v === 1);
-
-  // Ping : TOUJOURS 3 sets (S1, S2, D1) et 0/1 partout
-  const okP = Array.isArray(m.ping) &&
-              m.ping.length === 3 &&
-              m.ping.every(v => v === 0 || v === 1);
-
-  // Palet : deux entiers
-  const okL = Number.isInteger(m.palet?.a) && Number.isInteger(m.palet?.b);
-
-  return okD && okP && okL;
-}
+function uiIsComplete(m){ return isMatchComplete(m); }
 
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
 function clearMatch(mid){const m=findMatch(mid);if(!m)return;if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b)))return;if(!confirm("Effacer tous les scores de ce match ?"))return;m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};saveState();renderMatches()}
@@ -1411,7 +1385,7 @@ function renderMatches(){
           const vv = sel.value==="" ? null : parseInt(sel.value,10);
           const mm = findMatch(m.id);
           if (!Array.isArray(mm.ping)) mm.ping = [];
-          const TOTAL = 3;
+          const TOTAL = pingTotal();
           
           while(mm.ping.length < TOTAL) mm.ping.push(null);
           mm.ping[i] = vv;
