@@ -1173,58 +1173,55 @@ function setRoundStatusPillClasses(pill,rs){
   else if(rs.started) pill.classList.add('yellow');
   else pill.classList.add('red');
 }
-
-/* === Early reveal policy for bonuses ===
-   - Reveal early if a team picked 'taupe' (René la taupe) or 'lefthand' (10 pouces 2 mains gauche).
-   - If the opponent has 'miroir' facing a revealed taupe/lefthand, reveal 'miroir' early too.
-   - BUT: if 'miroir' faces 'melon' or 'capitaine', none of them are revealed early.
-*/
-function getOpponentTeam(round, teamId){
-  const m = (state.matches||[]).find(x => x.round===round && (x.a===teamId || x.b===teamId));
-  if(!m) return null;
-  return m.a === teamId ? m.b : m.a;
-}
-function shouldRevealEarly(round, teamId){
-  try{
-    const mine = (getBonusSelection(round, teamId)||{}).type || null;
-    const opp  = getOpponentTeam(round, teamId);
-    const theirs = opp ? ((getBonusSelection(round, opp)||{}).type || null) : null;
-    const isTaupeOrLeft = (t)=> t==='taupe' || t==='lefthand';
-    if (!mine) return false;
-
-    // Blockers: mirror vs melon/capitaine in either direction
-    if ((mine==='miroir' && (theirs==='melon' || theirs==='capitaine')) ||
-        ((mine==='melon' || mine==='capitaine') && theirs==='miroir')) {
-      return false;
-    }
-
-    // Early reveal cases
-    if (isTaupeOrLeft(mine)) return true;
-    if (mine==='miroir' && isTaupeOrLeft(theirs)) return true;
-
-    return false;
-  }catch(_){ return false; }
-}
 function bonusChip(r, mTeam, rs){
   const sel = getBonusSelection(r, mTeam);
   const iAmTeam = hasClaim(mTeam);
+  const roundStarted  = !!rs.started;
   const roundFinished = !!rs.finished;
-// Aucune sélection
+
+  // Récupère la sélection de l'adversaire pour les règles Miroir
+  let oppSel = null;
+  try{
+    const m = (state.matches || []).find(x => x.round===r && (x.a===mTeam || x.b===mTeam));
+    if (m){
+      const oppId = (m.a===mTeam ? m.b : m.a);
+      oppSel = getBonusSelection(r, oppId) || null;
+    }
+  }catch(_){}
+
+  // --- Règles de révélation "au démarrage" ---
+  // Révéler tout de suite si :
+  //  - mon type est taupe/lefthand
+  //  - OU je suis Miroir et l’adversaire est taupe/lefthand
+  // Bloquer la révélation si Miroir est face à Melon ou Capitaine
+  const isTaupeOrLeft   = !!(sel && (sel.type==='taupe' || sel.type==='lefthand'));
+  const isMirrorFacingT = !!(sel && sel.type==='miroir' && oppSel && (oppSel.type==='taupe' || oppSel.type==='lefthand'));
+  const isMirrorVsMC    = !!(
+    (sel && sel.type==='miroir' && oppSel && (oppSel.type==='melon' || oppSel.type==='capitaine')) ||
+    (sel && (sel.type==='melon' || sel.type==='capitaine') && oppSel && oppSel.type==='miroir')
+  );
+
+  const revealAtStart = roundStarted && !roundFinished && !isMirrorVsMC && (isTaupeOrLeft || isMirrorFacingT);
+
+  // --- Visibilité admin ---
+  // Avant la fin : l’admin ne voit RIEN sauf si revealAtStart (règle ci-dessus).
+  if (!roundFinished && isAdmin() && !revealAtStart) return '';
+
+  // --- Aucune sélection ---
   const bonusUsed = (state.bonusUsed?.[r]?.[mTeam]) || false;
   const canChoose = (!rs.started && !rs.finished && !bonusUsed && iAmTeam);
   if (!sel) {
     if (!roundFinished) {
-      // Avant la fin : seulement un bouton pour l'équipe connectée ; rien pour l'adversaire
       return canChoose ? (
         '<button type="button" class="bonus-btn" data-bonus data-team="' + mTeam + '">🎖 Bonus</button>'
       ) : '';
     }
-    // Après la fin : pilule Pas de bonus
     return '<span class="pill">Pas de bonus</span>';
   }
 
-  // Déjà choisi : avant fin, visible uniquement par l'équipe concernée
-  if (!roundFinished && !iAmTeam && !shouldRevealEarly(r, mTeam)) return '';
+  // --- Sélection faite, visibilité côté équipes/visiteurs ---
+  // Avant la fin : visible seulement si (je suis l’équipe) OU (révélation autorisée au démarrage)
+  if (!roundFinished && !(iAmTeam || revealAtStart)) return '';
 
   const type = sel.type || 'capitaine';
   const lblType =
@@ -1245,18 +1242,19 @@ function bonusChip(r, mTeam, rs){
   const sportEmoji = (labelSport === 'Fléchettes' ? '🎯' :
                      labelSport === 'Ping'        ? '🏓' :
                      labelSport === 'Palet'       ? '🥏' : '');
-
   const labelPlayer = sel.player === 'p1' ? 'J1' : (sel.player === 'p2' ? 'J2' : null);
 
   if (!roundFinished) {
-    // Pastille côté équipe qui a choisi (avant la fin)
+    // Pastille d’aperçu (sans valeur) avant la fin, quand visible
     var parts = [lblType];
     if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
     if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
     var __lbl = parts.join(' / ');
-    return '<span class="pill blue">Bonus' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') + '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' + '</span>';
+    return '<span class="pill blue">Bonus' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
+           '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' +
+           '</span>';
   } else {
-    // Révélé à tous une fois fini, avec points appliqués
+    // Révélation complète + total appliqué (logique existante inchangée)
     const applied = Math.abs((state.bonusApplied?.[r]?.[mTeam]) || 0);
     const sign = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? '+' : '−';
     const valClass = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? 'pos' : 'neg';
@@ -1269,7 +1267,7 @@ function bonusChip(r, mTeam, rs){
        '>Bonus' +
        '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
        (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
-       '<span class="' + valClass + '\">' + sign + applied + '</span>' +
+       '<span class="' + valClass + '">'+ sign + applied + '</span>' +
        '</span>';
   }
 }
