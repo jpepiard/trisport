@@ -355,24 +355,25 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:22px; height:22px;              /* bigger */
+  width:20px; height:20px;              /* bigger */
   border-radius:6px;
   overflow:hidden;
   margin: 0 2px;                         /* closer to text and emoji */
   vertical-align:middle;
 }
 .match-card .pill.blue .mini-bonus img{
-  width:22px; height:22px;
+  width:20px; height:20px;
   border-radius:6px;
 }
 
 /* Emoji to match exactly the chip size */
 .match-card .pill.blue .sport-emo{
   display:inline-block;
-  font-size:22px;                        /* match 22px image */
+  font-size:20px;                        /* match 22px image */
   line-height:1;
   margin: 0 2px;                         /* closer spacing */
-  vertical-align:-1px;
+  vertical-align:-5px;
+  /*vertical-align:-1px;*/
 }
 
 /* Animations */
