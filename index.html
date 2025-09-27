@@ -2436,37 +2436,37 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   function isTaupeOrLeft(t){ return t==='taupe' || t==='lefthand'; }
 
   // List of strings describing early-revealed bonuses for round r
-  window.getEarlyRevealList = function(r){
-    var out = [];
-    var ms = (window.state?.matches || []).filter(function(m){ return m.round === r; });
-    ms.forEach(function(m){
-      var selA = (window.getBonusSelection && getBonusSelection(r, m.a)) || null;
-      var selB = (window.getBonusSelection && getBonusSelection(r, m.b)) || null;
-      var tA = (selA && selA.type) || null;
-      var tB = (selB && selB.type) || null;
+  
+window.getEarlyRevealList = function(r){
+  var out = [];
+  var seen = new Set();
+  function pushOnce(key, line){ if(!seen.has(key)){ seen.add(key); out.push(line); } }
+  function teamName(tid){
+    try{ return (window.teamObj && teamObj(tid)?.name) || ('Équipe '+tid); }catch(_){ return 'Équipe '+tid; }
+  }
+  function bonusLabel(t){ return t==='taupe' ? 'René la taupe' : (t==='lefthand' ? '10 pouces 2 mains gauche' : (t==='miroir' ? 'Miroir' : t)); }
+  var ms = (window.state?.matches || []).filter(function(m){ return m.round === r; });
+  ms.forEach(function(m){
+    // Team A
+    var selA = (window.getBonusSelection && getBonusSelection(r, m.a)) || null;
+    var typeA = (selA && selA.type) || null;
+    if (window.shouldRevealEarly && shouldRevealEarly(r, m.a)){
+      var lineA = teamName(m.a) + ' — ' + bonusLabel(typeA);
+      if (selA && selA.sport){ lineA += ' (' + (window.BONUS?.sportLabel(selA.sport)||selA.sport) + ')'; }
+      pushOnce('A-'+m.a, lineA);
+    }
+    // Team B
+    var selB = (window.getBonusSelection && getBonusSelection(r, m.b)) || null;
+    var typeB = (selB && selB.type) || null;
+    if (window.shouldRevealEarly && shouldRevealEarly(r, m.b)){
+      var lineB = teamName(m.b) + ' — ' + bonusLabel(typeB);
+      if (selB && selB.sport){ lineB += ' (' + (window.BONUS?.sportLabel(selB.sport)||selB.sport) + ')'; }
+      pushOnce('B-'+m.b, lineB);
+    }
+  });
+  return out;
+};
 
-      // Taupe / Gauche reveal themselves
-      if (isTaupeOrLeft(tA)){
-        var line = teamName(m.a) + ' — ' + (tA==='taupe'?'René la taupe':'10 pouces 2 mains gauche');
-        if (selA && selA.sport){ line += ' (' + (window.BONUS?.sportLabel(selA.sport)||selA.sport) + ')'; }
-        out.push(line);
-      }
-      if (isTaupeOrLeft(tB)){
-        var lineB = teamName(m.b) + ' — ' + (tB==='taupe'?'René la taupe':'10 pouces 2 mains gauche');
-        if (selB && selB.sport){ lineB += ' (' + (window.BONUS?.sportLabel(selB.sport)||selB.sport) + ')'; }
-        out.push(lineB);
-      }
-
-      // Mirror vs taupe/left (but NOT vs melon/capitaine)
-      if (tA==='miroir' && isTaupeOrLeft(tB)){
-        out.push(teamName(m.a) + ' — Miroir');
-      }
-      if (tB==='miroir' && isTaupeOrLeft(tA)){
-        out.push(teamName(m.b) + ' — Miroir');
-      }
-    });
-    return out;
-  };
 
   window.showEarlyRevealModalIfAny = function(r){
     try{
