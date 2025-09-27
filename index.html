@@ -1262,26 +1262,12 @@ function bonusChip(r, mTeam, rs){
       type === 'capitaine' ? (labelPlayer ? (' / ' + labelPlayer) : '') :
       ((type==='taupe' || type==='lefthand' || type==='melon') && labelSport ? (' / ' + labelSport) : '')
     );
-    const desc = (
-      type==='miroir'   ? 'Inverse le bonus adverse sur tout le match.' :
-      type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
-      type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
-      type==='melon'    ? 'Nouveau bonus — détails à venir.' :
-                          'Aucun réglage. +2/manche gagnée (fléchettes & ping, simples/doubles) et +2 si palet.'
-    );
     return '<span class="pill bonus-flashy ' + valClass + '" ' +
-       ' aria-label="' + lblType + '"' +
-       '>' +
-       'Bonus' +
+       (sportEmoji?('data-tip="' + (lblType + ' — Sport : ' + labelSport) + '"') : ('data-tip="' + lblType + '"')) +
+       '>Bonus' +
        '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
        (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
        '<span class="' + valClass + '">'+ sign + applied + '</span>' +
-       '<span class="bonus-pop">' +
-         '<img src="img/' + img + '" alt="' + lblType + '">' +
-         '<strong>' + lblType + '</strong>' +
-         (labelSport ? '<div class="muted">Sport : ' + labelSport + '</div>' : '') +
-         '<div class="desc">' + desc + '</div>' +
-       '</span>' +
        '</span>';
   }
 }
@@ -1335,6 +1321,11 @@ function renderMatches(){
       const done = uiIsComplete(m);if(done)complete++;
       const el=document.createElement("div");el.setAttribute("data-id",m.id);el.setAttribute("data-complete",uiIsComplete(m)?"true":"false");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
       const bonusA=bonusChip(r,m.a,rCtl), bonusB=bonusChip(r,m.b,rCtl);
+      const totalA = (wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0) + ((state.bonusApplied?.[r]?.[m.a]) || 0));
+      const totalB = (wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0) + ((state.bonusApplied?.[r]?.[m.b]) || 0));
+      const aWinGold = (rCtl.finished && done && totalA>totalB) ? ' is-winner-gold' : '';
+      const bWinGold = (rCtl.finished && done && totalB>totalA) ? ' is-winner-gold' : '';
+
       el.innerHTML=`<div class="hd" data-expand>
     <div class="scorewrap">
       <!-- Rail gauche : #Journée -->
@@ -1346,7 +1337,7 @@ function renderMatches(){
       <div class="centerlane" style="width:100%">
         <div class="teams-row">
           <div class="team left">
-            ${avatarHtml(m.a,'sm').replace('class="avatar','class="avatar')}
+            ${avatarHtml(m.a,'sm').replace('class="avatar','class="avatar'+aWinGold)}
             <div class="name">${esc(teamName(m.a))}</div>
             <div class="bonus-line">${bonusA || ''}</div>
           </div>
@@ -1354,7 +1345,7 @@ function renderMatches(){
           <div class="score"><span class="scorebox a">${(wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0) + ((state.bonusApplied?.[r]?.[m.a]) || 0))}</span><span class="scorebox b">${(wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0) + ((state.bonusApplied?.[r]?.[m.b]) || 0))}</span></div>
 
           <div class="team right">
-            ${avatarHtml(m.b,'sm').replace('class="avatar','class="avatar')}
+            ${avatarHtml(m.b,'sm').replace('class="avatar','class="avatar'+bWinGold)}
             <div class="name">${esc(teamName(m.b))}</div>
             <div class="bonus-line">${bonusB || ''}</div>
           </div>
