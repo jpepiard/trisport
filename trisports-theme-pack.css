@@ -806,9 +806,8 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .pill.bonus-flashy .bonus-pop{
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 20px);
   transform: translate(-50%, 6px) scale(.98);
-  transform-origin: bottom center;
+  transform-origin: top center;
   width: 360px; max-width: calc(100vw - 32px);
   background: #0f1331; color:#e7e9f7;
   border: 1px solid #2b315f; border-radius: 12px; padding: 12px;
@@ -821,8 +820,9 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .pill.bonus-flashy:hover .bonus-pop{ opacity:1; transform:translate(-50%,0) scale(1); }
 .pill.bonus-flashy .bonus-pop::after{
   content:""; position:absolute; left:50%; transform:translateX(-50%) rotate(45deg);
-  top:100%; width:12px; height:12px; background:#0f1331;
-  border-bottom:1px solid #2b315f; border-right:1px solid #2b315f;
+  top: -6px;
+  width:12px; height:12px; background:#0f1331;
+  border-top:1px solid #2b315f; border-left:1px solid #2b315f;
 }
 .pill.bonus-flashy .bonus-pop img{ width:88px; height:88px; border-radius:10px; grid-column:1; }
 .pill.bonus-flashy .bonus-pop strong{ grid-column:2; font-weight:800; margin-top:2px; }
