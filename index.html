@@ -85,6 +85,15 @@ function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
   const wM = ensureMelonWrapper();    if (wM){ wM.style.maxHeight = openMelon ? (wM.scrollHeight+'px') : '0px'; }
 }
 
+
+/** Nouvelle API : ouvre/ferme par type pour éviter les erreurs d'ordre d'arguments */
+function setParamsOpenByType(openTypes = new Set()){
+  const wC = ensureParamWrapper();    if (wC){ wC.style.maxHeight = openTypes.has('capitaine') ? (wC.scrollHeight+'px') : '0px'; }
+  const wT = ensureTaupeWrapper();    if (wT){ wT.style.maxHeight = openTypes.has('taupe')     ? (wT.scrollHeight+'px') : '0px'; }
+  const wL = ensureLeftHandWrapper(); if (wL){ wL.style.maxHeight = openTypes.has('lefthand')  ? (wL.scrollHeight+'px') : '0px'; }
+  const wM = ensureMelonWrapper();    if (wM){ wM.style.maxHeight = openTypes.has('melon')     ? (wM.scrollHeight+'px') : '0px'; }
+}
+
 function selectBonusType(t){
   // lock guard per category
   try{
@@ -142,7 +151,7 @@ function selectBonusType(t){
   }
 
   // 5) affichage des paramètres (Capitaine n’a plus de champs)
-  setParamsOpen(window._bonusType==='capitaine', window._bonusType==='taupe', window._bonusType==='lefthand', window._bonusType==='melon');
+  setParamsOpenByType(new Set([window._bonusType]));
 }
 
 function prepareBonusOptions(){
