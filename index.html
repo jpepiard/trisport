@@ -2469,22 +2469,27 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     }
     var overlapsHoriz = !(popRect.right < scoreRect.left || popRect.left > scoreRect.right);
     if (overlapsHoriz){
-      var overlapLeft = Math.max(0, scoreRect.left - popRect.left);
-      var overlapRight = Math.max(0, popRect.right - scoreRect.right);
+      
+      var margin = 16;
       var dx = 0;
-      if (overlapLeft > 0 && overlapRight === 0){
-        dx = - (overlapLeft + 16);
-      } else if (overlapRight > 0 && overlapLeft === 0){
-        dx = (overlapRight + 16);
+      // compute exact shift needed to fully clear the score horizontally
+      var needLeft = (popRect.right) - (scoreRect.left - margin);   // move left by this if > 0
+      var needRight = (scoreRect.right + margin) - (popRect.left);  // move right by this if > 0
+
+      if (needLeft > 0 && needRight <= 0){
+        dx = -needLeft;
+      } else if (needRight > 0 && needLeft <= 0){
+        dx = needRight;
       } else {
         var scoreCenter = (scoreRect.left + scoreRect.right)/2;
-        dx = (pillRect.left < scoreCenter) ? (overlapRight + 16) : -(overlapLeft + 16);
+        dx = (pillRect.left < scoreCenter) ? Math.max(needRight, margin) : -Math.max(needLeft, margin);
       }
-      var maxLeft = 16 - (popRect.left - window.scrollX);
-      var maxRight = (window.innerWidth - 16) - (popRect.right - window.scrollX);
-      if (dx < 0) dx = Math.max(dx, maxLeft);
-      else dx = Math.min(dx, maxRight);
-      pop.style.setProperty('--x-offset', dx.toFixed(0) + 'px');
+      // constrain to viewport
+      var newLeft = popRect.left + dx;
+      var newRight = popRect.right + dx;
+      if (newLeft < 16) dx += (16 - newLeft);
+      if (newRight > window.innerWidth - 16) dx -= (newRight - (window.innerWidth - 16));
+pop.style.setProperty('--x-offset', dx.toFixed(0) + 'px');
     }
   }
   function onEnter(e){
