@@ -867,3 +867,30 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
   left: 50% !important; transform: translateX(-50%) rotate(45deg) !important;
 }
 
+
+
+/* ===== Bonus popover v4: clamp width, clip content, ensure text under title ===== */
+.pill.bonus-flashy .bonus-pop{
+  width: auto !important;
+  max-width: min(92vw, 380px) !important;
+  overflow: hidden !important;        /* keep text inside the panel */
+  white-space: normal !important;
+  word-wrap: break-word !important;
+}
+.pill.bonus-flashy .bonus-pop strong,
+.pill.bonus-flashy .bonus-pop .muted,
+.pill.bonus-flashy .bonus-pop .desc{
+  display: block !important;          /* flow vertically */
+  grid-column: 2 !important;
+  margin-top: 0 !important;
+}
+/* tighten spacing between title and sport, then desc */
+.pill.bonus-flashy .bonus-pop strong{ margin-bottom: 2px !important; }
+.pill.bonus-flashy .bonus-pop .muted{ margin-bottom: 6px !important; }
+
+/* ===== Winner avatar gold ring — reinforce specificity ===== */
+.match-card .avatar.is-winner-gold{
+  border: 2px solid #d4af37 !important;
+  box-shadow: 0 0 0 2px rgba(212,175,55,.65), 0 0 18px rgba(212,175,55,.35) !important;
+}
+
