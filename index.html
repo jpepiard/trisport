@@ -2223,27 +2223,78 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   r2 && r2.addEventListener('click', pulse);
 })();
 </script>
-<script id="points-column-script-heatmap">(function applyPointsTiers(){
-  const t = document.getElementById('table-classement');
-  if(!t) return;
-  const tier = (n)=> n>=40 ? 'pts-elite' : n>=30 ? 'pts-high' : n>=20 ? 'pts-mid' : 'pts-low';
-  t.querySelectorAll('tbody td:nth-child(3)').forEach(td=>{
-    const n = parseFloat(td.textContent.trim() || "0");
-    td.classList.remove('pts-low','pts-mid','pts-high','pts-elite');
-    td.classList.add(tier(n));
-  });
-})();</script></body>
+<script id="points-column-script-medallion-hook">
+(function(){
+  function enhancePointsMedallion(){
+    var t = document.getElementById('table-classement');
+    if(!t) return;
+    var cells = t.querySelectorAll('tbody td:nth-child(3)');
+    cells.forEach(function(td){
+      var v = (td.textContent || "").trim();
+      // If it already contains our span, update it; else wrap.
+      var span = td.querySelector('span.points-medal');
+      if (span) {
+        span.textContent = v;
+      } else if (v) {
+        td.textContent = "";
+        var s = document.createElement('span');
+        s.className = 'points-medal';
+        s.textContent = v;
+        td.appendChild(s);
+      }
+    });
+  }
 
-<style id="points-column-emphasis">/* Heatmap tiers for Points */
-#table-classement thead th:nth-child(3){ text-align:right; }
-#table-classement tbody td:nth-child(3){ text-align:right; font-weight:900; font-size:18px; }
-#table-classement tbody td:nth-child(3).pts-low   { color:#cbd5ff; }
-#table-classement tbody td:nth-child(3).pts-mid   { color:#e7f2ff; text-shadow:0 0 24px rgba(122,162,255,.25); }
-#table-classement tbody td:nth-child(3).pts-high  { color:#ffffff; text-shadow:0 0 28px rgba(122,162,255,.45); }
-#table-classement tbody td:nth-child(3).pts-elite {
-  color:#fff; text-shadow:0 0 30px rgba(122,162,255,.6);
-  box-shadow: inset 0 -2px 0 rgba(122,162,255,.45);
-}</style></head></html>
+  // Monkey-patch renderLeaderboard to run our enhancement after each render
+  var patched = false;
+  function patchRender(){
+    if (patched) return;
+    var original = window.renderLeaderboard;
+    if (typeof original === 'function'){
+      window.renderLeaderboard = function(){
+        var ret = original.apply(this, arguments);
+        // After the DOM is updated, enhance
+        requestAnimationFrame(enhancePointsMedallion);
+        return ret;
+      };
+      patched = true;
+      // Run once in case the table is already present
+      requestAnimationFrame(enhancePointsMedallion);
+    } else {
+      // Retry shortly until renderLeaderboard exists
+      setTimeout(patchRender, 100);
+    }
+  }
+
+  // Also re-apply when the "Classement" tab is shown
+  document.addEventListener('click', function(ev){
+    var btn = ev.target.closest?.('.tab[data-tab="classement"]');
+    if (btn){ requestAnimationFrame(function(){ setTimeout(enhancePointsMedallion, 0); }); }
+  });
+
+  // Kick off
+  patchRender();
+})();
+</script></body>
+<style id="points-column-emphasis">
+/* Medallion (round) for Points — resilient version */
+#table-classement thead th:nth-child(3){ text-align:center; }
+#table-classement tbody td:nth-child(3){
+  text-align:center; position:relative; font-weight:900; font-size:18px;
+}
+#table-classement tbody td:nth-child(3) > span.points-medal{
+  display:inline-grid; place-items:center; min-width:52px; height:52px; border-radius:999px;
+  padding:0 10px;
+  background:radial-gradient(40px 26px at 50% 35%, rgba(255,255,255,.12), transparent),
+             linear-gradient(180deg,#2a3aa6,#1f2b86);
+  border:1px solid #4b5bd7;
+  box-shadow:0 10px 22px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.35) inset;
+}
+@media (max-width:520px){
+  #table-classement tbody td:nth-child(3) > span.points-medal{ min-width:44px; height:44px; }
+}
+</style>
+</head></html>
 <style id="rencontres-polish">
 /* Card container */
 .matches, .calendar, .journees, .games { gap: 20px; }
