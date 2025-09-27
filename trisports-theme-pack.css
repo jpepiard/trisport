@@ -326,8 +326,8 @@ Ralentir l’animation : 2.4s → 3s sur neonPulseCalm et 2.2s → 3s sur neonHa
   inset:-5px;
   border-radius:999px;
   pointer-events:none;
-  box-shadow: 0 0 0 0 rgba(0,210,220,.35), 0 0 18px rgba(0,210,220,.22);
-  animation: neonHaloCalm 2.2s ease-in-out infinite;
+  box-shadow: 0 0 0 0 rgba(35,153,242,.35), 0 0 18px rgba(35,153,242,.22);
+  animation: neonHaloCalm 1.2s ease-in-out infinite;
   opacity:.55;
 }
 
