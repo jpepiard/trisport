@@ -483,3 +483,61 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
   .match-card .pill.red{ animation: none !important; }
 }
 
+
+
+/* ===== Override: revealed bonus pills adopt in-progress flashy style but keep green/red ===== */
+/* Base (already defined for .pill.bonus-flashy). Here, specialize by result: */
+.pill.bonus-flashy.pos, .match-card .pill.bonus-flashy.pos{
+  border: 1px solid rgba(34,197,94,.6);
+  background: linear-gradient(135deg, #0e9f6e 0%, #0b7d58 100%);
+  box-shadow:
+    0 0 8px rgba(34,197,94,.35),
+    0 0 18px rgba(15,133,92,.25),
+    inset 0 0 6px rgba(255,255,255,.06);
+  color: #f7fbff !important;
+  animation: neonPulseGreen 2.4s ease-in-out infinite;
+}
+.pill.bonus-flashy.neg, .match-card .pill.bonus-flashy.neg{
+  border: 1px solid rgba(239,68,68,.6);
+  background: linear-gradient(135deg, #c02626 0%, #8a1f1f 100%);
+  box-shadow:
+    0 0 8px rgba(239,68,68,.35),
+    0 0 18px rgba(139,32,32,.25),
+    inset 0 0 6px rgba(255,255,255,.06);
+  color: #f7fbff !important;
+  animation: neonPulseRed 2.4s ease-in-out infinite;
+}
+
+/* Ensure emoji/icon alignment stays consistent */
+.pill.bonus-flashy.pos .sport-emo,
+.pill.bonus-flashy.neg .sport-emo{
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1;
+  margin: 0 4px;
+  vertical-align: -4px;
+}
+.pill.bonus-flashy.pos .mini-bonus img,
+.pill.bonus-flashy.neg .mini-bonus img{
+  width: 22px; height: 22px; border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transition: transform .15s ease;
+}
+.pill.bonus-flashy.pos:hover .mini-bonus img,
+.pill.bonus-flashy.neg:hover .mini-bonus img{ transform: scale(1.08) rotate(-2deg); }
+
+@keyframes neonPulseGreen{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 10px rgba(34,197,94,.55); }
+  50%     { filter: brightness(1.12); box-shadow: 0 0 20px rgba(34,220,120,.85); }
+}
+@keyframes neonPulseRed{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 10px rgba(239,68,68,.55); }
+  50%     { filter: brightness(1.12); box-shadow: 0 0 20px rgba(255,92,92,.85); }
+}
+@media (prefers-reduced-motion: reduce){
+  .pill.bonus-flashy.pos,
+  .pill.bonus-flashy.neg{ animation: none !important; }
+}
+
