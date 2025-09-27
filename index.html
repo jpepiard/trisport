@@ -1173,15 +1173,43 @@ function setRoundStatusPillClasses(pill,rs){
   else if(rs.started) pill.classList.add('yellow');
   else pill.classList.add('red');
 }
+
+/* === Early reveal policy for bonuses ===
+   - Reveal early if a team picked 'taupe' (René la taupe) or 'lefthand' (10 pouces 2 mains gauche).
+   - If the opponent has 'miroir' facing a revealed taupe/lefthand, reveal 'miroir' early too.
+   - BUT: if 'miroir' faces 'melon' or 'capitaine', none of them are revealed early.
+*/
+function getOpponentTeam(round, teamId){
+  const m = (state.matches||[]).find(x => x.round===round && (x.a===teamId || x.b===teamId));
+  if(!m) return null;
+  return m.a === teamId ? m.b : m.a;
+}
+function shouldRevealEarly(round, teamId){
+  try{
+    const mine = (getBonusSelection(round, teamId)||{}).type || null;
+    const opp  = getOpponentTeam(round, teamId);
+    const theirs = opp ? ((getBonusSelection(round, opp)||{}).type || null) : null;
+    const isTaupeOrLeft = (t)=> t==='taupe' || t==='lefthand';
+    if (!mine) return false;
+
+    // Blockers: mirror vs melon/capitaine in either direction
+    if ((mine==='miroir' && (theirs==='melon' || theirs==='capitaine')) ||
+        ((mine==='melon' || mine==='capitaine') && theirs==='miroir')) {
+      return false;
+    }
+
+    // Early reveal cases
+    if (isTaupeOrLeft(mine)) return true;
+    if (mine==='miroir' && isTaupeOrLeft(theirs)) return true;
+
+    return false;
+  }catch(_){ return false; }
+}
 function bonusChip(r, mTeam, rs){
   const sel = getBonusSelection(r, mTeam);
   const iAmTeam = hasClaim(mTeam);
   const roundFinished = !!rs.finished;
-
-  // Admin : ne voit rien avant la fin de journée
-  if (isAdmin() && !roundFinished) return '';
-
-  // Aucune sélection
+// Aucune sélection
   const bonusUsed = (state.bonusUsed?.[r]?.[mTeam]) || false;
   const canChoose = (!rs.started && !rs.finished && !bonusUsed && iAmTeam);
   if (!sel) {
@@ -1196,7 +1224,7 @@ function bonusChip(r, mTeam, rs){
   }
 
   // Déjà choisi : avant fin, visible uniquement par l'équipe concernée
-  if (!roundFinished && !iAmTeam) return '';
+  if (!roundFinished && !iAmTeam && !shouldRevealEarly(r, mTeam)) return '';
 
   const type = sel.type || 'capitaine';
   const lblType =
