@@ -2738,34 +2738,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 }
 
 /* Custom tooltip bubble */
-.pill.bonus-flashy[data-tip]::after{
-  content: attr(data-tip);
-  position: absolute;
-  left: 50%; transform: translateX(-50%);
-  bottom: calc(100% + 8px);
-  white-space: nowrap; max-width: calc(100vw - 32px);
-  background: #0f141e; color:#fff; font-weight:700;
-  border: 1px solid rgba(255,255,255,.28);
-  padding: 6px 8px;
-  font-size: 12px;
-  border-radius: 8px;
-  opacity: 0; pointer-events: none;
-  transition: opacity .12s ease, transform .12s ease;
-  transform-origin: bottom center;
-  box-shadow: 0 10px 26px rgba(0,0,0,.55); /* keep existing shadow */
-}
-.pill.bonus-flashy[data-tip]::before{
-  content: "";
-  position: absolute;
-  left: 50%; transform: translateX(-50%);
-  bottom: 100%;
-  border: 6px solid transparent;
-  border-top-color: rgba(15,20,30,.95);
-  opacity: 0; pointer-events: none;
-  transition: opacity .12s ease;
-}
-.pill.bonus-flashy:hover::after,
-.pill.bonus-flashy:hover::before{ opacity: 1; }
+
 </style>
 <style id="score-boxes-and-tooltip-align">
 /* Score en boîtes blanches */
@@ -2784,14 +2757,14 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 
 /* Tooltip alignment per column */
 .round-grid{ position:relative; }
-.round-grid > .match-card:nth-child(odd) .pill.bonus-flashy[data-tip]::after{ left: 12px; transform: none; }
-.round-grid > .match-card:nth-child(odd) .pill.bonus-flashy[data-tip]::before{ left: 22px; transform: none; }
-.round-grid > .match-card:nth-child(even) .pill.bonus-flashy[data-tip]::after{ left:auto; right: 12px; transform: none; }
-.round-grid > .match-card:nth-child(even) .pill.bonus-flashy[data-tip]::before{ left:auto; right: 22px; transform: none; }
+.round-grid > .match-card:nth-child(odd) 
+.round-grid > .match-card:nth-child(odd) 
+.round-grid > .match-card:nth-child(even) 
+.round-grid > .match-card:nth-child(even) 
 /* On mobile, centre le tooltip */
 @media (max-width: 900px){
-  .round-grid > .match-card .pill.bonus-flashy[data-tip]::after{ left:50%; right:auto; transform: translateX(-50%); }
-  .round-grid > .match-card .pill.bonus-flashy[data-tip]::before{ left:50%; right:auto; transform: translateX(-50%); }
+  .round-grid > .match-card 
+  .round-grid > .match-card 
 }
 
 /* Ajuste la taille des chiffres dans la boîte */
