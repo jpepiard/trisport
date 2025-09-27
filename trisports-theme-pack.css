@@ -212,3 +212,83 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 #table-classement .pos{ color: var(--success); font-weight:700; }
 #table-classement .neg{ color: #f87171; font-weight:700; }
 
+
+/* --- Flashier Bonus Pill (added) --- */
+.pill.blue,
+.pill.bonus-flashy {
+  position: relative;
+  font-weight: 700;
+  letter-spacing: .2px;
+  border: 2px solid rgba(255,255,255,.35);
+  box-shadow: 0 6px 18px rgba(0,0,0,.25), 0 0 10px rgba(0, 200, 255, .45) inset;
+  background: linear-gradient(135deg, rgba(0,153,255,.95) 0%, rgba(0,230,180,.95) 100%);
+  color: #fff !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,.35);
+  transform: translateZ(0); /* enable GPU */
+  animation: pillPulse 1.8s ease-in-out infinite;
+}
+
+.pill.blue::after,
+.pill.bonus-flashy::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% -10%, rgba(255,255,255,.35), transparent 35%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.pill.blue:hover,
+.pill.bonus-flashy:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,.3), 0 0 14px rgba(255,255,255,.5) inset;
+  filter: saturate(1.15);
+}
+
+@keyframes pillPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.12); }
+}
+
+/* Bonus image chip bigger and crisper */
+.mini-bonus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 6px;
+  vertical-align: middle;
+}
+
+.mini-bonus img {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transition: transform .15s ease;
+}
+
+.pill:hover .mini-bonus img {
+  transform: scale(1.08) rotate(-2deg);
+}
+
+/* Sport emoji sizing/alignment */
+.sport-emo {
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1;
+  margin: 0 6px;
+  vertical-align: -2px;
+}
+
+
+/* Enforce order: image first, then emoji (invert previous order) */
+.pill.blue,
+.pill.bonus-flashy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pill .mini-bonus { order: 1; }
+.pill .sport-emo { order: 2; }
