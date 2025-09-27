@@ -2223,28 +2223,26 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   r2 && r2.addEventListener('click', pulse);
 })();
 </script>
-<script id="points-column-script-chip">(function injectPointsChip(){
+<script id="points-column-script-heatmap">(function applyPointsTiers(){
   const t = document.getElementById('table-classement');
   if(!t) return;
+  const tier = (n)=> n>=40 ? 'pts-elite' : n>=30 ? 'pts-high' : n>=20 ? 'pts-mid' : 'pts-low';
   t.querySelectorAll('tbody td:nth-child(3)').forEach(td=>{
-    const v = td.textContent.trim();
-    td.innerHTML = v + ` <span class="pts-chip">${v}</span>`;
+    const n = parseFloat(td.textContent.trim() || "0");
+    td.classList.remove('pts-low','pts-mid','pts-high','pts-elite');
+    td.classList.add(tier(n));
   });
 })();</script></body>
 
-<style id="points-column-emphasis">/* Chip with star */
+<style id="points-column-emphasis">/* Heatmap tiers for Points */
 #table-classement thead th:nth-child(3){ text-align:right; }
-#table-classement tbody td:nth-child(3){
-  text-align:right; font-weight:900; letter-spacing:.2px; font-size:18px;
-}
-#table-classement tbody td:nth-child(3) .pts-chip{
-  display:inline-flex; align-items:center; gap:6px; padding:4px 10px; margin-left:8px;
-  border-radius:999px; border:1px solid #4b5bd7;
-  background:linear-gradient(180deg,#1d2a57,#1a2450);
-  box-shadow:0 0 0 1px rgba(75,139,255,.35) inset;
-}
-#table-classement tbody td:nth-child(3) .pts-chip::before{
-  content:"★"; font-size:12px; opacity:.9;
+#table-classement tbody td:nth-child(3){ text-align:right; font-weight:900; font-size:18px; }
+#table-classement tbody td:nth-child(3).pts-low   { color:#cbd5ff; }
+#table-classement tbody td:nth-child(3).pts-mid   { color:#e7f2ff; text-shadow:0 0 24px rgba(122,162,255,.25); }
+#table-classement tbody td:nth-child(3).pts-high  { color:#ffffff; text-shadow:0 0 28px rgba(122,162,255,.45); }
+#table-classement tbody td:nth-child(3).pts-elite {
+  color:#fff; text-shadow:0 0 30px rgba(122,162,255,.6);
+  box-shadow: inset 0 -2px 0 rgba(122,162,255,.45);
 }</style></head></html>
 <style id="rencontres-polish">
 /* Card container */
