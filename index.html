@@ -1270,7 +1270,7 @@ function bonusChip(r, mTeam, rs){
                           'Aucun réglage. +2/manche gagnée (fléchettes & ping, simples/doubles) et +2 si palet.'
     );
     return '<span class="pill bonus-flashy ' + valClass + '" ' +
-       (sportEmoji?('data-tip="' + (lblType + ' — Sport : ' + labelSport) + '"') : ('data-tip="' + lblType + '"')) +
+       ' aria-label="' + lblType + '"' +
        '>' +
        'Bonus' +
        '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
