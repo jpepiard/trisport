@@ -541,3 +541,64 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
   .pill.bonus-flashy.neg{ animation: none !important; }
 }
 
+
+
+/* ===== Bonus pills (revealed) — larger icons/emoji, tighter spacing, brighter border (no height change) ===== */
+.pill.bonus-flashy.pos,
+.pill.bonus-flashy.neg{
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;                 /* closer spacing */
+  padding: 4px 10px;        /* keep height */
+  line-height: 1;           /* compact baseline */
+  letter-spacing: .15px;
+  /* Brighter border look without changing size */
+  border-color: currentColor; /* overridden below per color */
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.06) inset,     /* inner crisp edge */
+    0 0 12px rgba(0,0,0,.22),                  /* soft float */
+    inset 0 0 10px rgba(255,255,255,.08);      /* glossy core */
+}
+
+/* Specific color accents + extra ring to emphasize border without adding height */
+.pill.bonus-flashy.pos{
+  color: #e8fff4;
+  border-color: rgba(34,197,94,.85);
+  box-shadow:
+    0 0 0 1px rgba(34,197,94,.65) inset,       /* vivid inner ring */
+    0 0 0 2px rgba(34,197,94,.25),             /* outer ring (visual border) */
+    0 0 14px rgba(34,197,94,.35),
+    inset 0 0 10px rgba(255,255,255,.08);
+}
+.pill.bonus-flashy.neg{
+  color: #ffecec;
+  border-color: rgba(239,68,68,.85);
+  box-shadow:
+    0 0 0 1px rgba(239,68,68,.65) inset,       /* vivid inner ring */
+    0 0 0 2px rgba(239,68,68,.25),             /* outer ring (visual border) */
+    0 0 14px rgba(239,68,68,.35),
+    inset 0 0 10px rgba(255,255,255,.08);
+}
+
+/* Larger mini bonus image but keep height by aligning tightly */
+.pill.bonus-flashy.pos .mini-bonus img,
+.pill.bonus-flashy.neg .mini-bonus img{
+  width: 24px;   /* was ~22 */
+  height: 24px;
+  border-radius: 6px;
+  margin: 0 2px;                /* reduce side margins */
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Larger emoji + slightly higher baseline; small margins so elements sit closer */
+.pill.bonus-flashy.pos .sport-emo,
+.pill.bonus-flashy.neg .sport-emo{
+  display: inline-block;
+  font-size: 20px;   /* was 18 */
+  line-height: 1;
+  margin: 0 2px;     /* tighter */
+  vertical-align: -5px;
+}
+
