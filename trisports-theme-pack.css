@@ -852,3 +852,20 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
   border: 2px solid #d4af37 !important;
   box-shadow: 0 0 0 2px rgba(212,175,55,.65), 0 0 16px rgba(212,175,55,.35) !important;
 }
+
+
+/* ==============================
+   Popover/Bonus stacking fix
+   Ensures bonus popovers display above the score
+   ============================== */
+.match-card .hd { position: relative; overflow: visible; z-index: 0; }
+.scorewrap, .match-card { overflow: visible !important; }
+
+/* Keep score below popover */
+.scorewrap .score { position: relative; z-index: 1; }
+
+/* Bonus pill and its popover to the very top */
+.pill.bonus-flashy { position: relative; z-index: 1000; }
+.pill.bonus-flashy .bonus-pop,
+.pill.bonus-flashy[data-tip]::after,
+.pill.bonus-flashy[data-tip]::before { z-index: 10000; }
