@@ -1095,3 +1095,58 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 
 /* avoid clipping */
 .match-card, .scorewrap, .round-grid{ overflow: visible !important; }
+
+
+/* ==============================
+   Popover layout v2: grid (img left, texts stacked), proper wrapping
+   ============================== */
+.pill.bonus-flashy .bonus-pop{
+  display: grid !important;
+  grid-template-columns: 80px 1fr !important;
+  grid-auto-rows: auto !important;
+  align-items: start !important;
+  gap: 12px 14px !important;
+
+  /* encourage wrapping */
+  width: auto !important;
+  max-width: min(520px, 92vw) !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+/* Left column image */
+.pill.bonus-flashy .bonus-pop img{
+  width: 80px !important;
+  height: 80px !important;
+  object-fit: cover !important;
+  border-radius: 12px !important;
+  grid-column: 1 !important;
+  grid-row: 1 / span 3 !important;
+}
+
+/* Right column text blocks (fallbacks for many possible tags) */
+.pill.bonus-flashy .bonus-pop strong,
+.pill.bonus-flashy .bonus-pop .title,
+.pill.bonus-flashy .bonus-pop .muted,
+.pill.bonus-flashy .bonus-pop .desc,
+.pill.bonus-flashy .bonus-pop p,
+.pill.bonus-flashy .bonus-pop small,
+.pill.bonus-flashy .bonus-pop span{
+  grid-column: 2 !important;
+  display: block !important;
+  margin: 0 !important;
+}
+
+.pill.bonus-flashy .bonus-pop strong,
+.pill.bonus-flashy .bonus-pop .title{ font-weight:800 !important; margin-bottom: 6px !important; color:#fff !important; }
+.pill.bonus-flashy .bonus-pop .muted,
+.pill.bonus-flashy .bonus-pop small{ color: rgba(255,255,255,0.75) !important; margin-bottom: 4px !important; }
+.pill.bonus-flashy .bonus-pop .desc,
+.pill.bonus-flashy .bonus-pop p{ color: rgba(255,255,255,0.92) !important; line-height: 1.45 !important; }
+
+/* tighten the pill shape to content */
+.pill.bonus-flashy .bonus-pop{ padding: 16px 18px !important; border-radius: 14px !important; }
+
+/* keep background pure black and opaque */
+.pill.bonus-flashy .bonus-pop{ background: rgba(0,0,0,0.98) !important; }
+.pill.bonus-flashy .bonus-pop::before{ background: rgba(0,0,0,0.98) !important; }
