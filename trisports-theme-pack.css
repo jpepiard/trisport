@@ -1018,3 +1018,80 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 
 /* Ensure containers don't clip the popover */
 .match-card, .scorewrap, .round-grid { overflow: visible !important; }
+
+
+/* ==============================
+   Popover: near‑black background, BELOW the pill, clean flex layout
+   ============================== */
+.pill.bonus-flashy{ position: relative !important; z-index: 2 !important; }
+
+/* container */
+.pill.bonus-flashy .bonus-pop{
+  position: absolute !important;
+  top: calc(100% + 10px) !important; /* BELOW the pill */
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+
+  /* sizing */
+  width: max-content !important;
+  max-width: min(560px, 92vw) !important;
+  padding: 16px 18px !important;
+  border-radius: 14px !important;
+
+  /* visual: almost opaque black */
+  background: rgba(0,0,0,0.98) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  box-shadow: 0 22px 44px rgba(0,0,0,.65) !important;
+
+  /* layout: image left, text right, no holes */
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 14px !important;
+
+  /* interaction */
+  visibility: hidden !important;
+  opacity: 0 !important;
+  transition: opacity .15s ease !important;
+  z-index: 10000 !important;
+}
+
+/* visible on hover */
+.pill.bonus-flashy:hover .bonus-pop{ visibility: visible !important; opacity: 1 !important; }
+
+/* Popover arrow (upwards, since popover is below) */
+.pill.bonus-flashy .bonus-pop::before{
+  content:"" !important;
+  position:absolute !important;
+  left:50% !important;
+  bottom: 100% !important;
+  transform: translateX(-50%) rotate(45deg) !important;
+  width:12px !important; height:12px !important;
+  background: rgba(0,0,0,0.98) !important;
+  border-top:1px solid rgba(255,255,255,0.06) !important;
+  border-left:1px solid rgba(255,255,255,0.06) !important;
+}
+
+/* media/thumbnail */
+.pill.bonus-flashy .bonus-pop img{
+  width: 72px !important;
+  height: 72px !important;
+  object-fit: cover !important;
+  border-radius: 12px !important;
+  flex: 0 0 72px !important;
+}
+
+/* text column */
+.pill.bonus-flashy .bonus-pop .content,
+.pill.bonus-flashy .bonus-pop .txt{
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+/* typography + spacing (fallback if no .content/.txt wrapper) */
+.pill.bonus-flashy .bonus-pop strong{ display:block !important; font-weight:800 !important; margin: 0 0 4px !important; color:#fff !important; }
+.pill.bonus-flashy .bonus-pop .muted{ display:block !important; color: rgba(255,255,255,0.75) !important; margin: 0 0 4px !important; }
+.pill.bonus-flashy .bonus-pop .desc{ display:block !important; color: rgba(255,255,255,0.92) !important; margin: 4px 0 0 !important; line-height: 1.45 !important; }
+
+/* avoid clipping */
+.match-card, .scorewrap, .round-grid{ overflow: visible !important; }
