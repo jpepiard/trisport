@@ -939,3 +939,22 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 
 /* Keep score layer neutral */
 .scorewrap .score { position: relative; z-index: 1; }
+
+
+/* ==============================
+   FINAL override: make match-card (popover container) above any score layer
+   ============================== */
+.round-grid, .match-card { position: relative !important; }
+.match-card { z-index: 300000 !important; } /* sit above mid-field score layer */
+.round-grid .scorewrap, .round-grid .score { z-index: 1 !important; position: relative !important; }
+
+/* Popover visual tweaks: more opaque background + pure white text */
+.pill.bonus-flashy .bonus-pop{
+  background: rgba(10,14,40,0.96) !important; /* darker + more opaque */
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+.pill.bonus-flashy .bonus-pop strong{ color:#fff !important; }
+.pill.bonus-flashy .bonus-pop .muted{ color: rgba(255,255,255,0.78) !important; }
+.pill.bonus-flashy .bonus-pop .desc{ color: rgba(255,255,255,0.92) !important; }
+.pill.bonus-flashy .bonus-pop::after{ background: rgba(10,14,40,0.96) !important; border-color: rgba(255,255,255,0.08) !important; }
