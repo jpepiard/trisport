@@ -1176,52 +1176,27 @@ function setRoundStatusPillClasses(pill,rs){
 function bonusChip(r, mTeam, rs){
   const sel = getBonusSelection(r, mTeam);
   const iAmTeam = hasClaim(mTeam);
-  const roundStarted  = !!rs.started;
   const roundFinished = !!rs.finished;
 
-  // Récupère la sélection de l'adversaire pour les règles Miroir
-  let oppSel = null;
-  try{
-    const m = (state.matches || []).find(x => x.round===r && (x.a===mTeam || x.b===mTeam));
-    if (m){
-      const oppId = (m.a===mTeam ? m.b : m.a);
-      oppSel = getBonusSelection(r, oppId) || null;
-    }
-  }catch(_){}
+  // Admin : ne voit rien avant la fin de journée
+  if (isAdmin() && !roundFinished) return '';
 
-  // --- Règles de révélation "au démarrage" ---
-  // Révéler tout de suite si :
-  //  - mon type est taupe/lefthand
-  //  - OU je suis Miroir et l’adversaire est taupe/lefthand
-  // Bloquer la révélation si Miroir est face à Melon ou Capitaine
-  const isTaupeOrLeft   = !!(sel && (sel.type==='taupe' || sel.type==='lefthand'));
-  const isMirrorFacingT = !!(sel && sel.type==='miroir' && oppSel && (oppSel.type==='taupe' || oppSel.type==='lefthand'));
-  const isMirrorVsMC    = !!(
-    (sel && sel.type==='miroir' && oppSel && (oppSel.type==='melon' || oppSel.type==='capitaine')) ||
-    (sel && (sel.type==='melon' || sel.type==='capitaine') && oppSel && oppSel.type==='miroir')
-  );
-
-  const revealAtStart = roundStarted && !roundFinished && !isMirrorVsMC && (isTaupeOrLeft || isMirrorFacingT);
-
-  // --- Visibilité admin ---
-  // Avant la fin : l’admin ne voit RIEN sauf si revealAtStart (règle ci-dessus).
-  if (!roundFinished && isAdmin() && !revealAtStart) return '';
-
-  // --- Aucune sélection ---
+  // Aucune sélection
   const bonusUsed = (state.bonusUsed?.[r]?.[mTeam]) || false;
   const canChoose = (!rs.started && !rs.finished && !bonusUsed && iAmTeam);
   if (!sel) {
     if (!roundFinished) {
+      // Avant la fin : seulement un bouton pour l'équipe connectée ; rien pour l'adversaire
       return canChoose ? (
         '<button type="button" class="bonus-btn" data-bonus data-team="' + mTeam + '">🎖 Bonus</button>'
       ) : '';
     }
+    // Après la fin : pilule Pas de bonus
     return '<span class="pill">Pas de bonus</span>';
   }
 
-  // --- Sélection faite, visibilité côté équipes/visiteurs ---
-  // Avant la fin : visible seulement si (je suis l’équipe) OU (révélation autorisée au démarrage)
-  if (!roundFinished && !(iAmTeam || revealAtStart)) return '';
+  // Déjà choisi : avant fin, visible uniquement par l'équipe concernée
+  if (!roundFinished && !iAmTeam) return '';
 
   const type = sel.type || 'capitaine';
   const lblType =
@@ -1242,19 +1217,18 @@ function bonusChip(r, mTeam, rs){
   const sportEmoji = (labelSport === 'Fléchettes' ? '🎯' :
                      labelSport === 'Ping'        ? '🏓' :
                      labelSport === 'Palet'       ? '🥏' : '');
+
   const labelPlayer = sel.player === 'p1' ? 'J1' : (sel.player === 'p2' ? 'J2' : null);
 
   if (!roundFinished) {
-    // Pastille d’aperçu (sans valeur) avant la fin, quand visible
+    // Pastille côté équipe qui a choisi (avant la fin)
     var parts = [lblType];
     if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
     if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
     var __lbl = parts.join(' / ');
-    return '<span class="pill blue">Bonus' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
-           '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' +
-           '</span>';
+    return '<span class="pill blue">Bonus' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') + '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' + '</span>';
   } else {
-    // Révélation complète + total appliqué (logique existante inchangée)
+    // Révélé à tous une fois fini, avec points appliqués
     const applied = Math.abs((state.bonusApplied?.[r]?.[mTeam]) || 0);
     const sign = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? '+' : '−';
     const valClass = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? 'pos' : 'neg';
@@ -1267,7 +1241,7 @@ function bonusChip(r, mTeam, rs){
        '>Bonus' +
        '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
        (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
-       '<span class="' + valClass + '">'+ sign + applied + '</span>' +
+       '<span class="' + valClass + '\">' + sign + applied + '</span>' +
        '</span>';
   }
 }
@@ -2426,7 +2400,8 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   });
   patch();
 })();
-</script></body>
+</script>  <script src="bonus-themes.js" defer></script>
+</body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
 #confirm-overlay{
@@ -2504,7 +2479,8 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     min-width:40px; height:28px; padding:0 8px; font-size:15px;
   }
 }
-</style></head></html>
+</style>  <link rel="stylesheet" href="trisports-bonus-themes.css">
+</head></html>
 <style id="rencontres-polish">
 /* Card container */
 .matches, .calendar, .journees, .games { gap: 20px; }

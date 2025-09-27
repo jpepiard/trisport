@@ -1,0 +1,131 @@
+
+/* ==============================
+   Bonus Pill Themes (toggle-ready)
+   Usage:
+     <body data-bonus-theme="flashy|neon|rainbow|glass|fire">
+   ============================== */
+
+/* Base layout for pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  text-shadow: 0 1px 1px rgba(0,0,0,.28);
+}
+
+/* Keep order: image first, emoji second */
+.pill .mini-bonus { order: 1; display:inline-flex; align-items:center; }
+.pill .sport-emo  { order: 2; display:inline-block; line-height:1; }
+
+.mini-bonus img {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  transition: transform .15s ease;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+.pill:hover .mini-bonus img { transform: scale(1.08) rotate(-2deg); }
+
+/* Value coloring kept from your app if present */
+.pill .pos { margin-left: 8px; }
+.pill .neg { margin-left: 8px; }
+
+/* ---- THEME: FLASHY (default) ---- */
+body[data-bonus-theme="flashy"] .pill,
+body:not([data-bonus-theme]) .pill.blue,
+body:not([data-bonus-theme]) .pill.bonus-flashy {
+  position: relative;
+  border: 2px solid rgba(255,255,255,.25);
+  background: linear-gradient(135deg, rgba(0,153,255,.95) 0%, rgba(0,230,180,.95) 100%);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25), 0 0 10px rgba(0, 200, 255, .45) inset;
+  animation: pillPulse 1.8s ease-in-out infinite;
+}
+body[data-bonus-theme="flashy"] .pill::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 20% -10%, rgba(255,255,255,.35), transparent 35%);
+  pointer-events: none; border-radius: inherit;
+}
+
+/* ---- THEME: NEON ---- */
+body[data-bonus-theme="neon"] .pill {
+  background: linear-gradient(90deg, #ff00cc, #3333ff);
+  color: #fff;
+  box-shadow: 0 0 8px #ff00cc, 0 0 12px #3333ff;
+  animation: neonPulse 2s infinite alternate;
+}
+
+/* ---- THEME: RAINBOW ---- */
+body[data-bonus-theme="rainbow"] .pill {
+  background: linear-gradient(45deg,
+    #ff0000, #ff7300, #fffb00, #48ff00,
+    #00ffd5, #002bff, #7a00ff, #ff00ab);
+  background-size: 600% 600%;
+  animation: rainbowMove 6s ease infinite;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+/* ---- THEME: GLASS ---- */
+body[data-bonus-theme="glass"] .pill {
+  backdrop-filter: blur(6px) saturate(180%);
+  -webkit-backdrop-filter: blur(6px) saturate(180%);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}
+
+/* ---- THEME: FIRE ---- */
+body[data-bonus-theme="fire"] .pill {
+  position: relative;
+  background: #111;
+  color: #fff;
+  z-index: 0;
+  overflow: hidden;
+}
+body[data-bonus-theme="fire"] .pill::before {
+  content: "";
+  position: absolute; inset: -2px;
+  background: linear-gradient(60deg, #ff0000, #ff7300, #fffb00, #ff0000);
+  background-size: 300% 300%;
+  animation: fireGlow 3s infinite linear;
+  z-index: -1;
+  border-radius: inherit;
+}
+
+/* Animations */
+@keyframes pillPulse { 0%,100%{ filter:brightness(1);} 50%{ filter:brightness(1.12);} }
+@keyframes neonPulse { from{ box-shadow: 0 0 6px #ff00cc, 0 0 10px #3333ff;} to{ box-shadow: 0 0 14px #ff00cc, 0 0 20px #3333ff;} }
+@keyframes rainbowMove { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+@keyframes fireGlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+/* Small “theme chip” control (optional) */
+#bonus-theme-toggle {
+  position: fixed;
+  right: 16px; bottom: 16px;
+  z-index: 9999;
+  display: inline-flex; align-items:center; gap:8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #fff; font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+#bonus-theme-toggle select {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-weight: 600;
+  outline: none;
+}
