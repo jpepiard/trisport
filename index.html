@@ -2446,6 +2446,16 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </script>
 <script id="bonus-pop-autoplace">
 (function(){
+  function _getPillFromEvent(e){
+    var t = e && e.target;
+    if (!t) return null;
+    // If Text node or non-element, climb to parent element
+    if (t.nodeType && t.nodeType !== 1) t = t.parentElement;
+    if (!t) return null;
+    if (typeof t.closest !== 'function') return null;
+    return t.closest('.pill.bonus-flashy');
+  }
+
   function getScoreRect(root){
     var score = root.closest('.match-card')?.querySelector('.scorewrap .score, .score') ||
                 document.querySelector('.scorewrap .score, .score');
@@ -2482,14 +2492,24 @@ pop.style.setProperty('--x-offset', dx.toFixed(0) + 'px');
     }
   }
   function onEnter(e){
-    var pill = e.target.closest('.pill.bonus-flashy');
+    var pill = _getPillFromEvent(e);
     if (!pill) return;
     var pop = pill.querySelector('.bonus-pop');
     if (!pop) return;
-    requestAnimationFrame(function(){ place(pop, pill); });
+    requestAnimationFrame(function(){
+  function _getPillFromEvent(e){
+    var t = e && e.target;
+    if (!t) return null;
+    // If Text node or non-element, climb to parent element
+    if (t.nodeType && t.nodeType !== 1) t = t.parentElement;
+    if (!t) return null;
+    if (typeof t.closest !== 'function') return null;
+    return t.closest('.pill.bonus-flashy');
+  }
+ place(pop, pill); });
   }
   function onLeave(e){
-    var pill = e.target.closest('.pill.bonus-flashy');
+    var pill = _getPillFromEvent(e);
     if (!pill) return;
     var pop = pill.querySelector('.bonus-pop');
     if (!pop) return;
@@ -2505,6 +2525,16 @@ document.addEventListener('mouseenter', onEnter, true);
 
 <script id="bonus-pop-portal">
 (function(){
+  function _getPillFromEvent(e){
+    var t = e && e.target;
+    if (!t) return null;
+    // If Text node or non-element, climb to parent element
+    if (t.nodeType && t.nodeType !== 1) t = t.parentElement;
+    if (!t) return null;
+    if (typeof t.closest !== 'function') return null;
+    return t.closest('.pill.bonus-flashy');
+  }
+
   var current = null, placeholder = null;
   function toBody(pop, pill){
     if (current === pop) return;
@@ -2545,14 +2575,24 @@ document.addEventListener('mouseenter', onEnter, true);
     current = null; placeholder = null;
   }
   document.addEventListener('mouseenter', function(e){
-    var pill = e.target.closest('.pill.bonus-flashy');
+    var pill = _getPillFromEvent(e);
     if (!pill) return;
     var pop = pill.querySelector('.bonus-pop');
     if (!pop) return;
-    requestAnimationFrame(function(){ toBody(pop, pill); });
+    requestAnimationFrame(function(){
+  function _getPillFromEvent(e){
+    var t = e && e.target;
+    if (!t) return null;
+    // If Text node or non-element, climb to parent element
+    if (t.nodeType && t.nodeType !== 1) t = t.parentElement;
+    if (!t) return null;
+    if (typeof t.closest !== 'function') return null;
+    return t.closest('.pill.bonus-flashy');
+  }
+ toBody(pop, pill); });
   }, true);
   document.addEventListener('mouseleave', function(e){
-    var pill = e.target.closest('.pill.bonus-flashy');
+    var pill = _getPillFromEvent(e);
     if (!pill) return;
     var pop = document.querySelector('.bonus-pop[data-portal="1"]') || pill.querySelector('.bonus-pop');
     if (!pop) return;
