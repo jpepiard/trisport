@@ -294,32 +294,26 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .pill .sport-emo { order: 2; }
 
 
-/* === Neon bonus pill — CALM variant (match cards only) ================== */
-/* Goals: dimmer colors, softer halo, slower pulse, no harsh inner glow.   */
+/* === Neon bonus pill — CALM variant (match cards only, cyan = 35,153,242) == */
 :root{
-  --neon-cyan: #00c6d9;  /* darker cyan */
-  --neon-green: #00d08a; /* darker green */
+  --neon-cyan: rgb(35,153,242);  /* #2399F2 */
+  --neon-green: #00d08a;         /* darker green kept */
 }
 
 .match-card .pill.blue{
   position: relative;
   color: #f4fdff !important;
-  border: 1px solid rgba(0, 215, 230, .38);
+  border: 1px solid rgba(35,153,242, .38);
   background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-green) 100%);
-  text-shadow: 0 0 2px rgba(0,255,255,.35);
+  text-shadow: 0 0 2px rgba(35,153,242,.35);
   box-shadow:
-    0 0 6px rgba(0,220,220,.28),
-    0 0 16px rgba(0,220,220,.18),
+    0 0 6px rgba(35,153,242,.28),
+    0 0 16px rgba(35,153,242,.18),
     inset 0 0 6px rgba(255,255,255,.08);
-  animation: neonPulseCalm 2.4s ease-in-out infinite;
+  animation: neonPulseCalm2399 2.4s ease-in-out infinite;
 }
 
-/* Softer, slower halo 
-Réduire encore le halo : passe opacity:.55; → opacity:.4; dans .match-card .pill.blue::before.
-
-Diminuer le glow : diminue les alpha des box-shadow (ex. .28 → .20).
-
-Ralentir l’animation : 2.4s → 3s sur neonPulseCalm et 2.2s → 3s sur neonHaloCalm.*/
+/* Softer, slower halo in the same cyan */
 .match-card .pill.blue::before{
   content:"";
   position:absolute;
@@ -327,7 +321,7 @@ Ralentir l’animation : 2.4s → 3s sur neonPulseCalm et 2.2s → 3s sur neonHa
   border-radius:999px;
   pointer-events:none;
   box-shadow: 0 0 0 0 rgba(35,153,242,.35), 0 0 18px rgba(35,153,242,.22);
-  animation: neonHaloCalm 1.2s ease-in-out infinite;
+  animation: neonHaloCalm2399 2.2s ease-in-out infinite;
   opacity:.55;
 }
 
@@ -349,12 +343,12 @@ Ralentir l’animation : 2.4s → 3s sur neonPulseCalm et 2.2s → 3s sur neonHa
   filter: saturate(1.04);
 }
 
-@keyframes neonPulseCalm{
+@keyframes neonPulseCalm2399{
   0%, 100%{ filter: brightness(1); }
   50%{ filter: brightness(1.06); }
 }
 
-@keyframes neonHaloCalm{
+@keyframes neonHaloCalm2399{
   0%{
     transform: scale(1);
     opacity:.55;
