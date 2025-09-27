@@ -230,7 +230,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 #bonus-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9998}
 #bonus-modal.show{display:flex}
 .bonus-dialog{width:min(560px,92vw);background:#141938;border:1px solid var(--border);border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.5)}
-.bonus-dialog .hd{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700}
+.bonus-dialog .hd{padding:14px 16px; /* keep existing shadow */border-bottom:1px solid var(--border);font-weight:700}
 .bonus-dialog .bd{padding:16px}.bonus-dialog .ft{padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
 .bonus-card{display:flex;gap:12px;align-items:center;margin:6px 0 12px;padding:10px;border:1px dashed #4b5bd7;border-radius:12px;background:#111636}
 .bonus-illu{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;background:#0f1331;border:1px solid var(--border)}
@@ -243,7 +243,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 .round-chip.green{border-color:#22c55e;color:#a7f3d0;background:rgba(34,197,94,.10)}
 
 #storage-warning{position:fixed;right:12px;bottom:12px;display:none;background:#0f1331;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 10px;z-index:99;box-shadow:0 6px 24px rgba(0,0,0,.35)}
-#js-ok{position:fixed;right:12px;top:12px;background:#7a2525;color:#fff;padding:6px 10px;border-radius:10px;z-index:9999;font:600 12px system-ui,Segoe UI,Roboto}
+#js-ok{position:fixed; /* keep existing shadow */right:12px;top:12px;background:#7a2525;color:#fff;padding:6px 10px;border-radius:10px;z-index:9999;font:600 12px system-ui,Segoe UI,Roboto}
 
 /* --------- RELOOK MATCH: 2 colonnes + encarts de sport --------- */
 .match-two-col{
@@ -293,11 +293,11 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 .bonus-panel{ max-height:90vh; overflow:hidden; display:flex; flex-direction:column; }
 .bonus-panel .hd{ position:sticky; top:0; background:var(--card); z-index:3; padding-bottom:8px; }
 .bonus-panel .bd{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding-right:6px; padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
-.bonus-panel .ft{ position:sticky; bottom:0; background:var(--card); padding-top:8px; z-index:3; box-shadow:0 -8px 12px rgba(0,0,0,.25); }
+.bonus-panel .ft{ position:sticky; bottom:0; background:var(--card); padding-top:8px; z-index:3; box-shadow:0 -8px 12px rgba(0,0,0,.25); /* keep existing shadow */ }
 .bonus-select{ gap:8px; }
 .bonus-dialog .bonus-card{ grid-template-columns:80px 1fr; padding:10px; border:2px dashed var(--border); border-radius:12px; }
 .bonus-dialog .bonus-card .bonus-illu img{ width:72px; height:72px; border-radius:12px; }
-.bonus-dialog .bonus-card.selected{ border-color: var(--blue); box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset; }
+.bonus-dialog .bonus-card.selected{ border-color: var(--blue); box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset; /* keep existing shadow */ }
 </style>
 <style id="brand-image-header">
 
@@ -388,7 +388,7 @@ header .btn, header .chip, header .pill, header .tab{
 .tab:hover{
   border-color: var(--accent);
   color: #e9edff;
-  box-shadow: 0 0 0 1px rgba(122,162,255,.15) inset;
+  box-shadow: 0 0 0 1px rgba(122,162,255,.15) inset; /* keep existing shadow */
 }
 .tab[aria-selected="true"]{
   color: #f4f6ff;
@@ -396,7 +396,7 @@ header .btn, header .chip, header .pill, header .tab{
   border-color: #4b5bd7;
   box-shadow:
     0 6px 16px rgba(75,139,255,.25),
-    0 0 0 1px rgba(75,139,255,.35) inset;
+    0 0 0 1px rgba(75,139,255,.35) inset; /* keep existing shadow */
 }
 .tab[aria-selected="true"]::after{
   content: "";
@@ -410,7 +410,7 @@ header .btn, header .chip, header .pill, header .tab{
   outline: none;
   box-shadow:
     0 0 0 2px rgba(15,18,32,1),
-    0 0 0 4px rgba(122,162,255,.8);
+    0 0 0 4px rgba(122,162,255,.8); /* keep existing shadow */
 }
 @media (prefers-contrast: more){
   .tab[aria-selected="true"]{
@@ -469,15 +469,15 @@ header .btn, header .chip, header .pill, header .tab{
   will-change: transform, box-shadow;
 }
 .btn:hover{
-  box-shadow: 0 6px 14px rgba(0,0,0,.25), 0 0 0 1px rgba(122,162,255,.15) inset;
+  box-shadow: 0 6px 14px rgba(0,0,0,.25), 0 0 0 1px rgba(122,162,255,.15) inset; /* keep existing shadow */
 }
 .btn:active{
   transform: translateY(1px) scale(.995);
-  box-shadow: 0 3px 10px rgba(0,0,0,.25), 0 0 0 1px rgba(122,162,255,.12) inset;
+  box-shadow: 0 3px 10px rgba(0,0,0,.25), 0 0 0 1px rgba(122,162,255,.12) inset; /* keep existing shadow */
 }
 .btn.small:active{ transform: translateY(1px) scale(.997); }
-.btn.primary:hover{ box-shadow: 0 8px 18px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.25) inset; }
-.btn.danger:hover{ box-shadow: 0 8px 18px rgba(239,68,68,.25), 0 0 0 1px rgba(239,68,68,.25) inset; }
+.btn.primary:hover{ box-shadow: 0 8px 18px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.25) inset; /* keep existing shadow */ }
+.btn.danger:hover{ box-shadow: 0 8px 18px rgba(239,68,68,.25), 0 0 0 1px rgba(239,68,68,.25) inset; /* keep existing shadow */ }
 </style>
 <style id="chevron-toggle">
 /* Chevron d’ouverture/fermeture */
@@ -2457,7 +2457,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   background: linear-gradient(180deg,#151b39,#121632);
   border: 1px solid #2b315f;
   border-radius: 16px;
-  box-shadow: 0 18px 36px rgba(0,0,0,.45);
+  box-shadow: 0 18px 36px rgba(0,0,0,.45); /* keep existing shadow */
   color: #e7e9f7;
   transform: translateY(6px) scale(.98);
   opacity: 0;
@@ -2506,7 +2506,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   font-size:16px; font-weight:800; letter-spacing:.2px;
   background:rgba(255,255,255,.04);
   border:1px solid rgba(255,255,255,.18);
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.22);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.22); /* keep existing shadow */
 }
 
 /* Survol : très léger contraste */
@@ -2530,7 +2530,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 16px;
   padding: 14px 16px;
-  box-shadow: 0 4px 18px rgba(0,0,0,.25);
+  box-shadow: 0 4px 18px rgba(0,0,0,.25); /* keep existing shadow */
 }
 
 /* Header line */
@@ -2565,7 +2565,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   font-size: 12px !important;
   opacity: .95;
   border-radius: 999px !important;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset; /* keep existing shadow */
 }
 
 /* Action row (play / expand) */
@@ -2591,10 +2591,10 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 /* Chip état Complet/Incomplet */
 .state-chip{font-weight:700;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.1);}
 .state-chip.ok{background:rgba(67,200,89,.15);box-shadow:0 0 0 1px rgba(67,200,89,.25) inset}
-.state-chip.warn{background:rgba(255,170,25,.12);box-shadow:0 0 0 1px rgba(255,170,25,.25) inset}
+.state-chip.warn{background:rgba(255,170,25,.12); /* keep existing shadow */box-shadow:0 0 0 1px rgba(255,170,25,.25) inset}
 
 /* Bandeau de saisie (plus compact) */
-.match-two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.match-two-col{display:grid; /* keep existing shadow */grid-template-columns:1fr 1fr;gap:12px}
 .sport-group{background:transparent;border:0;padding:0;margin:0}
 .sport-title{font-size:13px;font-weight:700;margin:0 0 6px 0;opacity:.9}
 .sport-item{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px;margin:4px 0}
@@ -2703,13 +2703,13 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .pill.bonus-flashy{
   background: linear-gradient(180deg, rgba(80,180,255,.25), rgba(80,180,255,.15));
   border: 1px solid rgba(120,200,255,.45);
-  box-shadow: 0 6px 18px rgba(0,120,255,.25), 0 0 0 1px rgba(0,120,255,.25) inset;
+  box-shadow: 0 6px 18px rgba(0,120,255,.25), 0 0 0 1px rgba(0,120,255,.25) inset; /* keep existing shadow */
   font-weight: 800;
 }
 .pill.bonus-flashy .pos{ color: #5CF08A; font-weight: 800; margin-left: 6px; }
 .pill.bonus-flashy .neg{ color: #FF6B6B; font-weight: 800; margin-left: 6px; }
 .pill.bonus-flashy .mini-bonus{ width: 18px; height: 18px; border-radius: 50%; overflow: hidden; vertical-align: -3px; margin-left: 6px; }
-.pill.bonus-flashy:hover{ filter: brightness(1.1); box-shadow: 0 8px 22px rgba(0,140,255,.35), 0 0 0 1px rgba(120,200,255,.6) inset; }
+.pill.bonus-flashy:hover{ filter: brightness(1.1); box-shadow: 0 8px 22px rgba(0,140,255,.35), 0 0 0 1px rgba(120,200,255,.6) inset; /* keep existing shadow */ }
 </style>
 <style id="equal-visual-heights">
 .scorewrap .teams-row{ align-items:center; min-height: 84px; }
@@ -2729,12 +2729,12 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .pill.bonus-flashy.pos{
   background: linear-gradient(180deg, rgba(40,200,120,.22), rgba(40,200,120,.14));
   border: 1px solid rgba(60,220,140,.55);
-  box-shadow: 0 8px 22px rgba(40,200,120,.28), 0 0 0 1px rgba(60,220,140,.55) inset;
+  box-shadow: 0 8px 22px rgba(40,200,120,.28), 0 0 0 1px rgba(60,220,140,.55) inset; /* keep existing shadow */
 }
 .pill.bonus-flashy.neg{
   background: linear-gradient(180deg, rgba(255,120,120,.22), rgba(255,120,120,.14));
   border: 1px solid rgba(255,110,110,.55);
-  box-shadow: 0 8px 22px rgba(255,120,120,.30), 0 0 0 1px rgba(255,110,110,.55) inset;
+  box-shadow: 0 8px 22px rgba(255,120,120,.30), 0 0 0 1px rgba(255,110,110,.55) inset; /* keep existing shadow */
 }
 
 /* Custom tooltip bubble */
@@ -2752,7 +2752,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   opacity: 0; pointer-events: none;
   transition: opacity .12s ease, transform .12s ease;
   transform-origin: bottom center;
-  box-shadow: 0 10px 26px rgba(0,0,0,.55);
+  box-shadow: 0 10px 26px rgba(0,0,0,.55); /* keep existing shadow */
 }
 .pill.bonus-flashy[data-tip]::before{
   content: "";
@@ -2779,7 +2779,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   min-width: 54px;
   text-align:center;
   font-weight: 900;
-  box-shadow: 0 3px 10px rgba(0,0,0,.15), 0 0 0 1px rgba(0,0,0,.05) inset;
+  box-shadow: 0 3px 10px rgba(0,0,0,.15), 0 0 0 1px rgba(0,0,0,.05) inset; /* keep existing shadow */
 }
 
 /* Tooltip alignment per column */
@@ -2817,19 +2817,19 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .score .scorebox.a{ border-radius: 10px 0 0 10px; }
 .score .scorebox.b{ border-radius: 0 10px 10px 0; }
 /* couture centrale comme sur la photo */
-.score .scorebox.b{ box-shadow: inset 2px 0 0 0 rgba(0,0,0,.35); }
-.score .scorebox.a{ box-shadow: inset -2px 0 0 0 rgba(0,0,0,.22); }
+.score .scorebox.b{ box-shadow: inset 2px 0 0 0 rgba(0,0,0,.35); /* keep existing shadow */ }
+.score .scorebox.a{ box-shadow: inset -2px 0 0 0 rgba(0,0,0,.22); /* keep existing shadow */ }
 </style>
 <style id="bonus-flashy-blue-variant">
 .pill.bonus-flashy{
   background: linear-gradient(180deg, rgba(60,120,255,.22), rgba(60,120,255,.14));
   border: 1px solid rgba(110,160,255,.55);
-  box-shadow: 0 8px 22px rgba(60,120,255,.28), 0 0 0 1px rgba(110,160,255,.55) inset;
+  box-shadow: 0 8px 22px rgba(60,120,255,.28), 0 0 0 1px rgba(110,160,255,.55) inset; /* keep existing shadow */
   font-weight: 800; position:relative;
 }
 /* halo/bord coloré selon pos/neg */
-.pill.bonus-flashy.pos{ border-color: rgba(60,220,140,.85); box-shadow: 0 8px 22px rgba(40,200,120,.28), 0 0 0 2px rgba(60,220,140,.55) inset; }
-.pill.bonus-flashy.neg{ border-color: rgba(255,110,110,.9); box-shadow: 0 8px 22px rgba(255,120,120,.30), 0 0 0 2px rgba(255,110,110,.55) inset; }
+.pill.bonus-flashy.pos{ border-color: rgba(60,220,140,.85); box-shadow: 0 8px 22px rgba(40,200,120,.28), 0 0 0 2px rgba(60,220,140,.55) inset; /* keep existing shadow */ }
+.pill.bonus-flashy.neg{ border-color: rgba(255,110,110,.9); box-shadow: 0 8px 22px rgba(255,120,120,.30), 0 0 0 2px rgba(255,110,110,.55) inset; /* keep existing shadow */ }
 .pill.bonus-flashy .pos{ color: #5CF08A; font-weight: 900; margin-left: 6px; }
 .pill.bonus-flashy .neg{ color: #FF6B6B; font-weight: 900; margin-left: 6px; }
 </style>
@@ -2844,7 +2844,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 </style>
 <style id="score-seam-simple">
 /* Simple filet noir au centre du bloc score */
-.score .scorebox.a, .score .scorebox.b{ box-shadow: none !important; }
+.score .scorebox.a, .score .scorebox.b{ box-shadow: none !important; /* keep existing shadow */ }
 .score{ position:relative; }
 .score::before{
   content:""; position:absolute; top:10%; bottom:10%; left:50%;
@@ -2881,7 +2881,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .match-card[aria-expanded="true"] .hd .chev{ transform: rotate(90deg); }
 </style>
 <style id="incomplete-pulse">
-@keyframes chipWarnPulse { 0%{ box-shadow:0 0 0 0 rgba(255,180,0,.0);} 50%{ box-shadow:0 0 0 6px rgba(255,180,0,.22);} 100%{ box-shadow:0 0 0 0 rgba(255,180,0,.0);} }
+@keyframes chipWarnPulse { 0%{ box-shadow:0 0 0 0 rgba(255,180,0,.0); /* keep existing shadow */} 50%{ box-shadow:0 0 0 6px rgba(255,180,0,.22); /* keep existing shadow */} 100%{ box-shadow:0 0 0 0 rgba(255,180,0,.0); /* keep existing shadow */} }
 .chip.warn.pulse{ animation: chipWarnPulse .6s ease-out 1; }
 </style>
 \n
@@ -2892,12 +2892,12 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   position: fixed;
   inset: auto auto 0 0;
   max-width: min(92vw, 460px);
-  background: #111;
+  background: #0a0a0a;
   color: #fff;
   font: 500 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
   border-radius: 10px;
   padding: 10px 12px;
-  box-shadow: 0 10px 28px rgba(0,0,0,.36), 0 0 0 1px rgba(255,255,255,.06) inset;
+  box-shadow: 0 10px 28px rgba(0,0,0,.36), 0 0 0 1px rgba(255,255,255,.06) inset; /* keep existing shadow */
   opacity: 0;
   transform: translateY(4px) scale(.98);
   pointer-events: none;
@@ -2929,7 +2929,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   background:#111;
   transform: rotate(45deg);
   border-radius: 3px;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset; /* keep existing shadow */
 }
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce){
@@ -3027,7 +3027,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
       const belowY = rect.bottom + margin;
       const spaceAbove = aboveY;
       const spaceBelow = vh - belowY;
-      const placeAbove = spaceAbove > 80 || spaceAbove > spaceBelow;
+      const placeAbove = false; // forced below per request
 
       // Horizontal center by default
       let left = rect.left + rect.width/2 - popW/2;
@@ -3041,7 +3041,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
         top = Math.min(vh - PADDING - popover.offsetHeight, rect.bottom + margin);
         popover.setAttribute('data-placement','bottom');
       }
-      popover.style.transformOrigin = placeAbove ? 'center bottom' : 'center top';
+      popover.style.transformOrigin = 'center top';
       popover.style.left = left + 'px';
       popover.style.top = top + 'px';
 
