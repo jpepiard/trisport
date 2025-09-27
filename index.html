@@ -2443,7 +2443,71 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   });
   patch();
 })();
-</script></body>
+</script>
+<script id="bonus-pop-autoplace">
+(function(){
+  function getScoreRect(root){
+    var score = root.closest('.match-card')?.querySelector('.scorewrap .score, .score') ||
+                document.querySelector('.scorewrap .score, .score');
+    return score ? score.getBoundingClientRect() : null;
+  }
+  function place(pop, pill){
+    pop.classList.remove('is-above');
+    pop.style.setProperty('--x-offset','0px');
+    var popRect = pop.getBoundingClientRect();
+    var pillRect = pill.getBoundingClientRect();
+    var scoreRect = getScoreRect(pill);
+    if (!scoreRect){
+      if (popRect.top < 8) pop.classList.add('is-above');
+      return;
+    }
+    var overlapsVertically = !(popRect.bottom < scoreRect.top || popRect.top > scoreRect.bottom);
+    if (overlapsVertically){
+      pop.classList.add('is-above');
+      popRect = pop.getBoundingClientRect();
+      overlapsVertically = !(popRect.bottom < scoreRect.top || popRect.top > scoreRect.bottom);
+    }
+    var overlapsHoriz = !(popRect.right < scoreRect.left || popRect.left > scoreRect.right);
+    if (overlapsHoriz){
+      var overlapLeft = Math.max(0, scoreRect.left - popRect.left);
+      var overlapRight = Math.max(0, popRect.right - scoreRect.right);
+      var dx = 0;
+      if (overlapLeft > 0 && overlapRight === 0){
+        dx = - (overlapLeft + 16);
+      } else if (overlapRight > 0 && overlapLeft === 0){
+        dx = (overlapRight + 16);
+      } else {
+        var scoreCenter = (scoreRect.left + scoreRect.right)/2;
+        dx = (pillRect.left < scoreCenter) ? (overlapRight + 16) : -(overlapLeft + 16);
+      }
+      var maxLeft = 16 - (popRect.left - window.scrollX);
+      var maxRight = (window.innerWidth - 16) - (popRect.right - window.scrollX);
+      if (dx < 0) dx = Math.max(dx, maxLeft);
+      else dx = Math.min(dx, maxRight);
+      pop.style.setProperty('--x-offset', dx.toFixed(0) + 'px');
+    }
+  }
+  function onEnter(e){
+    var pill = e.target.closest('.pill.bonus-flashy');
+    if (!pill) return;
+    var pop = pill.querySelector('.bonus-pop');
+    if (!pop) return;
+    requestAnimationFrame(function(){ place(pop, pill); });
+  }
+  function onLeave(e){
+    var pill = e.target.closest('.pill.bonus-flashy');
+    if (!pill) return;
+    var pop = pill.querySelector('.bonus-pop');
+    if (!pop) return;
+    pop.classList.remove('is-above');
+    pop.style.removeProperty('--x-offset');
+  }
+  document.addEventListener('mouseenter', onEnter, true);
+  document.addEventListener('mouseleave', onLeave, true);
+})();
+</script>
+
+</body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
 #confirm-overlay{

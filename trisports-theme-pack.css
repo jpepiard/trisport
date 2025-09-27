@@ -832,3 +832,22 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 /* Stacking context adjustments */
 .match-card, .scorewrap, .round-grid { overflow: visible !important; }
 .scorewrap .score { position: relative; z-index: 1; }
+
+/* --- Bonus popover auto-placement helpers --- */
+.pill.bonus-flashy .bonus-pop{ --x-offset: 0px; }
+.pill.bonus-flashy .bonus-pop{ left:50%; transform: translate(calc(-50% + var(--x-offset)), 6px) scale(.98); }
+.pill.bonus-flashy .bonus-pop.is-above{
+  top: auto; bottom: calc(100% + 12px);
+  transform: translate(calc(-50% + var(--x-offset)), 6px) scale(.98);
+  transform-origin: bottom center;
+}
+.pill.bonus-flashy:hover .bonus-pop.is-above{
+  transform: translate(calc(-50% + var(--x-offset)), 0) scale(1);
+}
+/* Arrow positions */
+.pill.bonus-flashy .bonus-pop::after{ top: -6px; }
+.pill.bonus-flashy .bonus-pop.is-above::after{
+  top: auto; bottom: -6px;
+  border-top: none; border-left: none;
+  border-bottom:1px solid #2b315f; border-right:1px solid #2b315f;
+}
