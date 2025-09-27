@@ -696,3 +696,44 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .match-card{ transform: none !important; transition: box-shadow .18s ease !important; }
 .match-card:hover{ transform: none !important; }
 
+
+
+/* ===== Bonus pill hover popover ===== */
+.pill.bonus-flashy{ position: relative; }
+.pill.bonus-flashy .bonus-pop{
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: 280px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 14px 28px rgba(0,0,0,.45);
+  opacity: 0;
+  transform: translateY(6px) scale(.98);
+  transform-origin: bottom left;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+  z-index: 30;
+}
+.pill.bonus-flashy .bonus-pop::after{
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 100%;
+  width: 10px; height: 10px;
+  transform: rotate(45deg);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.pill.bonus-flashy:hover .bonus-pop{ opacity: 1; transform: translateY(0) scale(1); }
+
+.pill.bonus-flashy .bonus-pop img{
+  width: 80px; height: 80px; border-radius: 10px; display: block; margin-bottom: 8px;
+}
+.pill.bonus-flashy .bonus-pop strong{ display: block; margin-bottom: 2px; }
+.pill.bonus-flashy .bonus-pop .desc{ font-size: 13px; color: var(--muted); margin-top: 4px; }
+
