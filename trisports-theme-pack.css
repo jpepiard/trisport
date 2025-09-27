@@ -409,3 +409,41 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
   .match-card .pill.blue{ animation: none; }
   .match-card .pill.blue::before{ animation: none; opacity:.35; }
 }
+
+
+/* ===== Overrides — Bonus pill darker blue + slower/flashier halo + emoji align ===== */
+.match-card .pill.blue {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+
+  color: #f7fbff !important;
+  border: 1px solid rgba(28,107,224,.55);
+  background: linear-gradient(135deg, #1c44b8 0%, #133080 100%); /* bleu plus foncé */
+  text-shadow: 0 0 2px rgba(0,0,0,.45);
+
+  box-shadow:
+    0 0 8px rgba(30,120,255,.35),
+    0 0 18px rgba(0,80,200,.25),
+    inset 0 0 6px rgba(255,255,255,.06);
+
+  animation: neonPulseBlue 2.4s ease-in-out infinite; /* halo plus lent et flashy */
+}
+
+/* Halo flashy et plus lent */
+@keyframes neonPulseBlue {
+  0%, 100% { filter: brightness(1); box-shadow: 0 0 10px rgba(0,160,255,.55); }
+  50%      { filter: brightness(1.15); box-shadow: 0 0 20px rgba(0,200,255,.85); }
+}
+
+/* Emoji sport aligné un peu plus haut */
+.pill .sport-emo {
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1;
+  margin: 0 4px;
+  vertical-align: -4px; /* remonté pour meilleur alignement */
+}
+
