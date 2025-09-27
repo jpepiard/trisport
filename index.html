@@ -2223,20 +2223,31 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   r2 && r2.addEventListener('click', pulse);
 })();
 </script>
-</body>
+<script id="points-column-script-medallion">(function wrapPointsMedallion(){
+  const t = document.getElementById('table-classement');
+  if(!t) return;
+  t.querySelectorAll('tbody td:nth-child(3)').forEach(td=>{
+    const v = td.textContent.trim();
+    td.innerHTML = `<span class="points-medal">${v}</span>`;
+  });
+})();</script></body>
 
-<style id="points-column-emphasis">/* Right accent bar for Points column */
-#table-classement thead th:nth-child(3){ text-align:right; font-weight:800; letter-spacing:.2px; }
+<style id="points-column-emphasis">/* Medallion (round) for Points */
+#table-classement thead th:nth-child(3){ text-align:center; }
 #table-classement tbody td:nth-child(3){
-  text-align:right; font-weight:900; font-size:18px; letter-spacing:.2px; position:relative;
-  padding-right:16px;
+  text-align:center; position:relative; font-weight:900; font-size:18px;
 }
-#table-classement tbody td:nth-child(3)::after{
-  content:""; position:absolute; right:6px; top:8px; bottom:8px; width:6px; border-radius:6px;
-  background:linear-gradient(180deg,#9ab4ff,#2a3aa6);
-  box-shadow:0 0 0 1px rgba(75,139,255,.35) inset, 0 6px 14px rgba(0,0,0,.25);
+#table-classement tbody td:nth-child(3) > span.points-medal{
+  display:inline-grid; place-items:center; min-width:52px; height:52px; border-radius:999px;
+  padding:0 10px;
+  background:radial-gradient(40px 26px at 50% 35%, rgba(255,255,255,.12), transparent),
+             linear-gradient(180deg,#2a3aa6,#1f2b86);
+  border:1px solid #4b5bd7;
+  box-shadow:0 10px 22px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.35) inset;
 }
-#table-classement tbody tr:hover td:nth-child(3)::after{ filter:saturate(120%); }</style></head></html>
+@media (max-width:520px){
+  #table-classement tbody td:nth-child(3) > span.points-medal{ min-width:44px; height:44px; }
+}</style></head></html>
 <style id="rencontres-polish">
 /* Card container */
 .matches, .calendar, .journees, .games { gap: 20px; }
