@@ -33,6 +33,16 @@
 }
 .scorewrap .sports-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; padding-top:6px; }
 </style>
+<style id="winner-gold-avatar">
+/* === Gold outline for winning team's avatar (after round finished) === */
+.avatar.is-winner-gold{
+  border-color: #d4af37 !important;
+  box-shadow: 0 0 0 2px rgba(212,175,55,.65), 0 0 16px rgba(212,175,55,.35);
+}
+/* Slight emphasis on match card winner avatar only */
+.match-card .avatar.is-winner-gold{ transform: translateZ(0); }
+</style>
+
 <!-- Garde-fou : certaines extensions injectent du React minifié qui loggue "Minified React error #...".
      On évite que ça remonte et perturbe l'app (ça n'affecte PAS ton site). -->
 <script>
