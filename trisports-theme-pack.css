@@ -294,38 +294,41 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .pill .sport-emo { order: 2; }
 
 
-/* === Neon bonus pill (scoped to match cards only) ======================= */
-/* Applies to the blue bonus pill inside .match-card only */
+/* === Neon bonus pill — CALM variant (match cards only) ================== */
+/* Goals: dimmer colors, softer halo, slower pulse, no harsh inner glow.   */
 :root{
-  --neon-cyan: #00e5ff;
-  --neon-green: #00ffa3;
-}
-.match-card .pill.blue{
-  position: relative;
-  color: #fff !important;
-  border: 2px solid rgba(0, 255, 255, .6);
-  background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-green) 100%);
-  text-shadow: 0 0 6px rgba(0,255,255,.8);
-  box-shadow:
-    0 0 8px rgba(0,255,255,.5),
-    0 0 18px rgba(0,255,255,.35),
-    0 0 32px rgba(0,255,255,.25),
-    inset 0 0 12px rgba(255,255,255,.15);
-  animation: neonPulse 1.8s ease-in-out infinite;
+  --neon-cyan: #00c6d9;  /* darker cyan */
+  --neon-green: #00d08a; /* darker green */
 }
 
-/* Blinking/expanding halo around the pill */
+.match-card .pill.blue{
+  position: relative;
+  color: #f4fdff !important;
+  border: 1px solid rgba(0, 215, 230, .38);
+  background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-green) 100%);
+  text-shadow: 0 0 2px rgba(0,255,255,.35);
+  box-shadow:
+    0 0 6px rgba(0,220,220,.28),
+    0 0 16px rgba(0,220,220,.18),
+    inset 0 0 6px rgba(255,255,255,.08);
+  animation: neonPulseCalm 2.4s ease-in-out infinite;
+}
+
+/* Softer, slower halo 
+Réduire encore le halo : passe opacity:.55; → opacity:.4; dans .match-card .pill.blue::before.
+
+Diminuer le glow : diminue les alpha des box-shadow (ex. .28 → .20).
+
+Ralentir l’animation : 2.4s → 3s sur neonPulseCalm et 2.2s → 3s sur neonHaloCalm.*/
 .match-card .pill.blue::before{
   content:"";
   position:absolute;
-  inset:-6px;                /* controls halo thickness */
+  inset:-5px;
   border-radius:999px;
   pointer-events:none;
-  box-shadow:
-    0 0 0 0 rgba(0,255,255,.55),
-    0 0 24px rgba(0,255,255,.45);
-  animation: neonHalo 1.6s ease-in-out infinite;
-  opacity:.75;
+  box-shadow: 0 0 0 0 rgba(0,210,220,.35), 0 0 18px rgba(0,210,220,.22);
+  animation: neonHaloCalm 2.2s ease-in-out infinite;
+  opacity:.55;
 }
 
 /* Subtle glossy highlight */
@@ -334,52 +337,48 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
   position:absolute;
   inset:0;
   border-radius:inherit;
-  background:
-    radial-gradient(circle at 18% -10%, rgba(255,255,255,.35), transparent 35%);
+  background: radial-gradient(circle at 18% -10%, rgba(255,255,255,.22), transparent 35%);
   pointer-events:none;
 }
 
-/* Hover = stronger glow */
 .match-card .pill.blue:hover{
   box-shadow:
-    0 0 12px rgba(0,255,255,.7),
-    0 0 28px rgba(0,255,255,.5),
-    0 0 56px rgba(0,255,255,.35),
-    inset 0 0 16px rgba(255,255,255,.22);
-  filter: saturate(1.08);
+    0 0 10px rgba(0,210,220,.35),
+    0 0 22px rgba(0,210,220,.25),
+    inset 0 0 8px rgba(255,255,255,.12);
+  filter: saturate(1.04);
 }
 
-@keyframes neonPulse{
+@keyframes neonPulseCalm{
   0%, 100%{ filter: brightness(1); }
-  50%{ filter: brightness(1.12); }
+  50%{ filter: brightness(1.06); }
 }
 
-@keyframes neonHalo{
+@keyframes neonHaloCalm{
   0%{
     transform: scale(1);
-    opacity:.75;
+    opacity:.55;
     box-shadow:
-      0 0 0 0 rgba(0,255,255,.55),
-      0 0 24px rgba(0,255,255,.45);
+      0 0 0 0 rgba(0,210,220,.35),
+      0 0 18px rgba(0,210,220,.22);
   }
   70%{
-    transform: scale(1.22);
+    transform: scale(1.16);
     opacity:0;
     box-shadow:
-      0 0 0 14px rgba(0,255,255,0),
-      0 0 40px rgba(0,255,255,.0);
+      0 0 0 10px rgba(0,210,220,0),
+      0 0 26px rgba(0,210,220,0);
   }
   100%{
-    transform: scale(1.22);
+    transform: scale(1.16);
     opacity:0;
     box-shadow:
-      0 0 0 14px rgba(0,255,255,0),
-      0 0 40px rgba(0,255,255,0);
+      0 0 0 10px rgba(0,210,220,0),
+      0 0 26px rgba(0,210,220,0);
   }
 }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce){
   .match-card .pill.blue{ animation: none; }
-  .match-card .pill.blue::before{ animation: none; opacity:.45; }
+  .match-card .pill.blue::before{ animation: none; opacity:.35; }
 }
