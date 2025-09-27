@@ -2992,7 +2992,8 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
       }
       el.setAttribute('data-popover-state','open');
       place(el);
-      popover.setAttribute('data-state','open');
+popover.setAttribute('data-placement','bottom');
+popover.setAttribute('data-state','open');
       // If opened by click/touch, trap dismissal with outside click
       if (viaClick) {
         setTimeout(()=>document.addEventListener('pointerdown', onDocPointerDown, { once:true }), 0);
@@ -3012,46 +3013,42 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
       }
     };
 
-    const place = (el) => {
-      const rect = el.getBoundingClientRect();
-      const vw = document.documentElement.clientWidth;
-      const vh = document.documentElement.clientHeight;
-      const popW = Math.min(460, vw - PADDING*2);
-      popover.style.maxWidth = popW + 'px';
-      popover.style.left = '0px'; // reset to compute
-      popover.style.top = '0px';
+    
+const place = (el) => {
+  const rect = el.getBoundingClientRect();
+  const vw = document.documentElement.clientWidth;
+  const vh = document.documentElement.clientHeight;
+  const popW = Math.min(460, vw - PADDING*2);
+  popover.style.maxWidth = popW + 'px';
+  // Ensure measurable size before positioning
+  popover.style.left = '0px';
+  popover.style.top = '0px';
+  popover.setAttribute('data-placement','bottom');
+  // compute content size after setting content
+  const margin = 10;
+  const popH = popover.offsetHeight || 0;
 
-      // Preferred placement: above for dense UI; fallback below
-      const margin = 10;
-      const aboveY = rect.top - margin;
-      const belowY = rect.bottom + margin;
-      const spaceAbove = aboveY;
-      const spaceBelow = vh - belowY;
-      const placeAbove = false; // forced below per request
+  // Horizontal centering with clamping
+  let left = rect.left + rect.width/2 - popW/2;
+  left = Math.max(PADDING, Math.min(left, vw - PADDING - popW));
 
-      // Horizontal center by default
-      let left = rect.left + rect.width/2 - popW/2;
-      // Clamp within viewport
-      left = Math.max(PADDING, Math.min(left, vw - PADDING - popW));
-      let top;
-      if (placeAbove) {
-        top = Math.max(PADDING, rect.top - popover.offsetHeight - margin);
-        popover.setAttribute('data-placement','top');
-      } else {
-        top = Math.min(vh - PADDING - popover.offsetHeight, rect.bottom + margin);
-        popover.setAttribute('data-placement','bottom');
-      }
-      popover.style.transformOrigin = 'center top';
-      popover.style.left = left + 'px';
-      popover.style.top = top + 'px';
+  // Force below the trigger
+  let top = rect.bottom + margin;
+  // Clamp to viewport bottom with padding
+  top = Math.min(vh - PADDING - popH, top);
 
-      // Arrow X based on trigger center
-      const arrow = popover.querySelector('.ts-popover__arrow');
-      const centerX = rect.left + rect.width/2;
-      const arrowLeft = Math.max(14, Math.min(popW - 14, centerX - left));
-      arrow.style.left = arrowLeft + 'px';
-      arrow.style.top = placeAbove ? (popover.offsetHeight - 7) + 'px' : (-7) + 'px';
-    };
+  popover.style.transformOrigin = 'center top';
+  popover.style.left = left + 'px';
+  popover.style.top = top + 'px';
+
+  // Arrow X based on trigger center
+  const arrow = popover.querySelector('.ts-popover__arrow');
+  const centerX = rect.left + rect.width/2;
+  const arrowLeft = Math.max(14, Math.min(popW - 14, centerX - left));
+  arrow.style.left = arrowLeft + 'px';
+  arrow.style.top = (-7) + 'px';
+};
+
 
     // Hover/focus show, leave/blur hide
     const show = (e) => open(e.currentTarget, e.type === 'click');
