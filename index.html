@@ -497,8 +497,6 @@ header .btn, header .chip, header .pill, header .tab{
 </style>
 <link href="trisports-theme-pack.css" rel="stylesheet"/>
 <body>
-
-
 <header>
 <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
 <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
@@ -2360,6 +2358,48 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     if (typeof updateWho === 'function')  updateWho();
   }catch(e){ /* silent */ }
 })();
+</script><script id="points-column-script-medallion-hook">
+(function(){
+  function wrapPoints(){
+    var t = document.getElementById('table-classement');
+    if(!t) return;
+    t.querySelectorAll('tbody td:nth-child(3)').forEach(function(td){
+      var v = (td.textContent || "").trim();
+      var span = td.querySelector('span.points-medal');
+      if (span) {
+        span.textContent = v;
+      } else if (v) {
+        td.textContent = "";
+        var s = document.createElement('span');
+        s.className = 'points-medal';
+        s.textContent = v;
+        td.appendChild(s);
+      }
+    });
+  }
+  function patch(){
+    var orig = window.renderLeaderboard;
+    if (typeof orig === 'function'){
+      if (!orig._withPointsWrap){
+        window.renderLeaderboard = function(){
+          var r = orig.apply(this, arguments);
+          requestAnimationFrame(wrapPoints);
+          return r;
+        };
+        window.renderLeaderboard._withPointsWrap = true;
+      }
+      requestAnimationFrame(wrapPoints);
+    } else {
+      setTimeout(patch, 120);
+    }
+  }
+  // Réappliquer quand on affiche l’onglet Classement
+  document.addEventListener('click', function(ev){
+    var btn = ev.target.closest && ev.target.closest('.tab[data-tab="classement"]');
+    if (btn){ requestAnimationFrame(function(){ setTimeout(wrapPoints, 0); }); }
+  });
+  patch();
+})();
 </script></body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
@@ -2391,6 +2431,53 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 .confirm-card .btn.primary{ background: linear-gradient(180deg,#2f3da2,#25337d); border-color:#3a4aa0; }
 .confirm-card .btn.danger{ background: linear-gradient(180deg,#7a2b2b,#5c2222); border-color:#8a2b2b; }
 .confirm-card .icon{ width: 22px; height: 22px; display:grid; place-items:center; font-size:18px; }
+</style><style id="standings-points-emphasis">
+/* === Classement: centré + pastille Points discrète + liserets groupés === */
+
+/* Centre tout le tableau */
+#table-classement thead th{ text-align:center; }
+#table-classement tbody td{ text-align:center; }
+
+/* Centre le contenu "Équipe" */
+#table-classement tbody td:nth-child(2) .team-name{ justify-content:center; }
+
+/* Pas de liserets dans l'en-tête */
+#table-classement thead th{ border-right:none !important; border-left:none !important; }
+
+/* Liserets groupés :
+   - Sports : Fléchettes(4) | Ping(5) | Palet(6)
+   - Bonus/Malus : Bonus(7) | Malus(8)
+*/
+#table-classement tbody td:nth-child(4){ border-left: 1px solid rgba(255,255,255,.10); }
+#table-classement tbody td:nth-child(6){ border-right:1px solid rgba(255,255,255,.10); }
+#table-classement tbody td:nth-child(7){ border-left: 1px solid rgba(255,255,255,.10); }
+#table-classement tbody td:nth-child(8){ border-right:1px solid rgba(255,255,255,.10); }
+
+/* Pastille discrète pour la colonne Points (col 3) */
+#table-classement thead th:nth-child(3){ text-align:center; }
+#table-classement tbody td:nth-child(3){ position:relative; font-weight:900; }
+
+#table-classement tbody td:nth-child(3) > span.points-medal{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:44px; height:30px; padding:0 10px; border-radius:999px;
+  font-size:16px; font-weight:800; letter-spacing:.2px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.22);
+}
+
+/* Survol : très léger contraste */
+#table-classement tbody tr:hover td:nth-child(3) > span.points-medal{
+  background:rgba(255,255,255,.06);
+  border-color:rgba(255,255,255,.22);
+}
+
+/* Mobile */
+@media (max-width:520px){
+  #table-classement tbody td:nth-child(3) > span.points-medal{
+    min-width:40px; height:28px; padding:0 8px; font-size:15px;
+  }
+}
 </style></head></html>
 <style id="rencontres-polish">
 /* Card container */
