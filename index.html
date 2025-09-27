@@ -1262,12 +1262,24 @@ function bonusChip(r, mTeam, rs){
       type === 'capitaine' ? (labelPlayer ? (' / ' + labelPlayer) : '') :
       ((type==='taupe' || type==='lefthand' || type==='melon') && labelSport ? (' / ' + labelSport) : '')
     );
-    return '<span class="pill bonus-flashy ' + valClass + '" ' +
-       (sportEmoji?('data-tip="' + (lblType + ' — Sport : ' + labelSport) + '"') : ('data-tip="' + lblType + '"')) +
-       '>Bonus' +
+    const desc = (
+      type==='miroir'   ? 'Inverse le bonus adverse sur tout le match.' :
+      type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
+      type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
+      type==='melon'    ? 'Nouveau bonus — détails à venir.' :
+                          'Aucun réglage. +2/manche gagnée (fléchettes & ping, simples/doubles) et +2 si palet.'
+    );
+    return '<span class="pill bonus-flashy ' + valClass + '" aria-label="' + lblType + '">' +
+       'Bonus' +
        '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
        (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
        '<span class="' + valClass + '">'+ sign + applied + '</span>' +
+       '<span class="bonus-pop">' +
+         '<img src="img/' + img + '" alt="' + lblType + '">' +
+         '<strong>' + lblType + '</strong>' +
+         (labelSport ? '<div class="muted">Sport : ' + labelSport + '</div>' : '') +
+         '<div class="desc">' + desc + '</div>' +
+       '</span>' +
        '</span>';
   }
 }
