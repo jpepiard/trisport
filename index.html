@@ -1342,7 +1342,7 @@ function renderMatches(){
       <div class="centerlane" style="width:100%">
         <div class="teams-row">
           <div class="team left">
-            ${avatarHtml(m.a,'sm').replace('class="avatar','class="avatar')}
+            ${avatarHtml(m.a,'sm').replace('class="avatar', 'class="avatar' + ((rCtl.finished && done && ((wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0) + ((state.bonusApplied?.[r]?.[m.a]) || 0)) > (wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0) + ((state.bonusApplied?.[r]?.[m.b]) || 0)))) ? ' is-winner-gold' : ''))}
             <div class="name">${esc(teamName(m.a))}</div>
             <div class="bonus-line">${bonusA || ''}</div>
           </div>
@@ -1350,7 +1350,7 @@ function renderMatches(){
           <div class="score"><span class="scorebox a">${(wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0) + ((state.bonusApplied?.[r]?.[m.a]) || 0))}</span><span class="scorebox b">${(wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0) + ((state.bonusApplied?.[r]?.[m.b]) || 0))}</span></div>
 
           <div class="team right">
-            ${avatarHtml(m.b,'sm').replace('class="avatar','class="avatar')}
+            ${avatarHtml(m.b,'sm').replace('class="avatar', 'class="avatar' + ((rCtl.finished && done && ((wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0) + ((state.bonusApplied?.[r]?.[m.b]) || 0)) > (wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0) + ((state.bonusApplied?.[r]?.[m.a]) || 0)))) ? ' is-winner-gold' : ''))}
             <div class="name">${esc(teamName(m.b))}</div>
             <div class="bonus-line">${bonusB || ''}</div>
           </div>
