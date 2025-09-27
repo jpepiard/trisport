@@ -2444,96 +2444,60 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   patch();
 })();
 </script>
-<script id="bonus-pop-portal">
+<script id="bonus-pop-autoplace">
 (function(){
-  function _getPillFromEvent(e){
-    var t = e && e.target;
-    if (!t) return null;
-    // If Text node or non-element, climb to parent element
-    if (t.nodeType && t.nodeType !== 1) t = t.parentElement;
-    if (!t) return null;
-    if (typeof t.closest !== 'function') return null;
-    return t.closest('.pill.bonus-flashy');
+  function getScoreRect(root){
+    var score = root.closest('.match-card')?.querySelector('.scorewrap .score, .score') ||
+                document.querySelector('.scorewrap .score, .score');
+    return score ? score.getBoundingClientRect() : null;
   }
-
-  var current = null, placeholder = null;
-  function toBody(pop, pill){
-    if (current === pop) return;
-    current = pop;
-    placeholder = document.createComment('bonus-pop placeholder');
-    pop.classList.add('portal-fixed');
-    pop.setAttribute('data-portal','1');
-    var rect = pill.getBoundingClientRect();
+  function place(pop, pill){
+    pop.classList.remove('is-above');
+    pop.style.setProperty('--x-offset','0px');
     var popRect = pop.getBoundingClientRect();
-    // decide above/below
-    var spaceBelow = window.innerHeight - (rect.bottom + 16);
-    var spaceAbove = rect.top - 16;
-    var placeAbove = (spaceBelow < popRect.height && spaceAbove > spaceBelow);
-    pop.classList.toggle('is-above', placeAbove);
-    // compute top-left anchor
-    var top = placeAbove ? (rect.top - popRect.height - 12) : (rect.bottom + 12);
-    var left = rect.left + (rect.width/2) - (popRect.width/2);
-    // clamp to viewport with 12px margin
-    left = Math.max(12, Math.min(left, window.innerWidth - popRect.width - 12));
-    pop.style.top = Math.round(top) + 'px';
-    pop.style.left = Math.round(left) + 'px';
-    // move to body to break stacking contexts
-    var parent = pop.parentNode;
-    if (parent){
-      parent.insertBefore(placeholder, pop);
-      document.body.appendChild(pop);
+    var pillRect = pill.getBoundingClientRect();
+    var scoreRect = getScoreRect(pill);
+    if (!scoreRect){
+      if (popRect.top < 8) pop.classList.add('is-above');
+      return;
+    }
+    var overlapsVertically = !(popRect.bottom < scoreRect.top || popRect.top > scoreRect.bottom);
+    if (overlapsVertically){
+      pop.classList.add('is-above');
+      popRect = pop.getBoundingClientRect();
+      overlapsVertically = !(popRect.bottom < scoreRect.top || popRect.top > scoreRect.bottom);
+    }
+    var overlapsHoriz = true; if (overlapsHoriz){ pop.style.setProperty('--x-offset','0px'); } else if (needRight > 0 && needLeft <= 0){
+        dx = needRight;
+      } else {
+        var scoreCenter = (scoreRect.left + scoreRect.right)/2;
+        dx = (pillRect.left < scoreCenter) ? Math.max(needRight, margin) : -Math.max(needLeft, margin);
+      }
+      // constrain to viewport
+      var newLeft = popRect.left + dx;
+      var newRight = popRect.right + dx;
+      if (newLeft < 16) dx += (16 - newLeft);
+      if (newRight > window.innerWidth - 16) dx -= (newRight - (window.innerWidth - 16));
+pop.style.setProperty('--x-offset', dx.toFixed(0) + 'px');
     }
   }
-  function backToPill(pop){
-    if (!pop || !placeholder) return;
-    if (placeholder.parentNode){
-      placeholder.parentNode.replaceChild(pop, placeholder);
-    }
-    pop.removeAttribute('data-portal');
-    pop.classList.remove('portal-fixed');
-    pop.style.removeProperty('top');
-    pop.style.removeProperty('left');
-    current = null; placeholder = null;
-  }
-  document.addEventListener('mouseenter', function(e){
-    var pill = _getPillFromEvent(e);
+  function onEnter(e){
+    var pill = e.target.closest('.pill.bonus-flashy');
     if (!pill) return;
     var pop = pill.querySelector('.bonus-pop');
     if (!pop) return;
-    requestAnimationFrame(function(){
-  function _getPillFromEvent(e){
-    var t = e && e.target;
-    if (!t) return null;
-    // If Text node or non-element, climb to parent element
-    if (t.nodeType && t.nodeType !== 1) t = t.parentElement;
-    if (!t) return null;
-    if (typeof t.closest !== 'function') return null;
-    return t.closest('.pill.bonus-flashy');
+    requestAnimationFrame(function(){ place(pop, pill); });
   }
- toBody(pop, pill); });
-  }, true);
-  document.addEventListener('mouseleave', function(e){
-    var pill = _getPillFromEvent(e);
+  function onLeave(e){
+    var pill = e.target.closest('.pill.bonus-flashy');
     if (!pill) return;
-    var pop = document.querySelector('.bonus-pop[data-portal="1"]') || pill.querySelector('.bonus-pop');
+    var pop = pill.querySelector('.bonus-pop');
     if (!pop) return;
-    backToPill(pop);
-  }, true);
-  window.addEventListener('scroll', function(){
-    var pop = document.querySelector('.bonus-pop.portal-fixed[data-portal="1"]');
-    if (!pop) return;
-    // keep position relative on scroll by recomputing against its origin pill
-    var pill = document.querySelector('.pill.bonus-flashy:hover') || pop.closest('.pill.bonus-flashy');
-    if (!pill) return;
-    toBody(pop, pill);
-  }, {passive:true});
-  window.addEventListener('resize', function(){
-    var pop = document.querySelector('.bonus-pop.portal-fixed[data-portal="1"]');
-    if (!pop) return;
-    var pill = document.querySelector('.pill.bonus-flashy:hover') || pop.closest('.pill.bonus-flashy');
-    if (!pill) return;
-    toBody(pop, pill);
-  });
+    pop.classList.remove('is-above');
+    pop.style.removeProperty('--x-offset');
+  }
+  document.addEventListener('mouseenter', onEnter, true);
+  document.addEventListener('mouseleave', onLeave, true);
 })();
 </script>
 
