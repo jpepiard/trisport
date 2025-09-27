@@ -1689,7 +1689,7 @@ document.addEventListener("click",async(e)=>{
 
     case "btn-unlock":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Déverrouiller le calendrier ?"))return;state.locked=false;saveState();renderTeams();renderMatches();updateLock();break}
 
-    case "btn-start-round":{if(!isAdmin())return;const r=CURRENT_ROUND,rs=roundState(r);if(rs.started||rs.finished)return;rs.started=true;saveState();renderMatches();showToast("Journée #"+r+" démarrée — bonus verrouillés.");break}
+    case "btn-start-round":{if(!isAdmin())return;const r=CURRENT_ROUND,rs=roundState(r);if(rs.started||rs.finished)return;rs.started=true;saveState();renderMatches();showToast("Journée #"+r+" démarrée — bonus verrouillés."); showEarlyRevealModalIfAny(r);break}
 
     /* ---- Fin de journée : blocage si incomplet + bonus appliqués ---- */
     case "btn-end-round": {
@@ -2428,6 +2428,61 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   });
   patch();
 })();
+</script><div aria-hidden="true" id="info-overlay"><div class="info-card"><div class="hd"><span class="icon">🎖️</span><span>Bonus révélés au démarrage</span></div><div class="bd"><div class="msg">Des bonus ont été posés pour cette journée :</div><ul class="list"></ul></div><div class="ft"><button class="btn primary" type="button">OK</button></div></div></div><script id="early-reveal-logic">
+(function(){
+  function teamName(tid){
+    try{ return (window.teamObj && teamObj(tid)?.name) || ('Équipe '+tid); }catch(_){ return 'Équipe '+tid; }
+  }
+  function isTaupeOrLeft(t){ return t==='taupe' || t==='lefthand'; }
+
+  // List of strings describing early-revealed bonuses for round r
+  window.getEarlyRevealList = function(r){
+    var out = [];
+    var ms = (window.state?.matches || []).filter(function(m){ return m.round === r; });
+    ms.forEach(function(m){
+      var selA = (window.getBonusSelection && getBonusSelection(r, m.a)) || null;
+      var selB = (window.getBonusSelection && getBonusSelection(r, m.b)) || null;
+      var tA = (selA && selA.type) || null;
+      var tB = (selB && selB.type) || null;
+
+      // Taupe / Gauche reveal themselves
+      if (isTaupeOrLeft(tA)){
+        var line = teamName(m.a) + ' — ' + (tA==='taupe'?'René la taupe':'10 pouces 2 mains gauche');
+        if (selA && selA.sport){ line += ' (' + (window.BONUS?.sportLabel(selA.sport)||selA.sport) + ')'; }
+        out.push(line);
+      }
+      if (isTaupeOrLeft(tB)){
+        var lineB = teamName(m.b) + ' — ' + (tB==='taupe'?'René la taupe':'10 pouces 2 mains gauche');
+        if (selB && selB.sport){ lineB += ' (' + (window.BONUS?.sportLabel(selB.sport)||selB.sport) + ')'; }
+        out.push(lineB);
+      }
+
+      // Mirror vs taupe/left (but NOT vs melon/capitaine)
+      if (tA==='miroir' && isTaupeOrLeft(tB)){
+        out.push(teamName(m.a) + ' — Miroir');
+      }
+      if (tB==='miroir' && isTaupeOrLeft(tA)){
+        out.push(teamName(m.b) + ' — Miroir');
+      }
+    });
+    return out;
+  };
+
+  window.showEarlyRevealModalIfAny = function(r){
+    try{
+      var list = window.getEarlyRevealList(r) || [];
+      if (!list.length) return;
+      var overlay = document.getElementById('info-overlay');
+      var ul = overlay.querySelector('.list');
+      ul.innerHTML = '';
+      list.forEach(function(line){
+        var li = document.createElement('li'); li.textContent = line; ul.appendChild(li);
+      });
+      overlay.classList.add('show');
+      overlay.querySelector('.btn.primary').onclick = function(){ overlay.classList.remove('show'); };
+    }catch(_){}
+  };
+})();
 </script></body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
@@ -2506,6 +2561,32 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     min-width:40px; height:28px; padding:0 8px; font-size:15px;
   }
 }
+</style><style id="early-reveal-modal-style">
+/* === Early Reveal Info Modal =========================================== */
+#info-overlay{
+  position: fixed; inset: 0; display: none; z-index: 9998;
+  background: rgba(10,12,24,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+#info-overlay.show{ display: grid; place-items: center; }
+.info-card{
+  width: min(560px, 92vw);
+  background: linear-gradient(180deg,#141a36,#121632);
+  border: 1px solid #2b315f;
+  border-radius: 16px;
+  box-shadow: 0 18px 36px rgba(0,0,0,.45);
+  color: #e7e9f7;
+  transform: translateY(6px) scale(.98);
+  opacity: 0;
+  transition: transform .18s ease, opacity .18s ease;
+}
+#info-overlay.show .info-card{ transform: translateY(0) scale(1); opacity: 1; }
+.info-card .hd{ padding: 14px 16px; border-bottom: 1px solid #2b315f; font-weight: 800; display:flex; gap:10px; align-items:center; }
+.info-card .bd{ padding: 16px; color: #cbd5ff; }
+.info-card .ft{ padding: 12px 16px; border-top: 1px solid #2b315f; display:flex; gap:8px; justify-content: flex-end; }
+.info-card .list{ margin: 8px 0 0; padding: 0 0 0 16px; }
+.info-card .list li{ margin: 6px 0; }
+.info-card .btn{ padding: 10px 14px; border-radius: 12px; }
+.info-card .btn.primary{ background: linear-gradient(180deg,#2f3da2,#25337d); border-color:#3a4aa0; }
 </style></head></html>
 <style id="rencontres-polish">
 /* Card container */
