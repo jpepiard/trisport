@@ -1,0 +1,214 @@
+/*
+ TriSports — Theme Pack (drop‑in CSS)
+ --------------------------------------------------
+ - Non destructif : se superpose à tes styles existants
+ - Vise : cohérence des accents, micro‑interactions, podium plus lisible,
+         header + tabs + boutons + cartes, responsive mobile
+ - À inclure après tes styles pour prendre le dessus :
+   <link rel="stylesheet" href="trisports-theme-pack.css" />
+*/
+
+/* === Palette d'accent unifiée =========================================== */
+:root{
+  --accent: #7aa2ff;               /* bleu principal */
+  --accent-strong: #9ab4ff;        /* bleu clair pour halos */
+  --accent-muted: rgba(122,162,255,.15);
+  --success: #22c55e;
+  --danger:  #ef4444;
+  --warning: #eab308;
+}
+
+/* === Boutons : relief + transitions ==================================== */
+.btn{
+  transition: background .18s ease, border-color .18s ease, color .18s ease,
+              box-shadow .18s ease, transform .06s ease, filter .18s ease;
+}
+.btn:hover{
+  box-shadow: 0 8px 18px rgba(0,0,0,.28), 0 0 0 1px var(--accent-muted) inset;
+  filter: saturate(115%);
+}
+.btn:active{ transform: translateY(1px) scale(.995); }
+.btn.primary{
+  background: linear-gradient(180deg, #2a3aa6, #1f2b86);
+  border-color: #4b5bd7;
+}
+.btn.primary:hover{
+  box-shadow: 0 10px 22px rgba(75,139,255,.28), 0 0 0 1px rgba(75,139,255,.25) inset;
+}
+.btn.danger:hover{
+  box-shadow: 0 10px 22px rgba(239,68,68,.25), 0 0 0 1px rgba(239,68,68,.25) inset;
+}
+.btn.toggle[aria-pressed="true"]{
+  background: linear-gradient(180deg,#2b3a99,#22307c);
+  border-color:#3a4aa0; box-shadow: 0 0 0 1px rgba(75,139,255,.25) inset;
+}
+
+/* === Tabs : soulignement animé, focus visible ========================== */
+.tab{
+  position: relative; font-weight: 600; letter-spacing: .2px;
+  transition: background .18s ease, border-color .18s ease, color .18s ease,
+              box-shadow .18s ease, transform .06s ease;
+}
+.tab:hover{ border-color: var(--accent); color:#e9edff; box-shadow:0 0 0 1px var(--accent-muted) inset; }
+
+.tab::after{
+  content:""; position:absolute; left:10px; right:10px; bottom:-6px; height:3px;
+  border-radius:3px; background:linear-gradient(90deg,transparent,var(--accent-strong),transparent);
+  transform: scaleX(0); transform-origin: center; transition: transform .18s ease;
+}
+.tab[aria-selected="true"]{ color:#f4f6ff; background:linear-gradient(180deg,#2a3aa6,#1f2b86); border-color:#4b5bd7;
+  box-shadow:0 6px 16px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.35) inset;
+}
+.tab[aria-selected="true"]::after{ transform: scaleX(1); }
+.tab:focus-visible{
+  outline:none; box-shadow:0 0 0 2px rgba(15,18,32,1), 0 0 0 4px rgba(122,162,255,.8);
+}
+@media (prefers-contrast: more){ .tab[aria-selected="true"]::after{ height:4px; } }
+
+/* === Header : compact + respirations mobiles =========================== */
+header, .app-header, .topbar{ padding-block: 8px !important; }
+header *{ margin-block: 0 !important; }
+header .brand{ display:flex; align-items:center; gap:12px; }
+header .brand img{ display:block; }
+
+/* Tabs horizontaux scrollables sur petit écran */
+@media (max-width: 520px){
+  header .tabs{ overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+  header .tabs::-webkit-scrollbar{ height:6px; }
+}
+
+/* === Cards & match-cards : halo subtil + hover ========================= */
+.card, .match-card{
+  box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
+}
+.match-card{ transition: box-shadow .18s ease, transform .06s ease; }
+.match-card:hover{ box-shadow: 0 10px 28px rgba(0,0,0,.35); transform: translateY(-1px); }
+.match-card .hd{ cursor: pointer; }
+
+/* Collapse doux du contenu (si pas déjà géré) */
+.match-card .bd{ transition: max-height .28s ease, opacity .2s ease, padding .2s ease; will-change: max-height, opacity; }
+.match-card[aria-expanded="false"] .bd{ max-height:0 !important; overflow:hidden; padding-top:0 !important; padding-bottom:0 !important; opacity:.0; }
+
+/* === Classement : podium lisible (ligne entière) ======================= */
+#table-classement tbody tr:nth-child(1){
+  background: linear-gradient(90deg, rgba(212,175,55,.12), transparent 40%, transparent 60%, rgba(212,175,55,.12));
+}
+#table-classement tbody tr:nth-child(2){
+  background: linear-gradient(90deg, rgba(192,192,192,.10), transparent 40%, transparent 60%, rgba(192,192,192,.10));
+}
+#table-classement tbody tr:nth-child(3){
+  background: linear-gradient(90deg, rgba(205,127,50,.10), transparent 40%, transparent 60%, rgba(205,127,50,.10));
+}
+/* Survol : accentue la ligne */
+#table-classement tbody tr:hover{ box-shadow: inset 0 0 0 1px rgba(122,162,255,.18); }
+
+/* Badge de rang (1re colonne) – ajustements doux */
+#table-classement tbody td:first-child{
+  text-shadow: 0 1px 0 rgba(0,0,0,.35);
+}
+
+/* === Avatars : glow optionnel quand gagnant ============================ */
+/* Ajoute la classe .is-winning à .avatar (ou au container) côté JS si besoin */
+.avatar.is-winning{ box-shadow: 0 0 0 2px rgba(34,197,94,.55), 0 0 18px rgba(34,197,94,.45); }
+
+/* === Chips / Pills : légers upgrades ================================== */
+.pill{ transition: filter .18s ease, box-shadow .18s ease; }
+.pill:hover{ filter: saturate(115%); box-shadow: 0 0 0 1px rgba(122,162,255,.12) inset; }
+
+/* === Bonus cards : état sélectionné plus visible ======================= */
+.bonus-dialog .bonus-card{ transition: box-shadow .18s ease, border-color .18s ease; }
+.bonus-dialog .bonus-card.selected{
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset, 0 10px 22px rgba(0,0,0,.25);
+}
+
+/* === Inputs : focus net, grille un peu plus aérée ====================== */
+input[type=text], input[type=number], select{
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+input[type=text]:focus, input[type=number]:focus, select:focus{
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(122,162,255,.18);
+}
+
+/* Grilles : espacements par défaut un peu plus généreux */
+.grid{ gap: 12px; }
+
+/* === Notifications toast minimales (optionnel) ========================= */
+/* HTML suggéré : <div class="toast" id="toast"></div> */
+.toast{
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(12px);
+  background: #121632; color: #e7e9f7; border: 1px solid #2b315f; border-radius: 12px;
+  padding: 10px 14px; box-shadow: 0 10px 26px rgba(0,0,0,.35);
+  opacity: 0; pointer-events: none; transition: opacity .22s ease, transform .22s ease;
+  z-index: 9999; font: 600 13px system-ui, -apple-system, Segoe UI, Roboto;
+}
+.toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* === Mode clair (opt‑in) =============================================== */
+/* Ajoute [data-theme="light"] sur <html> pour l'activer */
+:root,[data-theme="dark"]{ /* valeurs par défaut = ton thème actuel */ }
+[data-theme="light"]{
+  --bg: #f6f7fb; --card: #ffffff; --chip: #eef2ff; --border: #d9def3; --text: #0f1220; --muted: #4b5563;
+}
+[data-theme="light"] body{
+  background: linear-gradient(180deg,#ffffff,#f6f7fb);
+  color: var(--text);
+}
+[data-theme="light"] .card, [data-theme="light"] .match-card{
+  background: #fff; border-color: #e5e7f9; box-shadow: 0 2px 6px rgba(0,0,0,.05);
+}
+[data-theme="light"] .tab{ background:#eef2ff; border-color:#d9def3; color:#1f2937; }
+[data-theme="light"] .tab[aria-selected="true"]{ background:#dbe3ff; border-color:#9ab4ff; color:#111827; }
+[data-theme="light"] .btn{ background:#eef2ff; border-color:#d9def3; color:#1f2937; }
+[data-theme="light"] .btn.primary{ background: linear-gradient(180deg,#c9d6ff,#a9bbff); border-color:#9ab4ff; }
+
+/* === Accessibilité : réduire les animations si souhaité ================= */
+@media (prefers-reduced-motion: reduce){
+  *{ transition: none !important; animation: none !important; }
+}
+
+/* === Classement — demandes spécifiques (hiding + visu upgrade) ========= */
+/* 1) Cacher les pilules "4 équipes" et "3 matchs par équipe" */
+#classement .hd #teams-count,
+#classement .hd #rounds-count{ display:none !important; }
+
+/* 2) Retirer les petites médailles or/argent/bronze dans la colonne # */
+#table-classement tbody tr:nth-child(-n+3) td:first-child::after{ content: none !important; }
+#table-classement tbody tr:nth-child(1) td:first-child,
+#table-classement tbody tr:nth-child(2) td:first-child,
+#table-classement tbody tr:nth-child(3) td:first-child{
+  background: none !important;
+  border-left-color: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+}
+
+/* 3) Amélioration visuelle globale du tableau de classement */
+/*   - lignes "cartes" espacées (border-spacing)
+     - hover doux + coins arrondis
+     - barrette de couleur fine pour top 3 (sans médailles)
+*/
+#table-classement{ border-collapse: separate !important; border-spacing: 0 8px !important; }
+#table-classement thead th{ border-bottom: none; background: linear-gradient(180deg,#171d3a,#121632); }
+#table-classement tbody tr{ background: linear-gradient(180deg, #151b39, #121632); }
+#table-classement tbody td{ border-bottom: none; }
+#table-classement tbody td:first-child{ border-top-left-radius: 12px; border-bottom-left-radius: 12px; width:56px; text-align:center; font-weight:800; }
+#table-classement tbody td:last-child{ border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+#table-classement tbody tr{ box-shadow: 0 1px 0 rgba(0,0,0,.18) inset, 0 0 0 1px rgba(255,255,255,.02); }
+#table-classement tbody tr:hover{ background: linear-gradient(180deg,#141a36,#10142f); box-shadow: 0 0 0 1px var(--accent-muted) inset, 0 10px 22px rgba(0,0,0,.25); }
+
+/* Barrette fine à gauche pour top 3 (sans icônes) */
+#table-classement tbody tr:nth-child(1){ box-shadow: inset 4px 0 0 0 #d4af37, 0 1px 0 rgba(0,0,0,.18) inset, 0 0 0 1px rgba(255,255,255,.02); }
+#table-classement tbody tr:nth-child(2){ box-shadow: inset 4px 0 0 0 #c0c0c0, 0 1px 0 rgba(0,0,0,.18) inset, 0 0 0 1px rgba(255,255,255,.02); }
+#table-classement tbody tr:nth-child(3){ box-shadow: inset 4px 0 0 0 #cd7f32, 0 1px 0 rgba(0,0,0,.18) inset, 0 0 0 1px rgba(255,255,255,.02); }
+
+/* Valeurs numériques un peu plus stables visuellement */
+#table-classement tbody td, #table-classement thead th{ font-variant-numeric: tabular-nums; }
+
+/* Bonus/Malus : nuances lisibles (si non déjà présentes) */
+#table-classement .pos{ color: var(--success); font-weight:700; }
+#table-classement .neg{ color: #f87171; font-weight:700; }
+
