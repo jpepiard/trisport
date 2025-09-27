@@ -343,8 +343,8 @@ Ralentir l’animation : 2.4s → 3s sur neonPulseCalm et 2.2s → 3s sur neonHa
 
 .match-card .pill.blue:hover{
   box-shadow:
-    0 0 10px rgba(0,210,220,.35),
-    0 0 22px rgba(0,210,220,.25),
+    0 0 10px rgba(35,153,242,.35),
+    0 0 22px rgba(35,153,242,.25),
     inset 0 0 8px rgba(255,255,255,.12);
   filter: saturate(1.04);
 }
@@ -359,22 +359,22 @@ Ralentir l’animation : 2.4s → 3s sur neonPulseCalm et 2.2s → 3s sur neonHa
     transform: scale(1);
     opacity:.55;
     box-shadow:
-      0 0 0 0 rgba(0,210,220,.35),
-      0 0 18px rgba(0,210,220,.22);
+      0 0 0 0 rgba(35,153,242,.35),
+      0 0 18px rgba(35,153,242,.22);
   }
   70%{
     transform: scale(1.16);
     opacity:0;
     box-shadow:
-      0 0 0 10px rgba(0,210,220,0),
-      0 0 26px rgba(0,210,220,0);
+      0 0 0 10px rgba(35,153,242,0),
+      0 0 26px rgba(35,153,242,0);
   }
   100%{
     transform: scale(1.16);
     opacity:0;
     box-shadow:
-      0 0 0 10px rgba(0,210,220,0),
-      0 0 26px rgba(0,210,220,0);
+      0 0 0 10px rgba(35,153,242,0),
+      0 0 26px rgba(35,153,242,0);
   }
 }
 
