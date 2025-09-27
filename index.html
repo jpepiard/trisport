@@ -1042,7 +1042,23 @@ function uiIsComplete(m){
 }
 
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
-function clearMatch(mid){if(!isAdmin())return;const m=findMatch(mid);if(!m)return;if(!(isAdmin()||hasClaim(m.a)||hasClaim(m.b)))return;if(!confirm("Effacer tous les scores de ce match ?"))return;m.darts=Array(dartsTotal()).fill(null);m.pingPts=Array(pingTotal()).fill({a:null,b:null});m.palet={a:null,b:null};saveState();renderMatches()}
+function clearMatch(mid){const m = findMatch(mid); if(!m) return;
+if(!isAdmin()) return;
+
+// Reset Fléchettes
+m.darts = Array(dartsTotal()).fill(null);
+
+// Reset Ping (choix set gagnant ET scores chiffrés)
+m.ping = Array(pingTotal()).fill(null);
+m.pingPts = Array(pingTotal()).fill({a:null,b:null});
+
+// Reset Palet
+m.palet = { a:null, b:null };
+
+saveState();
+renderMatches();
+renderLeaderboard && renderLeaderboard();
+renderH2H && renderH2H();});m.palet={a:null,b:null};saveState();renderMatches()}
 
 /* ===== Bonus ===== */
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
@@ -1381,7 +1397,7 @@ function renderMatches(){
           ${renderPalet(m)}
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">
             <div class="help">La saisie nécessite d’être connecté·e à une des deux équipes (ou admin).</div>
-            <div>${(isAdmin())?`<button type="button" class="btn small" data-clear="${m.id}">Effacer ce match</button>`:''}</div>
+            <div>${(isAdmin()||hasClaim(m.a)||hasClaim(m.b))?`<button type="button" class="btn small" data-clear="${m.id}">Effacer ce match</button>`:''}</div>
           </div>
         </div>`;
       roundWrap.appendChild(el);
