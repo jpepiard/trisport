@@ -2223,30 +2223,28 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   r2 && r2.addEventListener('click', pulse);
 })();
 </script>
-<script id="points-column-script-medallion">(function wrapPointsMedallion(){
+<script id="points-column-script-chip">(function injectPointsChip(){
   const t = document.getElementById('table-classement');
   if(!t) return;
   t.querySelectorAll('tbody td:nth-child(3)').forEach(td=>{
     const v = td.textContent.trim();
-    td.innerHTML = `<span class="points-medal">${v}</span>`;
+    td.innerHTML = v + ` <span class="pts-chip">${v}</span>`;
   });
 })();</script></body>
 
-<style id="points-column-emphasis">/* Medallion (round) for Points */
-#table-classement thead th:nth-child(3){ text-align:center; }
+<style id="points-column-emphasis">/* Chip with star */
+#table-classement thead th:nth-child(3){ text-align:right; }
 #table-classement tbody td:nth-child(3){
-  text-align:center; position:relative; font-weight:900; font-size:18px;
+  text-align:right; font-weight:900; letter-spacing:.2px; font-size:18px;
 }
-#table-classement tbody td:nth-child(3) > span.points-medal{
-  display:inline-grid; place-items:center; min-width:52px; height:52px; border-radius:999px;
-  padding:0 10px;
-  background:radial-gradient(40px 26px at 50% 35%, rgba(255,255,255,.12), transparent),
-             linear-gradient(180deg,#2a3aa6,#1f2b86);
-  border:1px solid #4b5bd7;
-  box-shadow:0 10px 22px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.35) inset;
+#table-classement tbody td:nth-child(3) .pts-chip{
+  display:inline-flex; align-items:center; gap:6px; padding:4px 10px; margin-left:8px;
+  border-radius:999px; border:1px solid #4b5bd7;
+  background:linear-gradient(180deg,#1d2a57,#1a2450);
+  box-shadow:0 0 0 1px rgba(75,139,255,.35) inset;
 }
-@media (max-width:520px){
-  #table-classement tbody td:nth-child(3) > span.points-medal{ min-width:44px; height:44px; }
+#table-classement tbody td:nth-child(3) .pts-chip::before{
+  content:"★"; font-size:12px; opacity:.9;
 }</style></head></html>
 <style id="rencontres-polish">
 /* Card container */
