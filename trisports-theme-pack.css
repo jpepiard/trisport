@@ -1332,82 +1332,80 @@ body::before{
 /* === /Fin patch topbar ================================================= */
 
 
-/* === Palette “Coucher de soleil — AMBRE” =============================== */
-/* Plus orangé/ambre, avec onglet actif à contour noir */
+/* === Thème “Coucher de soleil — AMBRE *Doux*” ========================= */
+/* Version moins saturée et plus translucide pour se marier au background */
 :root{
   /* Boutons (primaires / toggles actifs) */
-  --amb-top:       #ffb44c;  /* ambre clair */
-  --amb-bottom:    #d46b11;  /* orange brûlé */
-  --amb-border:    #ffd39a;  /* liseré chaud */
-  --amb-glow:      rgba(255,180,80,.42);
-  --amb-inset:     rgba(255,180,80,.28);
-  --amb-top-h:     #ffc062;  /* hover plus clair */
-  --amb-bottom-h:  #e0761f;
+  --mamb-top:       rgba(241,176,109,.88); /* ambre doux (haut) */
+  --mamb-bottom:    rgba(208,123,58,.88);  /* ambre terre cuite (bas) */
+  --mamb-border:    #eecda2;               /* liseré chaud mais discret */
+  --mamb-glow:      rgba(245,188,130,.28); /* halo adouci */
+  --mamb-inset:     rgba(245,188,130,.22);
+  --mamb-top-h:     rgba(247,191,128,.95);
+  --mamb-bottom-h:  rgba(221,139,71,.95);
 
-  /* Tabs (barre du haut) */
-  --tab-amb-top:      #ffb86b;  /* ambre rosé en haut */
-  --tab-amb-bottom:   #ff9a3c;  /* corail ambré en bas */
-  --tab-amb-glow:     rgba(255,180,80,.45);
-  --tab-amb-inset:    rgba(255,180,80,.30);
-  --tab-amb-top-h:    #ffc178;
-  --tab-amb-bottom-h: #ffa24c;
+  /* Tabs (barre du haut) — contour noir conservé */
+  --tab-mamb-top:      rgba(247,191,128,.90);
+  --tab-mamb-bottom:   rgba(233,145,82,.90);
+  --tab-mamb-glow:     rgba(247,191,128,.28);
+  --tab-mamb-inset:    rgba(247,191,128,.20);
+  --tab-mamb-top-h:    rgba(253,203,147,.98);
+  --tab-mamb-bottom-h: rgba(240,158,95,.98);
 }
 
-/* === Boutons primaires & toggles actifs ================================ */
+/* === Boutons primaires & toggles actifs (ambiance douce) =============== */
 .btn.primary,
 .btn.toggle[aria-pressed="true"]{
-  background: linear-gradient(180deg, var(--amb-top), var(--amb-bottom));
-  border-color: var(--amb-border);
-  color: #fffaf3;
-  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  background: linear-gradient(180deg, var(--mamb-top), var(--mamb-bottom));
+  border-color: var(--mamb-border);
+  color: #fff8f0;
+  text-shadow: 0 1px 0 rgba(0,0,0,.22);
   box-shadow:
-    0 14px 32px var(--amb-glow),
-    0 0 0 1px var(--amb-inset) inset;
+    0 10px 26px var(--mamb-glow),
+    0 0 0 1px var(--mamb-inset) inset;
 }
 .btn.primary:hover,
-.btn.toggle[aria-pressed="true"]::hover{
-  background: linear-gradient(180deg, var(--amb-top-h), var(--amb-bottom-h));
-  transform: translateY(-1px);
-  filter: saturate(1.08) brightness(1.04);
+.btn.toggle[aria-pressed="true"]:hover{
+  background: linear-gradient(180deg, var(--mamb-top-h), var(--mamb-bottom-h));
+  transform: translateY(-0.5px);
+  filter: saturate(1.03) brightness(1.02);
   box-shadow:
-    0 18px 44px var(--amb-glow),
-    0 0 0 1px var(--amb-inset) inset;
+    0 14px 34px var(--mamb-glow),
+    0 0 0 1px var(--mamb-inset) inset;
 }
 
-/* Boutons neutres: bordure chaude au hover */
-.btn:hover{ border-color: var(--amb-border); }
-
-/* Focus clavier lisible sur fond chaud */
-.btn:focus-visible{
-  outline: none;
-  box-shadow:
-    0 0 0 3px rgba(255,255,255,.08),
-    0 0 0 5px var(--amb-glow),
-    0 0 0 1px var(--amb-inset) inset;
+/* Boutons neutres: bordure chaude et fond très discret */
+.btn{
+  background: rgba(24,26,40,.32);
+  backdrop-filter: saturate(1.02) blur(2px);
+}
+.btn:hover{
+  background: rgba(24,26,40,.40);
+  border-color: var(--mamb-border);
 }
 
-/* === Onglet actif dans la barre du haut (contour NOIR) ================= */
+/* === Onglet actif top-bar (contour noir, remplissage plus feutré) ====== */
 .tab[aria-selected="true"],
 .tab.active{
-  background: linear-gradient(180deg, var(--tab-amb-top), var(--tab-amb-bottom));
-  color: #1a0f00;
+  background: linear-gradient(180deg, var(--tab-mamb-top), var(--tab-mamb-bottom));
+  color: #1a120a;
   font-weight: 800;
-  text-shadow: 0 1px 0 rgba(255,255,255,.25);
-  border: 2px solid #000;                /* contour noir demandé */
+  border: 2px solid #000; /* contour noir conservé */
+  text-shadow: 0 1px 0 rgba(255,255,255,.22);
   box-shadow:
-    0 16px 40px var(--tab-amb-glow),
-    0 0 0 1px var(--tab-amb-inset) inset;
+    0 14px 32px var(--tab-mamb-glow),
+    0 0 0 1px var(--tab-mamb-inset) inset;
 }
 .tab[aria-selected="true"]:hover,
 .tab.active:hover{
-  background: linear-gradient(180deg, var(--tab-amb-top-h), var(--tab-amb-bottom-h));
-  transform: translateY(-1px);
-  filter: saturate(1.06) brightness(1.04);
+  background: linear-gradient(180deg, var(--tab-mamb-top-h), var(--tab-mamb-bottom-h));
+  transform: translateY(-0.5px);
+  filter: saturate(1.02) brightness(1.02);
   box-shadow:
-    0 22px 54px var(--tab-amb-glow),
-    0 0 0 1px var(--tab-amb-inset) inset;
+    0 18px 40px var(--tab-mamb-glow),
+    0 0 0 1px var(--tab-mamb-inset) inset;
 }
 
-/* Si des règles plus spécifiques existent, on renforce le contour noir */
+/* Renfort priorité si nécessaire */
 .tabs .tab[aria-selected="true"]{ border-color:#000 !important; border-width:2px !important; }
-/* === /Fin thème AMBRE ================================================== */
+/* === /Fin thème AMBRE Doux ============================================ */
