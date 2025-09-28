@@ -1378,3 +1378,24 @@ body::before{
   text-shadow: none;
 }
 /* ====================================================================== */
+
+
+/* === Sport score chips (match header) — emoji + white score only ======= */
+/* Scope narrowly so we don't affect other chips (round, state, bonus…) */
+.match-card .sports-row .chip{
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 8px 0 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  color: #fff !important;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: .2px;
+}
+.match-card .sports-row .chip .score-compact{
+  font-variant-numeric: tabular-nums;
+}
