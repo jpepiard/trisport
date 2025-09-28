@@ -2518,6 +2518,8 @@ function onEnter(e){
 
 
 <script>
+
+<script>
 // === Auto Bonus Tooltip (no markup change needed) =========================
 (function initBonusTooltips(){
   const DESCS = {
@@ -2529,16 +2531,15 @@ function onEnter(e){
   };
 
   function buildTip(pill){
-    if (pill.querySelector('.bonus-tip')) return;
+    if (!pill || pill.querySelector?.('.bonus-tip')) return;
 
-    // Prefer explicit data-* attributes
-    const img = pill.dataset.bonusImg
-      || pill.querySelector('.mini-bonus img')?.getAttribute('src')
+    const img = pill.dataset?.bonusImg
+      || pill.querySelector?.('.mini-bonus img')?.getAttribute('src')
       || '';
-    const title = pill.dataset.bonusTitle
-      || pill.getAttribute('aria-label')
-      || pill.textContent.trim().replace(/\s+\S*$/, '').trim(); // naive fallback
-    const desc = pill.dataset.bonusDesc || DESCS[title] || "";
+    const title = pill.dataset?.bonusTitle
+      || pill.getAttribute?.('aria-label')
+      || (pill.textContent || '').trim();
+    const desc = pill.dataset?.bonusDesc || DESCS[title] || "";
 
     const tip = document.createElement('span');
     tip.className = 'bonus-tip';
@@ -2549,25 +2550,27 @@ function onEnter(e){
       '<div class="tip-desc">'+ (desc || '') +'</div></span>';
 
     pill.appendChild(tip);
-    // ensure wrapper class & focusability
     pill.classList.add('bonus-tip-wrap');
     if (!pill.hasAttribute('tabindex')) pill.setAttribute('tabindex','0');
   }
 
-  function enhanceAll(root=document){
+  function enhanceAll(root){
+    // Guard: if called by an event, or invalid root, fall back to document
+    if (!root || !root.querySelectorAll) root = document;
     root.querySelectorAll('.pill.blue, .pill.bonus-flashy').forEach(buildTip);
   }
 
   if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', enhanceAll);
-  }else{
-    enhanceAll();
+    document.addEventListener('DOMContentLoaded', () => enhanceAll(document));
+  } else {
+    enhanceAll(document);
   }
 
-  // expose for dynamic updates
-  window.refreshBonusTooltips = enhanceAll;
+  // Expose for dynamic updates
+  window.refreshBonusTooltips = (root) => enhanceAll(root);
 })();
 </script>
+
 
 </body>
 <style id="pretty-confirm-modal">
