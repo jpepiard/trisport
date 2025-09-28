@@ -1096,3 +1096,63 @@ body::before{
     var(--site-bg-image) center / cover no-repeat;
 }
 /* ======================================================================= */
+
+/* === Unifier les boutons sur le style des onglets ===================== */
+/* Base bouton = même “chip” que les .tab, en pill */
+.btn{
+  background: var(--chip);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 12px;              /* proche des .tab */
+  font-weight: 600;
+  letter-spacing: .2px;
+  transition: background .18s ease, border-color .18s ease, color .18s ease,
+              box-shadow .18s ease, transform .06s ease, filter .18s ease;
+}
+.btn:hover{
+  border-color: var(--accent);
+  color: #e9edff;
+  box-shadow: 0 0 0 1px rgba(122,162,255,.15) inset;
+  filter: saturate(1.05);
+}
+.btn:active{ transform: translateY(1px) scale(.995); }
+
+/* Variante “primaire” = état sélectionné des .tab */
+.btn.primary{
+  background: linear-gradient(180deg, #2a3aa6, #1f2b86);
+  border-color: #4b5bd7;
+  color: #f4f6ff;
+  box-shadow:
+    0 6px 16px rgba(75,139,255,.25),
+    0 0 0 1px rgba(75,139,255,.35) inset;
+}
+.btn.primary:hover{
+  box-shadow:
+    0 10px 22px rgba(75,139,255,.28),
+    0 0 0 1px rgba(75,139,255,.25) inset;
+}
+
+/* Boutons “toggle” pressés = comme un onglet actif */
+.btn.toggle[aria-pressed="true"]{
+  background: linear-gradient(180deg,#2a3aa6,#1f2b86);
+  border-color:#4b5bd7;
+  color:#f4f6ff;
+  box-shadow: 0 0 0 1px rgba(75,139,255,.25) inset;
+}
+
+/* Tailles */
+.btn.small{ padding: 6px 10px; font-size: 13px; }
+
+/* Danger garde son rouge mais en pill + cohérent */
+.btn.danger{
+  border-radius: 999px;
+  background: linear-gradient(180deg,#7a2b2b,#5c2222);
+  border-color:#8a2b2b;
+  color:#ffecec;
+}
+.btn.danger:hover{
+  box-shadow: 0 10px 22px rgba(239,68,68,.25),
+              0 0 0 1px rgba(239,68,68,.25) inset;
+}
+/* === /Fin patch boutons type "onglets" === */
