@@ -1597,7 +1597,14 @@ function renderLeaderboard(){
     const signPal = diffPal>=0?'+':'';
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${(i < 4 ? ['🥇','🥈','🥉','💩'][i] : (i+1))}</td>
+      <td>${(()=>{const total=rows.length;const last= (i===total-1);
+  if(i===0) return '🥇';
+  if(i===1) return '🥈';
+  if(i===2) return '🥉';
+  if(last) return '💩';
+  if(i===3) return '😭';
+  return (i+1);
+})()}</td>
       <td><span class="team-name">${avatar} ${esc(r.name||'')}</span></td>
       <td class=\"points-cell\"><span class="points-pill"><b>${r.points}</b></span></td>
       <td>${r.dartsPF}</td>
