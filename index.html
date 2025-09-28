@@ -2891,13 +2891,14 @@ function onEnter(e){
 
 
 
+
 <style id="gta-selected-and-classement-dark">
 :root{
-  --gta-active: #8b5cf6;      /* Electric violet */
-  --gta-active-strong: #7c3aed;
+  --gta-active: #ef4444;      /* Rouge carmin */
+  --gta-active-strong: #b91c1c;
 }
 
-/* === GTA tabs — état sélectionné violet lisible ======================= */
+/* === GTA tabs — état sélectionné rouge carmin ========================= */
 .tab.gta[aria-selected="true"]{
   background: linear-gradient(180deg, var(--gta-active), var(--gta-active-strong));
   color: #ffffff;
@@ -2906,38 +2907,45 @@ function onEnter(e){
   box-shadow:
     0 2px 0 rgba(0,0,0,.40),
     0 0 0 3px rgba(0,0,0,.18) inset,
-    0 14px 26px rgba(139,92,246,.30);
+    0 14px 26px rgba(239,68,68,.30);
 }
 .tab.gta[aria-selected="true"]:hover{
   filter: brightness(1.04);
 }
 
-/* === Classement : fond plus noir MAIS semi‑transparent (glass) ========= */
-#classement .card{
-  background: rgba(8, 10, 16, .62) !important;     /* quasi noir mais 62% */
+/* === Fonds "noir translucide" — partout ================================ */
+.card,
+.match-card{
+  background: rgba(8, 10, 16, .62) !important;
   border-color: rgba(26, 28, 34, .75) !important;
   box-shadow: 0 10px 30px rgba(0,0,0,.35);
   backdrop-filter: blur(6px) saturate(110%);
 }
-#classement .card .hd{
+
+/* En-têtes de cartes : séparation discrète */
+.card .hd,
+.match-card .hd{
   background: transparent !important;
   border-bottom-color: rgba(26,28,34,.75) !important;
 }
-/* Table header et lignes avec même effet verre */
-#table-classement thead th{
+
+/* Tables génériques dans les cartes */
+.card table thead th{
   background: rgba(10,12,18,.66) !important;
   border-bottom-color: rgba(26,28,34,.75) !important;
   backdrop-filter: blur(6px) saturate(110%);
 }
-#table-classement tbody tr{
+.card table tbody tr{
   background: rgba(10,12,18,.58) !important;
   box-shadow: 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02);
 }
-/* Barrette top3 conservée */
+
+/* Classement : conserver les barrettes top 3 */
 #table-classement tbody tr:nth-child(1){ box-shadow: inset 4px 0 0 0 rgba(212,175,55,.9), 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02); }
 #table-classement tbody tr:nth-child(2){ box-shadow: inset 4px 0 0 0 rgba(192,192,192,.9), 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02); }
 #table-classement tbody tr:nth-child(3){ box-shadow: inset 4px 0 0 0 rgba(205,127,50,.9), 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02); }
 </style>
+
 
 
 </head></html>
