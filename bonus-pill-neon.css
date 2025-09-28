@@ -1,0 +1,37 @@
+
+/* Neon style applied ONLY to .bonus-pill */
+.bonus-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0,0,0,.35);
+  background: linear-gradient(90deg, #ff00cc, #3333ff);
+  box-shadow: 0 0 8px #ff00cc, 0 0 12px #3333ff;
+  animation: neonPulse 2s infinite alternate;
+}
+
+/* Keep order: image first, emoji second */
+.bonus-pill .mini-bonus { order: 1; display:inline-flex; align-items:center; }
+.bonus-pill .sport-emo  { order: 2; display:inline-block; line-height:1; }
+
+/* Make the icon pop a bit */
+.bonus-pill .mini-bonus img {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  transition: transform .15s ease;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+.bonus-pill:hover .mini-bonus img { transform: scale(1.08) rotate(-2deg); }
+
+@keyframes neonPulse {
+  from { box-shadow: 0 0 6px #ff00cc, 0 0 10px #3333ff; filter: brightness(1); }
+  to   { box-shadow: 0 0 14px #ff00cc, 0 0 20px #3333ff; filter: brightness(1.1); }
+}
