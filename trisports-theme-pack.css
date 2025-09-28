@@ -1423,3 +1423,26 @@ body::before{
   line-height: 1.1 !important;  /* compact lines */
   font-size: 14px !important;
 }
+
+/* === Ultra-tight: sub-scores nearly touching the main score =========== */
+.match-card .sports-row{
+  margin-top: -12px !important;   /* pull upwards to almost touch */
+  padding-top: 0 !important;
+  gap: 0 !important;
+  line-height: 1.05 !important;
+}
+
+/* Slightly larger for readability when very close */
+.match-card .sports-row .chip{
+  font-size: 15px !important;
+}
+
+/* Desktop: align first line with bonus pills height */
+@media (min-width: 720px){
+  .match-card .sports-row{ margin-top: -16px !important; }
+}
+
+/* If needed on very large screens, pull a bit more */
+@media (min-width: 1100px){
+  .match-card .sports-row{ margin-top: -18px !important; }
+}
