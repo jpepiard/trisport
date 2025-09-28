@@ -1121,3 +1121,30 @@ body::before{
 .round-grid .match-card .scorewrap .team{
   min-width: 160px; /* ajuste si besoin (140–180px) */
 }
+
+/* === Fix carte match: revenir à 2 colonnes fluides + respiration interne === */
+
+/* Revenir à des colonnes 1fr / 1fr (notre précédent min-width élargissait trop) */
+.round-grid{
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+/* Un peu plus de padding interne pour que le bonus ne colle pas le bord arrondi */
+.round-grid .match-card .scorewrap{
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}
+
+/* Lignes d'équipes: laisser un soupçon de marge interne avant/après le contenu
+   pour éviter que la pill touche l'arrondi même quand le texte est long */
+.round-grid .match-card .scorewrap .teams-row{
+  grid-template-columns: 1.2fr auto 1.2fr !important;
+  gap: 18px !important;
+}
+
+/* Bonus line : autoriser le retour à la ligne propre si vraiment serré */
+.round-grid .match-card .team .bonus-line{
+  flex-wrap: wrap;
+  row-gap: 4px;
+  max-width: 100%;
+}
