@@ -1412,3 +1412,14 @@ body::before{
 .match-card .sports-row .chip{
   width: auto !important;
 }
+
+/* === Tighter spacing: sub-match scores closer to main score =========== */
+.match-card .sports-row{
+  padding-top: 0 !important;
+  margin-top: 2px !important;   /* pull closer to the big score */
+  gap: 2px !important;          /* minimal spacing between lines */
+}
+.match-card .sports-row .chip{
+  line-height: 1.1 !important;  /* compact lines */
+  font-size: 14px !important;
+}
