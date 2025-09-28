@@ -1250,21 +1250,18 @@ function bonusChip(r, mTeam, rs){
     if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
     if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
     var __lbl = parts.join(' / ');
-
-    // Titre/description pour le gros tooltip (même logique que révélé)
-    const desc = (
-      type==='miroir'   ? 'Inverse le bonus adverse sur tout le match.' :
-      type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
-      type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
-      type==='melon'    ? 'Nouveau bonus — détails à venir.' :
-                          'Aucun réglage. +2/manche gagnée (fléchettes & ping, simples/doubles) et +2 si palet.'
-    );
     return '<span class="pill blue" aria-label="' + lblType + '"'
-         + ' data-bonus-title="' + lblType + '"'
-         + ' data-bonus-desc="' + desc + '">Bonus'
-         + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'')
-         + '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>'
-         + '</span>';
+       + ' data-bonus-title="' + lblType + '"'
+       + ' data-bonus-desc="' + (
+           (type==='miroir')   ? 'Inverse le bonus adverse sur tout le match.' :
+           (type==='taupe')    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
+           (type==='lefthand') ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
+           (type==='melon')    ? 'Nouveau bonus — détails à venir.' :
+                                  'Aucun réglage. +2 par manche gagnée (fléchettes & ping, simples/doubles) et +2 si palet.'
+         ) + '">Bonus'
+       + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'')
+       + '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>'
+       + '</span>';
   } else {
     // Révélation complète + total appliqué (logique existante inchangée)
     const applied = Math.abs((state.bonusApplied?.[r]?.[mTeam]) || 0);
@@ -2610,8 +2607,9 @@ function onEnter(e){
 
   function enhanceAll(root){
     (root || document).querySelectorAll('.pill').forEach(p=>{
-      if (p.querySelector('.mini-bonus img')) attach(p);
-    });
+  const img = p.querySelector('.mini-bonus img');
+  if (img) { attach(p); attach(img); }
+});
   }
 
   if (document.readyState === 'loading'){
