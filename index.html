@@ -3597,3 +3597,28 @@ const place = (el) => {
 <style id="chevron-inline-content-2">
 .chev--inline::before{ content:"▶"; display:inline-block; }
 </style>
+
+
+<style id="matchcard-right-absolute">
+/* Positionne la pilule + le chevron tout à droite, centrés verticalement dans l'entête */
+.match-card .hd{ position:relative !important; }
+.match-card .hd .right-rail{
+  position:absolute !important;
+  right:42px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  margin-left:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  z-index:1;
+}
+.match-card .hd .chev--inline{
+  position:absolute !important;
+  right:14px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+}
+/* éviter que .scorewrap impose un wrap */
+.match-card .hd .scorewrap{ width:auto !important; min-width:0 !important; }
+</style>
