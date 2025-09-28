@@ -2447,8 +2447,11 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 <script id="bonus-pop-autoplace">
 (function(){
   function getScoreRect(root){
-    var score = root.closest('.match-card')?.querySelector('.scorewrap .score, .score') ||
-                document.querySelector('.scorewrap .score, .score');
+var container = root.closest ? root.closest('.match-card') : null;
+var score = (container && container.querySelector)
+  ? container.querySelector('.scorewrap .score, .score')
+  : document.querySelector('.scorewrap .score, .score');
+
     return score ? score.getBoundingClientRect() : null;
   }
   function place(pop, pill){
