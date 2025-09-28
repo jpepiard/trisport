@@ -2540,15 +2540,29 @@ function onEnter(e){
   const imgBox = tip.querySelector('.tip-img');
   const tTitle = tip.querySelector('.tip-title');
   const tDesc  = tip.querySelector('.tip-desc');
-  let anchor = null;    // current pill
-  let overTip = false;  // track hover inside the tip
+  let overTip = false;
+
+  function findBonusImage(pill){
+    // priority: explicit data, then .mini-bonus img, then any img inside pill
+    const data = pill.dataset?.bonusImg;
+    if (data) return data;
+    const mini = pill.querySelector?.('.mini-bonus img');
+    if (mini) return mini.getAttribute('src');
+    const any = pill.querySelector?.('img');
+    if (any) return any.getAttribute('src');
+    return '';
+  }
+
+  function inferTitle(pill){
+    return pill.dataset?.bonusTitle || pill.getAttribute?.('aria-label') || (pill.textContent || '').trim() || 'Bonus';
+  }
 
   function fill(pill){
-    const img = pill.dataset?.bonusImg || pill.querySelector?.('.mini-bonus img')?.getAttribute('src') || '';
-    const title = pill.dataset?.bonusTitle || pill.getAttribute?.('aria-label') || (pill.textContent || '').trim();
+    const img = findBonusImage(pill);
+    const title = inferTitle(pill);
     const desc  = pill.dataset?.bonusDesc || DESCS[title] || '';
     imgBox.innerHTML = img ? '<img src="'+img+'" alt="" />' : '';
-    tTitle.textContent = title || 'Bonus';
+    tTitle.textContent = title;
     tDesc.textContent  = desc;
   }
 
@@ -2573,17 +2587,19 @@ function onEnter(e){
     });
   }
 
-  function show(pill){ anchor = pill; fill(pill); place(pill); }
-  function hide(){
-    if (!overTip) { tip.style.display = 'none'; tip.classList.remove('show'); anchor = null; }
-  }
+  function show(pill){ fill(pill); place(pill); }
+  function hide(){ if (!overTip){ tip.style.display = 'none'; tip.classList.remove('show'); } }
 
-  // Keep visible while mouse moves over the tooltip
   tip.addEventListener('mouseenter', ()=>{ overTip = true; });
   tip.addEventListener('mouseleave', ()=>{ overTip = false; hide(); });
 
   function attach(pill){
     if (!pill || pill.dataset.btipReady) return;
+    // Heuristic: attach to pills that have any <img> OR explicit data-bonus-*
+    const hasExplicit = pill.hasAttribute('data-bonus-img') || pill.hasAttribute('data-bonus-title') || pill.hasAttribute('data-bonus-desc');
+    const hasImage = !!pill.querySelector('img');
+    if (!(hasExplicit || hasImage)) return;
+
     pill.dataset.btipReady = '1';
     if (!pill.hasAttribute('tabindex')) pill.setAttribute('tabindex','0');
     pill.addEventListener('mouseenter', ()=>show(pill));
@@ -2593,13 +2609,10 @@ function onEnter(e){
     });
     pill.addEventListener('focus', ()=>show(pill));
     pill.addEventListener('blur', hide);
-    // No click/touch needed
   }
 
   function enhanceAll(root){
-    (root || document).querySelectorAll('.pill').forEach(p=>{
-      if (p.querySelector('.mini-bonus img')) attach(p);
-    });
+    (root || document).querySelectorAll('.pill').forEach(attach);
   }
 
   if (document.readyState === 'loading'){
@@ -2616,6 +2629,7 @@ function onEnter(e){
   window.refreshBonusTooltips = enhanceAll;
 })();
 </script>
+
 
 
 
