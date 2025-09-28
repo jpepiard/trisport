@@ -1332,64 +1332,49 @@ body::before{
 /* === /Fin patch topbar ================================================= */
 
 
-/* === Contraste renforcé pour bouton ACTIF (prune/indigo) ============== */
-/* Objectif: que .btn.primary se détache nettement des .btn "neutres"     */
-/* - Actif: fond plus opaque, texte plus clair, bordure 2px + halo        */
-/* - Neutres: fond plus sombre & plus translucide, bordure atténuée       */
-:root{
-  --pi2-top:    #342653;          /* haut (prune plus présent) */
-  --pi2-bottom: #1c233a;          /* bas (indigo nuit) */
-  --pi2-border: #8b79a5;          /* bordure mauve plus visible */
-  --pi2-glow:   rgba(176,124,193,.40);
-  --pi2-inset:  rgba(176,124,193,.30);
-  --pi2-top-h:    #3d2f62;
-  --pi2-bottom-h: #222a44;
+/* === Patch demandé ===================================================== */
+/* 1) Neutres: inchangés (on ne touche PAS à .btn)                         */
+/* 2) Actifs: .btn.primary et .btn.toggle[aria-pressed="true"]             */
+/*    → prune/indigo un peu plus CLAIR pour mieux ressortir                */
+/* 3) Barre du haut: onglet sélectionné → police NOIRE                     */
 
-  --pi2-neutral-bg: rgba(16,18,28,.24); /* neutre plus sombre et + transparent */
-  --pi2-neutral-bg-h: rgba(16,18,28,.34);
-  --pi2-neutral-border: rgba(160,150,190,.35);
-  --pi2-neutral-border-h: rgba(160,150,190,.55);
+:root{
+  /* Palette prune/indigo – version plus claire */
+  --piL-top:    #3a2a55;   /* prune + clair (haut) */
+  --piL-bottom: #232a44;   /* indigo + clair (bas) */
+  --piL-border: #8b79a5;   /* bordure mauve lisible */
+  --piL-glow:   rgba(176,124,193,.34);
+  --piL-inset:  rgba(176,124,193,.28);
+  --piL-top-h:    #423067;
+  --piL-bottom-h: #283053;
 }
 
-/* Bouton actif */
+/* Boutons ACTIFS seulement */
 .btn.primary,
 .btn.toggle[aria-pressed="true"]{
-  background: linear-gradient(180deg, var(--pi2-top), var(--pi2-bottom));
-  border-color: var(--pi2-border);
+  background: linear-gradient(180deg, var(--piL-top), var(--piL-bottom));
+  border-color: var(--piL-border);
   border-width: 2px;
   color: #ffffff;
-  text-shadow: 0 1px 0 rgba(0,0,0,.35);
+  text-shadow: 0 1px 0 rgba(0,0,0,.25);
   box-shadow:
-    0 16px 36px var(--pi2-glow),
-    0 0 0 2px var(--pi2-inset) inset;
+    0 14px 34px var(--piL-glow),
+    0 0 0 2px var(--piL-inset) inset;
 }
 .btn.primary:hover,
 .btn.toggle[aria-pressed="true"]:hover{
-  background: linear-gradient(180deg, var(--pi2-top-h), var(--pi2-bottom-h));
+  background: linear-gradient(180deg, var(--piL-top-h), var(--piL-bottom-h));
   transform: translateY(-0.5px);
-  filter: saturate(1.06) brightness(1.04);
+  filter: saturate(1.05) brightness(1.04);
   box-shadow:
-    0 22px 48px var(--pi2-glow),
-    0 0 0 2px var(--pi2-inset) inset;
+    0 18px 44px var(--piL-glow),
+    0 0 0 2px var(--piL-inset) inset;
 }
 
-/* Boutons neutres (non actifs) */
-.btn{
-  background: var(--pi2-neutral-bg);
-  border-color: var(--pi2-neutral-border);
-  color: #e9e9f2;
+/* Barre du haut: onglet actif → police noire */
+.tab[aria-selected="true"],
+.tab.active{
+  color: #000 !important;
+  text-shadow: none;
 }
-.btn:hover{
-  background: var(--pi2-neutral-bg-h);
-  border-color: var(--pi2-neutral-border-h);
-}
-
-/* Accessibilité: focus bien visible */
-.btn:focus-visible{
-  outline: none;
-  box-shadow:
-    0 0 0 3px rgba(255,255,255,.08),
-    0 0 0 5px var(--pi2-glow),
-    0 0 0 2px var(--pi2-inset) inset;
-}
-/* === /Fin contraste renforcé ========================================== */
+/* ====================================================================== */
