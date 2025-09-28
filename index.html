@@ -32,37 +32,6 @@
   letter-spacing:.5px;
 }
 .scorewrap .sports-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; padding-top:6px; }
-
-/* ÉQUIPES — réagencement sans changer le HTML */
-
-/* espacements de la grille d’équipes */
-#team-list{ gap:16px; }
-
-/* en-tête : avatar + nom sur une ligne, compact */
-#team-list .team-header{
-  display:flex; align-items:center; gap:12px;
-}
-#team-list .team-header [data-click-avatar]{
-  width:56px; height:56px; flex:0 0 56px; border-radius:50%; overflow:hidden;
-}
-#team-list .team-header input[type="text"]{
-  height:40px; font-size:16px;
-}
-
-/* corps de carte : 2 colonnes, éléments alignés bas */
-#team-list .card .bd{
-  display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:end;
-}
-
-/* le sous-bloc “Joueur·se 1/2” (déjà en .grid.cols-2) reste sur toute la largeur */
-#team-list .card .bd .grid.cols-2{ grid-column:1 / -1; }
-
-/* la ligne d’info (protégée par mot de passe, etc.) s’étend sur la largeur */
-#team-list .card .bd .help{ grid-column:1 / -1; margin-top:4px; }
-
-/* boutons : deux colonnes par défaut, login en pleine largeur */
-#team-list .card .bd > button{ width:100%; min-height:40px; }
-#team-list .card .bd > button[data-act="login"]{ grid-column:1 / -1; }
 </style>
 <!-- Garde-fou : certaines extensions injectent du React minifié qui loggue "Minified React error #...".
      On évite que ça remonte et perturbe l'app (ça n'affecte PAS ton site). -->
