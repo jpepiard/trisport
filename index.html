@@ -3515,3 +3515,20 @@ const place = (el) => {
   opacity: 1;
 }
 </style>
+
+
+<style id="chevron-right-of-chip">
+/* Place state chip and chevron on the same line, aligned right */
+.match-card .hd{ display:flex; align-items:center; }
+.match-card .hd .right-rail{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+/* Cancel the "below sports" spacing for this context */
+.match-card .hd .state-chip{ margin-top:0; }
+.match-card .hd .chev{
+  margin-left:8px !important; /* sit next to the chip, not flush far right */
+}
+</style>
