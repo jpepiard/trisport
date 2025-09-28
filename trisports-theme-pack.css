@@ -1097,85 +1097,27 @@ body::before{
 }
 /* ======================================================================= */
 
+/* === Match cards : +large pour les équipes / bonus ==================== */
 
-/* ==========================================================================
-   TriSports — Button Visuals: Purple/Blue Neon tuned to background
-   (Overrides appended at end so they take precedence)
-   ========================================================================== */
-
-:root{
-  --btn-bg-top:   #1a1e36;
-  --btn-bg-bot:   #14182c;
-  --btn-bd:       #343b66;
-  --btn-pri-top:  #4b3fae;
-  --btn-pri-bot:  #1f2b86;
-  --btn-pri-bd:   #6a5bd7;
+/* 1) Élargir chaque colonne de carte (desktop) */
+.round-grid{
+  /* passe de minmax(0,1fr) à minmax(420px,1fr) pour éviter les cartes trop étroites */
+  grid-template-columns: repeat(2, minmax(420px, 1fr));
+  gap: 16px;
+}
+/* breakpoint mobile identique à l’existant (1 colonne) */
+@media (max-width: 900px){
+  .round-grid{ grid-template-columns: 1fr; }
 }
 
-/* Base button */
-.btn{
-  background: linear-gradient(180deg, var(--btn-bg-top), var(--btn-bg-bot));
-  border-color: var(--btn-bd);
-  will-change: transform, box-shadow, filter;
-  transform: translateZ(0);
-}
-.btn:hover{
-  transform: scale(1.03);
-  box-shadow:
-    0 8px 18px rgba(0,0,0,.28),
-    0 0 0 1px rgba(122,162,255,.15) inset;
-  filter: saturate(1.06);
-}
-.btn:active{
-  transform: translateY(1px) scale(.995);
+/* 2) À l’intérieur de la carte : colonnes équipe | score | équipe plus larges
+      -> plus d'espace pour les bonus à gauche et à droite */
+.round-grid .match-card .scorewrap .teams-row{
+  /* était: 1fr auto 1fr  */
+  grid-template-columns: 1.3fr auto 1.3fr;
 }
 
-/* Primary = violet→bleu to match header/bg */
-.btn.primary{
-  background: linear-gradient(180deg, var(--btn-pri-top), var(--btn-pri-bot));
-  border-color: var(--btn-pri-bd);
-  color: #eef3ff;
-  text-shadow: 0 1px 0 rgba(0,0,0,.28);
-}
-.btn.primary:hover{
-  box-shadow:
-    0 0 14px rgba(122,162,255,.35),
-    0 0 24px rgba(122,162,255,.22),
-    0 0 0 1px rgba(122,162,255,.25) inset;
-  filter: saturate(1.08);
-}
-.btn.primary:active{
-  box-shadow:
-    0 0 8px rgba(122,162,255,.28),
-    0 0 0 1px rgba(122,162,255,.2) inset;
-}
-
-/* Toggle pressed keeps the neon rim */
-.btn.toggle[aria-pressed="true"]{
-  background: linear-gradient(180deg, #3a2fa2, #24308a);
-  border-color: #6a5bd7;
-  box-shadow: 0 0 0 1px rgba(122,162,255,.28) inset, 0 0 14px rgba(122,162,255,.22);
-}
-
-/* Danger keeps red scheme but with subtle halo */
-.btn.danger{
-  background: linear-gradient(180deg, #7a2b2b, #5c2222);
-  border-color: #8a2b2b;
-}
-.btn.danger:hover{
-  box-shadow:
-    0 0 14px rgba(239,68,68,.32),
-    0 0 0 1px rgba(239,68,68,.25) inset;
-  filter: saturate(1.07);
-}
-
-/* Small buttons: slightly tighter transform so they don't jump too much */
-.btn.small:hover{
-  transform: scale(1.02);
-}
-
-/* High-contrast preference: stronger borders */
-@media (prefers-contrast: more){
-  .btn{ border-color: #6b76b2; }
-  .btn.primary{ border-color: #9ab4ff; }
+/* 3) Sécurité : éviter que le contenu bonus force une colonne trop étroite */
+.round-grid .match-card .scorewrap .team{
+  min-width: 160px; /* ajuste si besoin (140–180px) */
 }
