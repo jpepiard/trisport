@@ -983,3 +983,7 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .bonus-tip.floating.show{
   transform: translateY(0);
 }
+
+
+/* === Tooltip spacing tweak ============================================= */
+.bonus-tip.floating{ gap: 12px; }   /* espace entre la photo et le texte */
