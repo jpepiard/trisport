@@ -3532,3 +3532,17 @@ const place = (el) => {
   margin-left:8px !important; /* sit next to the chip, not flush far right */
 }
 </style>
+
+
+<style id="chevron-far-right">
+/* Chev à l'extrême droite de la carte, sur la même ligne que la pilule */
+.match-card .hd{ display:flex; align-items:center; position:relative; }
+.match-card .hd .right-rail{
+  margin-left:auto;             /* pousse la zone état à droite */
+  display:flex; align-items:center;
+}
+.match-card .hd .state-chip{ margin-top:0; } /* même ligne que le chevron */
+.match-card .hd .chev{
+  margin-left:12px;             /* place le chevron après la pilule */
+}
+</style>
