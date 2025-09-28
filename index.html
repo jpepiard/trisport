@@ -1389,21 +1389,21 @@ function renderMatches(){
           ${renderPalet(m)}
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">
             <div class="help">La saisie nécessite d’être connecté·e à une des deux équipes (ou admin).</div>
-            <div>${(isAdmin()||hasClaim(m.a)||hasClaim(m.b))?`<button type="button" class="btn small" data-clear="${m.id}">Effacer ce match</button>`:''}</div>
+            <div>${(isAdmin())?`<button type="button" class="btn small" data-clear="${m.id}">Effacer ce match</button>`:''}</div>
           </div>
         </div>`;
       roundWrap.appendChild(el);
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); sel.disabled=!(can && canEditScores(m,rCtl));
+        const can=(isAdmin()); sel.disabled=!(can && canEditScores(m,rCtl));
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
       
       // ping (vainqueur A/B)
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="ping"]').forEach(sel=>{
-        const can = (isAdmin() || hasClaim(m.a) || hasClaim(m.b));
+        const can = (isAdmin());
         sel.disabled = !(can && canEditScores(m, rCtl));
         sel.addEventListener("change", ()=>{
           const i  = parseInt(sel.getAttribute("data-index"),10);
@@ -1425,7 +1425,7 @@ updateMatchCompleteness(m.id);
 
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const can=(isAdmin()||hasClaim(m.a)||hasClaim(m.b)); inp.disabled=!(can && canEditScores(m,rCtl));
+        const can=(isAdmin()); inp.disabled=!(can && canEditScores(m,rCtl));
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;saveState();updateNote()});
