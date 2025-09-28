@@ -489,7 +489,7 @@ header .btn, header .chip, header .pill, header .tab{
 <style id="chevron-toggle">
 /* Chevron d’ouverture/fermeture */
 .hd{ position:relative; }
-.hd .chev{
+.hd .chev--abs{
   position:absolute; right:12px; top:12px;
   display:inline-block;
   width:1.25em;
@@ -497,8 +497,8 @@ header .btn, header .chip, header .pill, header .tab{
   opacity:.7;
   transition:transform .18s ease, opacity .18s ease;
 }
-.hd .chev::before{ content:"▶"; display:inline-block; }
-.match-card[aria-expanded="true"] .hd .chev{ transform:rotate(90deg); opacity:1; }
+.hd .chev--abs::before{ content:"▶"; display:inline-block; }
+.match-card[aria-expanded="true"] .hd .chev--abs{ transform:rotate(90deg); opacity:1; }
 /* rendre l'en-tête cliquable */
 .match-card .hd{ cursor:pointer; }
 </style>
@@ -1386,7 +1386,7 @@ function renderMatches(){
       </div>
 
       <!-- chevron à droite -->
-      <span class="chev" aria-hidden="true"></span>
+      <span class="chev chev--inline" aria-hidden="true"></span>
     </div>
   </div>
   <div class="bd">
@@ -3289,10 +3289,7 @@ function onEnter(e){
 </style>
 <style id="chev-bottom-right">
 .match-card .hd{ position: relative; }
-.match-card .hd .chev{
-  position: absolute; right: 14px; bottom: 12px; top: auto;
-  transform: none;
-}
+
 .match-card[aria-expanded="true"] .hd .chev{ transform: rotate(90deg); }
 </style>
 <style id="incomplete-pulse">
@@ -3493,3 +3490,184 @@ const place = (el) => {
   });
 })();
 </script>
+
+
+<style id="chevron-stays-put">
+/* Fix chevron: keep it inside match-card header, not absolutely positioned */
+.match-card .hd{
+  display:flex;
+  align-items:center;
+}
+
+/* Rotate when expanded */
+.match-card[aria-expanded="true"] .hd .chev{
+  transform: rotate(90deg);
+  opacity: 1;
+}
+</style>
+
+
+<style id="chevron-right-of-chip">
+/* Place state chip and chevron on the same line, aligned right */
+.match-card .hd{ display:flex; align-items:center; }
+.match-card .hd .right-rail{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+/* Cancel the "below sports" spacing for this context */
+.match-card .hd .state-chip{ margin-top:0; }
+
+</style>
+
+
+<style id="chevron-far-right">
+/* Chev à l'extrême droite de la carte, sur la même ligne que la pilule */
+.match-card .hd{ display:flex; align-items:center; position:relative; }
+.match-card .hd .right-rail{
+  margin-left:auto;             /* pousse la zone état à droite */
+  display:flex; align-items:center;
+}
+.match-card .hd .state-chip{ margin-top:0; } /* même ligne que le chevron */
+
+</style>
+
+
+<style id="chevron-full-right-nowrap">
+/* Empêche le retour à la ligne et pousse chip+chevron à l'extrême droite */
+.match-card .hd{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap: nowrap;          /* <<< pas de wrap */
+  padding-right: 14px;        /* bord droit agréable */
+}
+.match-card .hd .scorewrap{   /* le bloc central prend toute la place restante */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.match-card .hd .right-rail,
+
+.match-card .hd .state-chip{ margin-top:0; }  /* même ligne */
+
+</style>
+
+
+<style id="chevron-inline-match-card">
+/* Chevron inline spécifique aux cartes de match (n'interfère pas avec les autres) */
+.match-card .hd{ display:flex; align-items:center; position:relative; }
+.match-card .hd .right-rail{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+.match-card .hd .state-chip{ margin-top:0; }
+.chev--inline{ position:static !important; margin-left:8px; width:1.25em; text-align:center; opacity:.7; transition:transform .18s ease, opacity .18s ease; }
+.match-card[aria-expanded="true"] .hd .chev--inline{ transform:rotate(90deg); opacity:1; }
+</style>
+
+
+<style id="matchcard-header-inline-fix">
+/* Empêche .scorewrap (largeur 100%) de pousser la pilule/chevron à la ligne */
+.match-card .hd{ display:flex; align-items:center; flex-wrap:nowrap; }
+.match-card .hd .scorewrap{ flex:1 1 auto; width:auto !important; min-width:0; }
+.match-card .hd .right-rail{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+.match-card .hd .state-chip{ margin-top:0; }
+
+</style>
+
+
+<style id="matchcard-chev-final-fix">
+/* Forcer chevron + pilule sur la même ligne, tout à droite (override fort) */
+.match-card .hd{ display:flex !important; align-items:center !important; flex-wrap:nowrap !important; }
+.match-card .hd .scorewrap{ flex:1 1 auto !important; width:auto !important; min-width:0 !important; }
+.match-card .hd .right-rail{ margin-left:auto !important; display:flex !important; align-items:center !important; gap:10px !important; }
+.match-card .hd .state-chip{ margin-top:0 !important; }
+
+.match-card[aria-expanded="true"] .hd .chev{ transform:rotate(90deg) !important; }
+</style>
+
+<style id="chevron-inline-final">
+/* Match-card: pilule + chevron à droite, sur une seule ligne */
+.match-card .hd{ display:flex; align-items:center; flex-wrap:nowrap; }
+.match-card .hd .scorewrap{ flex:1 1 auto; width:auto; min-width:0; }
+.match-card .hd .right-rail{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+.match-card .hd .state-chip{ margin-top:0; }
+.match-card .hd .chev--inline{ position:static; margin-left:8px; width:1.25em; text-align:center; opacity:.7; transition:transform .18s ease, opacity .18s ease; }
+.match-card[aria-expanded="true"] .hd .chev--inline{ transform:rotate(90deg); opacity:1; }
+</style>
+
+<style id="chevron-inline-content-2">
+.chev--inline::before{ content:"▶"; display:inline-block; }
+</style>
+
+
+<style id="matchcard-right-absolute">
+/* Positionne la pilule + le chevron tout à droite, centrés verticalement dans l'entête */
+.match-card .hd{ position:relative !important; }
+.match-card .hd .right-rail{
+  position:absolute !important;
+  right:42px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  margin-left:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  z-index:1;
+}
+.match-card .hd .chev--inline{
+  position:absolute !important;
+  right:14px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+}
+/* éviter que .scorewrap impose un wrap */
+.match-card .hd .scorewrap{ width:auto !important; min-width:0 !important; }
+</style>
+
+
+<style id="matchcard-bottom-corners">
+/* Objectif: pilule bas-gauche, chevron bas-droite de la CARTE */
+/* La carte sert de conteneur de positionnement */
+.match-card{ position:relative !important; }
+
+/* Pilule déjà en bas à gauche : on s'assure qu'elle n'est plus dans le flux du header */
+.match-card .right-rail{
+  position:absolute !important;
+  left:16px !important;
+  bottom:12px !important;
+  top:auto !important;
+  right:auto !important;
+  margin:0 !important;
+  display:flex !important;
+  align-items:center !important;
+}
+
+/* Chevron en bas à droite de la carte */
+.match-card .chev--inline{
+  position:absolute !important;
+  right:16px !important;
+  bottom:12px !important;
+  top:auto !important;
+  transform:none !important;
+}
+
+/* Le header peut rester en flex sans wrap, mais ne contrôle plus la pilule/chevron */
+.match-card .hd{ display:block !important; }
+.match-card .hd .scorewrap{ width:100% !important; }
+</style>
+
+
+<style id="matchcard-bottom-corners-anchorto-card">
+/* Ancre le positionnement absolu au conteneur .match-card, pas au header */
+.match-card{ position:relative !important; }
+.match-card .hd{ position:static !important; } /* clé : ne plus être l'ancêtre positionné */
+.match-card .right-rail{
+  position:absolute !important;
+  left:16px !important;
+  bottom:12px !important;
+}
+.match-card .chev--inline{
+  position:absolute !important;
+  right:16px !important;
+  bottom:12px !important;
+}
+</style>
