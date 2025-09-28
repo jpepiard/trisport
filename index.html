@@ -501,16 +501,16 @@ header .btn, header .chip, header .pill, header .tab{
 <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
 <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
 <nav aria-label="Sections" class="tabs" id="tabs" role="tablist">
-<button aria-selected="true" class="tab" data-tab="setup" role="tab" type="button">Tournoi</button>
-<button aria-selected="false" class="tab" data-tab="equipes" role="tab" type="button">Équipes</button>
-<button aria-selected="false" class="tab" data-tab="calendrier" role="tab" type="button">Rencontres</button>
-<button aria-selected="false" class="tab" data-tab="classement" role="tab" type="button">Classement</button>
-<button aria-selected="false" class="tab" data-tab="options" role="tab" type="button">Options</button>
+<button aria-selected="true" class="tab gta" data-tab="setup" role="tab" type="button">Tournoi</button>
+<button aria-selected="false" class="tab gta" data-tab="equipes" role="tab" type="button">Équipes</button>
+<button aria-selected="false" class="tab gta" data-tab="calendrier" role="tab" type="button">Rencontres</button>
+<button aria-selected="false" class="tab gta" data-tab="classement" role="tab" type="button">Classement</button>
+<button aria-selected="false" class="tab gta" data-tab="options" role="tab" type="button">Options</button>
 </nav>
 <div style="display:flex;align-items:center;gap:8px">
 <span class="pill" id="tname-top" style="display:none"></span>
 <span class="pill" id="whoami-top" style="">visiteur</span>
-<button class="btn small" id="btn-fullscreen" type="button">⛶ Plein écran</button>
+<button class="btn small header-chip gta" id="btn-fullscreen" type="button">⛶ Plein écran</button>
 </div>
 </div>
 </header>
@@ -2810,6 +2810,97 @@ function onEnter(e){
     justify-content: center !important;
   }
 </style>
+
+<style id="gta-tabs">
+/* ===== Onglets style "GTA" ============================================== */
+@font-face{
+  font-family: "Pricedown";
+  src: local("Pricedown");
+  font-display: swap;
+}
+.tab.gta{
+  font-family: "Pricedown","Bangers","Luckiest Guy","Impact","Arial Black",system-ui,sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-weight: 900;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: linear-gradient(180deg,#1a234d,#141a36);
+  border: 2px solid rgba(255,255,255,.12);
+  -webkit-text-stroke: 2px #000;
+  color: #fff;
+  text-shadow:
+    0 0 0 #000,
+    0 2px 0 #000,
+    2px 0 0 #000,
+    -2px 0 0 #000,
+    0 -2px 0 #000,
+    0 4px 10px rgba(0,0,0,.6);
+  box-shadow:
+    0 0 0 1px rgba(122,162,255,.10) inset,
+    0 6px 16px rgba(41,90,255,.20);
+  transition: transform .08s ease, box-shadow .18s ease, filter .18s ease, background .18s ease;
+  position: relative;
+  overflow: hidden;
+}
+.tab.gta::before{
+  content:"";
+  position:absolute; left:8px; right:8px; top:4px; height:40%;
+  border-radius:999px;
+  background: radial-gradient(ellipse at top, rgba(255,255,255,.25), transparent 60%);
+  pointer-events:none;
+  mix-blend-mode: screen;
+}
+.tab.gta:hover{
+  transform: translateY(-1px);
+  filter: saturate(1.06);
+  box-shadow:
+    0 0 0 1px rgba(122,162,255,.18) inset,
+    0 10px 24px rgba(41,90,255,.28);
+}
+.tab.gta:active{ transform: translateY(0); }
+.tab.gta[aria-selected="true"]{
+  background: linear-gradient(180deg,#2e4bff,#1e2e86);
+  border-color: rgba(255,255,255,.22);
+  box-shadow:
+    0 0 0 1px rgba(122,162,255,.25) inset,
+    0 14px 30px rgba(46,75,255,.35),
+    0 0 22px rgba(75,139,255,.35);
+}
+.tab.gta[aria-selected="true"]::after{
+  content:"";
+  position:absolute; left:14px; right:14px; bottom:-6px; height:4px;
+  border-radius:4px;
+  background: linear-gradient(90deg, transparent, rgba(180,200,255,.95), transparent);
+  filter: blur(.3px);
+}
+
+/* Version badge/bouton pour la zone droite du header */
+.header-chip.gta{
+  font-family: "Pricedown","Bangers","Luckiest Guy","Impact","Arial Black",system-ui,sans-serif;
+  text-transform: uppercase;
+  font-weight: 900;
+  -webkit-text-stroke: 1.5px #000;
+  color:#fff !important;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: linear-gradient(180deg,#1a234d,#141a36);
+  border: 2px solid rgba(255,255,255,.10);
+  text-shadow:
+    0 0 0 #000, 0 2px 0 #000, 2px 0 0 #000, -2px 0 0 #000, 0 -2px 0 #000,
+    0 3px 8px rgba(0,0,0,.55);
+  box-shadow: 0 6px 16px rgba(41,90,255,.2);
+}
+.header-chip.gta:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(41,90,255,.28);
+}
+
+@media (prefers-reduced-motion: reduce){
+  .tab.gta, .header-chip.gta{ transition: none; }
+}
+</style>
+
 </head></html>
 <style id="rencontres-polish">
 /* Card container */
