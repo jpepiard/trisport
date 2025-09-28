@@ -1446,27 +1446,3 @@ body::before{
 @media (min-width: 1100px){
   .match-card .sports-row{ margin-top: -18px !important; }
 }
-
-/* === Journées (calendrier) : réduire l'espace au-dessus des titres ========
-   - Cible les titres injectés dans #match-list (ex: "Journée 1", "Journée 2")
-   - Reste non destructif : n'affecte que cette zone
-*/
-#calendrier #match-list h1,
-#calendrier #match-list h2,
-#calendrier #match-list h3,
-#calendrier #match-list h4,
-#calendrier #match-list h5,
-#calendrier #match-list h6,
-#calendrier #match-list .round-title,
-#calendrier #match-list .journee-title{
-  margin-top: 4px !important;   /* avant ~16px */
-  margin-bottom: 6px;
-  line-height: 1.2;
-}
-
-/* Optionnel : si un conteneur ajoute du padding en haut d'un groupe de journée,
-   on le compresse légèrement (sans impacter le reste du site). */
-#calendrier #match-list .round-header,
-#calendrier #match-list .journee-header{
-  padding-top: 4px !important;
-}

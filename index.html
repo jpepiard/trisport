@@ -205,6 +205,13 @@ main .container{padding-top:22px}section{display:none}section.active{display:blo
 input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1331;color:#fff}
 label{font-size:13px;color:var(--muted)}
 table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left}th{color:var(--muted);font-weight:600}
+/* Base: compacter les marges des titres (impacte "Journée X") */
+h1, h2, h3, h4, h5, h6{
+  margin-top: 6px;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
 .match-card{border-radius:14px;border:1px solid var(--border);background:var(--card);overflow:hidden}
 .match-card[aria-expanded="false"] .bd{display:none}.match-card[aria-expanded="true"] .bd{display:block}
 .chip{font-size:12px;padding:4px 8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;color:var(--muted)}
