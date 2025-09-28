@@ -1399,3 +1399,16 @@ body::before{
 .match-card .sports-row .chip .score-compact{
   font-variant-numeric: tabular-nums;
 }
+
+/* === Stack sub-match scores vertically under the main score ============ */
+.match-card .sports-row{
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding-top: 8px !important;
+}
+/* Make each item take its own line nicely */
+.match-card .sports-row .chip{
+  width: auto !important;
+}
