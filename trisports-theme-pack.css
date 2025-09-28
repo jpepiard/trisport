@@ -1187,3 +1187,44 @@ body::before{
   border-color: var(--btn-border);
 }
 /* === /Fin thème #330726 ================================================ */
+
+
+/* === Thème harmonisé sur le background (prune/indigo brumeux) ========= */
+/* Palette extraite de l'image: dominantes prune sombre + indigo, reflets mauve */
+:root{
+  --btn-top: #2b1f3f;      /* haut du dégradé (prune) */
+  --btn-bottom: #1c2133;   /* bas du dégradé (indigo nuit) */
+  --btn-border: #5f4a6d;   /* bordure / hover */
+  --btn-glow: rgba(176,124,193,.26); /* halo mauve doux */
+  --btn-inset: rgba(176,124,193,.28);
+}
+
+/* Appliqué aux primaires et toggles actifs */
+.btn.primary,
+.btn.toggle[aria-pressed="true"]{
+  background: linear-gradient(180deg, var(--btn-top), var(--btn-bottom));
+  border-color: var(--btn-border);
+  color: #f3eef7;
+  box-shadow:
+    0 12px 26px var(--btn-glow),
+    0 0 0 1px var(--btn-inset) inset;
+}
+
+/* Hover et focus visibles mais subtils */
+.btn.primary:hover,
+.btn.toggle[aria-pressed="true"]:hover{
+  box-shadow:
+    0 16px 32px var(--btn-glow),
+    0 0 0 1px var(--btn-inset) inset;
+}
+.btn:hover{ border-color: var(--btn-border); }
+
+/* Variante douce pour les .btn “neutres” (si tu veux tout aligner) */
+.btn{
+  background: rgba(24,26,40,.35);
+  backdrop-filter: saturate(1.05) blur(2px);
+}
+.btn:hover{
+  background: rgba(24,26,40,.45);
+}
+/* === /Fin thème harmonisé background ================================== */
