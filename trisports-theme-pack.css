@@ -964,7 +964,7 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 }
 
 
-/* === Bonus tooltip — large + backdrop blur ============================== */
+/* Bonus tooltip — large */
 .bonus-tip.floating{
   grid-template-columns: 56px 1fr;
   max-width: 360px;
@@ -980,21 +980,6 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .bonus-tip.floating .tip-title{ font-size:16px; font-weight:800; margin-bottom:4px; }
 .bonus-tip.floating .tip-desc{ font-size:13px; color: var(--muted, #8b94b8); }
 
-.bonus-tip-backdrop{
-  position: fixed;
-  inset: 0;
-  z-index: 99990;
-  background: rgba(0,0,0,.45);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .16s ease;
-}
-.bonus-tip-backdrop.show{
-  opacity: 1;
-  pointer-events: auto;
-}
 .bonus-tip.floating.show{
   transform: translateY(0);
 }
