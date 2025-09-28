@@ -1332,42 +1332,64 @@ body::before{
 /* === /Fin patch topbar ================================================= */
 
 
-/* === Thème boutons actifs — PRUNE / INDIGO ============================ */
-/* Harmonisé au fond: prune sombre et indigo nuit, halo mauve discret      */
-/* N'affecte que .btn.primary et .btn.toggle[aria-pressed="true"]          */
+/* === Contraste renforcé pour bouton ACTIF (prune/indigo) ============== */
+/* Objectif: que .btn.primary se détache nettement des .btn "neutres"     */
+/* - Actif: fond plus opaque, texte plus clair, bordure 2px + halo        */
+/* - Neutres: fond plus sombre & plus translucide, bordure atténuée       */
 :root{
-  --pi-top:    #2b1f3f;     /* haut du dégradé (prune) */
-  --pi-bottom: #1c2133;     /* bas du dégradé (indigo) */
-  --pi-border: #5f4a6d;     /* bordure mauve grisé     */
-  --pi-glow:   rgba(176,124,193,.26); /* halo externe doux */
-  --pi-inset:  rgba(176,124,193,.24); /* halo interne doux */
-  --pi-top-h:    #342653;   /* hover: +clair/prune */
-  --pi-bottom-h: #222a44;   /* hover: +clair/indigo */
+  --pi2-top:    #342653;          /* haut (prune plus présent) */
+  --pi2-bottom: #1c233a;          /* bas (indigo nuit) */
+  --pi2-border: #8b79a5;          /* bordure mauve plus visible */
+  --pi2-glow:   rgba(176,124,193,.40);
+  --pi2-inset:  rgba(176,124,193,.30);
+  --pi2-top-h:    #3d2f62;
+  --pi2-bottom-h: #222a44;
+
+  --pi2-neutral-bg: rgba(16,18,28,.24); /* neutre plus sombre et + transparent */
+  --pi2-neutral-bg-h: rgba(16,18,28,.34);
+  --pi2-neutral-border: rgba(160,150,190,.35);
+  --pi2-neutral-border-h: rgba(160,150,190,.55);
 }
 
-/* États actifs */
+/* Bouton actif */
 .btn.primary,
 .btn.toggle[aria-pressed="true"]{
-  background: linear-gradient(180deg, var(--pi-top), var(--pi-bottom));
-  border-color: var(--pi-border);
-  color: #f2eef6;
-  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  background: linear-gradient(180deg, var(--pi2-top), var(--pi2-bottom));
+  border-color: var(--pi2-border);
+  border-width: 2px;
+  color: #ffffff;
+  text-shadow: 0 1px 0 rgba(0,0,0,.35);
   box-shadow:
-    0 12px 28px var(--pi-glow),
-    0 0 0 1px var(--pi-inset) inset;
+    0 16px 36px var(--pi2-glow),
+    0 0 0 2px var(--pi2-inset) inset;
 }
-
-/* Survol actif : légère surbrillance, sans être “pétant” */
 .btn.primary:hover,
 .btn.toggle[aria-pressed="true"]:hover{
-  background: linear-gradient(180deg, var(--pi-top-h), var(--pi-bottom-h));
+  background: linear-gradient(180deg, var(--pi2-top-h), var(--pi2-bottom-h));
   transform: translateY(-0.5px);
-  filter: saturate(1.04) brightness(1.03);
+  filter: saturate(1.06) brightness(1.04);
   box-shadow:
-    0 16px 36px var(--pi-glow),
-    0 0 0 1px var(--pi-inset) inset;
+    0 22px 48px var(--pi2-glow),
+    0 0 0 2px var(--pi2-inset) inset;
 }
 
-/* Optionnel: boutons neutres restent sobres, juste bordure au hover */
-.btn:hover{ border-color: var(--pi-border); }
-/* === /Fin thème PRUNE / INDIGO ======================================== */
+/* Boutons neutres (non actifs) */
+.btn{
+  background: var(--pi2-neutral-bg);
+  border-color: var(--pi2-neutral-border);
+  color: #e9e9f2;
+}
+.btn:hover{
+  background: var(--pi2-neutral-bg-h);
+  border-color: var(--pi2-neutral-border-h);
+}
+
+/* Accessibilité: focus bien visible */
+.btn:focus-visible{
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,.08),
+    0 0 0 5px var(--pi2-glow),
+    0 0 0 2px var(--pi2-inset) inset;
+}
+/* === /Fin contraste renforcé ========================================== */
