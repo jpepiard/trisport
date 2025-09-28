@@ -2447,51 +2447,64 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
 <script id="bonus-pop-autoplace">
 (function(){
   function getScoreRect(root){
-    var container = (root && root.closest) ? root.closest('.match-card') : null;
-    var score = (container && container.querySelector)
-      ? container.querySelector('.scorewrap .score, .score')
-      : document.querySelector('.scorewrap .score, .score');
+    var score = root.closest('.match-card')?.querySelector('.scorewrap .score, .score') ||
+                document.querySelector('.scorewrap .score, .score');
     return score ? score.getBoundingClientRect() : null;
   }
+  
   function place(pop, pill){
+    // reset
     pop.classList.remove('is-above');
-    pop.style.setProperty('--x-offset','0px');
-    var popRect = pop.getBoundingClientRect();
-    var pillRect = pill.getBoundingClientRect();
+    pop.style.setProperty('--x-offset', '0px');
+
+    var popRect   = pop.getBoundingClientRect();
+    var pillRect  = pill.getBoundingClientRect();
     var scoreRect = getScoreRect(pill);
+
     if (!scoreRect){
       if (popRect.top < 8) pop.classList.add('is-above');
       return;
     }
-    var overlapsVertically = !(popRect.bottom < scoreRect.top || popRect.top > scoreRect.bottom);
-    if (overlapsVertically){
+
+    var overlapVert = !(popRect.bottom < scoreRect.top || popRect.top > scoreRect.bottom);
+    if (overlapVert){
       pop.classList.add('is-above');
       popRect = pop.getBoundingClientRect();
-      overlapsVertically = !(popRect.bottom < scoreRect.top || popRect.top > scoreRect.bottom);
     }
-    var overlapsHoriz = true; if (overlapsHoriz){ pop.style.setProperty('--x-offset','0px'); } else if (needRight > 0 && needLeft <= 0){
-        dx = needRight;
-      } else {
-        var scoreCenter = (scoreRect.left + scoreRect.right)/2;
-        dx = (pillRect.left < scoreCenter) ? Math.max(needRight, margin) : -Math.max(needLeft, margin);
-      }
-      // constrain to viewport
-      var newLeft = popRect.left + dx;
-      var newRight = popRect.right + dx;
-      if (newLeft < 16) dx += (16 - newLeft);
-      if (newRight > window.innerWidth - 16) dx -= (newRight - (window.innerWidth - 16));
-pop.style.setProperty('--x-offset', dx.toFixed(0) + 'px');
+
+    var margin = 8;
+    var needLeft  = Math.max(0, scoreRect.left  - popRect.left  + margin);
+    var needRight = Math.max(0, popRect.right   - scoreRect.right + margin);
+
+    var dx = 0;
+    if (needLeft === 0 && needRight === 0){
+      dx = 0;
+    } else if (needRight > 0 && needLeft <= 0){
+      dx = -needRight;
+    } else if (needLeft > 0 && needRight <= 0){
+      dx = needLeft;
+    } else {
+      var scoreCenter = (scoreRect.left + scoreRect.right) / 2;
+      dx = (pillRect.left < scoreCenter) ? needLeft : -needRight;
     }
+
+    var newLeft  = popRect.left  + dx;
+    var newRight = popRect.right + dx;
+    if (newLeft < 16) dx += (16 - newLeft);
+    if (newRight > window.innerWidth - 16) dx -= (newRight - (window.innerWidth - 16));
+
+    pop.style.setProperty('--x-offset', dx.toFixed(0) + 'px');
   }
-  function onEnter(e){
-    var pill = closestFrom(e.target, '.pill.bonus-flashy');
+
+function onEnter(e){
+    var pill = (function(t){var el=t; if(el&&el.nodeType&&el.nodeType!==1) el=el.parentElement; while(el){ if(el.matches&&el.matches('.pill.bonus-flashy')) return el; el=el.parentElement; } return null;})(e.target);
     if (!pill) return;
     var pop = pill.querySelector('.bonus-pop');
     if (!pop) return;
     requestAnimationFrame(function(){ place(pop, pill); });
   }
   function onLeave(e){
-    var pill = closestFrom(e.target, '.pill.bonus-flashy');
+    var pill = (function(t){var el=t; if(el&&el.nodeType&&el.nodeType!==1) el=el.parentElement; while(el){ if(el.matches&&el.matches('.pill.bonus-flashy')) return el; el=el.parentElement; } return null;})(e.target);
     if (!pill) return;
     var pop = pill.querySelector('.bonus-pop');
     if (!pop) return;
