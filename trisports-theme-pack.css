@@ -1282,3 +1282,51 @@ body::before{
   transform: translateY(-0.5px);
 }
 /* === /Fin accentuation ================================================= */
+
+
+/* === Barre du haut : couleur de sélection harmonisée ================== */
+/* Accord avec le background (mauve/prune lumineux) */
+:root{
+  --tab-top: #6e3a8a;        /* haut du dégradé (mauve) */
+  --tab-bottom: #4a2765;     /* bas (prune indigo) */
+  --tab-border: #9b6cc0;     /* bordure/anneau */
+  --tab-glow: rgba(220,140,255,.40); /* halo externe */
+  --tab-inset: rgba(220,140,255,.30);/* halo interne */
+  --tab-top-hover: #7a4397;  /* éclairci au hover */
+  --tab-bottom-hover: #522c72;
+}
+
+/* État sélectionné/actif de l’onglet */
+.tab.active,
+.tab[aria-selected="true"]{
+  background: linear-gradient(180deg, var(--tab-top), var(--tab-bottom));
+  color: #fff;
+  border-color: var(--tab-border);
+  box-shadow:
+    0 14px 32px var(--tab-glow),
+    0 0 0 1px var(--tab-inset) inset;
+}
+
+/* Survol de l’onglet (y compris quand il est actif) */
+.tab:hover{
+  border-color: var(--tab-border);
+}
+.tab.active:hover,
+.tab[aria-selected="true"]:hover{
+  background: linear-gradient(180deg, var(--tab-top-hover), var(--tab-bottom-hover));
+  transform: translateY(-1px);
+  filter: saturate(1.06) brightness(1.04);
+  box-shadow:
+    0 18px 42px var(--tab-glow),
+    0 0 0 1px var(--tab-inset) inset;
+}
+
+/* Focus clavier visible pour accessibilité */
+.tab:focus-visible{
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,.08),
+    0 0 0 5px var(--tab-glow),
+    0 0 0 1px var(--tab-inset) inset;
+}
+/* === /Fin patch topbar ================================================= */
