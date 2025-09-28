@@ -3588,3 +3588,14 @@ const place = (el) => {
 .match-card .hd .state-chip{ margin-top:0; }
 .match-card .hd .chev{ margin-left:8px; }
 </style>
+
+
+<style id="matchcard-chev-final-fix">
+/* Forcer chevron + pilule sur la même ligne, tout à droite (override fort) */
+.match-card .hd{ display:flex !important; align-items:center !important; flex-wrap:nowrap !important; }
+.match-card .hd .scorewrap{ flex:1 1 auto !important; width:auto !important; min-width:0 !important; }
+.match-card .hd .right-rail{ margin-left:auto !important; display:flex !important; align-items:center !important; gap:10px !important; }
+.match-card .hd .state-chip{ margin-top:0 !important; }
+.match-card .hd .chev{ position:static !important; margin-left:8px !important; transform:none; }
+.match-card[aria-expanded="true"] .hd .chev{ transform:rotate(90deg) !important; }
+</style>
