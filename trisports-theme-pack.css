@@ -1332,90 +1332,82 @@ body::before{
 /* === /Fin patch topbar ================================================= */
 
 
-/* === Palette “Coucher de soleil” (orange ←→ rose) ====================== */
-/* Tons choisis pour matcher un ciel orangé/rosé avec liseré lumineux */
+/* === Palette “Coucher de soleil — AMBRE” =============================== */
+/* Plus orangé/ambre, avec onglet actif à contour noir */
 :root{
-  /* Nuances principales */
-  --sun-top:    #ff7a59;   /* corail lumineux (haut du dégradé) */
-  --sun-bottom: #b13b2a;   /* brique/rouille (bas du dégradé) */
-  --sun-border: #ffb199;   /* bordure chaude */
-  --sun-glow:   rgba(255,160,120,.40);  /* halo externe */
-  --sun-inset:  rgba(255,160,120,.28);  /* halo interne */
+  /* Boutons (primaires / toggles actifs) */
+  --amb-top:       #ffb44c;  /* ambre clair */
+  --amb-bottom:    #d46b11;  /* orange brûlé */
+  --amb-border:    #ffd39a;  /* liseré chaud */
+  --amb-glow:      rgba(255,180,80,.42);
+  --amb-inset:     rgba(255,180,80,.28);
+  --amb-top-h:     #ffc062;  /* hover plus clair */
+  --amb-bottom-h:  #e0761f;
 
-  /* Hover éclairci (petit lift) */
-  --sun-top-h:    #ff8e6f;
-  --sun-bottom-h: #c74633;
+  /* Tabs (barre du haut) */
+  --tab-amb-top:      #ffb86b;  /* ambre rosé en haut */
+  --tab-amb-bottom:   #ff9a3c;  /* corail ambré en bas */
+  --tab-amb-glow:     rgba(255,180,80,.45);
+  --tab-amb-inset:    rgba(255,180,80,.30);
+  --tab-amb-top-h:    #ffc178;
+  --tab-amb-bottom-h: #ffa24c;
 }
 
 /* === Boutons primaires & toggles actifs ================================ */
 .btn.primary,
 .btn.toggle[aria-pressed="true"]{
-  background: linear-gradient(180deg, var(--sun-top), var(--sun-bottom));
-  border-color: var(--sun-border);
-  color: #fff7f5;
+  background: linear-gradient(180deg, var(--amb-top), var(--amb-bottom));
+  border-color: var(--amb-border);
+  color: #fffaf3;
   text-shadow: 0 1px 0 rgba(0,0,0,.25);
   box-shadow:
-    0 14px 30px var(--sun-glow),
-    0 0 0 1px var(--sun-inset) inset;
+    0 14px 32px var(--amb-glow),
+    0 0 0 1px var(--amb-inset) inset;
 }
 .btn.primary:hover,
-.btn.toggle[aria-pressed="true"]:hover{
-  background: linear-gradient(180deg, var(--sun-top-h), var(--sun-bottom-h));
+.btn.toggle[aria-pressed="true"]::hover{
+  background: linear-gradient(180deg, var(--amb-top-h), var(--amb-bottom-h));
   transform: translateY(-1px);
   filter: saturate(1.08) brightness(1.04);
   box-shadow:
-    0 18px 42px var(--sun-glow),
-    0 0 0 1px var(--sun-inset) inset;
+    0 18px 44px var(--amb-glow),
+    0 0 0 1px var(--amb-inset) inset;
 }
 
-/* Boutons neutres — garde le style général mais avec bordure chaude au hover */
-.btn:hover{ border-color: var(--sun-border); }
+/* Boutons neutres: bordure chaude au hover */
+.btn:hover{ border-color: var(--amb-border); }
 
 /* Focus clavier lisible sur fond chaud */
 .btn:focus-visible{
   outline: none;
   box-shadow:
     0 0 0 3px rgba(255,255,255,.08),
-    0 0 0 5px var(--sun-glow),
-    0 0 0 1px var(--sun-inset) inset;
+    0 0 0 5px var(--amb-glow),
+    0 0 0 1px var(--amb-inset) inset;
 }
 
-/* === Onglet actif dans la barre du haut (tabs) ========================= */
-:root{
-  --tab-sun-top:    #ff8ab2;  /* rose chaud en liseré (haut) */
-  --tab-sun-bottom: #ff7a59;  /* corail (bas) */
-  --tab-sun-border: #ffc7d6;  /* bordure rosée claire */
-  --tab-sun-glow:   rgba(255,170,190,.45);
-  --tab-sun-inset:  rgba(255,170,190,.30);
-  --tab-sun-top-h:    #ff98be;
-  --tab-sun-bottom-h: #ff8e6f;
-}
-
+/* === Onglet actif dans la barre du haut (contour NOIR) ================= */
 .tab[aria-selected="true"],
 .tab.active{
-  background: linear-gradient(180deg, var(--tab-sun-top), var(--tab-sun-bottom));
-  color: #fff;
-  border-color: var(--tab-sun-border);
-  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  background: linear-gradient(180deg, var(--tab-amb-top), var(--tab-amb-bottom));
+  color: #1a0f00;
+  font-weight: 800;
+  text-shadow: 0 1px 0 rgba(255,255,255,.25);
+  border: 2px solid #000;                /* contour noir demandé */
   box-shadow:
-    0 14px 34px var(--tab-sun-glow),
-    0 0 0 1px var(--tab-sun-inset) inset;
+    0 16px 40px var(--tab-amb-glow),
+    0 0 0 1px var(--tab-amb-inset) inset;
 }
 .tab[aria-selected="true"]:hover,
 .tab.active:hover{
-  background: linear-gradient(180deg, var(--tab-sun-top-h), var(--tab-sun-bottom-h));
+  background: linear-gradient(180deg, var(--tab-amb-top-h), var(--tab-amb-bottom-h));
   transform: translateY(-1px);
   filter: saturate(1.06) brightness(1.04);
   box-shadow:
-    0 20px 46px var(--tab-sun-glow),
-    0 0 0 1px var(--tab-sun-inset) inset;
+    0 22px 54px var(--tab-amb-glow),
+    0 0 0 1px var(--tab-amb-inset) inset;
 }
 
-/* Soulignement animé : passe sur une lueur orangée-rose */
-.tab::after{
-  background: linear-gradient(90deg, transparent, #ffb199, transparent);
-}
-
-/* === Fallback : si .tabs a des règles très spécifiques, on force un peu === */
-.tabs .tab[aria-selected="true"]{ border-color: var(--tab-sun-border) !important; }
-/* === /Fin thème “Coucher de soleil” ==================================== */
+/* Si des règles plus spécifiques existent, on renforce le contour noir */
+.tabs .tab[aria-selected="true"]{ border-color:#000 !important; border-width:2px !important; }
+/* === /Fin thème AMBRE ================================================== */
