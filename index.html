@@ -2444,6 +2444,78 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   patch();
 })();
 </script>
+<script id="bonus-pop-autoplace">
+(function(){
+  function getScoreRect(root){
+    var score = root.closest('.match-card')?.querySelector('.scorewrap .score, .score') ||
+                document.querySelector('.scorewrap .score, .score');
+    return score ? score.getBoundingClientRect() : null;
+  }
+  
+  function place(pop, pill){
+    // reset
+    pop.classList.remove('is-above');
+    pop.style.setProperty('--x-offset', '0px');
+
+    var popRect   = pop.getBoundingClientRect();
+    var pillRect  = pill.getBoundingClientRect();
+    var scoreRect = getScoreRect(pill);
+
+    if (!scoreRect){
+      if (popRect.top < 8) pop.classList.add('is-above');
+      return;
+    }
+
+    var overlapVert = !(popRect.bottom < scoreRect.top || popRect.top > scoreRect.bottom);
+    if (overlapVert){
+      pop.classList.add('is-above');
+      popRect = pop.getBoundingClientRect();
+    }
+
+    var margin = 8;
+    var needLeft  = Math.max(0, scoreRect.left  - popRect.left  + margin);
+    var needRight = Math.max(0, popRect.right   - scoreRect.right + margin);
+
+    var dx = 0;
+    if (needLeft === 0 && needRight === 0){
+      dx = 0;
+    } else if (needRight > 0 && needLeft <= 0){
+      dx = -needRight;
+    } else if (needLeft > 0 && needRight <= 0){
+      dx = needLeft;
+    } else {
+      var scoreCenter = (scoreRect.left + scoreRect.right) / 2;
+      dx = (pillRect.left < scoreCenter) ? needLeft : -needRight;
+    }
+
+    var newLeft  = popRect.left  + dx;
+    var newRight = popRect.right + dx;
+    if (newLeft < 16) dx += (16 - newLeft);
+    if (newRight > window.innerWidth - 16) dx -= (newRight - (window.innerWidth - 16));
+
+    pop.style.setProperty('--x-offset', dx.toFixed(0) + 'px');
+  }
+
+function onEnter(e){
+    var pill = (function(t){var el=t; if(el&&el.nodeType&&el.nodeType!==1) el=el.parentElement; while(el){ if(el.matches&&el.matches('.pill.bonus-flashy')) return el; el=el.parentElement; } return null;})(e.target);
+    if (!pill) return;
+    var pop = pill.querySelector('.bonus-pop');
+    if (!pop) return;
+    requestAnimationFrame(function(){ place(pop, pill); });
+  }
+  function onLeave(e){
+    var pill = (function(t){var el=t; if(el&&el.nodeType&&el.nodeType!==1) el=el.parentElement; while(el){ if(el.matches&&el.matches('.pill.bonus-flashy')) return el; el=el.parentElement; } return null;})(e.target);
+    if (!pill) return;
+    var pop = pill.querySelector('.bonus-pop');
+    if (!pop) return;
+    pop.classList.remove('is-above');
+    pop.style.removeProperty('--x-offset');
+  }
+  document.addEventListener('mouseenter', onEnter, true);
+  document.addEventListener('mouseleave', onLeave, true);
+})();
+</script>
+
 
 <script>
 // === Auto Bonus Tooltip (no markup change needed) =========================
@@ -2457,6 +2529,10 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   };
 
   function buildTip(pill){
+    // Only apply to bonus pills that have the mini-bonus image (avoid generic pills)
+    if (!pill || !pill.querySelector) return;
+    const hasMini = !!pill.querySelector('.mini-bonus');
+    if (!hasMini) return;
     if (!pill || pill.querySelector?.('.bonus-tip')) return;
 
     const img = pill.dataset?.bonusImg
@@ -2483,7 +2559,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
   function enhanceAll(root){
     // Guard: if called by an event, or invalid root, fall back to document
     if (!root || !root.querySelectorAll) root = document;
-    root.querySelectorAll('.pill.blue, .pill.bonus-flashy').forEach(buildTip);
+    root.querySelectorAll('.pill').forEach(buildTip);
   }
 
   if (document.readyState === 'loading'){
