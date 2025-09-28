@@ -501,16 +501,16 @@ header .btn, header .chip, header .pill, header .tab{
 <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
 <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
 <nav aria-label="Sections" class="tabs" id="tabs" role="tablist">
-<button aria-selected="true" class="tab gta" data-tab="setup" role="tab" type="button">Tournoi</button>
-<button aria-selected="false" class="tab gta" data-tab="equipes" role="tab" type="button">Équipes</button>
-<button aria-selected="false" class="tab gta" data-tab="calendrier" role="tab" type="button">Rencontres</button>
-<button aria-selected="false" class="tab gta" data-tab="classement" role="tab" type="button">Classement</button>
-<button aria-selected="false" class="tab gta" data-tab="options" role="tab" type="button">Options</button>
+<button aria-selected="true" class="tab gta gta" data-tab="setup" role="tab" type="button">Tournoi</button>
+<button aria-selected="false" class="tab gta gta" data-tab="equipes" role="tab" type="button">Équipes</button>
+<button aria-selected="false" class="tab gta gta" data-tab="calendrier" role="tab" type="button">Rencontres</button>
+<button aria-selected="false" class="tab gta gta" data-tab="classement" role="tab" type="button">Classement</button>
+<button aria-selected="false" class="tab gta gta" data-tab="options" role="tab" type="button">Options</button>
 </nav>
 <div style="display:flex;align-items:center;gap:8px">
 <span class="pill" id="tname-top" style="display:none"></span>
 <span class="pill" id="whoami-top" style="">visiteur</span>
-<button class="btn small header-chip gta" id="btn-fullscreen" type="button">⛶ Plein écran</button>
+<button class="btn small header-chip gta header-chip gta" id="btn-fullscreen" type="button">⛶ Plein écran</button>
 </div>
 </div>
 </header>
@@ -2812,95 +2812,81 @@ function onEnter(e){
 </style>
 
 
+
 <style id="gta-tabs">
-/* ===== Onglets style "GTA" (lisible) =================================== */
-@font-face{
-  font-family: "Pricedown";
-  src: local("Pricedown");
-  font-display: swap;
-}
+/* ===== Onglets style "GTA" — version blanche lisible =================== */
+@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
+
 .tab.gta{
-  /* police & casing */
-  font-family: "Pricedown","Impact","Arial Black",system-ui,sans-serif;
+  /* Nouvelle police + lisibilité */
+  font-family: "Bangers","Impact","Arial Black",system-ui,sans-serif;
   text-transform: uppercase;
-  letter-spacing: .3px;
+  letter-spacing: .6px;
   font-weight: 900;
-  font-size: 15px;
-  /* capsule */
+  font-size: 16px;
+
+  /* Capsule blanche à contour noir */
   border-radius: 999px;
-  padding: 10px 16px;
-  background: linear-gradient(180deg,#263369,#1a224b);
-  border: 2px solid rgba(255,255,255,.16);
-  /* lisibilité du texte */
-  color: #ffffff;
-  -webkit-text-fill-color: #ffffff;     /* Safari: forcer le blanc */
-  -webkit-text-stroke: 1.2px #000000;   /* contour net mais fin */
-  text-shadow: 0 1px 0 #000, 0 0 10px rgba(120,160,255,.25);
-  /* effets doux */
+  padding: 10px 18px;
+  background: #ffffff;
+  color: #111111;
+  border: 3px solid #000000;
+
+  /* Ombres très légères pour le relief, sans altérer le contraste */
   box-shadow:
-    0 0 0 1px rgba(122,162,255,.10) inset,
-    0 6px 14px rgba(41,90,255,.18);
-  transition: transform .06s ease, box-shadow .18s ease, filter .18s ease, background .18s ease;
-  position: relative;
-  overflow: hidden;
-}
-/* gloss discret */
-.tab.gta::before{
-  content:"";
-  position:absolute; left:10px; right:10px; top:5px; height:36%;
-  border-radius:999px;
-  background: linear-gradient(180deg, rgba(255,255,255,.12), transparent);
-  pointer-events:none;
-  opacity:.7;
+    0 2px 0 rgba(0,0,0,.35),
+    0 8px 18px rgba(0,0,0,.18);
+  transition: transform .06s ease, box-shadow .18s ease, background .18s ease, filter .18s ease;
 }
 .tab.gta:hover{
   transform: translateY(-1px);
-  filter: saturate(1.04);
+  background: #fefefe;
   box-shadow:
-    0 0 0 1px rgba(122,162,255,.18) inset,
-    0 10px 22px rgba(41,90,255,.24);
+    0 3px 0 rgba(0,0,0,.38),
+    0 12px 22px rgba(0,0,0,.22);
 }
-.tab.gta:active{ transform: translateY(0); }
+.tab.gta:active{
+  transform: translateY(0);
+  box-shadow:
+    0 2px 0 rgba(0,0,0,.35),
+    0 8px 16px rgba(0,0,0,.20);
+}
 
-/* Etat sélectionné */
+/* Onglet actif : léger halo bleu mais fond reste blanc */
 .tab.gta[aria-selected="true"]{
-  background: linear-gradient(180deg,#3a52ff,#22319a);
-  border-color: rgba(255,255,255,.22);
+  background: #ffffff;
   box-shadow:
-    0 0 0 1px rgba(122,162,255,.25) inset,
-    0 14px 28px rgba(46,75,255,.30),
-    0 0 18px rgba(75,139,255,.28);
-}
-.tab.gta[aria-selected="true"]::after{
-  content:"";
-  position:absolute; left:16px; right:16px; bottom:-5px; height:3px;
-  border-radius:3px;
-  background: linear-gradient(90deg, transparent, rgba(200,215,255,.9), transparent);
+    0 2px 0 rgba(0,0,0,.38),
+    0 0 0 3px rgba(59,130,246,.18),
+    0 14px 28px rgba(59,130,246,.22);
 }
 
-/* Badge/bouton à droite */
+/* Petits boutons/puces à droite du header */
 .header-chip.gta{
-  font-family: "Pricedown","Impact","Arial Black",system-ui,sans-serif;
+  font-family: "Bangers","Impact","Arial Black",system-ui,sans-serif;
   text-transform: uppercase;
   font-weight: 900;
-  -webkit-text-fill-color:#fff; -webkit-text-stroke: 1px #000;
-  color:#fff !important;
+  font-size: 14px;
+
   border-radius: 999px;
-  padding: 8px 12px;
-  background: linear-gradient(180deg,#263369,#1a224b);
-  border: 2px solid rgba(255,255,255,.12);
-  text-shadow: 0 1px 0 #000, 0 0 8px rgba(120,160,255,.25);
-  box-shadow: 0 6px 14px rgba(41,90,255,.18);
+  padding: 8px 14px;
+  background: #ffffff;
+  color: #111111 !important;
+  border: 3px solid #000000;
+  box-shadow: 0 2px 0 rgba(0,0,0,.35), 0 8px 18px rgba(0,0,0,.18);
+  transition: transform .06s ease, box-shadow .18s ease, background .18s ease;
 }
 .header-chip.gta:hover{
   transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(41,90,255,.24);
+  background: #fefefe;
+  box-shadow: 0 3px 0 rgba(0,0,0,.38), 0 12px 22px rgba(0,0,0,.22);
 }
 
 @media (prefers-reduced-motion: reduce){
   .tab.gta, .header-chip.gta{ transition: none; }
 }
 </style>
+
 
 
 </head></html>
