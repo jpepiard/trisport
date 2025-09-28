@@ -1332,80 +1332,42 @@ body::before{
 /* === /Fin patch topbar ================================================= */
 
 
-/* === Thème “Coucher de soleil — AMBRE *Doux*” ========================= */
-/* Version moins saturée et plus translucide pour se marier au background */
+/* === Thème boutons actifs — PRUNE / INDIGO ============================ */
+/* Harmonisé au fond: prune sombre et indigo nuit, halo mauve discret      */
+/* N'affecte que .btn.primary et .btn.toggle[aria-pressed="true"]          */
 :root{
-  /* Boutons (primaires / toggles actifs) */
-  --mamb-top:       rgba(241,176,109,.88); /* ambre doux (haut) */
-  --mamb-bottom:    rgba(208,123,58,.88);  /* ambre terre cuite (bas) */
-  --mamb-border:    #eecda2;               /* liseré chaud mais discret */
-  --mamb-glow:      rgba(245,188,130,.28); /* halo adouci */
-  --mamb-inset:     rgba(245,188,130,.22);
-  --mamb-top-h:     rgba(247,191,128,.95);
-  --mamb-bottom-h:  rgba(221,139,71,.95);
-
-  /* Tabs (barre du haut) — contour noir conservé */
-  --tab-mamb-top:      rgba(247,191,128,.90);
-  --tab-mamb-bottom:   rgba(233,145,82,.90);
-  --tab-mamb-glow:     rgba(247,191,128,.28);
-  --tab-mamb-inset:    rgba(247,191,128,.20);
-  --tab-mamb-top-h:    rgba(253,203,147,.98);
-  --tab-mamb-bottom-h: rgba(240,158,95,.98);
+  --pi-top:    #2b1f3f;     /* haut du dégradé (prune) */
+  --pi-bottom: #1c2133;     /* bas du dégradé (indigo) */
+  --pi-border: #5f4a6d;     /* bordure mauve grisé     */
+  --pi-glow:   rgba(176,124,193,.26); /* halo externe doux */
+  --pi-inset:  rgba(176,124,193,.24); /* halo interne doux */
+  --pi-top-h:    #342653;   /* hover: +clair/prune */
+  --pi-bottom-h: #222a44;   /* hover: +clair/indigo */
 }
 
-/* === Boutons primaires & toggles actifs (ambiance douce) =============== */
+/* États actifs */
 .btn.primary,
 .btn.toggle[aria-pressed="true"]{
-  background: linear-gradient(180deg, var(--mamb-top), var(--mamb-bottom));
-  border-color: var(--mamb-border);
-  color: #fff8f0;
-  text-shadow: 0 1px 0 rgba(0,0,0,.22);
+  background: linear-gradient(180deg, var(--pi-top), var(--pi-bottom));
+  border-color: var(--pi-border);
+  color: #f2eef6;
+  text-shadow: 0 1px 0 rgba(0,0,0,.25);
   box-shadow:
-    0 10px 26px var(--mamb-glow),
-    0 0 0 1px var(--mamb-inset) inset;
+    0 12px 28px var(--pi-glow),
+    0 0 0 1px var(--pi-inset) inset;
 }
+
+/* Survol actif : légère surbrillance, sans être “pétant” */
 .btn.primary:hover,
 .btn.toggle[aria-pressed="true"]:hover{
-  background: linear-gradient(180deg, var(--mamb-top-h), var(--mamb-bottom-h));
+  background: linear-gradient(180deg, var(--pi-top-h), var(--pi-bottom-h));
   transform: translateY(-0.5px);
-  filter: saturate(1.03) brightness(1.02);
+  filter: saturate(1.04) brightness(1.03);
   box-shadow:
-    0 14px 34px var(--mamb-glow),
-    0 0 0 1px var(--mamb-inset) inset;
+    0 16px 36px var(--pi-glow),
+    0 0 0 1px var(--pi-inset) inset;
 }
 
-/* Boutons neutres: bordure chaude et fond très discret */
-.btn{
-  background: rgba(24,26,40,.32);
-  backdrop-filter: saturate(1.02) blur(2px);
-}
-.btn:hover{
-  background: rgba(24,26,40,.40);
-  border-color: var(--mamb-border);
-}
-
-/* === Onglet actif top-bar (contour noir, remplissage plus feutré) ====== */
-.tab[aria-selected="true"],
-.tab.active{
-  background: linear-gradient(180deg, var(--tab-mamb-top), var(--tab-mamb-bottom));
-  color: #1a120a;
-  font-weight: 800;
-  border: 2px solid #000; /* contour noir conservé */
-  text-shadow: 0 1px 0 rgba(255,255,255,.22);
-  box-shadow:
-    0 14px 32px var(--tab-mamb-glow),
-    0 0 0 1px var(--tab-mamb-inset) inset;
-}
-.tab[aria-selected="true"]:hover,
-.tab.active:hover{
-  background: linear-gradient(180deg, var(--tab-mamb-top-h), var(--tab-mamb-bottom-h));
-  transform: translateY(-0.5px);
-  filter: saturate(1.02) brightness(1.02);
-  box-shadow:
-    0 18px 40px var(--tab-mamb-glow),
-    0 0 0 1px var(--tab-mamb-inset) inset;
-}
-
-/* Renfort priorité si nécessaire */
-.tabs .tab[aria-selected="true"]{ border-color:#000 !important; border-width:2px !important; }
-/* === /Fin thème AMBRE Doux ============================================ */
+/* Optionnel: boutons neutres restent sobres, juste bordure au hover */
+.btn:hover{ border-color: var(--pi-border); }
+/* === /Fin thème PRUNE / INDIGO ======================================== */
