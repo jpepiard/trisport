@@ -1211,7 +1211,39 @@ function bonusChip(r, mTeam, rs){
   const bonusUsed = (state.bonusUsed?.[r]?.[mTeam]) || false;
   const canChoose = (!rs.started && !rs.finished && !bonusUsed && iAmTeam);
   if (!sel) {
-    
+    if (!roundFinished) {
+      return canChoose ? (
+        '<button type="button" class="bonus-btn" data-bonus data-team="' + mTeam + '">🎖 Bonus</button>'
+      ) : '';
+    }
+    return '<span class="pill">Pas de bonus</span>';
+  }
+
+  // --- Sélection faite, visibilité côté équipes/visiteurs ---
+  // Avant la fin : visible seulement si (je suis l’équipe) OU (révélation autorisée au démarrage)
+  if (!roundFinished && !(iAmTeam || revealAtStart)) return '';
+
+  const type = sel.type || 'capitaine';
+  const lblType =
+    type === 'miroir'   ? 'Miroir' :
+    type === 'taupe'    ? 'René la taupe' :
+    type === 'lefthand' ? '10 pouces 2 mains gauche' :
+    type === 'melon'    ? 'Melon d\'or' :
+                          'Capitaine';
+
+  const img =
+    type === 'miroir'   ? 'miroir.jpg' :
+    type === 'taupe'    ? 'taupe.png' :
+    type === 'lefthand' ? 'main-gauche.png' :
+    type === 'melon'    ? 'melon.png' :
+                          'capitaine.jpg';
+
+  const labelSport = sel.sport ? BONUS.sportLabel(sel.sport) : null;
+  const sportEmoji = (labelSport === 'Fléchettes' ? '🎯' :
+                     labelSport === 'Ping'        ? '🏓' :
+                     labelSport === 'Palet'       ? '🥏' : '');
+  const labelPlayer = sel.player === 'p1' ? 'J1' : (sel.player === 'p2' ? 'J2' : null);
+
   if (!roundFinished) {
     // Pastille d’aperçu (sans valeur) avant la fin, quand visible
     var parts = [lblType];
@@ -1219,24 +1251,21 @@ function bonusChip(r, mTeam, rs){
     if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
     var __lbl = parts.join(' / ');
 
-    // Tooltip fallback (titre + description) pour les bonus non révélés
+    // Titre/description pour le gros tooltip (même logique que révélé)
     const desc = (
       type==='miroir'   ? 'Inverse le bonus adverse sur tout le match.' :
-      type==='taupe'    ? 'Lunettes gênantes imposées à l’adversaire (sport choisi).' :
-      type==='lefthand' ? 'L’adversaire joue un sous-match avec sa mauvaise main (sport choisi).' :
-      type==='melon'    ? 'Bonus spécial (Melon d’or) — détails affichés à la révélation.' :
-                          'Capitaine: +2 par manche gagnée (fléchettes & ping, simples/doubles) et +2 si palet.'
+      type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
+      type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
+      type==='melon'    ? 'Nouveau bonus — détails à venir.' :
+                          'Aucun réglage. +2/manche gagnée (fléchettes & ping, simples/doubles) et +2 si palet.'
     );
-
     return '<span class="pill blue" aria-label="' + lblType + '"'
          + ' data-bonus-title="' + lblType + '"'
-         + ' data-bonus-desc="' + desc + '">'
-         + 'Bonus'
+         + ' data-bonus-desc="' + desc + '">Bonus'
          + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'')
          + '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>'
          + '</span>';
   } else {
-
     // Révélation complète + total appliqué (logique existante inchangée)
     const applied = Math.abs((state.bonusApplied?.[r]?.[mTeam]) || 0);
     const sign = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? '+' : '−';
