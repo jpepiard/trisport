@@ -1599,7 +1599,7 @@ function renderLeaderboard(){
     tr.innerHTML = `
       <td>${(i < 4 ? ['🥇','🥈','🥉','💩'][i] : (i+1))}</td>
       <td><span class="team-name">${avatar} ${esc(r.name||'')}</span></td>
-      <td class=\"points-cell\"><b>${r.points}</b></td>
+      <td class=\"points-cell\"><span class="points-pill"><b>${r.points}</b></span></td>
       <td>${r.dartsPF}</td>
       <td>${r.pingPF}</td>
       <td>${r.palPF}-${r.palPA} <span class="muted">(${signPal}${diffPal})</span></td>
@@ -2701,28 +2701,36 @@ function onEnter(e){
   }
 }
 </style>
+
 <style id="classement-tweaks">
-  /* Align avatar + team name in classement */
+  /* Align everything to the left in the classement table */
+  #table-classement th,
+  #table-classement td{ text-align:left; }
+
+  /* Keep team row visuals but ensure left alignment with consistent spacing */
   #table-classement td:nth-child(2) .team-name{
-    display:flex; align-items:center; gap:8px;
-    line-height:1.2;
+    display:inline-flex; align-items:center; gap:8px;
+    vertical-align:middle;
   }
-  /* Normalize avatar size inside classement */
-  #table-classement .team-name .avatar,
-  #table-classement .team-name .avatar-initials{
-    width:22px; height:22px; border-radius:50%;
-    display:inline-flex; align-items:center; justify-content:center;
-    font-weight:700; font-size:12px;
-    flex:0 0 22px;
+
+  /* Bigger emojis in the rank column */
+  #table-classement td:first-child{
+    font-size:1.4em; /* larger only for emoji */
+    line-height:1.1;
   }
-  /* Make the general points stand out */
-  #table-classement td.points-cell{
-    font-weight:800;
-  }
-  #table-classement td.points-cell b{
-    font-size:1.25em;
+
+  /* Points pill — more visible without changing base font size */
+  #table-classement td.points-cell .points-pill{
+    display:inline-block;
+    padding:2px 10px;
+    border-radius:9999px;
+    background:#EEF2FF;          /* soft indigo */
+    border:1px solid #C7D2FE;    /* indigo-200 */
+    color:#1E3A8A;               /* indigo-900 */
+    box-shadow:0 1px 0 rgba(30,58,138,.08), inset 0 0 0 1px rgba(255,255,255,.4);
   }
 </style>
+
 
 </head></html>
 <style id="rencontres-polish">
