@@ -1330,3 +1330,92 @@ body::before{
     0 0 0 1px var(--tab-inset) inset;
 }
 /* === /Fin patch topbar ================================================= */
+
+
+/* === Palette “Coucher de soleil” (orange ←→ rose) ====================== */
+/* Tons choisis pour matcher un ciel orangé/rosé avec liseré lumineux */
+:root{
+  /* Nuances principales */
+  --sun-top:    #ff7a59;   /* corail lumineux (haut du dégradé) */
+  --sun-bottom: #b13b2a;   /* brique/rouille (bas du dégradé) */
+  --sun-border: #ffb199;   /* bordure chaude */
+  --sun-glow:   rgba(255,160,120,.40);  /* halo externe */
+  --sun-inset:  rgba(255,160,120,.28);  /* halo interne */
+
+  /* Hover éclairci (petit lift) */
+  --sun-top-h:    #ff8e6f;
+  --sun-bottom-h: #c74633;
+}
+
+/* === Boutons primaires & toggles actifs ================================ */
+.btn.primary,
+.btn.toggle[aria-pressed="true"]{
+  background: linear-gradient(180deg, var(--sun-top), var(--sun-bottom));
+  border-color: var(--sun-border);
+  color: #fff7f5;
+  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  box-shadow:
+    0 14px 30px var(--sun-glow),
+    0 0 0 1px var(--sun-inset) inset;
+}
+.btn.primary:hover,
+.btn.toggle[aria-pressed="true"]:hover{
+  background: linear-gradient(180deg, var(--sun-top-h), var(--sun-bottom-h));
+  transform: translateY(-1px);
+  filter: saturate(1.08) brightness(1.04);
+  box-shadow:
+    0 18px 42px var(--sun-glow),
+    0 0 0 1px var(--sun-inset) inset;
+}
+
+/* Boutons neutres — garde le style général mais avec bordure chaude au hover */
+.btn:hover{ border-color: var(--sun-border); }
+
+/* Focus clavier lisible sur fond chaud */
+.btn:focus-visible{
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,.08),
+    0 0 0 5px var(--sun-glow),
+    0 0 0 1px var(--sun-inset) inset;
+}
+
+/* === Onglet actif dans la barre du haut (tabs) ========================= */
+:root{
+  --tab-sun-top:    #ff8ab2;  /* rose chaud en liseré (haut) */
+  --tab-sun-bottom: #ff7a59;  /* corail (bas) */
+  --tab-sun-border: #ffc7d6;  /* bordure rosée claire */
+  --tab-sun-glow:   rgba(255,170,190,.45);
+  --tab-sun-inset:  rgba(255,170,190,.30);
+  --tab-sun-top-h:    #ff98be;
+  --tab-sun-bottom-h: #ff8e6f;
+}
+
+.tab[aria-selected="true"],
+.tab.active{
+  background: linear-gradient(180deg, var(--tab-sun-top), var(--tab-sun-bottom));
+  color: #fff;
+  border-color: var(--tab-sun-border);
+  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  box-shadow:
+    0 14px 34px var(--tab-sun-glow),
+    0 0 0 1px var(--tab-sun-inset) inset;
+}
+.tab[aria-selected="true"]:hover,
+.tab.active:hover{
+  background: linear-gradient(180deg, var(--tab-sun-top-h), var(--tab-sun-bottom-h));
+  transform: translateY(-1px);
+  filter: saturate(1.06) brightness(1.04);
+  box-shadow:
+    0 20px 46px var(--tab-sun-glow),
+    0 0 0 1px var(--tab-sun-inset) inset;
+}
+
+/* Soulignement animé : passe sur une lueur orangée-rose */
+.tab::after{
+  background: linear-gradient(90deg, transparent, #ffb199, transparent);
+}
+
+/* === Fallback : si .tabs a des règles très spécifiques, on force un peu === */
+.tabs .tab[aria-selected="true"]{ border-color: var(--tab-sun-border) !important; }
+/* === /Fin thème “Coucher de soleil” ==================================== */
