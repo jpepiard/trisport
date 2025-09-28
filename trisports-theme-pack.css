@@ -1064,3 +1064,35 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
     justify-content: center !important;
   }
 
+
+
+/* === Global background image (added by ChatGPT) ========================= */
+:root{
+  /* Path to your background image. Place the image in /img/ with this filename
+     or update the URL below to match your project. */
+  --site-bg-image: url("img/grand-theft-auto-6-video-game-4k-wallpaper-uhdpaper.com-288@1@n.jpg");
+}
+
+html, body { min-height: 100%; }
+body { position: relative; }
+
+/* Background below everything */
+body::before{
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    /* dark-mode readable overlay */
+    linear-gradient(180deg, rgba(12,16,40,.55), rgba(12,16,40,.35)),
+    var(--site-bg-image) center / cover no-repeat;
+  background-attachment: scroll;
+}
+
+/* Light theme variant: brighter veil for contrast */
+[data-theme="light"] body::before{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.78), rgba(246,247,251,.78)),
+    var(--site-bg-image) center / cover no-repeat;
+}
+/* ======================================================================= */
