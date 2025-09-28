@@ -489,7 +489,7 @@ header .btn, header .chip, header .pill, header .tab{
 <style id="chevron-toggle">
 /* Chevron d’ouverture/fermeture */
 .hd{ position:relative; }
-.hd .chev{
+.hd .chev--abs{
   position:absolute; right:12px; top:12px;
   display:inline-block;
   width:1.25em;
@@ -497,8 +497,8 @@ header .btn, header .chip, header .pill, header .tab{
   opacity:.7;
   transition:transform .18s ease, opacity .18s ease;
 }
-.hd .chev::before{ content:"▶"; display:inline-block; }
-.match-card[aria-expanded="true"] .hd .chev{ transform:rotate(90deg); opacity:1; }
+.hd .chev--abs::before{ content:"▶"; display:inline-block; }
+.match-card[aria-expanded="true"] .hd .chev--abs{ transform:rotate(90deg); opacity:1; }
 /* rendre l'en-tête cliquable */
 .match-card .hd{ cursor:pointer; }
 </style>
@@ -3289,10 +3289,7 @@ function onEnter(e){
 </style>
 <style id="chev-bottom-right">
 .match-card .hd{ position: relative; }
-.match-card .hd .chev{
-  position: absolute; right: 14px; bottom: 12px; top: auto;
-  transform: none;
-}
+
 .match-card[aria-expanded="true"] .hd .chev{ transform: rotate(90deg); }
 </style>
 <style id="incomplete-pulse">
@@ -3501,14 +3498,7 @@ const place = (el) => {
   display:flex;
   align-items:center;
 }
-.match-card .hd .chev{
-  position: static;
-  margin-left: auto;
-  width: 1.25em;
-  text-align: center;
-  opacity: .7;
-  transition: transform .18s ease, opacity .18s ease;
-}
+
 /* Rotate when expanded */
 .match-card[aria-expanded="true"] .hd .chev{
   transform: rotate(90deg);
@@ -3528,9 +3518,7 @@ const place = (el) => {
 }
 /* Cancel the "below sports" spacing for this context */
 .match-card .hd .state-chip{ margin-top:0; }
-.match-card .hd .chev{
-  margin-left:8px !important; /* sit next to the chip, not flush far right */
-}
+
 </style>
 
 
@@ -3542,9 +3530,7 @@ const place = (el) => {
   display:flex; align-items:center;
 }
 .match-card .hd .state-chip{ margin-top:0; } /* même ligne que le chevron */
-.match-card .hd .chev{
-  margin-left:12px;             /* place le chevron après la pilule */
-}
+
 </style>
 
 
@@ -3562,11 +3548,9 @@ const place = (el) => {
   min-width: 0;
 }
 .match-card .hd .right-rail,
-.match-card .hd .chev{
-  flex: 0 0 auto;             /* taille auto, pas d'étirement, pas de wrap */
-}
+
 .match-card .hd .state-chip{ margin-top:0; }  /* même ligne */
-.match-card .hd .chev{ margin-left:8px; }
+
 </style>
 
 
@@ -3586,7 +3570,7 @@ const place = (el) => {
 .match-card .hd .scorewrap{ flex:1 1 auto; width:auto !important; min-width:0; }
 .match-card .hd .right-rail{ margin-left:auto; display:flex; align-items:center; gap:10px; }
 .match-card .hd .state-chip{ margin-top:0; }
-.match-card .hd .chev{ margin-left:8px; }
+
 </style>
 
 
@@ -3596,6 +3580,16 @@ const place = (el) => {
 .match-card .hd .scorewrap{ flex:1 1 auto !important; width:auto !important; min-width:0 !important; }
 .match-card .hd .right-rail{ margin-left:auto !important; display:flex !important; align-items:center !important; gap:10px !important; }
 .match-card .hd .state-chip{ margin-top:0 !important; }
-.match-card .hd .chev{ position:static !important; margin-left:8px !important; transform:none; }
+
 .match-card[aria-expanded="true"] .hd .chev{ transform:rotate(90deg) !important; }
+</style>
+
+<style id="chevron-inline-final">
+/* Match-card: pilule + chevron à droite, sur une seule ligne */
+.match-card .hd{ display:flex; align-items:center; flex-wrap:nowrap; }
+.match-card .hd .scorewrap{ flex:1 1 auto; width:auto; min-width:0; }
+.match-card .hd .right-rail{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+.match-card .hd .state-chip{ margin-top:0; }
+.match-card .hd .chev--inline{ position:static; margin-left:8px; width:1.25em; text-align:center; opacity:.7; transition:transform .18s ease, opacity .18s ease; }
+.match-card[aria-expanded="true"] .hd .chev--inline{ transform:rotate(90deg); opacity:1; }
 </style>
