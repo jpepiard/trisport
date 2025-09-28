@@ -987,3 +987,58 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 
 /* === Tooltip spacing tweak ============================================= */
 .bonus-tip.floating{ gap: 12px; }   /* espace entre la photo et le texte */
+
+
+/* === Patch: align left + stronger points === */
+
+
+  /* 1) CLASSEMENT — tout à gauche, sauf le rang (#) que l’on garde centré */
+  #table-classement thead th,
+  #table-classement tbody td{
+    text-align: left !important;
+  }
+  #table-classement tbody td:first-child{
+    text-align: center !important; /* garde la colonne # centrée */
+  }
+
+  /* Équipe : avatar + nom alignés à gauche */
+  #table-classement tbody td:nth-child(2) .team-name{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-start !important;
+  }
+
+  /* 2) POINTS — pastille bien plus visible */
+  #table-classement thead th:nth-child(3){ text-align: left !important; }
+  #table-classement tbody td:nth-child(3){ text-align: left !important; }
+
+  #table-classement tbody td:nth-child(3) > span.points-medal{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: .3px;
+    background: linear-gradient(180deg, #c9d6ff 0%, #a9bbff 100%);
+    color: #0b1450;
+    border: 1px solid #9ab4ff;
+    box-shadow:
+      0 4px 12px rgba(75,139,255,.25),
+      inset 0 0 0 1px rgba(255,255,255,.6);
+  }
+
+  /* Mobile : réduit un peu la taille de la pastille */
+  @media (max-width:520px){
+    #table-classement tbody td:nth-child(3) > span.points-medal{
+      min-width: 48px;
+      height: 30px;
+      padding: 0 10px;
+      font-size: 16px;
+    }
+  }
+

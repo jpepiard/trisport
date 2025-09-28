@@ -2702,49 +2702,88 @@ function onEnter(e){
 }
 </style>
 
-
 <style id="classement-tweaks">
-  /* Tout aligner à gauche dans le classement */
+  /* Align everything to the left in the classement table */
   #table-classement th,
   #table-classement td{ text-align:left; }
 
-  /* Forcer l’alignement des vignettes + noms côté gauche */
-  #table-classement td:nth-child(2){
-    padding-left: 12px;
-  }
+  /* Keep team row visuals but ensure left alignment with consistent spacing */
   #table-classement td:nth-child(2) .team-name{
-    display:inline-flex;
-    align-items:center;
-    justify-content:flex-start;
-    gap:10px;
+    display:inline-flex; align-items:center; gap:8px;
     vertical-align:middle;
   }
 
-  /* Émojis de rang plus grands (sans toucher au reste) */
+  /* Bigger emojis in the rank column */
   #table-classement td:first-child{
-    font-size:1.6em;
+    font-size:1.4em; /* larger only for emoji */
     line-height:1.1;
-    width: 2.5em; /* espace suffisant mais compact */
   }
 
-  /* Points généraux — pastille bien visible */
-  #table-classement td.points-cell{
-    white-space:nowrap;
-  }
+  /* Points pill — more visible without changing base font size */
   #table-classement td.points-cell .points-pill{
     display:inline-block;
-    padding:4px 14px;
+    padding:2px 10px;
     border-radius:9999px;
-    background:#4338CA;          /* indigo-700 */
-    border:1px solid #312E81;    /* indigo-900 */
-    color:#FFFFFF;
-    font-weight:800;
-    box-shadow:0 2px 6px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.12);
+    background:#EEF2FF;          /* soft indigo */
+    border:1px solid #C7D2FE;    /* indigo-200 */
+    color:#1E3A8A;               /* indigo-900 */
+    box-shadow:0 1px 0 rgba(30,58,138,.08), inset 0 0 0 1px rgba(255,255,255,.4);
   }
 </style>
 
 
 
+<style id="classement-align-left-and-strong-points-v2">
+  /* 1) CLASSEMENT — tout à gauche, sauf le rang (#) que l’on garde centré */
+  #table-classement thead th,
+  #table-classement tbody td{
+    text-align: left !important;
+  }
+  #table-classement tbody td:first-child{
+    text-align: center !important; /* garde la colonne # centrée */
+  }
+
+  /* Équipe : avatar + nom alignés à gauche */
+  #table-classement tbody td:nth-child(2) .team-name{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-start !important;
+  }
+
+  /* 2) POINTS — pastille bien plus visible */
+  #table-classement thead th:nth-child(3){ text-align: left !important; }
+  #table-classement tbody td:nth-child(3){ text-align: left !important; }
+
+  #table-classement tbody td:nth-child(3) > span.points-medal{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: .3px;
+    background: linear-gradient(180deg, #c9d6ff 0%, #a9bbff 100%);
+    color: #0b1450;
+    border: 1px solid #9ab4ff;
+    box-shadow:
+      0 4px 12px rgba(75,139,255,.25),
+      inset 0 0 0 1px rgba(255,255,255,.6);
+  }
+
+  /* Mobile : réduit un peu la taille de la pastille */
+  @media (max-width:520px){
+    #table-classement tbody td:nth-child(3) > span.points-medal{
+      min-width: 48px;
+      height: 30px;
+      padding: 0 10px;
+      font-size: 16px;
+    }
+  }
+</style>
 </head></html>
 <style id="rencontres-polish">
 /* Card container */
