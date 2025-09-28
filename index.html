@@ -6,6 +6,9 @@
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>TriSports — Fléchettes • Ping-pong • Palet</title>
 <style id="scoreline-googleish">
+/* Hide title image */
+.brand-title{ display:none !important; }
+
 .scorewrap .teams-row{
   display:grid;
   grid-template-columns: 1fr auto 1fr;
@@ -312,7 +315,7 @@ header .brand[data-mode="images"] > .logo{ display:none !important; }
 header .brand[data-mode="images"] > h1{ display:none !important; }
 
 /* Our real images */
-.brand-logo{ width:64px; height:64px; border-radius:14px; display:block; }
+.brand-logo{ width:80px; height:80px; border-radius:14px; display:block; }
 .brand-title{ height:72px; width:auto; display:block; }
 
 @media (max-width: 640px){
@@ -2521,11 +2524,11 @@ function onEnter(e){
 // === Bonus tooltip — large, hover only (fixed to body) ===================
 (function bonusTooltipHoverOnly(){
   const DESCS = {
-    "Capitaine": "Aucun réglage. +2 par manche gagnée (fléchettes & ping, simples et doubles) et +2 si palet gagné.",
-    "Miroir": "Inverse le bonus adverse sur tout le match. Si l’adversaire choisit Capitaine, son effet s’applique à votre équipe.",
-    "René la taupe": "Lunettes gênantes imposées à l’adversaire dans le sport choisi. Si l’adversaire joue « Miroir », vous portez les lunettes.",
-    "10 pouces 2 mains gauche": "L’adversaire doit jouer un sous-match avec sa mauvaise main. Choisissez le sport concerné.",
-    "Melon d'or": "Nouveau bonus — détails à venir."
+    "Capitaine": "+2 pts par manche gagnée (fléchettes & ping, simples et doubles) et +2 pts si victoire au palet.",
+    "Miroir": "Inverse le bonus adverse sur tout le match.",
+    "René la taupe": "Lunettes gênantes imposées à l’adversaire dans le sport choisi.",
+    "10 pouces 2 mains gauche": "L’adversaire doit jouer un sport avec sa mauvaise main. Choisissez le sport concerné.",
+    "Melon d'or": "Double des points en cas de victoire. En cas de défaite on soustrait le double de la différence de points avec l'équipe adverse.  "
   };
 
   // Single tooltip node (no backdrop)
