@@ -929,3 +929,26 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 .bonus-tip .tip-desc{
   font-size: 12px; line-height: 1.3;
 }
+
+
+/* === Désactivation des anciens popovers bonus dans les match-cards ===== */
+.match-card .bonus-pop,
+.match-card .bonus-popover,
+.match-card .popover-bonus,
+.match-card .pop-bonus,
+.match-card .popover,
+.match-card .pop {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+
+/* === Kill any legacy popover inside match-card (broad but scoped) ====== */
+.match-card :is([class*="popover"], [id*="popover"], [class*="bonus-pop"], [id*="bonus-pop"], [class*="pop-bonus"], [id*="pop-bonus"]) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
