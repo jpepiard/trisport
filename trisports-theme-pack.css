@@ -1228,3 +1228,57 @@ body::before{
   background: rgba(24,26,40,.45);
 }
 /* === /Fin thème harmonisé background ================================== */
+
+
+/* === Accentuation bordure + halo + survol ============================= */
+/* Renforce la lisibilité: bordure 2px, halo externe + interne plus denses,
+   et surbrillance au hover (légère montée + éclaircissement du dégradé). */
+:root{
+  --btn-border-strong: #7c6791;
+  --btn-glow-strong: rgba(176,124,193,.42);
+  --btn-inset-strong: rgba(176,124,193,.36);
+  --btn-top-hover: #3a2a55;    /* haut plus clair au hover */
+  --btn-bottom-hover: #212842; /* bas légèrement plus clair */
+}
+
+/* États actifs/primaires */
+.btn.primary,
+.btn.toggle[aria-pressed="true"]{
+  border-width: 2px;
+  border-color: var(--btn-border-strong);
+  box-shadow:
+    0 14px 34px var(--btn-glow-strong),
+    0 0 0 2px var(--btn-inset-strong) inset;
+}
+
+/* Survol accentué (surbrillance) */
+.btn.primary:hover,
+.btn.toggle[aria-pressed="true"]:hover{
+  background: linear-gradient(180deg, var(--btn-top-hover), var(--btn-bottom-hover));
+  transform: translateY(-1px);
+  filter: saturate(1.08) brightness(1.04);
+  box-shadow:
+    0 18px 42px var(--btn-glow-strong),
+    0 0 0 2px var(--btn-inset-strong) inset;
+}
+
+/* Focus clavier visible (accessibilité) */
+.btn:focus-visible{
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,.08),
+    0 0 0 5px var(--btn-glow-strong),
+    0 0 0 2px var(--btn-inset-strong) inset;
+}
+
+/* Boutons neutres: bordure + hover un peu plus marqués */
+.btn{
+  border-width: 1.5px;
+  border-color: var(--btn-border-strong);
+}
+.btn:hover{
+  border-color: var(--btn-border-strong);
+  box-shadow: 0 10px 24px rgba(0,0,0,.18), 0 0 0 1px var(--btn-inset-strong) inset;
+  transform: translateY(-0.5px);
+}
+/* === /Fin accentuation ================================================= */
