@@ -2528,7 +2528,11 @@ function onEnter(e){
     "Melon d'or": "Nouveau bonus — détails à venir."
   };
 
-  // Create a single floating node attached to <body>
+  // Backdrop (blurred black) + single tooltip node
+  const backdrop = document.createElement('div');
+  backdrop.className = 'bonus-tip-backdrop';
+  document.body.appendChild(backdrop);
+
   const node = document.createElement('div');
   node.className = 'bonus-tip floating';
   node.style.position = 'fixed';
@@ -2540,6 +2544,7 @@ function onEnter(e){
   const imgBox  = node.querySelector('.tip-img');
   const tTitle  = node.querySelector('.tip-title');
   const tDesc   = node.querySelector('.tip-desc');
+  let currentPill = null;
 
   function contentFor(pill){
     const img = pill.dataset?.bonusImg || pill.querySelector?.('.mini-bonus img')?.getAttribute('src') || '';
@@ -2551,36 +2556,41 @@ function onEnter(e){
   }
 
   function showAt(pill){
-    // Build content
+    currentPill = pill;
     contentFor(pill);
 
-    // Position above, centered on pill
     const r = pill.getBoundingClientRect();
     node.style.display = 'grid';
     node.style.opacity = '0';
-    node.style.pointerEvents = 'none';
+    node.classList.remove('show');
 
-    // Allow layout to compute size, then position
     requestAnimationFrame(()=>{
       const w = node.offsetWidth;
       const h = node.offsetHeight;
       let x = Math.round(r.left + r.width/2 - w/2);
-      let y = Math.round(r.top - h - 8);
+      let y = Math.round(r.top - h - 10);
 
-      // Clamp within viewport
-      const margin = 8;
+      const margin = 10;
       if (x < margin) x = margin;
       if (x + w > window.innerWidth - margin) x = window.innerWidth - margin - w;
-      if (y < margin) y = Math.round(r.bottom + 8); // flip below if not enough space
+      if (y < margin) y = Math.round(r.bottom + 10); // flip below if not enough space
 
       node.style.left = x + 'px';
       node.style.top  = y + 'px';
       node.style.opacity = '1';
-      node.style.pointerEvents = 'auto';
+      node.classList.add('show');
+
+      // Backdrop on
+      backdrop.classList.add('show');
     });
   }
 
-  function hide(){ node.style.display = 'none'; }
+  function hide(){
+    node.style.display = 'none';
+    node.classList.remove('show');
+    backdrop.classList.remove('show');
+    currentPill = null;
+  }
 
   function attach(pill){
     if (!pill || pill.dataset.btipReady) return;
@@ -2588,16 +2598,20 @@ function onEnter(e){
     if (!pill.hasAttribute('tabindex')) pill.setAttribute('tabindex','0');
 
     pill.addEventListener('mouseenter', ()=>showAt(pill));
-    pill.addEventListener('mouseleave', hide);
-    pill.addEventListener('focus',     ()=>showAt(pill));
-    pill.addEventListener('blur',      hide);
+    pill.addEventListener('mouseleave', (e)=>{
+      // only hide if leaving both pill and tooltip area
+      const to = e.relatedTarget;
+      if (!node.contains(to)) hide();
+    });
+    pill.addEventListener('focus', ()=>showAt(pill));
+    pill.addEventListener('blur', hide);
     pill.addEventListener('touchstart', (e)=>{ showAt(pill); e.stopPropagation(); }, {passive:true});
-    document.addEventListener('touchstart', hide, {passive:true});
   }
+
+  backdrop.addEventListener('click', hide);
 
   function enhanceAll(root){
     if (!root || !root.querySelectorAll) root = document;
-    // Target any pill that has a mini-bonus image (bonus pill visible)
     root.querySelectorAll('.pill').forEach(p=>{
       if (p.querySelector('.mini-bonus img')) attach(p);
     });
@@ -2609,7 +2623,6 @@ function onEnter(e){
     enhanceAll(document);
   }
 
-  // Watch dynamic changes
   try{
     const mo = new MutationObserver(()=>enhanceAll(document));
     mo.observe(document.body, { childList:true, subtree:true });
@@ -2618,6 +2631,7 @@ function onEnter(e){
   window.refreshBonusTooltips = enhanceAll;
 })();
 </script>
+
 
 
 
