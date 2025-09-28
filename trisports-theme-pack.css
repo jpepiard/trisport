@@ -1122,7 +1122,7 @@ body::before{
 .btn.primary{
   background: linear-gradient(180deg, #2a3aa6, #1f2b86);
   border-color: #4b5bd7;
-  color: #f4f6ff;
+  color: #000000;
   box-shadow:
     0 6px 16px rgba(75,139,255,.25),
     0 0 0 1px rgba(75,139,255,.35) inset;
