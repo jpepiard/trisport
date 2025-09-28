@@ -1378,3 +1378,19 @@ body::before{
   text-shadow: none;
 }
 /* ====================================================================== */
+
+/* === TriSports override: remove dark blue pill around sub-match scores === */
+.match-card .pill.blue {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff !important;
+  font-variant-numeric: tabular-nums;
+}
+.match-card .pill.blue::before,
+.match-card .pill.blue::after {
+  content: none !important;
+}
