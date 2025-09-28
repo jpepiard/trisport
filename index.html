@@ -2811,95 +2811,97 @@ function onEnter(e){
   }
 </style>
 
+
 <style id="gta-tabs">
-/* ===== Onglets style "GTA" ============================================== */
+/* ===== Onglets style "GTA" (lisible) =================================== */
 @font-face{
   font-family: "Pricedown";
   src: local("Pricedown");
   font-display: swap;
 }
 .tab.gta{
-  font-family: "Pricedown","Bangers","Luckiest Guy","Impact","Arial Black",system-ui,sans-serif;
+  /* police & casing */
+  font-family: "Pricedown","Impact","Arial Black",system-ui,sans-serif;
   text-transform: uppercase;
-  letter-spacing: .5px;
+  letter-spacing: .3px;
   font-weight: 900;
+  font-size: 15px;
+  /* capsule */
   border-radius: 999px;
   padding: 10px 16px;
-  background: linear-gradient(180deg,#1a234d,#141a36);
-  border: 2px solid rgba(255,255,255,.12);
-  -webkit-text-stroke: 2px #000;
-  color: #fff;
-  text-shadow:
-    0 0 0 #000,
-    0 2px 0 #000,
-    2px 0 0 #000,
-    -2px 0 0 #000,
-    0 -2px 0 #000,
-    0 4px 10px rgba(0,0,0,.6);
+  background: linear-gradient(180deg,#263369,#1a224b);
+  border: 2px solid rgba(255,255,255,.16);
+  /* lisibilité du texte */
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;     /* Safari: forcer le blanc */
+  -webkit-text-stroke: 1.2px #000000;   /* contour net mais fin */
+  text-shadow: 0 1px 0 #000, 0 0 10px rgba(120,160,255,.25);
+  /* effets doux */
   box-shadow:
     0 0 0 1px rgba(122,162,255,.10) inset,
-    0 6px 16px rgba(41,90,255,.20);
-  transition: transform .08s ease, box-shadow .18s ease, filter .18s ease, background .18s ease;
+    0 6px 14px rgba(41,90,255,.18);
+  transition: transform .06s ease, box-shadow .18s ease, filter .18s ease, background .18s ease;
   position: relative;
   overflow: hidden;
 }
+/* gloss discret */
 .tab.gta::before{
   content:"";
-  position:absolute; left:8px; right:8px; top:4px; height:40%;
+  position:absolute; left:10px; right:10px; top:5px; height:36%;
   border-radius:999px;
-  background: radial-gradient(ellipse at top, rgba(255,255,255,.25), transparent 60%);
+  background: linear-gradient(180deg, rgba(255,255,255,.12), transparent);
   pointer-events:none;
-  mix-blend-mode: screen;
+  opacity:.7;
 }
 .tab.gta:hover{
   transform: translateY(-1px);
-  filter: saturate(1.06);
+  filter: saturate(1.04);
   box-shadow:
     0 0 0 1px rgba(122,162,255,.18) inset,
-    0 10px 24px rgba(41,90,255,.28);
+    0 10px 22px rgba(41,90,255,.24);
 }
 .tab.gta:active{ transform: translateY(0); }
+
+/* Etat sélectionné */
 .tab.gta[aria-selected="true"]{
-  background: linear-gradient(180deg,#2e4bff,#1e2e86);
+  background: linear-gradient(180deg,#3a52ff,#22319a);
   border-color: rgba(255,255,255,.22);
   box-shadow:
     0 0 0 1px rgba(122,162,255,.25) inset,
-    0 14px 30px rgba(46,75,255,.35),
-    0 0 22px rgba(75,139,255,.35);
+    0 14px 28px rgba(46,75,255,.30),
+    0 0 18px rgba(75,139,255,.28);
 }
 .tab.gta[aria-selected="true"]::after{
   content:"";
-  position:absolute; left:14px; right:14px; bottom:-6px; height:4px;
-  border-radius:4px;
-  background: linear-gradient(90deg, transparent, rgba(180,200,255,.95), transparent);
-  filter: blur(.3px);
+  position:absolute; left:16px; right:16px; bottom:-5px; height:3px;
+  border-radius:3px;
+  background: linear-gradient(90deg, transparent, rgba(200,215,255,.9), transparent);
 }
 
-/* Version badge/bouton pour la zone droite du header */
+/* Badge/bouton à droite */
 .header-chip.gta{
-  font-family: "Pricedown","Bangers","Luckiest Guy","Impact","Arial Black",system-ui,sans-serif;
+  font-family: "Pricedown","Impact","Arial Black",system-ui,sans-serif;
   text-transform: uppercase;
   font-weight: 900;
-  -webkit-text-stroke: 1.5px #000;
+  -webkit-text-fill-color:#fff; -webkit-text-stroke: 1px #000;
   color:#fff !important;
   border-radius: 999px;
   padding: 8px 12px;
-  background: linear-gradient(180deg,#1a234d,#141a36);
-  border: 2px solid rgba(255,255,255,.10);
-  text-shadow:
-    0 0 0 #000, 0 2px 0 #000, 2px 0 0 #000, -2px 0 0 #000, 0 -2px 0 #000,
-    0 3px 8px rgba(0,0,0,.55);
-  box-shadow: 0 6px 16px rgba(41,90,255,.2);
+  background: linear-gradient(180deg,#263369,#1a224b);
+  border: 2px solid rgba(255,255,255,.12);
+  text-shadow: 0 1px 0 #000, 0 0 8px rgba(120,160,255,.25);
+  box-shadow: 0 6px 14px rgba(41,90,255,.18);
 }
 .header-chip.gta:hover{
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(41,90,255,.28);
+  box-shadow: 0 10px 20px rgba(41,90,255,.24);
 }
 
 @media (prefers-reduced-motion: reduce){
   .tab.gta, .header-chip.gta{ transition: none; }
 }
 </style>
+
 
 </head></html>
 <style id="rencontres-polish">
