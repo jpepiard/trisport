@@ -2516,6 +2516,59 @@ function onEnter(e){
 })();
 </script>
 
+
+<script>
+// === Auto Bonus Tooltip (no markup change needed) =========================
+(function initBonusTooltips(){
+  const DESCS = {
+    "Capitaine": "Aucun réglage. +2 par manche gagnée (fléchettes & ping, simples et doubles) et +2 si palet gagné.",
+    "Miroir": "Inverse le bonus adverse sur tout le match. Si l’adversaire choisit Capitaine, son effet s’applique à votre équipe.",
+    "René la taupe": "Lunettes gênantes imposées à l’adversaire dans le sport choisi. Si l’adversaire joue « Miroir », vous portez les lunettes.",
+    "10 pouces 2 mains gauche": "L’adversaire doit jouer un sous-match avec sa mauvaise main. Choisissez le sport concerné.",
+    "Melon d'or": "Nouveau bonus — détails à venir."
+  };
+
+  function buildTip(pill){
+    if (pill.querySelector('.bonus-tip')) return;
+
+    // Prefer explicit data-* attributes
+    const img = pill.dataset.bonusImg
+      || pill.querySelector('.mini-bonus img')?.getAttribute('src')
+      || '';
+    const title = pill.dataset.bonusTitle
+      || pill.getAttribute('aria-label')
+      || pill.textContent.trim().replace(/\s+\S*$/, '').trim(); // naive fallback
+    const desc = pill.dataset.bonusDesc || DESCS[title] || "";
+
+    const tip = document.createElement('span');
+    tip.className = 'bonus-tip';
+    tip.setAttribute('role','tooltip');
+    tip.innerHTML =
+      '<span class="tip-img">' + (img ? '<img src="'+img+'" alt="">' : '') + '</span>' +
+      '<span><div class="tip-title">'+ (title || 'Bonus') +'</div>' +
+      '<div class="tip-desc">'+ (desc || '') +'</div></span>';
+
+    pill.appendChild(tip);
+    // ensure wrapper class & focusability
+    pill.classList.add('bonus-tip-wrap');
+    if (!pill.hasAttribute('tabindex')) pill.setAttribute('tabindex','0');
+  }
+
+  function enhanceAll(root=document){
+    root.querySelectorAll('.pill.blue, .pill.bonus-flashy').forEach(buildTip);
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', enhanceAll);
+  }else{
+    enhanceAll();
+  }
+
+  // expose for dynamic updates
+  window.refreshBonusTooltips = enhanceAll;
+})();
+</script>
+
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
