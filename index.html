@@ -2518,23 +2518,17 @@ function onEnter(e){
 
 
 <script>
-// === Bonus tooltip — delegated hover (works for new pills) ===============
-(function bonusTooltipDelegated(){
-  const MAP = [
-    {key: 'capitaine', title: 'Capitaine', desc: "Aucun réglage. +2 par manche gagnée (fléchettes & ping, simples et doubles) et +2 si palet gagné."},
-    {key: 'miroir',    title: 'Miroir',    desc: "Inverse le bonus adverse sur tout le match. Si l’adversaire choisit Capitaine, son effet s’applique à votre équipe."},
-    {key: 'taupe',     title: 'René la taupe', desc: "Lunettes gênantes imposées à l’adversaire dans le sport choisi. Si l’adversaire joue « Miroir », vous portez les lunettes."},
-    {key: 'main-gauche', title: '10 pouces 2 mains gauche', desc: "L’adversaire doit jouer un sous-match avec sa mauvaise main. Choisissez le sport concerné."},
-    {key: 'melon',     title: "Melon d'or", desc: "Nouveau bonus — détails à venir."}
-  ];
-  function inferFromSrc(src){
-    if (!src) return null;
-    const low = src.toLowerCase();
-    for (const m of MAP){ if (low.includes(m.key)) return m; }
-    return null;
-  }
+// === Bonus tooltip — large, hover only (fixed to body) ===================
+(function bonusTooltipHoverOnly(){
+  const DESCS = {
+    "Capitaine": "Aucun réglage. +2 par manche gagnée (fléchettes & ping, simples et doubles) et +2 si palet gagné.",
+    "Miroir": "Inverse le bonus adverse sur tout le match. Si l’adversaire choisit Capitaine, son effet s’applique à votre équipe.",
+    "René la taupe": "Lunettes gênantes imposées à l’adversaire dans le sport choisi. Si l’adversaire joue « Miroir », vous portez les lunettes.",
+    "10 pouces 2 mains gauche": "L’adversaire doit jouer un sous-match avec sa mauvaise main. Choisissez le sport concerné.",
+    "Melon d'or": "Nouveau bonus — détails à venir."
+  };
 
-  // Single tip node
+  // Single tooltip node (no backdrop)
   const tip = document.createElement('div');
   tip.className = 'bonus-tip floating';
   tip.style.position = 'fixed';
@@ -2542,46 +2536,30 @@ function onEnter(e){
   tip.style.display = 'none';
   tip.innerHTML = '<span class="tip-img"></span><span><div class="tip-title"></div><div class="tip-desc"></div></span>';
   document.body.appendChild(tip);
+
   const imgBox = tip.querySelector('.tip-img');
   const tTitle = tip.querySelector('.tip-title');
   const tDesc  = tip.querySelector('.tip-desc');
+  let anchor = null;    // current pill
+  let overTip = false;  // track hover inside the tip
 
-  let currentPill = null;
-
-  function findBonusPill(el){
-    return el?.closest?.('.pill');
-  }
-  function firstImage(el){
-    return el?.querySelector?.('img');
-  }
-  function fillFromPill(pill){
-    const dataTitle = pill.getAttribute('data-bonus-title');
-    const dataDesc  = pill.getAttribute('data-bonus-desc');
-    let img = pill.getAttribute('data-bonus-img');
-    let title = dataTitle || pill.getAttribute('aria-label') || '';
-    let desc  = dataDesc  || '';
-
-    const imgel = firstImage(pill);
-    if (!img && imgel) img = imgel.getAttribute('src') || '';
-
-    // auto-map title/desc from filename if not provided
-    if (!title){
-      const m = inferFromSrc(img);
-      if (m){ title = m.title; if (!desc) desc = m.desc; }
-    }
-    if (!title) title = (pill.textContent || '').trim() || 'Bonus';
-
+  function fill(pill){
+    const img = pill.dataset?.bonusImg || pill.querySelector?.('.mini-bonus img')?.getAttribute('src') || '';
+    const title = pill.dataset?.bonusTitle || pill.getAttribute?.('aria-label') || (pill.textContent || '').trim();
+    const desc  = pill.dataset?.bonusDesc || DESCS[title] || '';
     imgBox.innerHTML = img ? '<img src="'+img+'" alt="" />' : '';
-    tTitle.textContent = title;
+    tTitle.textContent = title || 'Bonus';
     tDesc.textContent  = desc;
   }
-  function placeNear(pill){
+
+  function place(pill){
     const r = pill.getBoundingClientRect();
     tip.style.display = 'grid';
     tip.style.opacity = '0';
     tip.classList.remove('show');
     requestAnimationFrame(()=>{
-      const w = tip.offsetWidth, h = tip.offsetHeight;
+      const w = tip.offsetWidth;
+      const h = tip.offsetHeight;
       let x = Math.round(r.left + r.width/2 - w/2);
       let y = Math.round(r.top - h - 10);
       const margin = 10;
@@ -2594,45 +2572,50 @@ function onEnter(e){
       tip.classList.add('show');
     });
   }
-  function showFor(pill){
-    currentPill = pill;
-    fillFromPill(pill);
-    placeNear(pill);
-  }
+
+  function show(pill){ anchor = pill; fill(pill); place(pill); }
   function hide(){
-    tip.style.display = 'none';
-    tip.classList.remove('show');
-    currentPill = null;
+    if (!overTip) { tip.style.display = 'none'; tip.classList.remove('show'); anchor = null; }
   }
 
-  // Delegated events: work for existing and future pills
-  document.addEventListener('mouseover', (e)=>{
-    const pill = findBonusPill(e.target);
-    if (!pill) return;
-    if (!pill.querySelector('img') && !pill.hasAttribute('data-bonus-title')) return; // skip non-bonus pills
-    showFor(pill);
-  }, true);
-  document.addEventListener('mouseout', (e)=>{
-    const from = findBonusPill(e.target);
-    const to   = findBonusPill(e.relatedTarget);
-    // If moving from a pill to another pill, switch; if leaving pill area entirely, hide
-    if (from && to && from !== to){
-      showFor(to);
-      return;
-    }
-    if (from && !to){
-      // if mouse enters tooltip itself, keep open
-      if (tip.contains(e.relatedTarget)) return;
-      hide();
-    }
-  }, true);
-  // Keep visible when cursor over the tooltip itself
-  tip.addEventListener('mouseleave', hide);
-  tip.addEventListener('mouseenter', ()=>{});
+  // Keep visible while mouse moves over the tooltip
+  tip.addEventListener('mouseenter', ()=>{ overTip = true; });
+  tip.addEventListener('mouseleave', ()=>{ overTip = false; hide(); });
+
+  function attach(pill){
+    if (!pill || pill.dataset.btipReady) return;
+    pill.dataset.btipReady = '1';
+    if (!pill.hasAttribute('tabindex')) pill.setAttribute('tabindex','0');
+    pill.addEventListener('mouseenter', ()=>show(pill));
+    pill.addEventListener('mouseleave', (e)=>{
+      const to = e.relatedTarget;
+      if (!tip.contains(to)) hide();
+    });
+    pill.addEventListener('focus', ()=>show(pill));
+    pill.addEventListener('blur', hide);
+    // No click/touch needed
+  }
+
+  function enhanceAll(root){
+    (root || document).querySelectorAll('.pill').forEach(p=>{
+      if (p.querySelector('.mini-bonus img')) attach(p);
+    });
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ()=>enhanceAll(document));
+  } else {
+    enhanceAll(document);
+  }
+
+  try{
+    const mo = new MutationObserver(()=>enhanceAll(document));
+    mo.observe(document.body, { childList:true, subtree:true });
+  }catch(_){}
+
+  window.refreshBonusTooltips = enhanceAll;
 })();
 </script>
-
-
 
 
 
