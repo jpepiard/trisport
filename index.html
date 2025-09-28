@@ -193,7 +193,7 @@ function prepareBonusOptions(){
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;background:radial-gradient(1200px 800px at 20% -10%,#1c2040,transparent),radial-gradient(1000px 600px at 120% 0%,#1b2550,transparent),var(--bg);color:var(--text)}
 header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(130%) blur(8px);background:linear-gradient(180deg,rgba(15,18,32,.9),rgba(15,18,32,.6));border-bottom:1px solid var(--border)}
 .container{max-width:1100px;margin:0 auto;padding:18px 16px}.brand{display:flex;gap:12px;align-items:center}
-.logo{width:153px;height:102px;border-radius:2px;background:conic-gradient(from 210deg,#6ee7b7,#7aa2ff);display:grid;place-items:center;font-weight:900;color:#0a0d1c}
+.logo{width:153px;height:102px;border-radius:14px;background:conic-gradient(from 210deg,#6ee7b7,#7aa2ff);display:grid;place-items:center;font-weight:900;color:#0a0d1c}
 .tabs{display:flex;gap:8px;flex-wrap:wrap}.tab{background:var(--chip);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:999px;cursor:pointer}
 .tab[aria-selected="true"]{background:linear-gradient(180deg,#1d2a57,#1a2450);border-color:#3a4aa0}
 main .container{padding-top:22px}section{display:none}section.active{display:block}
@@ -315,7 +315,7 @@ header .brand[data-mode="images"] > .logo{ display:none !important; }
 header .brand[data-mode="images"] > h1{ display:none !important; }
 
 /* Our real images */
-.brand-logo{ width:153px; height:102px; border-radius:2px; display:block; }
+.brand-logo{ width:153px; height:102px; border-radius:14px; display:block; }
 .brand-title{ height:72px; width:auto; display:block; }
 
 @media (max-width: 640px){
@@ -502,7 +502,10 @@ header .btn, header .chip, header .pill, header .tab{
 <body>
 <header>
 <div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
-<div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
+<div class="brand">
+  <span class="gta-title">TriSports</span>
+  <button class="gta-cta" id="cta-tournoi" type="button">Tournoi</button>
+</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
 <nav aria-label="Sections" class="tabs" id="tabs" role="tablist">
 <button aria-selected="true" class="tab" data-tab="setup" role="tab" type="button">Tournoi</button>
 <button aria-selected="false" class="tab" data-tab="equipes" role="tab" type="button">Équipes</button>
@@ -517,6 +520,32 @@ header .btn, header .chip, header .pill, header .tab{
 </div>
 </div>
 </header>
+
+<section class="gta-hero" aria-label="Bannière TriSports">
+  <div class="collage" aria-hidden="true">
+    <!-- Remplace les src par tes images réelles -->
+    <div class="cell"><img alt="" src="images/darts.jpg"></div>
+    <div class="cell"><img alt="" src="images/ping-pong-paddles-ball.jpg"></div>
+    <div class="cell"><img alt="" src="images/palet-plomb-planche.jpg"></div>
+    <div class="cell"><img alt="" src="images/whisky-bottle.jpg"></div>
+    <div class="cell"><img alt="" src="images/fromage-raclette.jpg"></div>
+    <div class="cell"><img alt="" src="images/saucisson.jpg"></div>
+    <div class="cell"><img alt="" src="images/darts-2.jpg"></div>
+    <div class="cell"><img alt="" src="images/ping-detail.jpg"></div>
+    <div class="cell"><img alt="" src="images/palet-closeup.jpg"></div>
+    <div class="cell"><img alt="" src="images/whisky-ice.jpg"></div>
+    <div class="cell"><img alt="" src="images/raclette-servie.jpg"></div>
+    <div class="cell"><img alt="" src="images/saucisson-planche.jpg"></div>
+  </div>
+
+  <div class="overlay">
+    <div>
+      <span class="gta-title">TriSports</span>
+      <span class="gta-sub">Fléchettes • Ping-pong • Palet</span>
+    </div>
+  </div>
+</section>
+
 <main>
 <div class="container">
 <div class="help" id="storage-warning" style="display:none"></div>

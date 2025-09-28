@@ -987,3 +987,119 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 
 /* === Tooltip spacing tweak ============================================= */
 .bonus-tip.floating{ gap: 12px; }   /* espace entre la photo et le texte */
+
+
+
+/* ====== GTA vibe ====================================================== */
+/* Optionnel : si tu as le fichier de police "Pricedown" (licence OK), dé-commente:
+@font-face{
+  font-family: "PricedownCustom";
+  src: url("./fonts/Pricedown.ttf") format("truetype");
+  font-display: swap;
+}
+*/
+
+:root{
+  --gta-yellow: #ffd34e;
+  --gta-orange: #ff9f1a;
+  --gta-black: #0a0a0a;
+  --hero-h: min(56vh, 520px);
+}
+
+/* Titre style GTA (outline épais) */
+.gta-title{
+  font-family: PricedownCustom, Impact, "Anton", "Archivo Black", system-ui, sans-serif;
+  font-size: clamp(28px, 6vw, 56px);
+  letter-spacing: .5px;
+  line-height: 1;
+  color: #fff;                           /* remplissage blanc */
+  /* Outline noir multi-ombre pour simuler le contour */
+  text-shadow:
+    0 2px 0 var(--gta-black),
+    0 -2px 0 var(--gta-black),
+    2px 0 0 var(--gta-black),
+    -2px 0 0 var(--gta-black),
+    2px 2px 0 var(--gta-black),
+    -2px 2px 0 var(--gta-black),
+    2px -2px 0 var(--gta-black),
+    -2px -2px 0 var(--gta-black),
+    0 0 18px rgba(0,0,0,.45);
+  display:inline-block;
+  transform: translateZ(0);
+}
+
+/* Petit badge dégradé jaune/orange sous le titre (facultatif) */
+.gta-sub{
+  display:inline-block; margin-left: 10px; padding: 6px 10px; border-radius: 999px;
+  font: 700 12px/1 system-ui, sans-serif; letter-spacing:.3px; color:#1a1200;
+  background: linear-gradient(180deg, var(--gta-yellow), var(--gta-orange));
+  border: 1px solid rgba(0,0,0,.25);
+  text-shadow: 0 1px 0 rgba(255,255,255,.35);
+}
+
+/* CTA "Tournoi" à droite du titre */
+.gta-cta{
+  margin-left: clamp(8px, 2vw, 14px);
+  padding: 10px 14px; border-radius: 14px; font-weight: 800;
+  background: linear-gradient(180deg,#2a3aa6,#1f2b86);
+  border: 1px solid #4b5bd7; color: #fff; cursor:pointer;
+  box-shadow: 0 8px 18px rgba(0,0,0,.28), 0 0 0 1px rgba(122,162,255,.15) inset;
+}
+.gta-cta:hover{ filter: saturate(112%); }
+
+/* Bandeau / HÉRO façon collage */
+.gta-hero{
+  position: relative; isolation:isolate;
+  height: var(--hero-h);
+  margin: 0; overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(0,0,0,.35), transparent 40%),
+    radial-gradient(800px 400px at 90% -20%, rgba(0,0,0,.35), transparent 45%),
+    linear-gradient(180deg, rgba(10,12,24,.9), rgba(10,12,24,.55) 60%, rgba(10,12,24,.95));
+}
+
+/* Grille d’images “stickers” */
+.gta-hero .collage{
+  position:absolute; inset:0; display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 12px; padding: 16px; opacity:.85;
+  filter: saturate(1.05) contrast(1.02);
+}
+.gta-hero .cell{
+  position:relative; border-radius: 14px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: 0 10px 24px rgba(0,0,0,.35) inset;
+  background:#0e1130;
+}
+.gta-hero .cell img{
+  position:absolute; inset:0; width:100%; height:100%; object-fit: cover;
+  transform: scale(1.06);
+  filter: brightness(.96);
+}
+
+/* Masques de forme “GTA poster” */
+.gta-hero .cell::after{
+  content:""; position:absolute; inset:0;
+  background: radial-gradient(circle at 20% -10%, rgba(255,255,255,.25), transparent 40%);
+  mix-blend-mode: overlay;
+}
+
+/* Ligne de base : titre et CTA au-dessus des images */
+.gta-hero .overlay{
+  position: relative; z-index: 2; height: 100%;
+  display:flex; align-items:flex-end; padding: 22px 16px;
+  background: linear-gradient(180deg, rgba(10,12,24,0) 0%, rgba(10,12,24,.55) 50%, rgba(10,12,24,.92) 100%);
+}
+
+/* Réactivité */
+@media (max-width: 980px){
+  .gta-hero .collage{ grid-template-columns: repeat(5,1fr); }
+}
+@media (max-width: 640px){
+  .gta-hero{ height: min(44vh, 380px); }
+  .gta-hero .collage{ grid-template-columns: repeat(3,1fr); gap:8px; padding:10px; }
+  .gta-title{ font-size: clamp(24px, 8vw, 42px); }
+  .gta-sub{ display:none; }
+}
