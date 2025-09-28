@@ -1156,3 +1156,34 @@ body::before{
               0 0 0 1px rgba(239,68,68,.25) inset;
 }
 /* === /Fin patch boutons type "onglets" === */
+
+/* === Thème boutons personnalisé : #330726 ============================== */
+:root{
+  --btn-base: #330726;
+  --btn-top: #570c41;
+  --btn-bottom: #180312;
+  --btn-border: #841262;
+  --btn-glow: rgba(208,29,155,0.28);
+  --btn-inset: rgba(208,29,155,0.3);
+}
+
+.btn.primary,
+.btn.toggle[aria-pressed="true"]{
+  background: linear-gradient(180deg, var(--btn-top), var(--btn-bottom));
+  border-color: var(--btn-border);
+  color: #f6f2f7;
+  box-shadow:
+    0 10px 22px var(--btn-glow),
+    0 0 0 1px var(--btn-inset) inset;
+}
+
+.btn.primary:hover{
+  box-shadow:
+    0 14px 28px var(--btn-glow),
+    0 0 0 1px var(--btn-inset) inset;
+}
+
+.btn:hover{
+  border-color: var(--btn-border);
+}
+/* === /Fin thème #330726 ================================================ */
