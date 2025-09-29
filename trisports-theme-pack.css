@@ -1469,3 +1469,22 @@ body::before{
 @media (max-width: 700px){
   #equipes #team-list{ grid-template-columns: 1fr; }
 }
+
+
+/* === Barre fixe en haut à droite : tournoi + utilisateur + actions === */
+#top-right-bar{
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 2000;
+}
+#top-right-bar .pill{ white-space: nowrap; }
+#top-right-bar .btn.small{ white-space: nowrap; }
+@media (max-width: 520px){
+  #top-right-bar{ top: 8px; right: 8px; gap: 6px; }
+  #top-right-bar .pill{ padding: 6px 10px; }
+  #top-right-bar .btn.small{ padding: 6px 10px; }
+}
