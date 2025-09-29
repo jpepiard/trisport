@@ -1471,20 +1471,129 @@ body::before{
 }
 
 
-/* === Barre fixe en haut à droite : tournoi + utilisateur + actions === */
-#top-right-bar{
-  position: fixed;
-  top: 10px;
-  right: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 2000;
+/* --- Added by assistant on request: brighter, sparkling bonus pills --- */
+
+/* === Bonus/Malus pills — BRIGHT & SPARKLY ===============================
+   Applies to the revealed badges inside match cards:
+   .match-card .pill.green  → positive bonus
+   .match-card .pill.red    → negative/malus
+   Non‑destructive: overrides previous styles if present.
+===========================================================================*/
+
+@keyframes neonPulseGreenX {
+  0%,100% { filter: brightness(1); }
+  50%     { filter: brightness(1.16); }
 }
-#top-right-bar .pill{ white-space: nowrap; }
-#top-right-bar .btn.small{ white-space: nowrap; }
-@media (max-width: 520px){
-  #top-right-bar{ top: 8px; right: 8px; gap: 6px; }
-  #top-right-bar .pill{ padding: 6px 10px; }
-  #top-right-bar .btn.small{ padding: 6px 10px; }
+@keyframes neonPulseRedX {
+  0%,100% { filter: brightness(1); }
+  50%     { filter: brightness(1.16); }
+}
+@keyframes shimmerSweep {
+  0%   { background-position: -180% 0; }
+  100% { background-position:  180% 0; }
+}
+@keyframes sparkleDrift {
+  0%   { transform: translateY(0) scale(1); opacity:.85; }
+  50%  { transform: translateY(-2px) scale(1.08); opacity:.35; }
+  100% { transform: translateY(0) scale(1); opacity:.85; }
+}
+
+/* Base pill look */
+.match-card .pill.green,
+.match-card .pill.red{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-weight: 800;
+  letter-spacing: .2px;
+  color: #f8fbff !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,.35);
+  border-radius: 999px;
+  overflow: hidden; /* so inner shine doesn't spill */
+  transform: translateZ(0);
+}
+
+/* POSITIVE (green neon) */
+.match-card .pill.green{
+  border: 1px solid rgba(34,197,94,.70);
+  background: linear-gradient(135deg, #10b981 0%, #0c9467 55%, #0a7a57 100%);
+  box-shadow:
+    0 0 10px rgba(34,197,94,.45),
+    0 0 22px rgba(15,133,92,.25),
+    inset 0 0 8px rgba(255,255,255,.08);
+  animation: neonPulseGreenX 1.8s ease-in-out infinite;
+}
+
+/* NEGATIVE (red neon) */
+.match-card .pill.red{
+  border: 1px solid rgba(239,68,68,.70);
+  background: linear-gradient(135deg, #ef4444 0%, #c02626 55%, #8a1f1f 100%);
+  box-shadow:
+    0 0 10px rgba(239,68,68,.45),
+    0 0 22px rgba(139,32,32,.25),
+    inset 0 0 8px rgba(255,255,255,.08);
+  animation: neonPulseRedX 1.8s ease-in-out infinite;
+}
+
+/* Moving glossy sweep */
+.match-card .pill.green::after,
+.match-card .pill.red::after{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  border-radius:inherit;
+  pointer-events:none;
+  background:
+    linear-gradient(120deg,
+      rgba(255,255,255,0) 20%,
+      rgba(255,255,255,.20) 40%,
+      rgba(255,255,255,0) 60%) center/220% 100% no-repeat;
+  mix-blend-mode: screen;
+  animation: shimmerSweep 2.4s linear infinite;
+}
+
+/* Subtle outer halo pulse */
+.match-card .pill.green::before,
+.match-card .pill.red::before{
+  content:"";
+  position:absolute;
+  inset:-6px;
+  border-radius:inherit;
+  pointer-events:none;
+  box-shadow: 0 0 0 0 rgba(255,255,255,.0), 0 0 20px rgba(255,255,255,.12);
+  animation: sparkleDrift 2.2s ease-in-out infinite;
+}
+
+/* Icon + emoji sizing (crisp) */
+.match-card .pill.green .mini-bonus img,
+.match-card .pill.red .mini-bonus img{
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transition: transform .15s ease;
+}
+.match-card .pill.green:hover .mini-bonus img,
+.match-card .pill.red:hover .mini-bonus img{
+  transform: scale(1.08) rotate(-2deg);
+}
+
+.match-card .pill.green .sport-emo,
+.match-card .pill.red .sport-emo{
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1;
+  margin: 0 4px;
+  vertical-align: -4px;
+}
+
+/* Accessible: reduce motion */
+@media (prefers-reduced-motion: reduce){
+  .match-card .pill.green, .match-card .pill.red{ animation:none !important; }
+  .match-card .pill.green::after, .match-card .pill.red::after{ animation:none !important; }
+  .match-card .pill.green::before, .match-card .pill.red::before{ animation:none !important; }
 }
