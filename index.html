@@ -76,7 +76,6 @@ function ensureMelonWrapper(){
   return wrap;
 }
 
-
 function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
   const wC = ensureParamWrapper();    if (wC){ wC.style.maxHeight = openCap   ? (wC.scrollHeight+'px') : '0px'; }
   const wT = ensureTaupeWrapper();    if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
@@ -364,7 +363,6 @@ header .btn, header .chip, header .pill, header .tab{
 @media (max-width: 640px){
   header, .app-header, .topbar{ padding-block: 4px !important; }
 }
-
 
 /* --- Bonus panel: put params under the card text (minimal, scoped) --- */
 #bonus-modal .bonus-dialog .bonus-card{display:grid!important;grid-template-columns:96px 1fr;gap:12px;align-items:start}
@@ -818,7 +816,6 @@ header .btn, header .chip, header .pill, header .tab{
  * @property {Object.<number, Object.<string, boolean>>} bonusUsed
  */
 
-
 // Centralise libellés/images pour les bonus (évite les erreurs de frappe)
 const BONUS = {
   /** @param {"capitaine"|"miroir"|"taupe"|"lefthand"|"melon"|string} type */
@@ -1160,9 +1157,6 @@ function recomputeAllBonuses(){
     });
   }catch(e){ /* noop */ }
 }
-
-
-
 
 /* Icônes pour titres de sport */
 function sportIcon(name){
@@ -1624,7 +1618,6 @@ function renderLeaderboard(){
   });
 }
 
-
 /* ===== H2H ===== */
 
 function pointsForTeamInMatch(m, tid){
@@ -1795,8 +1788,6 @@ document.addEventListener("click",async(e)=>{
 
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
-
-
 
 /* === Bonus categories & locks === */
 function rebuildCategoryLocksFromSelections(){
@@ -2529,7 +2520,6 @@ function onEnter(e){
 })();
 </script>
 
-
 <script>
 // === Bonus tooltip — large, hover only (fixed to body) ===================
 (function bonusTooltipHoverOnly(){
@@ -2629,11 +2619,6 @@ function onEnter(e){
   window.refreshBonusTooltips = enhanceAll;
 })();
 </script>
-
-
-
-
-
 
 </body>
 <style id="pretty-confirm-modal">
@@ -2744,8 +2729,6 @@ function onEnter(e){
   }
 </style>
 
-
-
 <style id="classement-align-left-and-strong-points-v2">
   /* 1) CLASSEMENT — tout à gauche, sauf le rang (#) que l’on garde centré */
   #table-classement thead th,
@@ -2816,8 +2799,6 @@ function onEnter(e){
     justify-content: center !important;
   }
 </style>
-
-
 
 <style id="gta-tabs">
 /* ===== Onglets style "GTA" — version blanche lisible =================== */
@@ -2893,13 +2874,6 @@ function onEnter(e){
 }
 </style>
 
-
-
-
-
-
-
-
 <style id="gta-selected-and-classement-dark">
 :root{
   /* Rouge-violet désaturé (crimson violet) */
@@ -2957,10 +2931,6 @@ function onEnter(e){
 #table-classement tbody tr:nth-child(2){ box-shadow: inset 4px 0 0 0 rgba(192,192,192,.9), 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02); }
 #table-classement tbody tr:nth-child(3){ box-shadow: inset 4px 0 0 0 rgba(205,127,50,.9), 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02); }
 </style>
-
-
-
-
 
 </head></html>
 <style id="rencontres-polish">
@@ -3140,47 +3110,13 @@ function onEnter(e){
   .round-grid{ grid-template-columns: 1fr; }
 }
 </style>
-<style id="bonus-flashy-pill">
-.pill.bonus-flashy{
-  background: linear-gradient(180deg, rgba(80,180,255,.25), rgba(80,180,255,.15));
-  border: 1px solid rgba(120,200,255,.45);
-  box-shadow: 0 6px 18px rgba(0,120,255,.25), 0 0 0 1px rgba(0,120,255,.25) inset; /* keep existing shadow */
-  font-weight: 800;
-}
-.pill.bonus-flashy .pos{ color: #5CF08A; font-weight: 800; margin-left: 6px; }
-.pill.bonus-flashy .neg{ color: #FF6B6B; font-weight: 800; margin-left: 6px; }
-.pill.bonus-flashy .mini-bonus{ width: 18px; height: 18px; border-radius: 50%; overflow: hidden; vertical-align: -3px; margin-left: 6px; }
-.pill.bonus-flashy:hover{ filter: brightness(1.1); box-shadow: 0 8px 22px rgba(0,140,255,.35), 0 0 0 1px rgba(120,200,255,.6) inset; /* keep existing shadow */ }
-</style>
+
 <style id="equal-visual-heights">
 .scorewrap .teams-row{ align-items:center; min-height: 84px; }
 .scorewrap .score{ font-size: clamp(28px, 3.2vw, 34px) !important; line-height:1; }
 .scorewrap .team .name{ font-size: clamp(15px, 1.4vw, 18px); }
 </style>
-<style id="bonus-flashy-anim-tooltip">
-/* Pop-in animation */
-@keyframes bonusPop { 
-  0% { transform: scale(.85); opacity: .0; filter: saturate(0.8) blur(.2px); } 
-  60% { transform: scale(1.04); opacity: 1; } 
-  100% { transform: scale(1); opacity: 1; } 
-}
-.pill.bonus-flashy{ animation: bonusPop .26s ease-out; position: relative; z-index: 0; }
 
-/* Color variants */
-.pill.bonus-flashy.pos{
-  background: linear-gradient(180deg, rgba(40,200,120,.22), rgba(40,200,120,.14));
-  border: 1px solid rgba(60,220,140,.55);
-  box-shadow: 0 8px 22px rgba(40,200,120,.28), 0 0 0 1px rgba(60,220,140,.55) inset; /* keep existing shadow */
-}
-.pill.bonus-flashy.neg{
-  background: linear-gradient(180deg, rgba(255,120,120,.22), rgba(255,120,120,.14));
-  border: 1px solid rgba(255,110,110,.55);
-  box-shadow: 0 8px 22px rgba(255,120,120,.30), 0 0 0 1px rgba(255,110,110,.55) inset; /* keep existing shadow */
-}
-
-/* Custom tooltip bubble */
-
-</style>
 <style id="score-boxes-and-tooltip-align">
 /* Score en boîtes blanches */
 .score{ display:flex; align-items:center; gap:10px; justify-content:center; }
@@ -3234,19 +3170,7 @@ function onEnter(e){
 .score .scorebox.b{ box-shadow: inset 2px 0 0 0 rgba(0,0,0,.35); /* keep existing shadow */ }
 .score .scorebox.a{ box-shadow: inset -2px 0 0 0 rgba(0,0,0,.22); /* keep existing shadow */ }
 </style>
-<style id="bonus-flashy-blue-variant">
-.pill.bonus-flashy{
-  background: linear-gradient(180deg, rgba(60,120,255,.22), rgba(60,120,255,.14));
-  border: 1px solid rgba(110,160,255,.55);
-  box-shadow: 0 8px 22px rgba(60,120,255,.28), 0 0 0 1px rgba(110,160,255,.55) inset; /* keep existing shadow */
-  font-weight: 800; position:relative;
-}
-/* halo/bord coloré selon pos/neg */
-.pill.bonus-flashy.pos{ border-color: rgba(60,220,140,.85); box-shadow: 0 8px 22px rgba(40,200,120,.28), 0 0 0 2px rgba(60,220,140,.55) inset; /* keep existing shadow */ }
-.pill.bonus-flashy.neg{ border-color: rgba(255,110,110,.9); box-shadow: 0 8px 22px rgba(255,120,120,.30), 0 0 0 2px rgba(255,110,110,.55) inset; /* keep existing shadow */ }
-.pill.bonus-flashy .pos{ color: #5CF08A; font-weight: 900; margin-left: 6px; }
-.pill.bonus-flashy .neg{ color: #FF6B6B; font-weight: 900; margin-left: 6px; }
-</style>
+
 <style id="scoreboxes-seam-stronger">
 .score{ position:relative; }
 .score::before{
@@ -3269,23 +3193,7 @@ function onEnter(e){
 <style id="bonus-sport-emoji-css">
 .pill .sport-emo{ margin: 0 6px 0 4px; font-size: 14px; line-height: 0; vertical-align: -1px; }
 </style>
-<style id="tooltip-visibility-fix">
-.match-card, .scorewrap, .round-grid { overflow: visible !important; }
-.pill.bonus-flashy{ position:relative; z-index: 50; }
-.pill.bonus-flashy[data-tip]::after,
-.pill.bonus-flashy[data-tip]::before{ z-index: 1000; }
-</style>
-<style id="bonus-pill-compact">
-.pill.bonus-flashy{ padding: 4px 8px; white-space: nowrap; font-size: 13px; }
-.pill.bonus-flashy .mini-bonus{ width: 14px; height: 14px; margin: 0 4px; vertical-align: -2px; }
-.pill .sport-emo{ margin: 0 4px 0 3px; font-size: 13px; vertical-align: -1px; }
-.pill.bonus-flashy .pos, .pill.bonus-flashy .neg{ margin-left: 3px; }
-</style>
-<style id="bonus-pill-order-tight">
-.pill.bonus-flashy, .pill.blue{ display:inline-flex; align-items:center; gap:4px; }
-.pill.bonus-flashy .mini-bonus, .pill.blue .mini-bonus{ margin:0 2px; }
-.pill .sport-emo{ margin:0 2px; }
-</style>
+
 <style id="chev-bottom-right">
 .match-card .hd{ position: relative; }
 .match-card .hd .chev{
@@ -3462,7 +3370,6 @@ const place = (el) => {
   arrow.style.left = arrowLeft + 'px';
   arrow.style.top = (-7) + 'px';
 };
-
 
     // Hover/focus show, leave/blur hide
     const show = (e) => open(e.currentTarget, e.type === 'click');
