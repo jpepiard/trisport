@@ -1597,3 +1597,100 @@ body::before{
   .match-card .pill.green::after, .match-card .pill.red::after{ animation:none !important; }
   .match-card .pill.green::before, .match-card .pill.red::before{ animation:none !important; }
 }
+
+
+/* --- Ultra sparkly variant appended --- */
+
+/* =======================================================================
+   ULTRA SPARKLY VARIANT — animated shimmer + particle sparkles
+   Targets revealed Bonus/Malus pills inside match cards:
+   .match-card .pill.green  / .match-card .pill.red
+   Layering:
+     - ::after  = diagonal glossy sweep (animated)
+     - ::before = twinkling particles (animated)
+     - extra    = subtle traveling highlight stripe
+   Non-destructive and respects prefers-reduced-motion.
+======================================================================== */
+
+@keyframes sparkleTwinkle {
+  0%, 100% { opacity: .2; transform: translateY(0) scale(1); filter: brightness(1); }
+  50%      { opacity: .9; transform: translateY(-1px) scale(1.08); filter: brightness(1.25); }
+}
+@keyframes sparkleFloat {
+  0%   { background-position: 0% 0%, 0% 0%, 0% 0%; }
+  100% { background-position: 120% 0%, -120% 0%, 200% 0%; }
+}
+@keyframes glossyRibbon {
+  0%   { transform: translateX(-120%) skewX(-20deg); opacity:.0; }
+  15%  { opacity:.7; }
+  50%  { transform: translateX(0) skewX(-20deg); opacity:.9; }
+  85%  { opacity:.7; }
+  100% { transform: translateX(120%) skewX(-20deg); opacity:.0; }
+}
+
+/* Common: stronger neon base to stand out under particles */
+.match-card .pill.green,
+.match-card .pill.red{
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;       /* keep inner blends contained */
+  will-change: filter, box-shadow;
+}
+
+/* Particle layer (sparks) */
+.match-card .pill.green::before,
+.match-card .pill.red::before{
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  /* Three moving layers of tiny radial dots (different sizes) */
+  background:
+    radial-gradient(2px 2px at 10% 30%, rgba(255,255,255,.9), transparent 60%) 0 0 / 180px 100% no-repeat,
+    radial-gradient(1.5px 1.5px at 60% 70%, rgba(255,255,255,.75), transparent 60%) 0 0 / 140px 100% no-repeat,
+    radial-gradient(1px 1px at 30% 50%, rgba(255,255,255,.6), transparent 60%) 0 0 / 110px 100% no-repeat;
+  mix-blend-mode: screen;
+  animation: sparkleFloat 6s linear infinite, sparkleTwinkle 2.4s ease-in-out infinite;
+  opacity: .55;
+}
+
+/* Glossy diagonal ribbon (extra highlight that passes through) */
+.match-card .pill.green::after,
+.match-card .pill.red::after{
+  content: "";
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  left: 0;
+  width: 55%;
+  border-radius: 16px;
+  background: linear-gradient(120deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,.25) 40%,
+    rgba(255,255,255,.65) 50%,
+    rgba(255,255,255,.25) 60%,
+    rgba(255,255,255,0) 100%);
+  filter: blur(0.5px);
+  transform: translateX(-120%) skewX(-20deg);
+  animation: glossyRibbon 2.6s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+/* Hover: tiny burst (without shifting layout) */
+.match-card .pill.green:hover,
+.match-card .pill.red:hover{
+  box-shadow:
+    0 0 14px rgba(255,255,255,.20),
+    0 0 24px rgba(255,255,255,.10),
+    inset 0 0 10px rgba(255,255,255,.12);
+  filter: saturate(1.06);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .match-card .pill.green::before,
+  .match-card .pill.red::before{ animation: none !important; opacity:.35; }
+  .match-card .pill.green::after,
+  .match-card .pill.red::after{ animation: none !important; opacity:.25; transform: none; }
+}
