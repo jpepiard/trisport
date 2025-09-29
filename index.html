@@ -2636,6 +2636,117 @@ function onEnter(e){
 
 
 
+
+<style id="teams-top-bottom-final">
+/* === TOP (badge + avatar + name input, one row) ====================== */
+#equipes .bd #team-list > * .team-header{
+  display: grid !important;
+  grid-template-columns: auto auto 1fr !important; /* badge | avatar | name */
+  align-items: center !important;
+  gap: 10px !important;
+  padding-bottom: 8px !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+#equipes .bd #team-list > * .team-header .avatar{
+  width: 48px !important; height: 48px !important;
+  border: 2px solid var(--border) !important; border-radius: 999px !important;
+}
+#equipes .bd #team-list > * .team-header .team-name-wrap input{
+  width: 100% !important;
+  padding: 10px 12px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--border) !important;
+  background: #0f1331 !important; /* chip-like */
+  color: #e7e9f7 !important;
+}
+
+/* === Players directly under header =================================== */
+#equipes .bd #team-list > * .players{
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+/* === BOTTOM (4 actions in 2x2 grid) ================================== */
+#equipes .bd #team-list > * .actions{
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  margin-top: 6px !important;
+}
+#equipes .bd #team-list > * .actions .btn,
+#equipes .bd #team-list > * .actions button{
+  font-size: 14px !important;
+  padding: 10px 12px !important;
+  border-radius: 12px !important;
+}
+</style>
+
+<script id="teams-card-upgrade-v3">
+(function(){
+  function upgradeTeamCards(){
+    const list = document.querySelector('#equipes .bd #team-list');
+    if(!list) return;
+    [...list.children].forEach(card=>{
+      if(card.__upgradedFinal) return;
+      card.__upgradedFinal = true;
+
+      // Create/prepare header
+      let header = card.querySelector('.team-header');
+      if(!header){
+        header = document.createElement('div');
+        header.className = 'team-header';
+        card.insertBefore(header, card.firstChild);
+      }
+      // badge (optional)
+      const rankCandidate = [...card.querySelectorAll('.pill, .chip, span, div')]
+        .find(el=> (el.parentElement !== header) &&
+                   /^#?\d+$/.test((el.textContent||'').trim().replace(/^#/,'')));
+      if(rankCandidate){ header.appendChild(rankCandidate); }
+      // avatar
+      const avatar = card.querySelector('.avatar');
+      if(avatar && avatar.parentElement !== header){ header.appendChild(avatar); }
+      // name field to the right
+      let wrap = header.querySelector('.team-name-wrap');
+      if(!wrap){ wrap = document.createElement('div'); wrap.className='team-name-wrap'; header.appendChild(wrap); }
+      const inputs = [...card.querySelectorAll('input')];
+      const nameInput = inputs[0] || null;
+      if(nameInput && nameInput.parentElement !== wrap){ wrap.appendChild(nameInput); }
+
+      // players row just below
+      let players = card.querySelector('.players');
+      if(!players){
+        players = document.createElement('div'); players.className='players';
+        inputs.slice(1,3).forEach(i=> players.appendChild(i));
+        if(players.children.length){
+          if(header.nextSibling) card.insertBefore(players, header.nextSibling);
+          else card.appendChild(players);
+        }
+      }
+
+      // mark security line
+      const sec = [...card.childNodes].find(n=> n.nodeType===1 && /protégée|mot de passe/i.test((n.textContent||'')));
+      if(sec){ sec.classList.add('security','muted'); }
+
+      // actions grid at bottom
+      let actions = card.querySelector('.actions');
+      if(!actions){
+        actions = document.createElement('div'); actions.className='actions';
+        const btns = [...card.querySelectorAll('button')];
+        btns.forEach(b=> actions.appendChild(b));
+        if(actions.children.length) card.appendChild(actions);
+      }
+    });
+  }
+  const run = ()=>{ setTimeout(upgradeTeamCards,30); setTimeout(upgradeTeamCards,300); };
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', run); } else { run(); }
+  const list = document.querySelector('#equipes .bd #team-list');
+  if(list && 'MutationObserver' in window){
+    new MutationObserver(upgradeTeamCards).observe(list,{childList:true, subtree:true});
+  }
+})();
+</script>
+
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
