@@ -964,7 +964,7 @@ document.addEventListener("fullscreenchange",()=>{const b=id("btn-fullscreen");i
 
 /* ===== Calendrier ===== */
 function generateSchedule(){const ids=state.teams.map(t=>t.id);if(ids.length<2){state.matches=[];saveState();renderMatches();return}const BYE="__BYE__";if(ids.length%2===1)ids.push(BYE);const fixed=ids[0],rest=ids.slice(1);for(let i=rest.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[rest[i],rest[j]]=[rest[j],rest[i]]}const n=ids.length,rounds=n-1;const out=[];let order=0;for(let r=0;r<rounds;r++){const arr=[fixed].concat(rest),half=n/2,pairs=[];for(let k=0;k<half;k++){const a=arr[k],b=arr[n-1-k];if(a!==BYE&&b!==BYE)pairs.push((r%2===0)?[a,b]:[b,a])}rest.unshift(rest.pop());if(pairs.length>1){let shift=r%pairs.length;while(shift-->0)pairs.unshift(pairs.pop())}for(const pr of pairs){out.push(_normMatch({id:uid(),a:pr[0],b:pr[1],darts:Array(dartsTotal()).fill(null),pingPts:Array(pingTotal()).fill({a:null,b:null}),palet:{a:null,b:null},round:r+1,order:order++}))}}out.sort((x,y)=>(x.round-y.round)||(x.order-y.order));state.matches=out;ui.open={};state.roundCtl={};state.bonusSelections={};state.bonusApplied={};saveState();renderMatches()}
-function renderTeams(){const el=id("team-list");el.innerHTML="";if(!state.teams.length){el.appendChild(help("Aucune équipe. Utilisez l’onglet « Tournoi » pour créer/rejoindre un tournoi cloud."));updateCounts();updateLock();return}state.teams.forEach((t,idx)=>{const iOwn=hasClaim(t.id),admin=isAdmin(),hasHash=!!(state.protect?.teamPassHash?.[t.id]);const dis=admin?'':' disabled';const delBtn=(admin&&!state.locked)?`<button type="button" class="btn small danger" data-act="del" data-id="${t.id}">Supprimer</button>`:'';const protectInfo=hasHash?(iOwn?'🔒 vous êtes connecté à cette équipe':'🔒 protégée par mot de passe'):'🔓 non protégée — demandez à l’admin de définir un mot de passe';const protectBtns=(admin?`<button type="button" class="btn small" data-act="setpass" data-id="${t.id}">Définir / changer mot de passe</button>`:'')+(!iOwn?`<button type="button" class="btn small" data-act="login" data-id="${t.id}">Se connecter à cette équipe</button>`:`<button type="button" class="btn small" data-act="logout" data-id="${t.id}">Se déconnecter</button>`);const avatarBtn=(admin||iOwn)?`<button type="button" class="btn small" data-act="avatar" data-id="${t.id}">Changer avatar</button>`:'';const avatarClr=((admin||iOwn)&&t.avatar)?`<button type="button" class="btn small" data-act="avatar-clear" data-id="${t.id}">Retirer avatar</button>`:'';const card=document.createElement("div");card.className="match-card";card.setAttribute("aria-expanded","true");card.innerHTML=`<div class="hd team-header" style="border:none;border-bottom:1px solid var(--border)"><div class="teams"><span class="chip">#${idx+1}</span><span class="team-name">${avatarHtml(t.id,'lg','data-click-avatar="'+t.id+'"')}<input type="text"${dis} value="${esc(t.name)}" data-field="name" data-id="${t.id}"/></span></div></div><div class="bd"><input type="file" accept="image/*" data-avatar="${t.id}" style="display:none"/><div class="grid cols-2"><div><label>Joueur·se 1</label><input type="text"${dis} value="${esc(t.p1)}" data-field="p1" data-id="${t.id}"/></div><div><label>Joueur·se 2</label><input type="text"${dis} value="${esc(t.p2)}" data-field="p2" data-id="${t.id}"/></div></div><div class="help" style="margin-top:6px">${protectInfo}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${avatarBtn}${avatarClr}${protectBtns}</div><div style="display:flex;justify-content:flex-end;margin-top:10px">${delBtn}</div></div>`;el.appendChild(card)});qsa('#team-list input[data-field]').forEach(inp=>{const tid=inp.getAttribute("data-id"),f=inp.getAttribute("data-field");inp.addEventListener("input",()=>{if(!isAdmin())return;const t=teamObj(tid);if(!t)return;t[f]=inp.value;localStorage.setItem(STORAGE_KEY,JSON.stringify(state))});inp.addEventListener("blur",()=>{if(!isAdmin())return;const t=teamObj(tid);if(!t)return;t[f]=inp.value;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()})});qsa('#team-list input[type="file"][data-avatar]').forEach(inp=>{inp.addEventListener("change",async()=>{const tid=inp.getAttribute("data-avatar");if(!(isAdmin()||hasClaim(tid)))return;const file=inp.files?.[0];if(!file)return;try{const url=await fileToSquareDataURL(file,160);const t=teamObj(tid);if(!t)return;t.avatar=url;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}catch{showToast("Échec du chargement de l’avatar.")}finally{inp.value=""}})});updateCounts();updateLock()}
+function renderTeams(){const el=id("team-list");el.innerHTML="";if(!state.teams.length){el.appendChild(help("Aucune équipe. Utilisez l’onglet « Tournoi » pour créer/rejoindre un tournoi cloud."));updateCounts();updateLock();return}state.teams.forEach((t,idx)=>{const iOwn=hasClaim(t.id),admin=isAdmin(),hasHash=!!(state.protect?.teamPassHash?.[t.id]);const dis=admin?'':' disabled';const delBtn=(admin&&!state.locked)?`<button type="button" class="btn small danger" data-act="del" data-id="${t.id}">Supprimer</button>`:'';const protectInfo=hasHash?(iOwn?'🔒 vous êtes connecté à cette équipe':'🔒 protégée par mot de passe'):'🔓 non protégée — demandez à l’admin de définir un mot de passe';const protectBtns=(admin?`<button type="button" class="btn small" data-act="setpass" data-id="${t.id}">Définir / changer mot de passe</button>`:'')+(!iOwn?`<button type="button" class="btn small" data-act="login" data-id="${t.id}">Se connecter à cette équipe</button>`:`<button type="button" class="btn small" data-act="logout" data-id="${t.id}">Se déconnecter</button>`);const avatarBtn=(admin||iOwn)?`<button type="button" class="btn small" data-act="avatar" data-id="${t.id}">Changer avatar</button>`:'';const avatarClr=((admin||iOwn)&&t.avatar)?`<button type="button" class="btn small" data-act="avatar-clear" data-id="${t.id}">Retirer avatar</button>`:'';const card=document.createElement("div");card.className="match-card";card.setAttribute("aria-expanded","true");card.innerHTML=`<div class="hd team-header" style="border:none;border-bottom:1px solid var(--border)"><div class="teams"><span class="chip">#${idx+1}</span><span class="team-name">${avatarHtml(t.id,'lg','data-click-avatar="'+t.id+'"')}<input type="text"${dis} value="${esc(t.name)}" data-field="name" data-id="${t.id}"/></span></div></div><div class="bd"><input type="file" accept="image/*" data-avatar="${t.id}" style="display:none"/><div class="grid cols-2"><div><label>Joueur·se 1</label><input type="text"${dis} value="${esc(t.p1)}" data-field="p1" data-id="${t.id}"/></div><div><label>Joueur·se 2</label><input type="text"${dis} value="${esc(t.p2)}" data-field="p2" data-id="${t.id}"/></div></div><div class="help" style="margin-top:6px">${protectInfo}</div><div class="team-actions">${avatarBtn}${avatarClr}${protectBtns}</div><div style="display:flex;justify-content:flex-end;margin-top:10px">${delBtn}</div></div>`;el.appendChild(card)});qsa('#team-list input[data-field]').forEach(inp=>{const tid=inp.getAttribute("data-id"),f=inp.getAttribute("data-field");inp.addEventListener("input",()=>{if(!isAdmin())return;const t=teamObj(tid);if(!t)return;t[f]=inp.value;localStorage.setItem(STORAGE_KEY,JSON.stringify(state))});inp.addEventListener("blur",()=>{if(!isAdmin())return;const t=teamObj(tid);if(!t)return;t[f]=inp.value;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()})});qsa('#team-list input[type="file"][data-avatar]').forEach(inp=>{inp.addEventListener("change",async()=>{const tid=inp.getAttribute("data-avatar");if(!(isAdmin()||hasClaim(tid)))return;const file=inp.files?.[0];if(!file)return;try{const url=await fileToSquareDataURL(file,160);const t=teamObj(tid);if(!t)return;t.avatar=url;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}catch{showToast("Échec du chargement de l’avatar.")}finally{inp.value=""}})});updateCounts();updateLock()}
 function fileToSquareDataURL(file,size){return new Promise((resolve,reject)=>{const r=new FileReader();r.onerror=()=>reject(new Error("read"));r.onload=()=>{const img=new Image();img.onload=()=>{try{const m=Math.min(img.width,img.height),sx=(img.width-m)/2,sy=(img.height-m)/2;const c=document.createElement("canvas");c.width=size;c.height=size;c.getContext('2d').drawImage(img,sx,sy,m,m,0,0,size,size);resolve(c.toDataURL('image/jpeg',0.9))}catch(e){reject(e)}};img.onerror=()=>reject(new Error("img"));img.src=r.result};r.readAsDataURL(file)})}
 function updateCounts(){id("teams-count").textContent=state.teams.length+" "+(state.teams.length>1?"équipes":"équipe");const per=Math.max(0,state.teams.length-1);id("rounds-count").textContent=per+" "+(per>1?"matchs":"match")+" par équipe"}
 function updateLock(){const pill=id("lock-pill");if(pill)pill.style.display=state.locked?"inline-block":"none";const gen=id("btn-generate");if(gen){gen.disabled=!!state.locked;gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"}}
@@ -2635,117 +2635,6 @@ function onEnter(e){
 
 
 
-
-
-<style id="teams-top-bottom-final">
-/* === TOP (badge + avatar + name input, one row) ====================== */
-#equipes .bd #team-list > * .team-header{
-  display: grid !important;
-  grid-template-columns: auto auto 1fr !important; /* badge | avatar | name */
-  align-items: center !important;
-  gap: 10px !important;
-  padding-bottom: 8px !important;
-  border-bottom: 1px solid var(--border) !important;
-}
-#equipes .bd #team-list > * .team-header .avatar{
-  width: 48px !important; height: 48px !important;
-  border: 2px solid var(--border) !important; border-radius: 999px !important;
-}
-#equipes .bd #team-list > * .team-header .team-name-wrap input{
-  width: 100% !important;
-  padding: 10px 12px !important;
-  border-radius: 12px !important;
-  border: 1px solid var(--border) !important;
-  background: #0f1331 !important; /* chip-like */
-  color: #e7e9f7 !important;
-}
-
-/* === Players directly under header =================================== */
-#equipes .bd #team-list > * .players{
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 10px !important;
-}
-
-/* === BOTTOM (4 actions in 2x2 grid) ================================== */
-#equipes .bd #team-list > * .actions{
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 10px !important;
-  margin-top: 6px !important;
-}
-#equipes .bd #team-list > * .actions .btn,
-#equipes .bd #team-list > * .actions button{
-  font-size: 14px !important;
-  padding: 10px 12px !important;
-  border-radius: 12px !important;
-}
-</style>
-
-<script id="teams-card-upgrade-v3">
-(function(){
-  function upgradeTeamCards(){
-    const list = document.querySelector('#equipes .bd #team-list');
-    if(!list) return;
-    [...list.children].forEach(card=>{
-      if(card.__upgradedFinal) return;
-      card.__upgradedFinal = true;
-
-      // Create/prepare header
-      let header = card.querySelector('.team-header');
-      if(!header){
-        header = document.createElement('div');
-        header.className = 'team-header';
-        card.insertBefore(header, card.firstChild);
-      }
-      // badge (optional)
-      const rankCandidate = [...card.querySelectorAll('.pill, .chip, span, div')]
-        .find(el=> (el.parentElement !== header) &&
-                   /^#?\d+$/.test((el.textContent||'').trim().replace(/^#/,'')));
-      if(rankCandidate){ header.appendChild(rankCandidate); }
-      // avatar
-      const avatar = card.querySelector('.avatar');
-      if(avatar && avatar.parentElement !== header){ header.appendChild(avatar); }
-      // name field to the right
-      let wrap = header.querySelector('.team-name-wrap');
-      if(!wrap){ wrap = document.createElement('div'); wrap.className='team-name-wrap'; header.appendChild(wrap); }
-      const inputs = [...card.querySelectorAll('input')];
-      const nameInput = inputs[0] || null;
-      if(nameInput && nameInput.parentElement !== wrap){ wrap.appendChild(nameInput); }
-
-      // players row just below
-      let players = card.querySelector('.players');
-      if(!players){
-        players = document.createElement('div'); players.className='players';
-        inputs.slice(1,3).forEach(i=> players.appendChild(i));
-        if(players.children.length){
-          if(header.nextSibling) card.insertBefore(players, header.nextSibling);
-          else card.appendChild(players);
-        }
-      }
-
-      // mark security line
-      const sec = [...card.childNodes].find(n=> n.nodeType===1 && /protégée|mot de passe/i.test((n.textContent||'')));
-      if(sec){ sec.classList.add('security','muted'); }
-
-      // actions grid at bottom
-      let actions = card.querySelector('.actions');
-      if(!actions){
-        actions = document.createElement('div'); actions.className='actions';
-        const btns = [...card.querySelectorAll('button')];
-        btns.forEach(b=> actions.appendChild(b));
-        if(actions.children.length) card.appendChild(actions);
-      }
-    });
-  }
-  const run = ()=>{ setTimeout(upgradeTeamCards,30); setTimeout(upgradeTeamCards,300); };
-  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', run); } else { run(); }
-  const list = document.querySelector('#equipes .bd #team-list');
-  if(list && 'MutationObserver' in window){
-    new MutationObserver(upgradeTeamCards).observe(list,{childList:true, subtree:true});
-  }
-})();
-</script>
 
 </body>
 <style id="pretty-confirm-modal">
