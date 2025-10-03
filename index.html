@@ -259,7 +259,7 @@ h1, h2, h3, h4, h5, h6 {
 .pill .mini-bonus img {width:100%;height:100%;object-fit:cover}</style>
 <style id="round-grid-css">@media (max-width: 900px) {
   .round-grid{ grid-template-columns: 1fr; }
-.round-grid .match-card { margin:0; }}</style>
+.round-grid .match-card { margin:0; }</style>
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -279,7 +279,7 @@ header .brand[data-mode="images"] > h1 { display:none !important; }
 @media (max-width: 640px) {
   .brand-title{ height:60px; }
 @media (max-width: 420px) {
-  .brand-title{ height:48px; }}}</style>
+  .brand-title{ height:48px; }</style>
 <style id="brand-hide-text">header .brand > .logo, header .brand > h1 { display: none !important; }</style>
 <style id="header-compact-keepimage">header nav, header .menu { display:flex; align-items:center; }
 header .btn, header .chip, header .pill, header .tab {
@@ -912,9 +912,8 @@ function computeMelonBonusForMatch(m, tid, sport){
       if (a==null || b==null) return 0;
       const myPF  = isA ? a : b;
       const oppPF = isA ? b : a;
-  const target = +((window.state && state.rules && state.rules.paletTarget) ?? 11);
       if (myPF > oppPF) return myPF;                 // victoire => +PF
-      if (myPF < oppPF) return - (2 * (target - myPF));  // défaite => -2×(11−PF équipe)
+      if (myPF < oppPF) return - (2 * (11 - myPF));  // défaite => -2×(11−PF équipe)
       return 0;
     }
   }catch(e){ return 0; }
@@ -1707,13 +1706,7 @@ function openBonusModal(round, teamId){
 
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
-  const type =
-  (window._bonusType === 'miroir')   ? 'miroir'   :
-  (window._bonusType === 'taupe')    ? 'taupe'    :
-  (window._bonusType === 'lefthand') ? 'lefthand' :
-  (window._bonusType === 'melon')    ? 'melon'    :
-                                       'capitaine';
-const r=bonusCTX.round, t=bonusCTX.teamId;
+  const r=bonusCTX.round, t=bonusCTX.teamId;
   // Block saving if category already used this season
   try{
     const locks = getTeamCategoryLocks(t);
@@ -2663,7 +2656,7 @@ function onEnter(e){
   text-overflow: ellipsis;
 }
 @media (min-width: 1400px) {
-  .scorewrap .team .name{ max-width: 16ch; font-size: clamp(14px, 1.6vw, 20px); }}}</style>
+  .scorewrap .team .name{ max-width: 16ch; font-size: clamp(14px, 1.6vw, 20px); }</style>
 <style id="match-cards-equalized">.round-grid .match-card {
   height: 100%;
   display: flex;
@@ -2694,7 +2687,7 @@ function onEnter(e){
   box-sizing: border-box;
 }
 @media (max-width: 900px) {
-  .round-grid{ grid-template-columns: 1fr; }}</style>
+  .round-grid{ grid-template-columns: 1fr; }</style>
 <style id="bonus-flashy-pill">.pill.bonus-flashy .pos { color: #5CF08A; font-weight: 800; margin-left: 6px; }
 .pill.bonus-flashy .neg { color: #FF6B6B; font-weight: 800; margin-left: 6px; }
 .pill.bonus-flashy .mini-bonus { width: 18px; height: 18px; border-radius: 50%; overflow: hidden; vertical-align: -3px; margin-left: 6px; }</style>
