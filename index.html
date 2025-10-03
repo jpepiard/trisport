@@ -272,22 +272,25 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 .bonus-panel .ft { position:sticky; bottom:0; background:var(--card); padding-top:8px; z-index:3; box-shadow:0 -8px 12px rgba(0,0,0,.25);  }
 .bonus-select { gap:8px; }
 .bonus-dialog .bonus-card .bonus-illu img { width:72px; height:72px; border-radius:12px; }</style>
-<style id="brand-image-header">header .brand[data-mode="images"] > .logo { display:none !important; }
-header .brand[data-mode="images"] > h1 { display:none !important; }
-.brand-logo { width:64px; height:64px; border-radius:14px; display:block; }
-.brand-title { height:72px; width:auto; display:block; }
+<style id="brand-image-header">/* Header brand: image-only mode */
+header .brand[data-mode="images"] > .logo { display: block !important; }
+header .brand[data-mode="images"] > h1 { display: none !important; }
+
+/* Brand assets sizing */
+.brand-logo { width: 64px; height: 64px; border-radius: 14px; display: block; }
+.brand-title { height: 72px; width: auto; display: block; }
+
 @media (max-width: 640px) {
-  .brand-title{ height:60px; }
+  .brand-title { height: 60px; }
+}
 @media (max-width: 420px) {
-  .brand-title{ height:48px; }</style>
-<style id="brand-hide-text">header .brand > .logo, header .brand > h1 { display: none !important; }</style>
-<style id="header-compact-keepimage">header nav, header .menu { display:flex; align-items:center; }
+  .brand-title { height: 48px; }
+}
+</style><style id="header-compact-keepimage">header nav, header .menu { display:flex; align-items:center; }
 header .btn, header .chip, header .pill, header .tab {
   padding-top: 8px !important;
   padding-bottom: 8px !important;
 }
-.brand-logo { width:64px !important; height:64px !important; }
-.brand-title { height:72px !important; width:auto !important; }
 @media (max-width: 640px) {
   header, .app-header, .topbar{ padding-block: 4px !important; }
 #bonus-modal .bonus-dialog .bonus-card {display:grid!important;grid-template-columns:96px 1fr;gap:12px;align-items:start}
