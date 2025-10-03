@@ -1469,3 +1469,63 @@ body::before{
 @media (max-width: 700px){
   #equipes #team-list{ grid-template-columns: 1fr; }
 }
+
+/* === TriSports: Consolidated component styles (tabs/buttons/chips) === */
+:root{
+  --accent: #7aa2ff;
+  --accent-strong: #9ab4ff;
+}
+.tab{
+  position: relative;
+  font-weight: 600;
+  letter-spacing: .2px;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
+}
+.tab:hover{
+  border-color: var(--accent);
+  color: #e9edff;
+  box-shadow: 0 0 0 1px rgba(122,162,255,.15) inset; /* keep existing shadow */
+}
+.tab[aria-selected="true"]{
+  color: #000000;
+  background: linear-gradient(180deg, #2a3aa6, #1f2b86);
+  border-color: #4b5bd7;
+  box-shadow:
+    0 6px 16px rgba(75,139,255,.25),
+    0 0 0 1px rgba(75,139,255,.35) inset; /* keep existing shadow */
+}
+.tab[aria-selected="true"]::after{
+  content: "";
+  position: absolute;
+  left: 10px; right: 10px; bottom: -6px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-strong), transparent);
+}
+.tab:focus-visible{
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(15,18,32,1),
+    0 0 0 4px rgba(122,162,255,.8); /* keep existing shadow */
+}
+@media (prefers-contrast: more){
+  .tab[aria-selected="true"]{
+    background: #2431a0;
+    border-color: #9ab4ff;
+  }
+  .tab[aria-selected="true"]::after{ height: 4px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .tab{ transition: none; }
+}
+
+/* Accessibility: unify reduced motion on interactive components */
+@media (prefers-reduced-motion: reduce){
+  .btn, .tab, .chip, .pill {
+    transition-duration: 0s !important;
+    animation: none !important;
+  }
+  .bonus-select .panel {
+    transition: none !important;
+  }
+}
