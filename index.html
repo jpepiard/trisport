@@ -76,7 +76,6 @@ function ensureMelonWrapper(){
   return wrap;
 }
 
-
 function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
   const wC = ensureParamWrapper();    if (wC){ wC.style.maxHeight = openCap   ? (wC.scrollHeight+'px') : '0px'; }
   const wT = ensureTaupeWrapper();    if (wT){ wT.style.maxHeight = openTaupe ? (wT.scrollHeight+'px') : '0px'; }
@@ -365,7 +364,6 @@ header .btn, header .chip, header .pill, header .tab{
   header, .app-header, .topbar{ padding-block: 4px !important; }
 }
 
-
 /* --- Bonus panel: put params under the card text (minimal, scoped) --- */
 #bonus-modal .bonus-dialog .bonus-card{display:grid!important;grid-template-columns:96px 1fr;gap:12px;align-items:start}
 #bonus-modal .bonus-dialog .bonus-card .bonus-illu{grid-column:1;grid-row:1}
@@ -381,111 +379,7 @@ header .btn, header .chip, header .pill, header .tab{
 #capitaine-params .grid,
 #capitaine-params .row { display: none !important; }
 </style>
-<style id="tabs-contrast-upgrade">
-:root{
-  --accent: #7aa2ff;
-  --accent-strong: #9ab4ff;
-}
-.tab{
-  position: relative;
-  font-weight: 600;
-  letter-spacing: .2px;
-  transition: background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
-}
-.tab:hover{
-  border-color: var(--accent);
-  color: #e9edff;
-  box-shadow: 0 0 0 1px rgba(122,162,255,.15) inset; /* keep existing shadow */
-}
-.tab[aria-selected="true"]{
-  color: #000000;
-  background: linear-gradient(180deg, #2a3aa6, #1f2b86);
-  border-color: #4b5bd7;
-  box-shadow:
-    0 6px 16px rgba(75,139,255,.25),
-    0 0 0 1px rgba(75,139,255,.35) inset; /* keep existing shadow */
-}
-.tab[aria-selected="true"]::after{
-  content: "";
-  position: absolute;
-  left: 10px; right: 10px; bottom: -6px;
-  height: 3px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, transparent, var(--accent-strong), transparent);
-}
-.tab:focus-visible{
-  outline: none;
-  box-shadow:
-    0 0 0 2px rgba(15,18,32,1),
-    0 0 0 4px rgba(122,162,255,.8); /* keep existing shadow */
-}
-@media (prefers-contrast: more){
-  .tab[aria-selected="true"]{
-    background: #2431a0;
-    border-color: #9ab4ff;
-  }
-  .tab[aria-selected="true"]::after{ height: 4px; }
-}
-@media (prefers-reduced-motion: reduce){
-  .tab{ transition: none; }
-}
-</style>
-<style id="matchcard-animations">
-/* Smooth expand/collapse for match cards */
-.match-card .bd{
-  /* default open state */
-  transition: max-height .28s ease, opacity .2s ease, padding .2s ease;
-  will-change: max-height, opacity;
-}
-/* Closed state visual without display:none (to allow animation) */
-.match-card[aria-expanded="false"] .bd{
-  max-height: 0 !important;
-  overflow: hidden;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  opacity: .0;
-}
-/* When JS finishes opening, we can reset to 'auto' via inline style */
-@media (prefers-reduced-motion: reduce){
-  .match-card .bd{ transition: none; }
-}
-</style>
-<style id="standings-and-buttons-animations">
-/* === Apparition des lignes du classement === */
-@keyframes slideUpFade {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-#table-classement tbody tr {
-  animation: slideUpFade .28s ease both;
-}
-#table-classement tbody tr:nth-child(1){ animation-delay: .00s; }
-#table-classement tbody tr:nth-child(2){ animation-delay: .03s; }
-#table-classement tbody tr:nth-child(3){ animation-delay: .06s; }
-#table-classement tbody tr:nth-child(4){ animation-delay: .09s; }
-#table-classement tbody tr:nth-child(5){ animation-delay: .12s; }
-#table-classement tbody tr:nth-child(6){ animation-delay: .15s; }
-/* réduit l'effet si l'utilisateur préfère moins d'animation */
-@media (prefers-reduced-motion: reduce){
-  #table-classement tbody tr{ animation: none !important; }
-}
 
-/* === Micro-transitions sur les boutons === */
-.btn{
-  transition: background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, transform .06s ease;
-  will-change: transform, box-shadow;
-}
-.btn:hover{
-  box-shadow: 0 6px 14px rgba(0,0,0,.25), 0 0 0 1px rgba(122,162,255,.15) inset; /* keep existing shadow */
-}
-.btn:active{
-  transform: translateY(1px) scale(.995);
-  box-shadow: 0 3px 10px rgba(0,0,0,.25), 0 0 0 1px rgba(122,162,255,.12) inset; /* keep existing shadow */
-}
-.btn.small:active{ transform: translateY(1px) scale(.997); }
-.btn.primary:hover{ box-shadow: 0 8px 18px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.25) inset; /* keep existing shadow */ }
-.btn.danger:hover{ box-shadow: 0 8px 18px rgba(239,68,68,.25), 0 0 0 1px rgba(239,68,68,.25) inset; /* keep existing shadow */ }
-</style>
 <style id="chevron-toggle">
 /* Chevron d’ouverture/fermeture */
 .hd{ position:relative; }
@@ -817,7 +711,6 @@ header .btn, header .chip, header .pill, header .tab{
  * @property {Object.<number, Object.<string, number>>} bonusApplied
  * @property {Object.<number, Object.<string, boolean>>} bonusUsed
  */
-
 
 // Centralise libellés/images pour les bonus (évite les erreurs de frappe)
 const BONUS = {
@@ -1160,9 +1053,6 @@ function recomputeAllBonuses(){
     });
   }catch(e){ /* noop */ }
 }
-
-
-
 
 /* Icônes pour titres de sport */
 function sportIcon(name){
@@ -1624,7 +1514,6 @@ function renderLeaderboard(){
   });
 }
 
-
 /* ===== H2H ===== */
 
 function pointsForTeamInMatch(m, tid){
@@ -1795,8 +1684,6 @@ document.addEventListener("click",async(e)=>{
 
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
-
-
 
 /* === Bonus categories & locks === */
 function rebuildCategoryLocksFromSelections(){
@@ -2529,7 +2416,6 @@ function onEnter(e){
 })();
 </script>
 
-
 <script>
 // === Bonus tooltip — large, hover only (fixed to body) ===================
 (function bonusTooltipHoverOnly(){
@@ -2629,11 +2515,6 @@ function onEnter(e){
   window.refreshBonusTooltips = enhanceAll;
 })();
 </script>
-
-
-
-
-
 
 </body>
 <style id="pretty-confirm-modal">
@@ -2744,8 +2625,6 @@ function onEnter(e){
   }
 </style>
 
-
-
 <style id="classement-align-left-and-strong-points-v2">
   /* 1) CLASSEMENT — tout à gauche, sauf le rang (#) que l’on garde centré */
   #table-classement thead th,
@@ -2816,8 +2695,6 @@ function onEnter(e){
     justify-content: center !important;
   }
 </style>
-
-
 
 <style id="gta-tabs">
 /* ===== Onglets style "GTA" — version blanche lisible =================== */
@@ -2893,13 +2770,6 @@ function onEnter(e){
 }
 </style>
 
-
-
-
-
-
-
-
 <style id="gta-selected-and-classement-dark">
 :root{
   /* Rouge-violet désaturé (crimson violet) */
@@ -2957,10 +2827,6 @@ function onEnter(e){
 #table-classement tbody tr:nth-child(2){ box-shadow: inset 4px 0 0 0 rgba(192,192,192,.9), 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02); }
 #table-classement tbody tr:nth-child(3){ box-shadow: inset 4px 0 0 0 rgba(205,127,50,.9), 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02); }
 </style>
-
-
-
-
 
 </head></html>
 <style id="rencontres-polish">
@@ -3462,7 +3328,6 @@ const place = (el) => {
   arrow.style.left = arrowLeft + 'px';
   arrow.style.top = (-7) + 'px';
 };
-
 
     // Hover/focus show, leave/blur hide
     const show = (e) => open(e.currentTarget, e.type === 'click');
