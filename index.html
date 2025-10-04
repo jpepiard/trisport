@@ -911,7 +911,18 @@ function recomputeAllBonuses(){
         const sel = sels[tid]; if (!sel) return;
         let total = 0;
         if (sel.type === 'capitaine'){
-          matches.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
+          const m = matches.find(x=>x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (oppSel && oppSel.type === 'miroir'){
+              total = 0; // Capitaine transféré : l'effet sera appliqué côté Miroir adverse
+            } else {
+              matches.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
+            }
+          } else {
+            matches.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
+          }
         } else if (sel.type === 'melon'){
           const m = matches.find(x=>x.a===tid || x.b===tid);
           if (m){
@@ -932,6 +943,10 @@ function recomputeAllBonuses(){
             if (oppSel && oppSel.type === 'melon'){
               const sport = oppSel.sport || 'darts';
               total = computeMelonBonusForMatch(m, tid, sport);
+            } else if (oppSel && oppSel.type === 'capitaine'){
+              // Transfert du Capitaine : applique le calcul Capitaine au camp Miroir
+              total = 0;
+              total += computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
             }
           }
         }
