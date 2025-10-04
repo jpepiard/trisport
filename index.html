@@ -4,7 +4,21 @@
 <head>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2212%22 fill=%22%23111%22/><path d=%22M10 42 L32 10 L54 42%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%226%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/><circle cx=%2232%22 cy=%2246%22 r=%226%22 fill=%22%23fff%22/></svg>" type="image/svg+xml">
 
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; worker-src 'self' blob:; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; script-src-elem 'self' 'unsafe-inline' https:; connect-src 'self' https: wss:; frame-src https: data:; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  base-uri 'self';
+  object-src 'none';
+  img-src 'self' data: blob: https:;
+  font-src 'self' https://fonts.gstatic.com;
+  style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+  style-src-elem 'self' https://fonts.googleapis.com 'unsafe-inline';
+  script-src 'self' https://www.gstatic.com https://www.googletagmanager.com;
+  script-src-elem 'self' https://www.gstatic.com;
+  connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss:;
+  worker-src 'self' blob:;
+  frame-src https: data:;
+  upgrade-insecure-requests">
+
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>TriSports — Fléchettes • Ping-pong • Palet</title>

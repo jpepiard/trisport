@@ -312,44 +312,25 @@ function safeSetStateFromCloud(val){
   }catch(_){ /* on ignore, on garde l'état local */ }
 }
 
-function pushCloud(immediate){if(!cloud.enabled||!cloud.ref)return;clearTimeout(cloud.timer);cloud.timer=setTimeout(()=>cloud.ref.set({state,updatedAt:Date.now()}),immediate?0:250)}
-function deleteCloud(code){if(!cloud.db){cloud.db=initFB()}return cloud.db.ref("tournaments/"+code).remove()}
-function saveState(){normalize();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));upsertIndex({id:state.cloudId||cloud.id||"?",name:state.tournamentName||"Sans titre",updatedAt:Date.now()});renderTitle();renderSetupRecent();renderManageList();if(cloud.enabled)pushCloud()}
 
-/* Plein écran */
-document.addEventListener("fullscreenchange",()=>{const b=id("btn-fullscreen");if(!b)return;b.textContent=document.fullscreenElement?"Quitter plein écran":"⛶ Plein écran"});
-
-/* ===== Calendrier ===== */
-function generateSchedule(){const ids=state.teams.map(t=>t.id);if(ids.length<2){state.matches=[];saveState();renderMatches();return}const BYE="__BYE__";if(ids.length%2===1)ids.push(BYE);const fixed=ids[0],rest=ids.slice(1);for(let i=rest.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[rest[i],rest[j]]=[rest[j],rest[i]]}const n=ids.length,rounds=n-1;const out=[];let order=0;for(let r=0;r<rounds;r++){const arr=[fixed].concat(rest),half=n/2,pairs=[];for(let k=0;k<half;k++){const a=arr[k],b=arr[n-1-k];if(a!==BYE&&b!==BYE)pairs.push((r%2===0)?[a,b]:[b,a])}rest.unshift(rest.pop());if(pairs.length>1){let shift=r%pairs.length;while(shift-->0)pairs.unshift(pairs.pop())}for(const pr of pairs){out.push(_normMatch({id:uid(),a:pr[0],b:pr[1],darts:Array(dartsTotal()).fill(null),pingPts:Array(pingTotal()).fill({a:null,b:null}),palet:{a:null,b:null},round:r+1,order:order++}))}}out.sort((x,y)=>(x.round-y.round)||(x.order-y.order));state.matches=out;ui.open={};state.roundCtl={};state.bonusSelections={};state.bonusApplied={};saveState();renderMatches()}
-function renderTeams(){const el=id("team-list");el.innerHTML="";if(!state.teams.length){el.appendChild(help("Aucune équipe. Utilisez l’onglet « Tournoi » pour créer/rejoindre un tournoi cloud."));updateCounts();updateLock();return}state.teams.forEach((t,idx)=>{const iOwn=hasClaim(t.id),admin=isAdmin(),hasHash=!!(state.protect?.teamPassHash?.[t.id]);const dis=admin?'':' disabled';const delBtn=(admin&&!state.locked)?`<button type="button" class="btn small danger" data-act="del" data-id="${t.id}">Supprimer</button>`:'';const protectInfo=hasHash?(iOwn?'🔒 vous êtes connecté à cette équipe':'🔒 protégée par mot de passe'):'🔓 non protégée — demandez à l’admin de définir un mot de passe';const protectBtns=(admin?`<button type="button" class="btn small" data-act="setpass" data-id="${t.id}">Définir / changer mot de passe</button>`:'')+(!iOwn?`<button type="button" class="btn small" data-act="login" data-id="${t.id}">Se connecter à cette équipe</button>`:`<button type="button" class="btn small" data-act="logout" data-id="${t.id}">Se déconnecter</button>`);const avatarBtn=(admin||iOwn)?`<button type="button" class="btn small" data-act="avatar" data-id="${t.id}">Changer avatar</button>`:'';const avatarClr=((admin||iOwn)&&t.avatar)?`<button type="button" class="btn small" data-act="avatar-clear" data-id="${t.id}">Retirer avatar</button>`:'';const card=document.createElement("div");card.className="match-card";card.setAttribute("aria-expanded","true");card.innerHTML=`<div class="hd team-header" style="border:none;border-bottom:1px solid var(--border)"><div class="teams"><span class="chip">#${idx+1}</span><span class="team-name">${avatarHtml(t.id,'lg','data-click-avatar="'+t.id+'"')}<input type="text"${dis} value="${esc(t.name)}" data-field="name" data-id="${t.id}"/></span></div></div><div class="bd"><input type="file" accept="image/*" data-avatar="${t.id}" style="display:none"/><div class="grid cols-2"><div><label>Joueur·se 1</label><input type="text"${dis} value="${esc(t.p1)}" data-field="p1" data-id="${t.id}"/></div><div><label>Joueur·se 2</label><input type="text"${dis} value="${esc(t.p2)}" data-field="p2" data-id="${t.id}"/></div></div><div class="help" style="margin-top:6px">${protectInfo}</div><div class="team-actions">${avatarBtn}${avatarClr}${protectBtns}</div><div style="display:flex;justify-content:flex-end;margin-top:10px">${delBtn}</div></div>`;el.appendChild(card)});qsa('#team-list input[data-field]').forEach(inp=>{const tid=inp.getAttribute("data-id"),f=inp.getAttribute("data-field");inp.addEventListener("input",()=>{if(!isAdmin())return;const t=teamObj(tid);if(!t)return;t[f]=inp.value;localStorage.setItem(STORAGE_KEY,JSON.stringify(state))});inp.addEventListener("blur",()=>{if(!isAdmin())return;const t=teamObj(tid);if(!t)return;t[f]=inp.value;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()})});qsa('#team-list input[type="file"][data-avatar]').forEach(inp=>{inp.addEventListener("change",async()=>{const tid=inp.getAttribute("data-avatar");if(!(isAdmin()||hasClaim(tid)))return;const file=inp.files?.[0];if(!file)return;try{const url=await fileToSquareDataURL(file,160);const t=teamObj(tid);if(!t)return;t.avatar=url;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}catch{showToast("Échec du chargement de l’avatar.")}finally{inp.value=""}})});updateCounts();updateLock()}
-function fileToSquareDataURL(file,size){return new Promise((resolve,reject)=>{const r=new FileReader();r.onerror=()=>reject(new Error("read"));r.onload=()=>{const img=new Image();img.onload=()=>{try{const m=Math.min(img.width,img.height),sx=(img.width-m)/2,sy=(img.height-m)/2;const c=document.createElement("canvas");c.width=size;c.height=size;c.getContext('2d').drawImage(img,sx,sy,m,m,0,0,size,size);resolve(c.toDataURL('image/jpeg',0.9))}catch(e){reject(e)}};img.onerror=()=>reject(new Error("img"));img.src=r.result};r.readAsDataURL(file)})}
-function updateCounts(){id("teams-count").textContent=state.teams.length+" "+(state.teams.length>1?"équipes":"équipe");const per=Math.max(0,state.teams.length-1);id("rounds-count").textContent=per+" "+(per>1?"matchs":"match")+" par équipe"}
-function updateLock(){const pill=id("lock-pill");if(pill)pill.style.display=state.locked?"inline-block":"none";const gen=id("btn-generate");if(gen){gen.disabled=!!state.locked;gen.textContent=state.locked?"Calendrier figé":"Générer le calendrier"}}
-
-/* ===== Rencontres & Scores ===== */
-const getPingPts = m => { return Array.isArray(m.ping) ? m.ping.map(v => (v===0?{a:1,b:0} : (v===1?{a:0,b:1}:{a:null,b:null}))) : (Array.isArray(m.pingPts)?m.pingPts:Array(pingTotal()).fill({a:null,b:null})); };
-const isPingValid=(a,b)=>{ if(a==null||b==null) return false; if((a===1&&b===0)||(a===0&&b===1)) return true; if(isNaN(a)||isNaN(b)) return false; const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
-function computeSetWins(m){ensureLengths(m);const aw={darts:0,ping:0},bw={darts:0,ping:0};m.darts.forEach(v=>{if(v===0)aw.darts++;else if(v===1)bw.darts++});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b)aw.ping++;else if(b>a)bw.ping++}});return{aw,bw}}
-function isMatchComplete(m){ensureLengths(m);const okD=m.darts.every(v=>v===0||v===1);const okP=getPingPts(m).every(s=>isPingValid(+s.a,+s.b));const T=+state.rules.paletTarget||11,pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);const okL=(pa!=null&&pb!=null)&&((pa===T&&pb>=0&&pb<=T-1)||(pb===T&&pa>=0&&pa<=T-1));return okD&&okP&&okL}
-// UI completeness stricter check
-function uiIsComplete(m){
-  const dN = dartsTotal();
-
-  // Fléchettes : longueur exacte + valeurs 0/1
-  const okD = Array.isArray(m.darts) &&
-              m.darts.length === dN &&
-              m.darts.every(v => v === 0 || v === 1);
-
-  // Ping : TOUJOURS 3 sets (S1, S2, D1) et 0/1 partout
-  const okP = Array.isArray(m.ping) &&
-              m.ping.length === 3 &&
-              m.ping.every(v => v === 0 || v === 1);
-
-  // Palet : deux entiers
-  const okL = Number.isInteger(m.palet?.a) && Number.isInteger(m.palet?.b);
-
-  return okD && okP && okL;
+function pushCloud(immediate){
+  try {
+    if(!cloud || !cloud.enabled || !cloud.ref) return;
+    if (!state || !Array.isArray(state.teams) || !Array.isArray(state.matches)) {
+      console.warn("pushCloud aborted: invalid state shape");
+      return;
+    }
+    clearTimeout(cloud.timer);
+    cloud.timer = setTimeout(function(){
+      try {
+        cloud.ref.set({ state: state, updatedAt: Date.now() });
+      } catch(e) { console.error("Cloud set failed:", e); }
+    }, immediate ? 0 : 250);
+  } catch(err) {
+    console.error("pushCloud error:", err);
+  }
 }
+
 
 const findMatch=mid=>state.matches.find(x=>x.id===mid);
 function clearMatch(mid){
@@ -2383,3 +2364,16 @@ const place = (el) => {
     });
   });
 })();
+
+// Soft admin confirmation helper (prompt-based). Customize ADMIN_PIN retrieval as needed.
+async function confirmerActionAdmin(message = "Confirmer l’action admin") {
+  try {
+    if (typeof isAdmin === "function" && !isAdmin()) return false;
+    const pin = prompt(message + " — entrez le code admin");
+    // TODO: Replace window.ADMIN_PIN with a secure retrieval method
+    return pin && pin === (window.ADMIN_PIN || "1234");
+  } catch (e) {
+    console.error("confirmerActionAdmin error:", e);
+    return false;
+  }
+}
