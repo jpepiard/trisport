@@ -5,34 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>TriSports — Fléchettes • Ping-pong • Palet</title>
-<style id="scoreline-googleish">
-.scorewrap .teams-row{
-  display:grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items:center;
-  gap:16px;
-  width:100%;
-}
-.scorewrap .team{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  min-width:0;
-}
-.scorewrap .team .avatar{ width:64px; height:64px; }
-.scorewrap .team .name{ font-weight:700; font-size:18px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.scorewrap .team .bonus-line{ font-size:12px; opacity:.8; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
-.scorewrap .score{
-  font-variant-numeric: tabular-nums;
-  font-size:44px;
-  line-height:1;
-  font-weight:800;
-  letter-spacing:.5px;
-}
-.scorewrap .sports-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; padding-top:6px; }
-</style>
+
 <!-- Garde-fou : certaines extensions injectent du React minifié qui loggue "Minified React error #...".
      On évite que ça remonte et perturbe l'app (ça n'affecte PAS ton site). -->
 <script>
@@ -278,102 +251,17 @@ h1, h2, h3, h4, h5, h6{
 .pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
 .pill .mini-bonus img{width:100%;height:100%;object-fit:cover}
 </style>
-<style id="round-grid-css">
-.round-grid{
-  display:grid;
-  grid-template-columns:repeat(2, minmax(0,1fr));
-  gap:12px;
-}
-@media (max-width: 900px){
-  .round-grid{ grid-template-columns: 1fr; }
-}
-/* que les items ne rajoutent pas de marge verticale excessive dans la grille */
-.round-grid .match-card{ margin:0; }
-</style>
+
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDomain:"trisport-9a7b2.firebaseapp.com",databaseURL:"https://trisport-9a7b2-default-rtdb.europe-west1.firebasedatabase.app",projectId:"trisport-9a7b2",messagingSenderId:"132024051367",appId:"1:132024051367:web:f9aa39785a3d4a43875d82"};
 </script>
-<style id="bonus-scroll-fix">
-.bonus-panel{ max-height:90vh; overflow:hidden; display:flex; flex-direction:column; }
-.bonus-panel .hd{ position:sticky; top:0; background:var(--card); z-index:3; padding-bottom:8px; }
-.bonus-panel .bd{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding-right:6px; padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
-.bonus-panel .ft{ position:sticky; bottom:0; background:var(--card); padding-top:8px; z-index:3; box-shadow:0 -8px 12px rgba(0,0,0,.25); /* keep existing shadow */ }
-.bonus-select{ gap:8px; }
-.bonus-dialog .bonus-card{ grid-template-columns:80px 1fr; padding:10px; border:2px dashed var(--border); border-radius:12px; }
-.bonus-dialog .bonus-card .bonus-illu img{ width:72px; height:72px; border-radius:12px; }
-.bonus-dialog .bonus-card.selected{ border-color: var(--blue); box-shadow: 0 0 0 2px rgba(75,139,255,.35) inset; /* keep existing shadow */ }
-</style>
-<style id="brand-image-header">
-
-/* ===== Header compact + brand images (reliable) ===== */
-header, .topbar, .app-header{
-  padding-block: 10px !important;
-}
-header .brand{ display:flex; align-items:center; gap:12px; }
-
-/* Hide old text-based logo/title if present */
-header .brand[data-mode="images"] > .logo{ display:none !important; }
-header .brand[data-mode="images"] > h1{ display:none !important; }
-
-/* Our real images */
-.brand-logo{ width:64px; height:64px; border-radius:14px; display:block; }
-.brand-title{ height:72px; width:auto; display:block; }
-
-@media (max-width: 640px){
-  .brand-title{ height:60px; }
-}
-@media (max-width: 420px){
-  .brand-title{ height:48px; }
-}
-
-</style>
-<style id="brand-hide-text">
-/* Hide the text title and fallback 'T' bubble in header brand */
-header .brand > .logo,
-header .brand > h1 { display: none !important; }
-</style>
-<style id="header-compact-keepimage">
-
-/* ===== Ultra-compact header — keep logo/title sizes ===== */
-header, .app-header, .topbar{
-  padding-block: 6px !important;   /* reduce vertical padding without touching images */
-  min-height: unset !important;
-}
-/* ensure children don't add extra vertical margins */
-header *{
-  margin-block: 0 !important;
-}
-/* layout + baseline fixes to avoid extra line-height space */
-header .brand{ display:flex; align-items:center; gap:12px; }
-header .brand img{ display:block; }             /* remove inline baseline gap */
-header nav, header .tabs, header .menu{ display:flex; align-items:center; }
-/* optional: slightly tighten chip/button vertical padding */
-header .btn, header .chip, header .pill, header .tab{
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-}
-
-/* keep the image sizes exactly as they are */
-.brand-logo{ width:64px !important; height:64px !important; }
-.brand-title{ height:72px !important; width:auto !important; }
-
-/* fine-tune on small screens */
-@media (max-width: 640px){
-  header, .app-header, .topbar{ padding-block: 4px !important; }
-}
 
 
-/* --- Bonus panel: put params under the card text (minimal, scoped) --- */
-#bonus-modal .bonus-dialog .bonus-card{display:grid!important;grid-template-columns:96px 1fr;gap:12px;align-items:start}
-#bonus-modal .bonus-dialog .bonus-card .bonus-illu{grid-column:1;grid-row:1}
-#bonus-modal .bonus-dialog .bonus-card .bonus-text{grid-column:2;grid-row:1}
-#bonus-modal .bonus-dialog .bonus-card .bonus-params{grid-column:2;grid-row:2;margin-top:8px;max-height:0;overflow:hidden;transition:max-height .25s ease,opacity .2s;opacity:.0}
-/* When JS opens the wrapper by setting max-height, fade in */
-#bonus-modal .bonus-dialog .bonus-card .bonus-params[style*="max-height:"][style*="px"]{opacity:1}
-</style>
+
+
 <style id="capitaine-teamwide-v2">
 /* Capitaine : suppression des champs joueur/sport dans l'UI (masqués) */
 #capitaine-fields,
@@ -381,131 +269,14 @@ header .btn, header .chip, header .pill, header .tab{
 #capitaine-params .grid,
 #capitaine-params .row { display: none !important; }
 </style>
-<style id="tabs-contrast-upgrade">
-:root{
-  --accent: #7aa2ff;
-  --accent-strong: #9ab4ff;
-}
-.tab{
-  position: relative;
-  font-weight: 600;
-  letter-spacing: .2px;
-  transition: background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
-}
-.tab:hover{
-  border-color: var(--accent);
-  color: #e9edff;
-  box-shadow: 0 0 0 1px rgba(122,162,255,.15) inset; /* keep existing shadow */
-}
-.tab[aria-selected="true"]{
-  color: #000000;
-  background: linear-gradient(180deg, #2a3aa6, #1f2b86);
-  border-color: #4b5bd7;
-  box-shadow:
-    0 6px 16px rgba(75,139,255,.25),
-    0 0 0 1px rgba(75,139,255,.35) inset; /* keep existing shadow */
-}
-.tab[aria-selected="true"]::after{
-  content: "";
-  position: absolute;
-  left: 10px; right: 10px; bottom: -6px;
-  height: 3px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, transparent, var(--accent-strong), transparent);
-}
-.tab:focus-visible{
-  outline: none;
-  box-shadow:
-    0 0 0 2px rgba(15,18,32,1),
-    0 0 0 4px rgba(122,162,255,.8); /* keep existing shadow */
-}
-@media (prefers-contrast: more){
-  .tab[aria-selected="true"]{
-    background: #2431a0;
-    border-color: #9ab4ff;
-  }
-  .tab[aria-selected="true"]::after{ height: 4px; }
-}
-@media (prefers-reduced-motion: reduce){
-  .tab{ transition: none; }
-}
-</style>
-<style id="matchcard-animations">
-/* Smooth expand/collapse for match cards */
-.match-card .bd{
-  /* default open state */
-  transition: max-height .28s ease, opacity .2s ease, padding .2s ease;
-  will-change: max-height, opacity;
-}
-/* Closed state visual without display:none (to allow animation) */
-.match-card[aria-expanded="false"] .bd{
-  max-height: 0 !important;
-  overflow: hidden;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  opacity: .0;
-}
-/* When JS finishes opening, we can reset to 'auto' via inline style */
-@media (prefers-reduced-motion: reduce){
-  .match-card .bd{ transition: none; }
-}
-</style>
-<style id="standings-and-buttons-animations">
-/* === Apparition des lignes du classement === */
-@keyframes slideUpFade {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-#table-classement tbody tr {
-  animation: slideUpFade .28s ease both;
-}
-#table-classement tbody tr:nth-child(1){ animation-delay: .00s; }
-#table-classement tbody tr:nth-child(2){ animation-delay: .03s; }
-#table-classement tbody tr:nth-child(3){ animation-delay: .06s; }
-#table-classement tbody tr:nth-child(4){ animation-delay: .09s; }
-#table-classement tbody tr:nth-child(5){ animation-delay: .12s; }
-#table-classement tbody tr:nth-child(6){ animation-delay: .15s; }
-/* réduit l'effet si l'utilisateur préfère moins d'animation */
-@media (prefers-reduced-motion: reduce){
-  #table-classement tbody tr{ animation: none !important; }
-}
 
-/* === Micro-transitions sur les boutons === */
-.btn{
-  transition: background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, transform .06s ease;
-  will-change: transform, box-shadow;
-}
-.btn:hover{
-  box-shadow: 0 6px 14px rgba(0,0,0,.25), 0 0 0 1px rgba(122,162,255,.15) inset; /* keep existing shadow */
-}
-.btn:active{
-  transform: translateY(1px) scale(.995);
-  box-shadow: 0 3px 10px rgba(0,0,0,.25), 0 0 0 1px rgba(122,162,255,.12) inset; /* keep existing shadow */
-}
-.btn.small:active{ transform: translateY(1px) scale(.997); }
-.btn.primary:hover{ box-shadow: 0 8px 18px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.25) inset; /* keep existing shadow */ }
-.btn.danger:hover{ box-shadow: 0 8px 18px rgba(239,68,68,.25), 0 0 0 1px rgba(239,68,68,.25) inset; /* keep existing shadow */ }
-</style>
-<style id="chevron-toggle">
-/* Chevron d’ouverture/fermeture */
-.hd{ position:relative; }
-.hd .chev{
-  position:absolute; right:12px; top:12px;
-  display:inline-block;
-  width:1.25em;
-  text-align:center;
-  opacity:.7;
-  transition:transform .18s ease, opacity .18s ease;
-}
-.hd .chev::before{ content:"▶"; display:inline-block; }
-.match-card[aria-expanded="true"] .hd .chev{ transform:rotate(90deg); opacity:1; }
-/* rendre l'en-tête cliquable */
-.match-card .hd{ cursor:pointer; }
-</style>
+
+
+
 <link href="trisports-theme-pack.css" rel="stylesheet"/>
 <body>
 <header>
-<div class="container" style="display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap">
+<div class="container flex items-center gap-16 justify-between flex-wrap">
 <div class="brand"><div class="logo">T</div><h1 style="font-size:18px;margin:0">TriSports</h1></div>
 <nav aria-label="Sections" class="tabs" id="tabs" role="tablist">
 <button aria-selected="true" class="tab gta gta" data-tab="setup" role="tab" type="button">Tournoi</button>
@@ -514,7 +285,7 @@ header .btn, header .chip, header .pill, header .tab{
 <button aria-selected="false" class="tab gta gta" data-tab="classement" role="tab" type="button">Classement</button>
 <button aria-selected="false" class="tab gta gta" data-tab="options" role="tab" type="button">Options</button>
 </nav>
-<div style="display:flex;align-items:center;gap:8px">
+<div class="flex items-center gap-8">
 <span class="pill" id="tname-top" style="display:none"></span>
 <span class="pill" id="whoami-top" style="">visiteur</span>
 <button class="btn small header-chip gta header-chip gta" id="btn-fullscreen" type="button">⛶ Plein écran</button>
@@ -558,7 +329,7 @@ header .btn, header .chip, header .pill, header .tab{
 </div>
 <div class="card" style="margin-top:12px">
 <div class="hd"><strong>Ouvrir un tournoi existant (Cloud)</strong></div>
-<div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<div class="bd" class="flex gap-8 flex-wrap items-center">
 <input id="join-code" placeholder="code du tournoi" style="max-width:220px" type="text"/>
 <button class="btn primary" id="btn-join-code" type="button">Rejoindre</button>
 <button class="btn" id="btn-copy-link" type="button">Copier lien ?id=code</button>
@@ -578,7 +349,7 @@ header .btn, header .chip, header .pill, header .tab{
 <strong>Équipes</strong>
 <div class="help">L’<b>administrateur</b> crée et édite les équipes. Les joueurs se connectent à leur équipe pour saisir <b>leurs scores</b> uniquement.</div>
 </div>
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<div class="flex gap-8 items-center flex-wrap">
 <span class="pill" id="lock-pill" style="display:none">Calendrier figé 🔒</span>
 <button class="btn primary" id="btn-generate" type="button">Générer le calendrier</button>
 </div>
@@ -590,11 +361,11 @@ header .btn, header .chip, header .pill, header .tab{
 <section id="calendrier">
 <div class="card">
 <div class="hd">
-<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<div class="flex items-center gap-8 flex-wrap">
 <strong>Rencontres</strong>
 <span class="pill" id="round-status">—</span>
 </div>
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<div class="flex gap-8 items-center flex-wrap">
 <span class="pill" id="stats-matches">0 / 0 matches complets</span>
 <button class="btn small" id="btn-start-round" style="display:none" type="button">Démarrer journée</button>
 <button class="btn small" id="btn-end-round" style="display:none" type="button">Fin de journée</button>
@@ -610,7 +381,7 @@ header .btn, header .chip, header .pill, header .tab{
 <div class="card">
 <div class="hd">
 <strong>Classement</strong>
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<div class="flex gap-8 items-center flex-wrap">
 <span class="pill" id="teams-count">0 équipes</span>
 <span class="pill" id="rounds-count">0 matchs par équipe</span>
 <button aria-pressed="true" class="btn small toggle" id="btn-show-summary" type="button">Classement général</button>
@@ -651,7 +422,7 @@ header .btn, header .chip, header .pill, header .tab{
 </div>
 </div>
 <div class="card"><div class="hd"><strong>Accès administrateur</strong></div>
-<div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<div class="bd" class="flex gap-8 flex-wrap items-center">
 <button class="btn" id="btn-admin-on" type="button">Activer admin</button>
 <button class="btn" id="btn-admin-off" type="button">Désactiver admin</button>
 <span class="pill" id="whoami">vous : visiteur (lecture seule)</span>
@@ -660,7 +431,7 @@ header .btn, header .chip, header .pill, header .tab{
 </div>
 <div class="card" style="margin-top:12px">
 <div class="hd"><strong>Gestion Cloud</strong></div>
-<div class="bd" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<div class="bd" class="flex gap-8 flex-wrap items-center">
 <span class="pill">Statut : <span id="cloud-status-2">hors ligne</span></span>
 <button class="btn" id="btn-cloud-copy" type="button">Copier le lien de partage</button>
 <button class="btn danger" id="btn-cloud-delete" type="button">Supprimer ce tournoi du cloud</button>
@@ -1265,7 +1036,7 @@ function bonusChip(r, mTeam, rs){
     if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
     if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
     var __lbl = parts.join(' / ');
-    return '<span class="pill blue">Bonus' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
+    return '<span class="pill pill--blue">Bonus' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
            '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' +
            '</span>';
   } else {
