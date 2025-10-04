@@ -1779,14 +1779,12 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
         };
         img.src = fall1;
       };
-      // try img/ first
       img.src = 'img/' + primary.split('/').pop();
     };
   }
   function ensureBrandImages(){
     var brand = document.querySelector('header .brand') || document.querySelector('.brand');
     if(!brand) return;
-    // avoid duplicates
     if(!brand.querySelector('img.brand-logo')){
       var logo = document.createElement('img');
       logo.className = 'brand-logo';
@@ -1798,7 +1796,6 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
       var title = document.createElement('img');
       title.className = 'brand-title';
       title.alt = 'TriSports';
-      // insert after logo
       var ref = brand.querySelector('img.brand-logo');
       if(ref && ref.nextSibling){ brand.insertBefore(title, ref.nextSibling); }
       else { brand.appendChild(title); }
@@ -1806,94 +1803,18 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     }
   }
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){
-    var btn = document.getElementById('btn-open-logs');
-    if (btn) {
-      btn.addEventListener('click', function(){
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden','false');
-        renderList();
-      });
-    }
-  });
-  document.addEventListener('click', ()=>setTimeout(rewriteCapitaineHelp,0), true);
-
-  // --- Calcul : Capitaine = +2 points par manche gagnée, tous sports ---
-  // Remplace/ajoute la fonction de calcul pour Capitaine
-  /*window.computeCapitaineBonusForMatch = function(match, teamId){
-    try{
-      let wins = 0;
-      const isA = match.a === teamId;
-      const isB = match.b === teamId;
-      if(!isA && !isB) return 0;
-
-      // Fléchettes: tableau de vainqueurs 0(A)/1(B)
-      if (Array.isArray(match.darts)){
-        match.darts.forEach(v=>{
-          if(v===0 && isA) wins++;
-          else if(v===1 && isB) wins++;
-        });
-      }
-
-      // Ping: sets via getPingPts(match) si dispo, sinon match.pingPts
-      const valid = (a,b)=> a!=null && b!=null && a!=='' && b!=='' && isFinite(+a) && isFinite(+b);
-      const sets = (typeof window.getPingPts==='function') ? getPingPts(match)
-                    : (Array.isArray(match.pingPts) ? match.pingPts : []);
-      if (Array.isArray(sets)){
-        sets.forEach(s=>{
-          const a = s?.a, b = s?.b;
-          if(!valid(a,b)) return;
-          if(+a > +b && isA) wins++;
-          else if(+b > +a && isB) wins++;
-        });
-      }
-
-      // Palet: victoire du match
-      const R = (window.state && state.rules) || {};
-      const target = +(R.paletTarget ?? 11);
-      const pa = (match.palet && match.palet.a!=null) ? +match.palet.a : null;
-      const pb = (match.palet && match.palet.b!=null) ? +match.palet.b : null;
-      if(pa!=null && pb!=null){
-        if(pa>=target && pa>pb && isA) wins++;
-        else if(pb>=target && pb>pa && isB) wins++;
-      }
-
-      return 2 * wins;
-    }catch(e){
-      return 0;
-    }
-  };*/
-
-  // --- Enregistrement : Capitaine sans paramètres ---
-  // Si la modale tente de lire joueur/sport, on intercepte pour n'envoyer que {type:'capitaine'}
-  document.addEventListener('click', function(ev){
-    const save = ev.target && ev.target.closest && ev.target.closest('#bonus-save');
-    if(!save) return;
-    const t = (window._bonusType||'').toLowerCase();
-    if(t !== 'capitaine') return; // on laisse la logique existante pour les autres bonus
-    try{
-      if(!window.bonusCTX) return;
-      const r = window.bonusCTX.round;
-      const tid = window.bonusCTX.teamId;
-      if (typeof window.setBonusSelection==='function'){
-        window.setBonusSelection(r, tid, { type:'capitaine' });
-      }
-      const modal = document.getElementById('bonus-modal');
-      if(modal) modal.classList.remove('show');
-      try{ if(typeof renderPills==='function') renderPills(); }catch(_){}
-      try{ if(typeof renderMatches==='function') renderMatches(); }catch(_){}
-      try{ if(typeof updateRanking==='function') updateRanking(); }catch(_){}
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-    }catch(_){}
-  }, true);
-
+    document.addEventListener('DOMContentLoaded', ensureBrandImages);
+  }else{
+    ensureBrandImages();
+  }
+  // garder la réécriture d'aide capitaine en async léger
+  document.addEventListener('click', function(){ setTimeout(rewriteCapitaineHelp,0); }, true);
+  
   // --- Affichage après révélation : ne pas afficher joueur/sport pour Capitaine ---
   if (typeof window.bonusChip === 'function'){
     const _origChip = window.bonusChip;
     window.bonusChip = function(r, mTeam, rs){
       const html = _origChip(r, mTeam, rs);
-      // Si révélé et que le label Capitaine inclut "J1 / ..." etc., on l'épure
       if (typeof html === 'string' && /Capitaine\s*:?\s*J\d/i.test(html)){
         return html.replace(/Capitaine\s*:?\s*J\d\s*\/\s*(Fléchettes|Ping|Palet)/i, 'Capitaine');
       }
