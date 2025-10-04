@@ -838,51 +838,61 @@ h1, h2, h3, h4, h5, h6{
 
 </style>
 
-<style id="mobile-portrait-strong-fix">
-/* ==== Strong fix for portrait: stack rows, each row scrolls horizontally ==== */
+<style id="mobile-horizontal-rail">
+/* ===== Mobile: horizontal scrolling rail for header buttons ===== */
 @media (max-width: 640px){
-  header{position:relative}
-  header .container{
-    display:block !important;   /* stack rows vertically */
-  }
-  /* Each direct child of header container becomes a single-row horizontal scroller */
-  header .container > *:not(.brand){
-    display:flex !important;
-    flex-wrap:nowrap !important;
-    overflow-x:auto !important;
-    overflow-y:hidden !important;
+  /* Make the top zones full-width rails */
+  header .tabs,
+  header .actions,
+  header .options,
+  header .container > .top-actions,
+  header .container > .flex.items-center{
+    width:100%;
+    display:flex;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
-    white-space:nowrap !important;
-    gap:8px !important;
-    padding-bottom:2px;
     scrollbar-width:none;
+    gap:10px;
+    white-space:nowrap;
+    scroll-snap-type:x proximity;
+    padding-bottom:4px;
+    position:relative;
+    mask-image: linear-gradient( to right, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
   }
-  header .container > *:not(.brand)::-webkit-scrollbar{display:none}
+  header .tabs::-webkit-scrollbar,
+  header .actions::-webkit-scrollbar,
+  header .options::-webkit-scrollbar,
+  header .container > .top-actions::-webkit-scrollbar,
+  header .container > .flex.items-center::-webkit-scrollbar{ display:none }
 
-  /* Items inside never shrink; behave like pills on a rail */
-  header .container > *:not(.brand) > *{
-    flex:0 0 auto !important;
-    max-width:85vw;              /* long labels don't blow up the layout */
+  /* Every pill snaps nicely */
+  header .tabs > *,
+  header .actions > *,
+  header .options > *,
+  header .container > .top-actions > *,
+  header .container > .flex.items-center > *{
+    flex:0 0 auto;
+    scroll-snap-align:center;
+    min-height:42px;
+    padding:8px 14px;
+    line-height:1.15;
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    min-height:40px;
-    line-height:1.15;
-    padding:8px 12px;
     white-space:nowrap;
-    position:relative !important;
+    max-width:85vw;
     transform:none !important;
-    margin:0 !important;
+    position:relative !important;
   }
 
-  /* Brand/logo stays on top */
-  header .brand{display:flex; align-items:center; min-height:44px; margin-bottom:6px}
-
-  /* Ensure no element in header visually overlaps another row */
-  header .container > * + *{ margin-top:6px }
-
-  /* Prevent accidental wrapping of long text ids */
-  #tname-top, #whoami-top{max-width:60vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  /* Stack rows: brand on top, then rails below */
+  header .container{ display:flex; flex-wrap:wrap; gap:8px }
+  header .brand{ order:1; flex:0 0 auto }
+  header .tabs{ order:2 }
+  header .actions{ order:3 }
+  header .options{ order:4 }
 }
 </style>
 
