@@ -1682,3 +1682,47 @@ header .container > div:last-child{
   flex:0 0 auto;
 }
 
+
+
+/* === Header grid layout (strong + specific) === */
+header > .container{
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items: center !important;
+  gap: 16px !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+}
+/* Brand: image + title aligned */
+header > .container > .brand{
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+}
+header > .container > .brand img{ display:block !important; line-height:1 !important; }
+header > .container > .brand h1{
+  margin: 0 !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+/* Tabs centered in the middle column, on one line */
+header > .container > nav.tabs{
+  justify-self: center !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-wrap: nowrap !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+}
+header > .container > nav.tabs .tab{ white-space: nowrap !important; }
+/* Right group stays compact */
+header > .container > div:last-child{
+  justify-self: end !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
