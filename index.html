@@ -422,6 +422,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </div>
 </div>
 <div class="card"><div class="hd"><strong>Accès administrateur</strong></div>
+<div class="row" style="margin:8px 0 0 0"><button id="btn-open-logs" class="btn small" type="button" title="Ouvrir le journal">📜 Ouvrir le journal</button></div>
 <div class="bd" class="flex gap-8 flex-wrap items-center">
 <button class="btn" id="btn-admin-on" type="button">Activer admin</button>
 <button class="btn" id="btn-admin-off" type="button">Désactiver admin</button>
@@ -2457,10 +2458,7 @@ function onEnter(e){
 .ts-log-item .ts{width:140px;color:#9aa9d8;font-size:12px}
 .ts-log-item .meta{flex:1;white-space:pre-wrap}
 .ts-log-controls{display:flex;gap:8px}
-#btn-open-logs{margin-left:8px}
 </style>
-
-<button id="btn-open-logs" class="btn small" type="button" title="Ouvrir le journal">📜 Logs</button>
 
 <div id="ts-log-modal" aria-hidden="true">
   <div id="ts-log-panel" role="dialog" aria-label="Journal des actions">
@@ -2482,6 +2480,63 @@ function onEnter(e){
   const MAX_DISPLAY = 1000;
   const id = (s)=>document.getElementById(s);
   const escape = s => (s==null ? '' : String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  const teamNameById = (tid)=>{
+    try{
+      const t = (window.state && Array.isArray(state.teams)) ? state.teams.find(x=>String(x.id)===String(tid) || String(x.tid)===String(tid)) : null;
+      return t?.name || t?.n || String(tid);
+    }catch(e){ return String(tid); }
+  };
+  const actorLabel = ()=>{
+    try{
+      if(window.session?.admin) return 'Admin';
+      const who = document.getElementById('whoami-top')?.textContent?.trim();
+      if(who) return who;
+    }catch(e){}
+    return 'Utilisateur';
+  };
+  function describeAction(type, data){
+    const who = actorLabel();
+    try{
+      switch(type){
+        case 'team_rename':
+          return `${who} a changé le nom de l’équipe « ${data?.newName||'?'} »` + (data?.oldName? ` (avant : « ${data.oldName} »)` : '');
+        case 'score_update':
+          return `${who} a changé le score du ${data?.discipline||'jeu'}${data?.team? ' pour « '+teamNameById(data.team)+' »':''}` + (data?.value!=null? ` à ${data.value}`:'');
+        case 'bonus_selection':
+          return `${who} a défini le bonus de « ${teamNameById(data?.team)} » pour la manche ${data?.round}`;
+        case 'clear_match':
+          return `${who} a réinitialisé le match ${data?.matchId||''}`.trim();
+        case 'saveState':
+          return `${who} a sauvegardé l’état (${data?.teams||0} équipes)`;
+        case 'pushCloud':
+          return `${who} a synchronisé sur le cloud`;
+        case 'admin_on':
+          return `Admin activé`;
+        case 'admin_off':
+          return `Admin désactivé`;
+        case 'round_start':
+          return `${who} a démarré la manche`;
+        case 'round_end':
+          return `${who} a terminé la manche`;
+        case 'import':
+          return `${who} a importé des données`;
+        case 'export':
+          return `${who} a exporté des données`;
+        case 'cloud_delete':
+          return `${who} a supprimé les données cloud`;
+        case 'ui_click':
+          // Fallback for UI click with details
+          if(data?.action) return `${who} a cliqué sur « ${data.action} »`;
+          return `${who} a cliqué dans l’interface`;
+        default:
+          if(typeof type === 'string') return `${who} — ${type}`;
+          return `${who} — action`;
+      }
+    }catch(e){
+      return `${who} — ${type}`;
+    }
+  }
+
   let logs = [];
   function firebaseRef(){
     try{
@@ -2505,11 +2560,8 @@ function onEnter(e){
     const out = logs.slice(-MAX_DISPLAY).map(l=>{
       const d = new Date(l.ts || Date.now());
       const ts = d.toLocaleString();
-      const who = escape(l.who || 'inconnu');
-      const type = escape(l.type || 'action');
-      const meta = typeof l.data === 'string' ? escape(l.data) : escape(JSON.stringify(l.data,null,2));
-      return `<div class="ts-log-item"><div class=\"ts\">${ts}</div><div class=\"meta\"><strong>${type}</strong> — ${who}
-${meta}</div></div>`;
+      const msg = escape(l.msg || l.type || 'action');
+      return `<div class="ts-log-item"><div class=\"ts\">${ts}</div><div class=\"meta\">${msg}</div></div>`;
     }).join('');
     wrap.innerHTML = out || '<div class="help">Aucun log.</div>';
     wrap.scrollTop = wrap.scrollHeight;
@@ -2521,15 +2573,25 @@ ${meta}</div></div>`;
       who: (window.session && (window.session.claims && Object.keys(window.session.claims).length ? Object.keys(window.session.claims).join(',') : (window.session.admin? 'admin':'visiteur'))) || (document.getElementById('whoami-top')?.textContent || 'visiteur'),
       type: type || 'event',
       path: location.pathname + location.search,
-      data: data === undefined ? null : data
+      data: data === undefined ? null : data,
+      msg: describeAction(type, data)
     };
     logs.push(entry); saveLocal(); renderList();
     try{ const ref = firebaseRef(); if(ref){ await writeFirebase(entry); } }catch(e){}
     return entry;
   };
+
+  // Open/close modal wiring — button lives in Admin card now
   const modal = id('ts-log-modal');
-  id('btn-open-logs')?.addEventListener('click', ()=>{ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); renderList(); });
-  id('ts-close')?.addEventListener('click', ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); });
+  // delegated: attach on DOMContentLoaded in case button is added later
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const btn = document.getElementById('btn-open-logs');
+    btn?.addEventListener('click', ()=>{ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); renderList(); });
+  });
+  document.addEventListener('click', (e)=>{
+    const target = e.target;
+    if(target?.id === 'ts-close'){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); }
+  });
   id('ts-clear-local')?.addEventListener('click', ()=>{ if(!confirm('Effacer les logs locaux ?')) return; logs=[]; saveLocal(); renderList(); });
   id('ts-download')?.addEventListener('click', ()=>{
     const blob = new Blob([JSON.stringify(logs, null, 2)], {type:'application/json'});
@@ -2537,6 +2599,7 @@ ${meta}</div></div>`;
     const a = document.createElement('a'); a.href = url; a.download = 'trisports-logs-'+(new Date()).toISOString().replace(/[:.]/g,'-')+'.json';
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   });
+
   (function attachFirebaseListener(){
     try{
       const ref = firebaseRef(); if(!ref) return;
@@ -2546,18 +2609,34 @@ ${meta}</div></div>`;
       });
     }catch(e){}
   })();
+
+  // Listen to custom events
   document.addEventListener('app:action', function(e){
     try{ window.logEvent(e.detail?.type || 'custom', e.detail?.data || null); }catch(_){}
   });
+
+  // Intercept key UI buttons -> map to simplified types
   document.addEventListener('click', function(ev){
     try{
-      const btn = ev.target.closest && (ev.target.closest('[data-act]') || ev.target.closest('[data-clear]') || ev.target.closest('#btn-create-tournament') || ev.target.closest('#btn-join-code') || ev.target.closest('#btn-start-round') || ev.target.closest('#btn-end-round') || ev.target.closest('#btn-import') || ev.target.closest('#btn-export') || ev.target.closest('#btn-admin-on') || ev.target.closest('#btn-admin-off') || ev.target.closest('#btn-admin-on-setup') || ev.target.closest('#btn-cloud-delete'));
-      if(!btn) return;
-      const act = btn.getAttribute('data-act') || btn.getAttribute('data-clear') || btn.id || btn.dataset.act;
-      const meta = { id: btn.dataset.id || btn.getAttribute('data-id') || null, text: (btn.textContent||'').trim() };
-      window.logEvent('ui_click', { action: act, meta });
+      const q = (sel)=>ev.target.closest && ev.target.closest(sel);
+      if(q('#btn-admin-on')) return window.logEvent('admin_on');
+      if(q('#btn-admin-off')) return window.logEvent('admin_off');
+      if(q('#btn-start-round')) return window.logEvent('round_start');
+      if(q('#btn-end-round')) return window.logEvent('round_end');
+      if(q('#btn-import')) return window.logEvent('import');
+      if(q('#btn-export')) return window.logEvent('export');
+      if(q('#btn-cloud-delete')) return window.logEvent('cloud_delete');
+      // generic
+      const btn = q('[data-act]') || q('[data-clear]');
+      if(btn){
+        const act = btn.getAttribute('data-act') || btn.getAttribute('data-clear') || btn.id || btn.dataset.act;
+        const meta = { id: btn.dataset.id || btn.getAttribute('data-id') || null, text: (btn.textContent||'').trim() };
+        return window.logEvent('ui_click', { action: act, meta });
+      }
     }catch(e){}
   }, true);
+
+  // Monkey patches -> simplified types
   function maybeWrap(name, wrapper){
     try{
       if(typeof window[name] === 'function'){
@@ -2581,7 +2660,12 @@ ${meta}</div></div>`;
   maybeWrap('clearMatch', function(mid){
     try{ window.logEvent('clear_match', { matchId: mid }); }catch(_){}
   });
+
+  // Helpers to log from app with friendly types
   window.emitAppLog = (type, data) => document.dispatchEvent(new CustomEvent('app:action',{detail:{type, data}}));
+  window.logTeamRename = (oldName, newName)=>window.logEvent('team_rename', {oldName, newName});
+  window.logScoreUpdate = (team, discipline, value)=>window.logEvent('score_update', {team, discipline, value});
+
   renderList();
 })();
 </script>
