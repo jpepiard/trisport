@@ -427,31 +427,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <button class="btn" id="btn-admin-off" type="button">Désactiver admin</button>
 <span class="pill" id="whoami">vous : visiteur (lecture seule)</span>
 </div>
-<div class="row" style="margin:8px 0 0 0"><button id="btn-open-logs" style="display:none" class="btn small" type="button" title="Ouvrir le journal">📜 Ouvrir le journal<
-<script>
-  (function(){
-    function _toggleLogsBtn(){
-      var btn = document.getElementById('btn-open-logs');
-      if (!btn) return;
-      try {
-        if (typeof isAdmin === 'function' && isAdmin()) { btn.style.display = 'inline-block'; }
-        else { btn.style.display = 'none'; }
-      } catch(e){}
-    }
-    // extend updateWho if present
-    if (typeof updateWho === 'function'){
-      var _orig = updateWho;
-      updateWho = function(){ try{ _orig.apply(this, arguments); }finally{ _toggleLogsBtn(); } };
-    }
-    // run now and on DOMContentLoaded
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', _toggleLogsBtn);
-    } else {
-      _toggleLogsBtn();
-    }
-  })();
-</script>
-/button></div>
+<div class="row" style="margin:8px 0 0 0"><button id="btn-open-logs" style="display:none" class="btn small" type="button" title="Ouvrir le journal">📜 Ouvrir le journal</button></div>
 </div>
 </div>
 <div class="card" style="margin-top:12px">
@@ -726,7 +702,7 @@ function canEditScores(m, rCtl){
 function teamObj(tid){return state.teams.find(t=>t.id===tid)||null} function teamName(tid){const t=teamObj(tid);return t?t.name:"—"}
 function initials(name){const s=(name||"").trim();if(!s)return"?";const p=s.split(/\s+/);return(p[0][0]+(p[1]?.[0]||"")).toUpperCase()}
 function avatarHtml(tid,size,attrs){const t=teamObj(tid)||{name:"?"};const url=t.avatar;const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':'');const extra=attrs?(' '+attrs):'';const content=url?('<img src="'+esc(url)+'" alt="avatar">'):('<span class="avatar-initials">'+esc(initials(t.name))+'</span>');return '<span class="avatar '+cls+'" title="'+esc(t.name)+'"'+extra+'>'+content+'</span>'}
-function updateWho(){const names=Object.keys(session.claims||{}).map(teamName).filter(Boolean);const who=isAdmin()?(names.length?("Admin · "+names.join(", ")):"Admin"):(names[0]||"visiteur");id("whoami").textContent="vous : "+who;id("whoami-top").textContent=who;const s=id("whoami-setup");if(s)s.textContent=who;const b=id("btn-add-team");if(b)b.style.display=isAdmin()?"inline-block":"none";const ba=id("btn-admin-on-setup");if(ba)ba.style.display=isAdmin()?"none":"inline-block"}
+function updateWho(){try{var lb=document.getElementById("btn-open-logs");if(lb)lb.style.display=isAdmin()?"inline-block":"none"}catch(e){};const names=Object.keys(session.claims||{}).map(teamName).filter(Boolean);const who=isAdmin()?(names.length?("Admin · "+names.join(", ")):"Admin"):(names[0]||"visiteur");id("whoami").textContent="vous : "+who;id("whoami-top").textContent=who;const s=id("whoami-setup");if(s)s.textContent=who;const b=id("btn-add-team");if(b)b.style.display=isAdmin()?"inline-block":"none";const ba=id("btn-admin-on-setup");if(ba)ba.style.display=isAdmin()?"none":"inline-block"}
 function renderTitle(){const name=(state.tournamentName||"").trim();document.title=(name?name+" — ":"")+"TriSports — Fléchettes • Ping-pong • Palet";const pill=id("tname-top");if(name){pill.style.display="inline-block";pill.textContent=name}else{pill.style.display="none";pill.textContent=""}}
 function dartsTotal(){return (state.rules?.dartsSingles||0)+(state.rules?.dartsDoubles||0)}
 function pingTotal(){return (state.rules?.pingSingles||0)+(state.rules?.pingDoubles||0)}
