@@ -2670,10 +2670,10 @@ function onEnter(e){
   });
   document.addEventListener('click', (e)=>{
     const target = e.target;
-    if(target?.id === 'ts-close'){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); }
+    if((target && target.id) === 'ts-close'){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); }
   });
-  id('ts-clear-local')?.addEventListener('click', ()=>{ if(!confirm('Effacer les logs locaux ?')) return; logs=[]; saveLocal(); renderList(); });
-  id('ts-download')?.addEventListener('click', ()=>{
+  if(id('ts-clear-local')) id('ts-clear-local').addEventListener('click', ()=>{ if(!confirm('Effacer les logs locaux ?')) return; logs=[]; saveLocal(); renderList(); });
+  if(id('ts-download')) id('ts-download').addEventListener('click', ()=>{
     const blob = new Blob([JSON.stringify(logs, null, 2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'trisports-logs-'+(new Date()).toISOString().replace(/[:.]/g,'-')+'.json';
