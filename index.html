@@ -2403,45 +2403,64 @@ function onEnter(e){
     return 'Utilisateur';
   };
   function describeAction(type, data){
-    const who = actorLabel();
+    var who = actorLabel();
     try{
       switch(type){
         case 'team_rename':
-          return `${who} a changé le nom de l’équipe « ${data?.newName||'?'} »` + (data?.oldName? ` (avant : « ${data.oldName} »)` : '');
+          return who + ' a changé le nom de l’équipe « ' + (data && (data.newName||'?')) + ' »' + (data && data.oldName ? ' (avant : « ' + data.oldName + ' »)' : '');
         case 'score_update':
-          return `${who} a changé le score du ${data?.discipline||'jeu'}${data?.team? ' pour « '+teamNameById(data.team)+' »':''}` + (data?.value!=null? ` à ${data.value}`:'');
+          // data: {team, discipline, value}
+          var team = data && data.team != null ? teamNameById(data.team) : null;
+          var disc = (data && data.discipline) || 'score';
+          var val  = (data && (data.value!=null ? data.value : data.to));
+          if(team) return who + ' a changé le score du ' + disc + ' pour « ' + team + ' » à ' + val;
+          return who + ' a changé le score du ' + disc + ' à ' + val;
+        case 'ping_set':
+          // data: {index, team}
+          var tP = data && data.team != null ? teamNameById(data.team) : null;
+          var idx = (data && typeof data.index==='number') ? data.index : 0;
+          try {
+            var sSingles = (state && state.rules && +state.rules.pingSingles) || 0;
+            var label = (idx < sSingles) ? ('Simple ' + (idx+1)) : ('Double ' + (idx - sSingles + 1));
+            return who + ' a enregistré une victoire au ping pour « ' + tP + ' » (' + label + ')';
+          } catch(e){
+            return who + ' a enregistré une victoire au ping pour « ' + (tP||'') + ' » (set #' + (idx+1) + ')';
+          }
+        case 'darts_set':
+          // data: {index, team}
+          var tD = data && data.team != null ? teamNameById(data.team) : null;
+          var i2 = (data && typeof data.index==='number') ? data.index : 0;
+          try {
+            var sD = (state && state.rules && +state.rules.dartsSingles) || 0;
+            var lab = (i2 < sD) ? ('Simple ' + (i2+1)) : ('Double ' + (i2 - sD + 1));
+            return who + ' a enregistré une victoire aux fléchettes pour « ' + tD + ' » (' + lab + ')';
+          } catch(e){
+            return who + ' a enregistré une victoire aux fléchettes pour « ' + (tD||'') + ' » (manche #' + (i2+1) + ')';
+          }
         case 'bonus_selection':
-          return `${who} a défini le bonus de « ${teamNameById(data?.team)} » pour la manche ${data?.round}`;
+          // data: { round, team, sel }
+          return who + ' a défini le bonus de « ' + teamNameById(data && data.team) + ' » pour la manche ' + (data && data.round);
         case 'clear_match':
-          return `${who} a réinitialisé le match ${data?.matchId||''}`.trim();
-        case 'saveState':
-          return `${who} a sauvegardé l’état (${data?.teams||0} équipes)`;
-        case 'pushCloud':
-          return `${who} a synchronisé sur le cloud`;
+          return who + ' a réinitialisé le match ' + (data && data.matchId ? data.matchId : '');
         case 'admin_on':
-          return `Admin activé`;
+          return 'Admin activé';
         case 'admin_off':
-          return `Admin désactivé`;
+          return 'Admin désactivé';
         case 'round_start':
-          return `${who} a démarré la manche`;
+          return who + ' a démarré la journée';
         case 'round_end':
-          return `${who} a terminé la manche`;
+          return who + ' a terminé la journée';
         case 'import':
-          return `${who} a importé des données`;
+          return who + ' a importé des données';
         case 'export':
-          return `${who} a exporté des données`;
+          return who + ' a exporté des données';
         case 'cloud_delete':
-          return `${who} a supprimé les données cloud`;
-        case 'ui_click':
-          // Fallback for UI click with details
-          if(data?.action) return `${who} a cliqué sur « ${data.action} »`;
-          return `${who} a cliqué dans l’interface`;
+          return who + ' a supprimé les données cloud';
         default:
-          if(typeof type === 'string') return `${who} — ${type}`;
-          return `${who} — action`;
+          return null; // laisser tomber les types techniques
       }
     }catch(e){
-      return `${who} — ${type}`;
+      return null;
     }
   }
 
@@ -2557,16 +2576,24 @@ function onEnter(e){
 
   renderList();
   window.logEvent = async function(type, data){
+    // masquer les types techniques si pas de message lisible
+    var technical = { 'saveState':1, 'pushCloud':1, 'ui_click':1 };
+    var message = describeAction(type, data);
+    if (message === null || technical[type]) {
+      // ne rien afficher si pas de message humain
+      // (mais on peut toujours pousser en cloud si besoin plus tard)
+      return null;
+    }
     const entry = {
       ts: Date.now(),
-      who: (window.session && (window.session.claims && Object.keys(window.session.claims).length ? Object.keys(window.session.claims).join(',') : (window.session.admin? 'admin':'visiteur'))) || ((document.getElementById('whoami-top') && document.getElementById('whoami-top').textContent) || 'visiteur'),
+      who: (window.session && (window.session.claims && Object.keys(window.session.claims).length ? Object.keys(window.session.claims).join(',') : (window.session.admin? 'admin':'visiteur'))) || (document.getElementById('whoami-top') && document.getElementById('whoami-top').textContent) || 'visiteur',
       type: type || 'event',
       path: location.pathname + location.search,
-      data: data === undefined ? null : data,
-      msg: describeAction(type, data)
+      data: (data === undefined ? null : data),
+      msg: message
     };
     logs.push(entry); saveLocal(); renderList();
-    try{ const ref = firebaseRef(); if(ref){ await writeFirebase(entry); } }catch(e){}
+    try{ var ref = firebaseRef(); if(ref){ await writeFirebase(entry); } }catch(e){}
     return entry;
   };
 
