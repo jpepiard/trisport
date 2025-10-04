@@ -422,12 +422,36 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </div>
 </div>
 <div class="card"><div class="hd"><strong>Accès administrateur</strong></div>
-<div class="row" style="margin:8px 0 0 0"><button id="btn-open-logs" class="btn small" type="button" title="Ouvrir le journal">📜 Ouvrir le journal</button></div>
 <div class="bd" class="flex gap-8 flex-wrap items-center">
 <button class="btn" id="btn-admin-on" type="button">Activer admin</button>
 <button class="btn" id="btn-admin-off" type="button">Désactiver admin</button>
 <span class="pill" id="whoami">vous : visiteur (lecture seule)</span>
 </div>
+<div class="row" style="margin:8px 0 0 0"><button id="btn-open-logs" style="display:none" class="btn small" type="button" title="Ouvrir le journal">📜 Ouvrir le journal<
+<script>
+  (function(){
+    function _toggleLogsBtn(){
+      var btn = document.getElementById('btn-open-logs');
+      if (!btn) return;
+      try {
+        if (typeof isAdmin === 'function' && isAdmin()) { btn.style.display = 'inline-block'; }
+        else { btn.style.display = 'none'; }
+      } catch(e){}
+    }
+    // extend updateWho if present
+    if (typeof updateWho === 'function'){
+      var _orig = updateWho;
+      updateWho = function(){ try{ _orig.apply(this, arguments); }finally{ _toggleLogsBtn(); } };
+    }
+    // run now and on DOMContentLoaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', _toggleLogsBtn);
+    } else {
+      _toggleLogsBtn();
+    }
+  })();
+</script>
+/button></div>
 </div>
 </div>
 <div class="card" style="margin-top:12px">
