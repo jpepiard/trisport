@@ -838,62 +838,63 @@ h1, h2, h3, h4, h5, h6{
 
 </style>
 
-<style id="mobile-header-fix">
-/* ======= Mobile header: scrollable tabs + actions below ======= */
-@media (max-width: 640px){
-  header, header .container{
-    display:flex;
-    flex-wrap:wrap !important;
-    gap:8px;
-  }
-
-  /* Brand/logo first */
-  header .brand{order:1; min-width:0; flex:0 0 auto}
-
-  /* Tabs: horizontal scroll (no wrapping), hide scrollbar */
+<style id="portrait-overlap-fix">
+/* ======= Fix overlapping buttons in portrait (iOS Safari safe) ======= */
+@media (max-width: 640px) and (orientation: portrait){
+  /* Tabs container: one single row with horizontal scroll */
   header .tabs{
-    order:2;
-    width:100%;
-    display:flex;
-    flex-wrap:nowrap;
-    gap:8px;
-    overflow-x:auto;
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
     -webkit-overflow-scrolling:touch;
+    white-space:nowrap !important;
+    gap:8px;
+    align-items:stretch;
     scrollbar-width:none;
-    white-space:nowrap;
-    min-width:0;
   }
   header .tabs::-webkit-scrollbar{display:none}
-  header .tabs > *{
-    flex:0 0 auto; /* prevent shrink -> no overlap */
-  }
-  /* Reasonable tap targets but compact */
-  header .tabs .tab, header .tabs .btn, header .tabs button{
-    min-height:40px;
-    padding:8px 12px;
-    font-size:14px;
+
+  /* Each tab/button behaves like a pill, no shrink, no weird transforms */
+  header .tabs .tab,
+  header .tabs a,
+  header .tabs button,
+  header .tabs .btn{
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto !important;     /* no shrinking */
+    min-height:42px;
     line-height:1.15;
+    font-size:14px;
+    padding:8px 12px;
+    position:relative !important; /* cancel absolute if theme applies it */
+    transform:none !important;    /* cancel translate effects that stack items */
+    margin:0 !important;          /* cancel negative margins */
+    vertical-align:middle;
+    max-width:80vw;               /* very long labels don't overflow screen */
+    white-space:nowrap;
   }
 
-  /* Actions block (e.g., visiteur, plein écran) drops under tabs */
+  /* Extra safety: avoid z-index stacking issues that can look like overlap */
+  header .tabs > *{ z-index:0; }
+
+  /* Actions area below tabs: stack nicely, no overlap */
   header .actions,
   header .container > .flex.items-center,
   header .right,
   header .top-actions{
-    order:3;
     width:100%;
     display:flex;
     flex-wrap:wrap;
     gap:8px;
+    align-items:center;
     justify-content:flex-start;
   }
-
-  /* Long texts truncation to avoid pushing layout */
-  #tname-top, #whoami-top{
-    max-width:60vw;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+  header .actions .btn,
+  header .container > .flex.items-center .btn{
+    min-height:44px;
+    flex:1 1 auto;  /* allow wrapping to next line without overlap */
   }
 }
 </style>
