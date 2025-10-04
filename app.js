@@ -2426,3 +2426,49 @@ function computeSetWins(m){
     return { aw:{darts:0,ping:0}, bw:{darts:0,ping:0} };
   }
 }
+
+
+// --- Completeness check for a match ---
+function isMatchComplete(m){
+  try{
+    if (!m) return false;
+    // Darts completeness: every entry is 0 or 1
+    var dartsOK = true;
+    if (Array.isArray(m.darts)){
+      for (var i=0;i<m.darts.length;i++){
+        if (!(m.darts[i]===0 || m.darts[i]===1)) { dartsOK=false; break; }
+      }
+    } else { dartsOK=false; }
+
+    // Ping completeness: either 0/1 or valid point sets for every set
+    var sets = (typeof getPingPts==='function') ? (getPingPts(m)||[]) : (Array.isArray(m.ping) ? m.ping.map(function(v){return v===0?{a:1,b:0}:(v===1?{a:0,b:1}:{a:null,b:null});}) : []);
+    var isValid = (typeof isPingValid==='function') ? isPingValid : function(a,b){
+      if(a==null||b==null) return false;
+      if((a===1&&b===0)||(a===0&&b===1)) return true;
+      if(isNaN(a)||isNaN(b)) return false;
+      var max=Math.max(a,b), diff=Math.abs(a-b);
+      return (max>=11)&&(diff>=2);
+    };
+    var pingOK = sets.length>0;
+    for (var j=0;j<sets.length;j++){
+      var s = sets[j]||{};
+      var a = (s.a!=null)?+s.a:null, b=(s.b!=null)?+s.b:null;
+      if (!isValid(a,b)) { pingOK=false; break; }
+    }
+
+    // Palet completeness: both scores present (don't enforce target here)
+    var pa = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
+    var pb = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
+    var paletOK = (pa!=null && pb!=null);
+
+    return !!(dartsOK && pingOK && paletOK);
+  }catch(e){
+    console.warn("isMatchComplete error", e);
+    return false;
+  }
+}
+
+// --- UI alias for completeness (legacy name)
+function uiIsComplete(m){
+  try{ return isMatchComplete(m); }catch(e){ return false; }
+}
