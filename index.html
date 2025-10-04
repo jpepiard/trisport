@@ -2566,6 +2566,82 @@ function onEnter(e){
     wrap.innerHTML = out || '<div class="help">Aucun log.</div>';
     wrap.scrollTop = wrap.scrollHeight;
   }
+  
+  // ---------- State diff helpers for precise logs ----------
+  const deepClone = (v)=>{
+    try{ return JSON.parse(JSON.stringify(v)); }catch(e){ return null; }
+  };
+  let __prevState = null;
+
+  function pathMatchesDiscipline(pathStr){
+    return /(palet|darts|ping|score)/i.test(pathStr);
+  }
+  function labelFromPath(pathArr){
+    try{
+      const pathStr = pathArr.join('.');
+      const tIdx = pathArr.findIndex(p=>/^team(Id|id|tid)$/i.test(p));
+      let team = null;
+      if(tIdx!==-1){
+        const tid = pathArr[tIdx+1];
+        team = teamNameById(tid);
+      }
+      const disc = pathArr.find(p=>/palet|darts|ping/i.test(p)) || 'score';
+      let base = team ? `Équipe ${team}` : 'Score';
+      return `${base} ${disc}`;
+    }catch(e){
+      return 'Score';
+    }
+  }
+
+  function walkDiff(a, b, cb, path=[]){
+    if(a===b) return;
+    const ta = Object.prototype.toString.call(a);
+    const tb = Object.prototype.toString.call(b);
+    if(ta!==tb){ cb(path, a, b); return; }
+    if(typeof a!=='object' || a===null || b===null){
+      cb(path, a, b); return;
+    }
+    const keys = new Set([...(Array.isArray(a)? Object.keys(a): Object.keys(a||{})), ...(Array.isArray(b)? Object.keys(b): Object.keys(b||{}))]);
+    for(const k of keys){
+      const ka = a ? a[k] : undefined;
+      const kb = b ? b[k] : undefined;
+      if(typeof ka==='undefined' && typeof kb==='undefined') continue;
+      walkDiff(ka, kb, cb, path.concat(String(k)));
+    }
+  }
+
+  function summarizeChanges(prevS, nextS){
+    const out = [];
+
+    // Team renames
+    try{
+      const prevTeams = Array.isArray(prevS?.teams)? prevS.teams: [];
+      const nextTeams = Array.isArray(nextS?.teams)? nextS.teams: [];
+      const byKey = (arr)=>Object.fromEntries(arr.map(t=>[String(t.id??t.tid??(t.name||t.n)||''), t]));
+      const A = byKey(prevTeams), B = byKey(nextTeams);
+      for(const k of Object.keys(B)){
+        if(A[k] && (A[k].name||A[k].n) !== (B[k].name||B[k].n)){
+          out.push({type:'team_rename', data:{oldName:(A[k].name||A[k].n), newName:(B[k].name||B[k].n)}});
+        }
+      }
+    }catch(e){}
+
+    // Numeric score-ish changes
+    try{
+      walkDiff(prevS, nextS, (path, a, b)=>{
+        if(a===b) return;
+        const bothNum = (typeof a==='number' && typeof b==='number');
+        const bothShortStr = (typeof a==='string' && typeof b==='string' && a.length<=3 && b.length<=3);
+        const pathStr = path.join('.');
+        if((bothNum || bothShortStr) && pathMatchesDiscipline(pathStr)){
+          out.push({type:'score_update', data:{path: pathStr, label: labelFromPath(path), from: a, to: b}});
+        }
+      });
+    }catch(e){}
+
+    return out;
+  }
+
   renderList();
   window.logEvent = async function(type, data){
     const entry = {
@@ -2649,7 +2725,23 @@ function onEnter(e){
     }catch(e){}
   }
   maybeWrap('saveState', function(){
-    try{ window.logEvent('saveState', { teams: (window.state && state.teams && state.teams.length) || 0 }); }catch(_){}
+    try{
+      const prev = __prevState ?? deepClone(window.state);
+      // Wait a tick to let state actually change (in case original mutates after call)
+      setTimeout(()=>{
+        try{
+          const next = deepClone(window.state);
+          const changes = summarizeChanges(prev, next);
+          if(changes.length){
+            changes.forEach(ch => window.logEvent(ch.type, ch.data));
+          }else{
+            // fallback minimal
+            window.logEvent('saveState', { teams: (window.state && state.teams && state.teams.length) || 0 });
+          }
+          __prevState = deepClone(window.state);
+        }catch(e){}
+      }, 0);
+    }catch(_){}
   });
   maybeWrap('pushCloud', function(immediate){
     try{ window.logEvent('pushCloud', { immediate: !!immediate, cloudId: (window.state && (state.cloudId||null)) || null }); }catch(_){}
