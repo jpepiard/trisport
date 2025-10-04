@@ -2487,8 +2487,8 @@ function onEnter(e){
   };
   const actorLabel = ()=>{
     try{
-      if(window.session?.admin) return 'Admin';
-      const who = document.getElementById('whoami-top')?.textContent?.trim();
+      if((window.session && window.session.admin)) return 'Admin';
+      const who = (document.getElementById('whoami-top') && document.getElementById('whoami-top').textContent)?.trim();
       if(who) return who;
     }catch(e){}
     return 'Utilisateur';
@@ -2614,9 +2614,14 @@ function onEnter(e){
 
     // Team renames
     try{
-      const prevTeams = Array.isArray(prevS?.teams)? prevS.teams: [];
-      const nextTeams = Array.isArray(nextS?.teams)? nextS.teams: [];
-      const byKey = (arr)=>Object.fromEntries(arr.map(t=>[String(t.id??t.tid??(t.name||t.n)||''), t]));
+      const prevTeams = Array.isArray((prevS && Array.isArray(prevS.teams) ? prevS.teams : []))? prevS.teams: [];
+      const nextTeams = Array.isArray((nextS && Array.isArray(nextS.teams) ? nextS.teams : []))? nextS.teams: [];
+      const byKey=function(arr){
+      return Object.fromEntries(arr.map(function(t){
+        var key = (t && (t.id!=null ? t.id : (t.tid!=null ? t.tid : ((t.name||t.n)||''))));
+        return [String(key), t];
+      }));
+    };
       const A = byKey(prevTeams), B = byKey(nextTeams);
       for(const k of Object.keys(B)){
         if(A[k] && (A[k].name||A[k].n) !== (B[k].name||B[k].n)){
@@ -2645,7 +2650,7 @@ function onEnter(e){
   window.logEvent = async function(type, data){
     const entry = {
       ts: Date.now(),
-      who: (window.session && (window.session.claims && Object.keys(window.session.claims).length ? Object.keys(window.session.claims).join(',') : (window.session.admin? 'admin':'visiteur'))) || (document.getElementById('whoami-top')?.textContent || 'visiteur'),
+      who: (window.session && (window.session.claims && Object.keys(window.session.claims).length ? Object.keys(window.session.claims).join(',') : (window.session.admin? 'admin':'visiteur'))) || ((document.getElementById('whoami-top') && document.getElementById('whoami-top').textContent) || 'visiteur'),
       type: type || 'event',
       path: location.pathname + location.search,
       data: data === undefined ? null : data,
@@ -2661,7 +2666,7 @@ function onEnter(e){
   // delegated: attach on DOMContentLoaded in case button is added later
   document.addEventListener('DOMContentLoaded', ()=>{
     const btn = document.getElementById('btn-open-logs');
-    btn?.addEventListener('click', ()=>{ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); renderList(); });
+    if(btn){btn.addEventListener('click', ()=>{ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); renderList(); });
   });
   document.addEventListener('click', (e)=>{
     const target = e.target;
