@@ -1625,3 +1625,60 @@ header .tab{ padding-left: 10px !important; padding-right: 10px !important; }
   header .container{ gap:12px; }
 }
 
+
+
+/* === Header alignment fix: brand image + title aligned with tabs/buttons === */
+:root{
+  --header-brand-size: 56px; /* tune if needed (48–64px) */
+}
+
+header .container{
+  display:flex;
+  align-items:center;            /* vertical centering for the whole row */
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:nowrap !important;
+  min-width:0;
+}
+
+header .brand{
+  display:flex;
+  align-items:center;            /* align image + title on same baseline */
+  gap:12px;
+  min-width:0;
+}
+/* Ensure the two brand images (square logo + title wordmark) sit on one line, no extra baseline gap */
+header .brand img{ display:block; line-height:1; }
+.brand-logo{ width:var(--header-brand-size); height:var(--header-brand-size); border-radius:14px; }
+.brand-title{ height:calc(var(--header-brand-size) * 0.90); width:auto; }
+
+/* Title <h1> variant (if used instead of image) */
+header .brand > h1{
+  margin:0 !important;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+}
+
+/* Tabs centered vertically with the brand */
+header nav.tabs{
+  flex:1 1 auto;
+  display:flex;
+  align-items:center;            /* vertical align with brand */
+  justify-content:center;
+  gap:12px;
+  flex-wrap:nowrap !important;
+  min-width:0;
+  white-space:nowrap;
+}
+
+header nav.tabs .tab{ white-space:nowrap; }
+
+/* Right controls vertically centered as well */
+header .container > div:last-child{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+}
+
