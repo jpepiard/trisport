@@ -2377,3 +2377,16 @@ async function confirmerActionAdmin(message = "Confirmer l’action admin") {
     return false;
   }
 }
+
+
+// --- Legacy compatibility: renderTeams shim ---
+if (typeof renderTeams !== 'function') {
+  function renderTeams(){
+    try { if (typeof renderManageList === 'function') renderManageList(); } catch(e) { console.warn('renderManageList failed', e); }
+    try { if (typeof updateWho === 'function') updateWho(); } catch(e) { console.warn('updateWho failed', e); }
+    try { if (typeof renderTitle === 'function') renderTitle(); } catch(e) { console.warn('renderTitle failed', e); }
+    try { if (typeof renderMatches === 'function') renderMatches(); } catch(e) { console.warn('renderMatches failed', e); }
+    try { if (typeof renderLeaderboard === 'function') renderLeaderboard(); } catch(e) { console.warn('renderLeaderboard failed', e); }
+    try { if (typeof renderH2H === 'function') renderH2H(); } catch(e) { /* optional */ }
+  }
+}
