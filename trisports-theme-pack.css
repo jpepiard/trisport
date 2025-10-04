@@ -1593,3 +1593,35 @@ header .brand > h1{ display:inline-flex !important; }
   header nav.tabs{ flex:1 1 100%; justify-content:flex-start; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 }
 
+
+
+/* === Header single-line layout (force) === */
+header .container{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  justify-content:space-between;
+  flex-wrap: nowrap !important; /* keep on one line */
+  min-width: 0; /* allow middle area to shrink */
+}
+header .brand{ flex:0 0 auto; }
+header nav.tabs{
+  flex:1 1 auto;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  flex-wrap: nowrap !important;  /* one line for tabs */
+  min-width: 0;
+  white-space: nowrap;           /* prevent internal wrap */
+}
+header nav.tabs .tab{ white-space: nowrap; }
+header .container > div:last-child{ flex:0 0 auto; }
+
+/* Slightly tighter padding so all fits more easily */
+header .tab{ padding-left: 10px !important; padding-right: 10px !important; }
+@media (max-width: 1280px){
+  header .tab{ padding-left: 8px !important; padding-right: 8px !important; }
+  header .container{ gap:12px; }
+}
+
