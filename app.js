@@ -2390,3 +2390,39 @@ if (typeof renderTeams !== 'function') {
     try { if (typeof renderH2H === 'function') renderH2H(); } catch(e) { /* optional */ }
   }
 }
+
+
+// --- Legacy compatibility: computeSetWins shim ---
+// Returns { aw: {darts, ping}, bw: {darts, ping} } counts of sets won
+function computeSetWins(m){
+  try{
+    var aw_d=0, bw_d=0;
+    // Darts: array of 0/1 (0 -> A gagne, 1 -> B gagne)
+    if (Array.isArray(m.darts)){
+      m.darts.forEach(function(v){
+        if (v===0) aw_d++;
+        else if (v===1) bw_d++;
+      });
+    }
+    var aw_p=0, bw_p=0;
+    // Ping: either 0/1 entries or detailed points via getPingPts()
+    var sets = (typeof getPingPts==='function') ? (getPingPts(m)||[]) : (Array.isArray(m.ping) ? m.ping.map(function(v){return v===0?{a:1,b:0}:(v===1?{a:0,b:1}:{a:null,b:null});}) : []);
+    var isValid = (typeof isPingValid==='function') ? isPingValid : function(a,b){
+      if(a==null||b==null) return false;
+      if((a===1&&b===0)||(a===0&&b===1)) return true;
+      if(isNaN(a)||isNaN(b)) return false;
+      var max=Math.max(a,b), diff=Math.abs(a-b);
+      return (max>=11)&&(diff>=2);
+    };
+    sets.forEach(function(s){
+      var a = (s && s.a!=null) ? +s.a : null;
+      var b = (s && s.b!=null) ? +s.b : null;
+      if (!isValid(a,b)) return;
+      if (a>b) aw_p++; else if (b>a) bw_p++;
+    });
+    return { aw:{darts:aw_d, ping:aw_p}, bw:{darts:bw_d, ping:bw_p} };
+  }catch(e){
+    console.warn("computeSetWins shim error", e);
+    return { aw:{darts:0,ping:0}, bw:{darts:0,ping:0} };
+  }
+}
