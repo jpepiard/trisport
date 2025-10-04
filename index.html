@@ -838,61 +838,71 @@ h1, h2, h3, h4, h5, h6{
 
 </style>
 
-<style id="mobile-horizontal-rail">
-/* ===== Mobile: horizontal scrolling rail for header buttons ===== */
+<style id="mobile-top-rail-final">
+/* ===== Mobile: top buttons scroll left↔right, no overlap ===== */
 @media (max-width: 640px){
-  /* Make the top zones full-width rails */
-  header .tabs,
-  header .actions,
-  header .options,
-  header .container > .top-actions,
-  header .container > .flex.items-center{
-    width:100%;
+  /* Stack header rows: brand → tabs rail → actions */
+  header .container{
     display:flex;
-    flex-wrap:nowrap;
-    overflow-x:auto;
+    flex-wrap:wrap !important;
+    gap:8px;
+  }
+  header .brand{order:1; flex:0 0 auto; min-width:0}
+
+  /* Tabs: single horizontal rail with momentum scrolling */
+  header .tabs{
+    order:2;
+    width:100%;
+    flex:1 1 100%;
+    display:flex;
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
     overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
+    white-space:nowrap !important;
     gap:10px;
-    white-space:nowrap;
-    scroll-snap-type:x proximity;
-    padding-bottom:4px;
-    position:relative;
-    mask-image: linear-gradient( to right, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+    padding:2px 2px 6px;
+    scrollbar-width:none;
+    min-width:0;
   }
-  header .tabs::-webkit-scrollbar,
-  header .actions::-webkit-scrollbar,
-  header .options::-webkit-scrollbar,
-  header .container > .top-actions::-webkit-scrollbar,
-  header .container > .flex.items-center::-webkit-scrollbar{ display:none }
+  header .tabs::-webkit-scrollbar{display:none}
 
-  /* Every pill snaps nicely */
-  header .tabs > *,
-  header .actions > *,
-  header .options > *,
-  header .container > .top-actions > *,
-  header .container > .flex.items-center > *{
-    flex:0 0 auto;
-    scroll-snap-align:center;
-    min-height:42px;
-    padding:8px 14px;
-    line-height:1.15;
+  /* Pills inside the rail: never shrink or wrap, cancel theme offsets */
+  header .tabs > *{
+    flex:0 0 auto !important;
     display:inline-flex;
     align-items:center;
     justify-content:center;
+    min-height:42px;
+    padding:8px 14px;
+    line-height:1.15;
     white-space:nowrap;
     max-width:85vw;
-    transform:none !important;
     position:relative !important;
+    transform:none !important;
+  }
+  header .tabs > *.gta{ margin:0 !important } /* cancel negative margins from theme */
+
+  /* Right-side actions drop under the rail and wrap if needed */
+  header .container > .flex.items-center{
+    order:3;
+    width:100%;
+    display:flex;
+    flex-wrap:wrap !important;
+    gap:8px;
+    justify-content:flex-start;
+  }
+  header .container > .flex.items-center .btn{
+    min-height:44px;
   }
 
-  /* Stack rows: brand on top, then rails below */
-  header .container{ display:flex; flex-wrap:wrap; gap:8px }
-  header .brand{ order:1; flex:0 0 auto }
-  header .tabs{ order:2 }
-  header .actions{ order:3 }
-  header .options{ order:4 }
+  /* Long labels truncate so they don't push layout */
+  #tname-top, #whoami-top{
+    max-width:60vw;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
 }
 </style>
 
