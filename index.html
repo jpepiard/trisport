@@ -838,64 +838,51 @@ h1, h2, h3, h4, h5, h6{
 
 </style>
 
-<style id="portrait-overlap-fix">
-/* ======= Fix overlapping buttons in portrait (iOS Safari safe) ======= */
-@media (max-width: 640px) and (orientation: portrait){
-  /* Tabs container: one single row with horizontal scroll */
-  header .tabs{
+<style id="mobile-portrait-strong-fix">
+/* ==== Strong fix for portrait: stack rows, each row scrolls horizontally ==== */
+@media (max-width: 640px){
+  header{position:relative}
+  header .container{
+    display:block !important;   /* stack rows vertically */
+  }
+  /* Each direct child of header container becomes a single-row horizontal scroller */
+  header .container > *:not(.brand){
     display:flex !important;
     flex-wrap:nowrap !important;
     overflow-x:auto !important;
     overflow-y:hidden !important;
     -webkit-overflow-scrolling:touch;
     white-space:nowrap !important;
-    gap:8px;
-    align-items:stretch;
+    gap:8px !important;
+    padding-bottom:2px;
     scrollbar-width:none;
   }
-  header .tabs::-webkit-scrollbar{display:none}
+  header .container > *:not(.brand)::-webkit-scrollbar{display:none}
 
-  /* Each tab/button behaves like a pill, no shrink, no weird transforms */
-  header .tabs .tab,
-  header .tabs a,
-  header .tabs button,
-  header .tabs .btn{
-    display:inline-flex !important;
+  /* Items inside never shrink; behave like pills on a rail */
+  header .container > *:not(.brand) > *{
+    flex:0 0 auto !important;
+    max-width:85vw;              /* long labels don't blow up the layout */
+    display:inline-flex;
     align-items:center;
     justify-content:center;
-    flex:0 0 auto !important;     /* no shrinking */
-    min-height:42px;
+    min-height:40px;
     line-height:1.15;
-    font-size:14px;
     padding:8px 12px;
-    position:relative !important; /* cancel absolute if theme applies it */
-    transform:none !important;    /* cancel translate effects that stack items */
-    margin:0 !important;          /* cancel negative margins */
-    vertical-align:middle;
-    max-width:80vw;               /* very long labels don't overflow screen */
     white-space:nowrap;
+    position:relative !important;
+    transform:none !important;
+    margin:0 !important;
   }
 
-  /* Extra safety: avoid z-index stacking issues that can look like overlap */
-  header .tabs > *{ z-index:0; }
+  /* Brand/logo stays on top */
+  header .brand{display:flex; align-items:center; min-height:44px; margin-bottom:6px}
 
-  /* Actions area below tabs: stack nicely, no overlap */
-  header .actions,
-  header .container > .flex.items-center,
-  header .right,
-  header .top-actions{
-    width:100%;
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    align-items:center;
-    justify-content:flex-start;
-  }
-  header .actions .btn,
-  header .container > .flex.items-center .btn{
-    min-height:44px;
-    flex:1 1 auto;  /* allow wrapping to next line without overlap */
-  }
+  /* Ensure no element in header visually overlaps another row */
+  header .container > * + *{ margin-top:6px }
+
+  /* Prevent accidental wrapping of long text ids */
+  #tname-top, #whoami-top{max-width:60vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 }
 </style>
 
