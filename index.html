@@ -196,7 +196,7 @@ h1, h2, h3, h4, h5, h6{
 .team-name{display:inline-flex;align-items:center;gap:8px;line-height:1.25;vertical-align:middle}
 .match-card .hd .teams{display:flex;align-items:center;gap:10px}
 .avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:#0f1331;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;color:#cbd5ff;font-weight:700;font-size:14px;flex:0 0 auto}
-.avatar img{width:100%;height:100%;object-fit: contain; padding: 4px;}.avatar .avatar-initials{display:inline-block;line-height:40px}
+.avatar img{width:100%;height:100%;object-fit:cover}.avatar .avatar-initials{display:inline-block;line-height:40px}
 .avatar-lg{width:48px;height:48px;font-size:15px}.avatar-lg .avatar-initials{line-height:48px}
 .avatar-sm{width:32px;height:32px;font-size:12px}.avatar-sm .avatar-initials{line-height:32px}
 .h2h-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-weight:600}
@@ -2446,6 +2446,146 @@ function onEnter(e){
 
 
 
+<!-- START: Simple action logger (Firebase + local fallback) -->
+<style>
+#ts-log-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:99999;background:rgba(0,0,0,0.45)}
+#ts-log-modal.show{display:flex}
+#ts-log-panel{width:min(980px,96vw);max-height:82vh;overflow:auto;background:#0f1331;border-radius:12px;border:1px solid rgba(255,255,255,0.04);padding:12px;box-shadow:0 30px 60px rgba(0,0,0,.6)}
+#ts-log-panel .hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+#ts-log-panel .list{font-family:monospace;font-size:13px;line-height:1.25;color:#dfe8ff;max-height:64vh;overflow:auto;padding:6px;border-radius:8px;background:linear-gradient(180deg,#0b0f22,#0f1331);border:1px solid rgba(122,162,255,0.05)}
+.ts-log-item{padding:8px;border-bottom:1px solid rgba(255,255,255,0.02);display:flex;gap:12px}
+.ts-log-item .ts{width:140px;color:#9aa9d8;font-size:12px}
+.ts-log-item .meta{flex:1;white-space:pre-wrap}
+.ts-log-controls{display:flex;gap:8px}
+#btn-open-logs{margin-left:8px}
+</style>
+
+<button id="btn-open-logs" class="btn small" type="button" title="Ouvrir le journal">📜 Logs</button>
+
+<div id="ts-log-modal" aria-hidden="true">
+  <div id="ts-log-panel" role="dialog" aria-label="Journal des actions">
+    <div class="hd">
+      <strong>Journal des actions</strong>
+      <div class="ts-log-controls">
+        <button id="ts-clear-local" class="btn small">Effacer local</button>
+        <button id="ts-download" class="btn small">Télécharger</button>
+        <button id="ts-close" class="btn small">Fermer</button>
+      </div>
+    </div>
+    <div class="list" id="ts-log-list" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const LS_KEY = 'trisports_logs_v1';
+  const MAX_DISPLAY = 1000;
+  const id = (s)=>document.getElementById(s);
+  const escape = s => (s==null ? '' : String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  let logs = [];
+  function firebaseRef(){
+    try{
+      if(window.firebase && firebase.database){
+        const tid = (window.state && (state.cloudId || state.tid)) || 'local';
+        return firebase.database().ref('tournaments/' + tid + '/logs');
+      }
+    }catch(e){}
+    return null;
+  }
+  function writeFirebase(entry){
+    const ref = firebaseRef();
+    if(!ref) return Promise.reject(new Error('no firebase'));
+    return ref.push(entry);
+  }
+  function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(logs)); }catch(_){} }
+  function loadLocal(){ try{ const raw = localStorage.getItem(LS_KEY); if(raw) logs = JSON.parse(raw) || []; }catch(e){ logs = []; } }
+  loadLocal();
+  function renderList(){
+    const wrap = id('ts-log-list'); if(!wrap) return;
+    const out = logs.slice(-MAX_DISPLAY).map(l=>{
+      const d = new Date(l.ts || Date.now());
+      const ts = d.toLocaleString();
+      const who = escape(l.who || 'inconnu');
+      const type = escape(l.type || 'action');
+      const meta = typeof l.data === 'string' ? escape(l.data) : escape(JSON.stringify(l.data,null,2));
+      return `<div class="ts-log-item"><div class=\"ts\">${ts}</div><div class=\"meta\"><strong>${type}</strong> — ${who}
+${meta}</div></div>`;
+    }).join('');
+    wrap.innerHTML = out || '<div class="help">Aucun log.</div>';
+    wrap.scrollTop = wrap.scrollHeight;
+  }
+  renderList();
+  window.logEvent = async function(type, data){
+    const entry = {
+      ts: Date.now(),
+      who: (window.session && (window.session.claims && Object.keys(window.session.claims).length ? Object.keys(window.session.claims).join(',') : (window.session.admin? 'admin':'visiteur'))) || (document.getElementById('whoami-top')?.textContent || 'visiteur'),
+      type: type || 'event',
+      path: location.pathname + location.search,
+      data: data === undefined ? null : data
+    };
+    logs.push(entry); saveLocal(); renderList();
+    try{ const ref = firebaseRef(); if(ref){ await writeFirebase(entry); } }catch(e){}
+    return entry;
+  };
+  const modal = id('ts-log-modal');
+  id('btn-open-logs')?.addEventListener('click', ()=>{ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); renderList(); });
+  id('ts-close')?.addEventListener('click', ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); });
+  id('ts-clear-local')?.addEventListener('click', ()=>{ if(!confirm('Effacer les logs locaux ?')) return; logs=[]; saveLocal(); renderList(); });
+  id('ts-download')?.addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(logs, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'trisports-logs-'+(new Date()).toISOString().replace(/[:.]/g,'-')+'.json';
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+  (function attachFirebaseListener(){
+    try{
+      const ref = firebaseRef(); if(!ref) return;
+      ref.limitToLast(200).on('child_added', snap=>{
+        const v = snap.val(); if(!v) return;
+        logs.push(v); saveLocal(); renderList();
+      });
+    }catch(e){}
+  })();
+  document.addEventListener('app:action', function(e){
+    try{ window.logEvent(e.detail?.type || 'custom', e.detail?.data || null); }catch(_){}
+  });
+  document.addEventListener('click', function(ev){
+    try{
+      const btn = ev.target.closest && (ev.target.closest('[data-act]') || ev.target.closest('[data-clear]') || ev.target.closest('#btn-create-tournament') || ev.target.closest('#btn-join-code') || ev.target.closest('#btn-start-round') || ev.target.closest('#btn-end-round') || ev.target.closest('#btn-import') || ev.target.closest('#btn-export') || ev.target.closest('#btn-admin-on') || ev.target.closest('#btn-admin-off') || ev.target.closest('#btn-admin-on-setup') || ev.target.closest('#btn-cloud-delete'));
+      if(!btn) return;
+      const act = btn.getAttribute('data-act') || btn.getAttribute('data-clear') || btn.id || btn.dataset.act;
+      const meta = { id: btn.dataset.id || btn.getAttribute('data-id') || null, text: (btn.textContent||'').trim() };
+      window.logEvent('ui_click', { action: act, meta });
+    }catch(e){}
+  }, true);
+  function maybeWrap(name, wrapper){
+    try{
+      if(typeof window[name] === 'function'){
+        const orig = window[name];
+        window[name] = function(...args){
+          try{ wrapper.apply(this, args); }catch(_){}
+          return orig.apply(this, args);
+        };
+      }
+    }catch(e){}
+  }
+  maybeWrap('saveState', function(){
+    try{ window.logEvent('saveState', { teams: (window.state && state.teams && state.teams.length) || 0 }); }catch(_){}
+  });
+  maybeWrap('pushCloud', function(immediate){
+    try{ window.logEvent('pushCloud', { immediate: !!immediate, cloudId: (window.state && (state.cloudId||null)) || null }); }catch(_){}
+  });
+  maybeWrap('setBonusSelection', function(round, tid, sel){
+    try{ window.logEvent('bonus_selection', { round, team: tid, sel }); }catch(_){}
+  });
+  maybeWrap('clearMatch', function(mid){
+    try{ window.logEvent('clear_match', { matchId: mid }); }catch(_){}
+  });
+  window.emitAppLog = (type, data) => document.dispatchEvent(new CustomEvent('app:action',{detail:{type, data}}));
+  renderList();
+})();
+</script>
+<!-- END: Simple action logger -->
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
