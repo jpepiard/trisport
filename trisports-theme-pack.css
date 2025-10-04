@@ -1578,3 +1578,18 @@ header .brand[data-mode="images"] > h1{ display:none !important; }
 .tab[aria-selected="true"]::after{ transform:scaleX(1); }
 .tab:focus-visible{ outline:none; box-shadow:0 0 0 2px rgba(15,18,32,1), 0 0 0 4px rgba(122,162,255,.8); }
 @media (prefers-contrast:more){ .tab[aria-selected="true"]::after{ height:4px; } }
+
+
+/* === Header layout fix: center tabs between brand and right controls === */
+header .container{ display:flex; align-items:center; gap:16px; justify-content:space-between; flex-wrap:wrap; }
+header .brand{ flex:0 0 auto; }
+header nav.tabs{ flex:1 1 auto; justify-content:center; display:flex; }
+header .container > div:last-child{ flex:0 0 auto; }
+/* Keep brand text/logo visible (override any previous hide rules) */
+header .brand > .logo,
+header .brand > h1{ display:inline-flex !important; }
+/* Mobile: let tabs align left and scroll if needed */
+@media (max-width: 640px){
+  header nav.tabs{ flex:1 1 100%; justify-content:flex-start; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+
