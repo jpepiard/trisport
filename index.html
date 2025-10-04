@@ -654,6 +654,9 @@ let state={version:40,tid:uid(),cloudId:null,tournamentName:"",rules:{dartsSingl
 let ui={open:{},h2h:false}; let session={admin:false,claims:{}};
 // === Session persistence (admin & team claims) ===
 (function(){
+  // safety: define rewriteCapitaineHelp if missing
+  if (typeof window.rewriteCapitaineHelp !== 'function') { window.rewriteCapitaineHelp = function(){}; }
+
   const SESSION_KEY = 'trisports.session.v1';
   const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 jours
 
@@ -1808,7 +1811,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     ensureBrandImages();
   }
   // garder la réécriture d'aide capitaine en async léger
-  document.addEventListener('click', function(){ setTimeout(rewriteCapitaineHelp,0); }, true);
+  document.addEventListener('click', function(){ if (typeof rewriteCapitaineHelp==='function') setTimeout(rewriteCapitaineHelp,0); }, true);
   
   // --- Affichage après révélation : ne pas afficher joueur/sport pour Capitaine ---
   if (typeof window.bonusChip === 'function'){
