@@ -797,6 +797,58 @@ h1, h2, h3, h4, h5, h6{
 
 
 
+
+<style id="mobile-overrides">
+/* === Mobile-first tweaks (phones) === */
+@media (max-width: 640px){
+  :root{
+    /* Slightly bigger base font on small screens for readability */
+    /* (inherits from system default otherwise) */
+  }
+  body{padding-bottom:env(safe-area-inset-bottom)}
+  header .container{gap:8px;flex-wrap:wrap}
+  header .tabs{flex:1 1 100%; order:3; margin-top:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:thin}
+  .brand{min-width:0}
+  .container{padding:16px 12px}
+  main .container{padding-top:14px}
+
+  /* Cards & headers wrap nicely */
+  .card .hd{flex-wrap:wrap;gap:10px}
+  .match-card .hd{flex-wrap:wrap;gap:10px}
+
+  /* Grids collapse to a single column */
+  .grid.cols-2,
+  .grid.cols-3,
+  .grid.cols-4{grid-template-columns:1fr}
+
+  /* Match layout: single column on phones */
+  .match-two-col{grid-template-columns:1fr !important}
+
+  /* Make primary actions easier to tap */
+  .btn{min-height:44px}
+  .btn.small{min-height:40px}
+  .btn, .btn.small{width:100%}
+
+  /* Avoid iOS zoom on inputs */
+  input[type=text],
+  input[type=number],
+  select{font-size:16px}
+
+  /* Tables become horizontally scrollable when needed */
+  table{display:block;overflow-x:auto;white-space:nowrap}
+
+  /* Bonus modal sizing on small screens */
+  .bonus-dialog{width:96vw;max-width:520px}
+}
+
+/* Allow two columns on small/medium devices when space allows */
+@media (min-width: 641px) and (max-width: 900px){
+  .match-two-col{
+    grid-template-columns:repeat(2, minmax(260px, 1fr));
+  }
+}
+</style>
+
 </head></html>
 <style id="rencontres-polish">
 /* Card container */
