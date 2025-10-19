@@ -2009,3 +2009,46 @@ header > .container > div:last-child{
   /* (optionnel) affiner la barre de défilement */
   header > .container > nav.tabs::-webkit-scrollbar{ height: 6px; }
 }
+/* ===== Onglets mobile : défilement H fluide, sans "saut" vertical ===== */
+@media (max-width: 640px){
+  /* Conteneur d’onglets */
+  header > .container > nav.tabs{
+    display: block !important;
+    white-space: nowrap !important;
+
+    /* Scroll horizontal OUI, vertical NON */
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+
+    /* Limite le geste au pan horizontal (évite le drift vertical) */
+    touch-action: pan-x !important;
+
+    /* Évite la mise à jour de layout quand la scrollbar apparaît */
+    scrollbar-gutter: stable both-edges;
+
+    /* Désactive le rebond vertical iOS à l’intérieur */
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+
+    /* Hauteur fixée pour empêcher toute variation (régle la valeur si besoin) */
+    --tab-h: 40px;
+    padding: 6px 0 !important;
+    height: calc(var(--tab-h) + 12px) !important; /* 12px = padding vertical total */
+    box-sizing: content-box;
+    will-change: scroll-position;
+  }
+
+  /* Items onglets : taille stable */
+  header > .container > nav.tabs .tab{
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    height: var(--tab-h) !important;
+    line-height: 1 !important;         /* on centre avec flex, pas avec line-height */
+    box-sizing: border-box;
+    margin-right: 6px;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* S’assurer que l’état actif/hover ne modifie PAS la hauteur*
