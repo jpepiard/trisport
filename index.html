@@ -1472,6 +1472,8 @@ function goto(tabId){if(guardTab(tabId)){showToast("Aucun tournoi ouvert. Créez
 
 document.addEventListener("click",async(e)=>{
   const btn=e.target.closest("button");if(btn){switch(btn.id){
+    case "btn-open-logs":{ const m=id("ts-log-modal"); if(m){ m.classList.add("show"); m.setAttribute("aria-hidden","false"); if(typeof renderList==="function") renderList(); } break; }
+
     case "btn-fullscreen":(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen())?.catch?.(()=>{});break;
 
     /* --- ADMIN : activation => re-render immédiat --- */
@@ -2697,14 +2699,6 @@ function onEnter(e){
   });
   document.addEventListener('click', function(e){
     var target = e.target;
-    // Delegated open for dynamically-added admin button
-    if (target && (target.id === 'btn-open-logs' || (target.closest && target.closest('#btn-open-logs')))){
-      modal.classList.add('show');
-      modal.setAttribute('aria-hidden','false');
-      renderList();
-      return;
-    }
-    // Close modal
     if (target && target.id === 'ts-close') {
       modal.classList.remove('show');
       modal.setAttribute('aria-hidden','true');
