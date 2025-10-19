@@ -2697,6 +2697,14 @@ function onEnter(e){
   });
   document.addEventListener('click', function(e){
     var target = e.target;
+    // Delegated open for dynamically-added admin button
+    if (target && (target.id === 'btn-open-logs' || (target.closest && target.closest('#btn-open-logs')))){
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden','false');
+      renderList();
+      return;
+    }
+    // Close modal
     if (target && target.id === 'ts-close') {
       modal.classList.remove('show');
       modal.setAttribute('aria-hidden','true');
