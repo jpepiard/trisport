@@ -2155,11 +2155,15 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     input.focus();
     var toggle = document.getElementById('password-toggle');
     if(toggle){
+      // reset any previous listeners by cloning the button
+      var _newT = toggle.cloneNode(true);
+      toggle.parentNode.replaceChild(_newT, toggle);
+      toggle = _newT;
       // reset to masked each time
       input.type = 'password';
       toggle.textContent = '👁️';
       toggle.setAttribute('aria-label','Afficher le mot de passe');
-      toggle.addEventListener('click', function(ev){
+      toggle.onclick = function(ev){
         ev.preventDefault();
         var cur = input.getAttribute('type');
         if(cur === 'password'){
@@ -2173,7 +2177,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
           toggle.setAttribute('aria-label','Afficher le mot de passe');
           toggle.setAttribute('aria-pressed','false');
         }
-      });
+      };
     }
     return new Promise(function(resolve){
       function close(val){
