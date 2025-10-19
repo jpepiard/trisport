@@ -1133,7 +1133,12 @@ function renderMatches(){
 
     groups[r].forEach(m=>{
       ensureLengths(m);
-      const wins=computeSetWins(m),pal=m.palet,palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"—";
+      const wins=computeSetWins(m), pal=m.palet;
+      const pa = (pal?.a==null ? null : +pal.a);
+      const pb = (pal?.b==null ? null : +pal.b);
+      const palA = (pa==null && pb==null) ? 0 : (pa ?? 0);
+      const palB = (pa==null && pb==null) ? 0 : (pb ?? 0);
+      const palScore = hy(palA, palB);
       const palChip = `<span class="chip">🥏 <span class="score-compact">${palScore}</span></span>`;
       const done = uiIsComplete(m);if(done)complete++;
       const el=document.createElement("div");el.setAttribute("data-id",m.id);el.setAttribute("data-complete",uiIsComplete(m)?"true":"false");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
