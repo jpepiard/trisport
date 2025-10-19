@@ -2685,14 +2685,7 @@ function onEnter(e){
 
   // Open/close modal wiring — button lives in Admin card now
   const modal = id('ts-log-modal');
-  document.addEventListener('DOMContentLoaded', function(){
-    var btn = document.getElementById('btn-open-logs');
-    if (btn) {
-      btn.addEventListener('click', function(){
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden','false');
-        renderList();
-      });
+  
     }
   });
   document.addEventListener('click', function(e){
@@ -2850,6 +2843,29 @@ function onEnter(e){
   .round-head:has(.round-chip.yellow) + .round-grid .pill.pill--blue::before{ animation: none !important; opacity: .4; }
 }
 </style>
+
+<script>
+// [PATCH] Ouverture du journal en délégation d'événement (fiable en mode admin ou non)
+document.addEventListener('click', function (ev) {
+  const t = ev.target && ev.target.closest && ev.target.closest('#btn-open-logs');
+  if (!t) return;
+  ev.preventDefault();
+  try {
+    // On réutilise les variables existantes si elles sont dans la portée globale
+    var modal = typeof modal !== 'undefined' ? modal : document.getElementById('ts-log-modal');
+    if (modal) {
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+    if (typeof renderList === 'function') {
+      renderList();
+    }
+  } catch (e) {
+    console && console.warn && console.warn('Erreur lors de l\'ouverture du journal:', e);
+  }
+});
+
+</script>
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
