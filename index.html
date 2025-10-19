@@ -692,7 +692,7 @@ let ui={open:{},h2h:false}; let session={admin:false,claims:{}};
 })();
 function isAdmin(){return !!session.admin} function hasClaim(tid){return !!session.claims[tid]}
 // === Droits de saisie des scores selon l'état de la journée ===
-function _iAmTeamOf(m){ return hasClaim(m.a); }
+function _iAmTeamOf(m){ return hasClaim(m.a) || hasClaim(m.b); }
 function canEditScores(m, rCtl){
   if (!rCtl.started && !rCtl.finished) return false; // pas commencé -> personne
   if (rCtl.finished) return isAdmin();               // terminé -> admin seul
@@ -1133,7 +1133,12 @@ function renderMatches(){
 
     groups[r].forEach(m=>{
       ensureLengths(m);
-      const wins=computeSetWins(m),pal=m.palet,palScore=(pal.a!=null&&pal.b!=null)?hy(pal.a,pal.b):"—";
+      const wins=computeSetWins(m), pal=m.palet;
+      const pa = (pal?.a==null ? null : +pal.a);
+      const pb = (pal?.b==null ? null : +pal.b);
+      const palA = (pa==null && pb==null) ? 0 : (pa ?? 0);
+      const palB = (pa==null && pb==null) ? 0 : (pb ?? 0);
+      const palScore = hy(palA, palB);
       const palChip = `<span class="chip">🥏 <span class="score-compact">${palScore}</span></span>`;
       const done = uiIsComplete(m);if(done)complete++;
       const el=document.createElement("div");el.setAttribute("data-id",m.id);el.setAttribute("data-complete",uiIsComplete(m)?"true":"false");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
@@ -1201,7 +1206,7 @@ function renderMatches(){
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const can=(isAdmin()); sel.disabled=!(can && canEditScores(m,rCtl));
+        const can=(isAdmin()); sel.disabled=!canEditScores(m, rCtl);
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;window.logEvent('darts_set',{index:i,team:(v===0?m.a:m.b)});saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
@@ -1209,7 +1214,7 @@ function renderMatches(){
       // ping (vainqueur A/B)
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="ping"]').forEach(sel=>{
         const can = (isAdmin());
-        sel.disabled = !(can && canEditScores(m, rCtl));
+        sel.disabled = !canEditScores(m, rCtl);
         sel.addEventListener("change", ()=>{
           const i  = parseInt(sel.getAttribute("data-index"),10);
           const vv = sel.value==="" ? null : parseInt(sel.value,10);
@@ -1229,7 +1234,7 @@ updateMatchCompleteness(m.id);
 
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const can=(isAdmin()); inp.disabled=!(can && canEditScores(m,rCtl));
+        const can=(isAdmin()); inp.disabled=!canEditScores(m, rCtl);
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;window.logScoreUpdate(which==='a'?m.a:m.b,'palet',v);saveState();updateNote()});
