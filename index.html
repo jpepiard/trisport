@@ -2684,32 +2684,24 @@ function onEnter(e){
   };
 
   // Open/close modal wiring — button lives in Admin card now
-  // (removed) avoid stale reference
+  const modal = id('ts-log-modal');
   document.addEventListener('DOMContentLoaded', function(){
     var btn = document.getElementById('btn-open-logs');
     if (btn) {
-      
-btn.addEventListener('click', function(){
-  var modal = document.getElementById('ts-log-modal');
-  if (!modal) return;
-  modal.classList.add('show');
-  modal.setAttribute('aria-hidden','false');
-  if (typeof renderList === 'function') renderList();
-});
-
+      btn.addEventListener('click', function(){
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden','false');
+        renderList();
+      });
     }
   });
-  
-document.addEventListener('click', function(e){
-  var target = e.target;
-  if (target && (target.id === 'ts-close' || target.id === 'ts-log-modal')) {
-    var modal = document.getElementById('ts-log-modal');
-    if (!modal) return;
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden','true');
-  }
-});
-
+  document.addEventListener('click', function(e){
+    var target = e.target;
+    if (target && target.id === 'ts-close') {
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden','true');
+    }
+  });
   if(id('ts-clear-local')) id('ts-clear-local').addEventListener('click', ()=>{ if(!confirm('Effacer les logs locaux ?')) return; logs=[]; saveLocal(); renderList(); });
   if(id('ts-download')) id('ts-download').addEventListener('click', ()=>{
     const blob = new Blob([JSON.stringify(logs, null, 2)], {type:'application/json'});
@@ -2950,6 +2942,11 @@ document.addEventListener('click', function(e){
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.22); /* keep existing shadow */
 }
 
+/* Survol : très léger contraste */
+#table-classement tbody tr:hover td:nth-child(3) > span.points-medal{
+  background:rgba(255,255,255,.06);
+  border-color:rgba(255,255,255,.22);
+}
 
 /* Mobile */
 @media (max-width:520px){
@@ -3201,9 +3198,6 @@ document.addEventListener('click', function(e){
 #table-classement tbody tr:nth-child(2){ box-shadow: inset 4px 0 0 0 rgba(192,192,192,.9), 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02); }
 #table-classement tbody tr:nth-child(3){ box-shadow: inset 4px 0 0 0 rgba(205,127,50,.9), 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02); }
 </style>
-
-
-
 
 
 
