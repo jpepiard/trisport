@@ -634,30 +634,6 @@ const help=t=>{const d=document.createElement("div");d.className="help";d.textCo
 function hashPass(s){s=(s||"").trim();let h=0x811c9dc5>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return("00000000"+h.toString(16)).slice(-8)}
 const hy=(a,b)=>`${a}\u2011${b}`;
 const BONUS_VAL=5;
-/* === Admin UI refresh (ensure log button reflects session on load) === */
-function refreshAdminUI(){
-  try{
-    const isAdmin = !!(window.session && window.session.admin);
-    const pillMain = document.getElementById('whoami');
-    const pillTop  = document.getElementById('whoami-top');
-    const pillSetup= document.getElementById('whoami-setup');
-    const btnLogs  = document.getElementById('btn-open-logs');
-    if (pillMain)  pillMain.textContent  = isAdmin ? 'vous : Admin' : 'vous : visiteur (lecture seule)';
-    if (pillTop)   pillTop.textContent   = isAdmin ? 'Admin' : 'visiteur';
-    if (pillSetup) pillSetup.textContent = isAdmin ? 'Admin' : 'visiteur';
-    if (btnLogs)   btnLogs.style.display = isAdmin ? 'inline-block' : 'none';
-  }catch(_){}
-}
-// Apply on DOM ready (so the log button is correct even when already admin)
-document.addEventListener('DOMContentLoaded', refreshAdminUI);
-// Also re-apply on admin toggle buttons as a safety net
-document.addEventListener('click', function(e){
-  const id = e && e.target && e.target.id;
-  if (id === 'btn-admin-on' || id === 'btn-admin-off' || id === 'btn-admin-on-setup'){
-    setTimeout(refreshAdminUI, 0);
-  }
-});
-
 
 /* ===== Erreurs visibles ===== */
 window.onerror=(msg,src,line,col)=>{const el=id("storage-warning");if(el){el.style.display="block";el.textContent="Erreur JS : "+msg+" @"+(src||"")+":"+(line||0)+":"+(col||0)} const p=id("js-ok");if(p){p.textContent='JS chargé avec erreurs ⚠️';p.style.background='#8a2a2a'}};
@@ -2708,17 +2684,21 @@ function onEnter(e){
   };
 
   // Open/close modal wiring — button lives in Admin card now
-  const modal = id('ts-log-modal');
-  document.addEventListener('DOMContentLoaded', function(){
-    var btn = document.getElementById('btn-open-logs');
-    if (btn) {
-      btn.addEventListener('click', function(){
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden','false');
-        renderList();
-      });
-    }
-  });
+  
+// Lazy-bind: resolve the modal at click time so it works even if injected later
+document.addEventListener('DOMContentLoaded', function(){
+  var btn = document.getElementById('btn-open-logs');
+  if (btn) {
+    btn.addEventListener('click', function(){
+      var modal = document.getElementById('ts-log-modal');
+      if (!modal) return; // modal not yet injected; nothing to open
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden','false');
+      if (typeof renderList === 'function') renderList();
+    });
+  }
+});
+
   document.addEventListener('click', function(e){
     var target = e.target;
     if (target && target.id === 'ts-close') {
