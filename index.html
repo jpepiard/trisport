@@ -1476,10 +1476,10 @@ document.addEventListener("click",async(e)=>{
 
     /* --- ADMIN : activation => re-render immédiat --- */
     case "btn-admin-on-setup":
-    case "btn-admin-on":{const pin=await showPassword({title:"PIN administrateur",message:"Entrez le PIN administrateur :",placeholder:"PIN"});if(pin==="30041991"){session.admin=true;session.claims={};updateWho();renderAll();showToast("Mode administrateur activé (déconnexion des équipes sur cet appareil).")}else showToast("PIN incorrect.");break}
+    case "btn-admin-on":{const pin=prompt("PIN administrateur :");if(pin==="30041991"){session.admin=true;session.claims={};updateWho();renderAll();showToast("Mode administrateur activé (déconnexion des équipes sur cet appareil).")}else showToast("PIN incorrect.");break}
     case "btn-admin-off":{session.admin=false;updateWho();renderAll();break}
 
-    case "btn-create-tournament":{if(!isAdmin()){const pin=await showPassword({title:"PIN administrateur",message:"Entrez le PIN administrateur :",placeholder:"PIN"});if(pin!=="30041991")return alert("PIN incorrect.");session.admin=true;session.claims={};updateWho();renderAll()}const code=(id("tcode-input").value||"").trim();if(!code)return alert("Code cloud obligatoire.");const name=(id("tname-input").value||"").trim()||"Tournoi";if(nameExistsLocally(name))return alert("Un tournoi portant ce nom existe déjà dans cette liste.");if(codeExistsLocally(code))return alert("Ce code cloud existe déjà dans votre liste.");const exists=await(async()=>{try{const db=cloud.db||initFB();if(!db)return false;const ref=db.ref("tournaments/"+code+"/payload");const snap=await ref.get?.()??await new Promise(res=>ref.once('value',res));return !!(snap&&snap.exists&&snap.exists())}catch(_){return false}})();if(exists)return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");const n=clampInt(id("teams-count-input").value,2,64);const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50),
+    case "btn-create-tournament":{if(!isAdmin()){const pin=prompt("PIN administrateur :");if(pin!=="30041991")return alert("PIN incorrect.");session.admin=true;session.claims={};updateWho();renderAll()}const code=(id("tcode-input").value||"").trim();if(!code)return alert("Code cloud obligatoire.");const name=(id("tname-input").value||"").trim()||"Tournoi";if(nameExistsLocally(name))return alert("Un tournoi portant ce nom existe déjà dans cette liste.");if(codeExistsLocally(code))return alert("Ce code cloud existe déjà dans votre liste.");const exists=await(async()=>{try{const db=cloud.db||initFB();if(!db)return false;const ref=db.ref("tournaments/"+code+"/payload");const snap=await ref.get?.()??await new Promise(res=>ref.once('value',res));return !!(snap&&snap.exists&&snap.exists())}catch(_){return false}})();if(exists)return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");const n=clampInt(id("teams-count-input").value,2,64);const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50),
   bonusMaxPerTeam: clampInt(id("rule-bonus-max").value,0,50),};joinCloud(code);state={version:40,tid:uid(),cloudId:code,tournamentName:name,rules:R,teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false})),matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};saveState();pushCloud(true);renderAll();goto("equipes");break}
     case "btn-join-code":{const code=(id("join-code").value||"").trim();if(!code)return alert("Renseigne un code.");joinCloud(code);goto("equipes");break}
     case "btn-copy-link":{const code=(id("join-code").value||id("tcode-input").value||state.cloudId||"").trim();if(!code)return alert("Aucun code.");const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);navigator.clipboard?.writeText(url);showToast("Lien copié !\n"+url);break}
@@ -2127,9 +2127,8 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     <div class="hd"><span class="icon">🔑</span><span id="password-title">Mot de passe</span></div>
     <div class="bd">
       <p id="password-message">Entrez votre mot de passe :</p>
-      <div id="password-field-wrap" style="display:flex;align-items:center;gap:8px;">
-        <input id="password-input" type="password" autocomplete="current-password" placeholder="Mot de passe" /> <button id="password-toggle" type="button" aria-label="Afficher le mot de passe" style="margin-left:8px;padding:4px 6px;cursor:pointer;border-radius:4px;border:1px solid rgba(0,0,0,0.08);background:transparent">👁️</button>
-      </div>
+      <input id="password-input" type="password" autocomplete="current-password" placeholder="Mot de passe" />
+    </div>
     <div class="ft">
       <button class="btn" type="button" id="password-cancel">Annuler</button>
       <button class="btn primary" type="button" id="password-ok">Valider</button>
@@ -2153,25 +2152,6 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     overlay.classList.add('show');
     overlay.style.display = 'grid';
     input.focus();
-    var toggle = document.getElementById('password-toggle');
-    if(toggle){
-      // reset to masked each time
-      input.type = 'password';
-      toggle.textContent = '👁️';
-      toggle.setAttribute('aria-label','Afficher le mot de passe');
-      toggle.addEventListener('click', function(ev){
-        ev.preventDefault();
-        if(input.type === 'password'){
-          input.type = 'text';
-          toggle.textContent = '🙈';
-          toggle.setAttribute('aria-label','Masquer le mot de passe');
-        }else{
-          input.type = 'password';
-          toggle.textContent = '👁️';
-          toggle.setAttribute('aria-label','Afficher le mot de passe');
-        }
-      });
-    }
     return new Promise(function(resolve){
       function close(val){
         overlay.classList.remove('show');
@@ -2878,32 +2858,6 @@ function onEnter(e){
 .confirm-card .btn.primary{ background: linear-gradient(180deg,#2f3da2,#25337d); border-color:#3a4aa0; }
 .confirm-card .btn.danger{ background: linear-gradient(180deg,#7a2b2b,#5c2222); border-color:#8a2b2b; }
 .confirm-card .icon{ width: 22px; height: 22px; display:grid; place-items:center; font-size:18px; }
-
-/* Password overlay mirrors confirm overlay */
-#password-overlay{
-  position: fixed; inset: 0; display: none; z-index: 9999;
-  background: rgba(10,12,24,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-}
-#password-overlay.show{ display: grid; place-items: center; }
-#password-overlay .confirm-card{
-  width: min(520px, 92vw);
-  background: linear-gradient(180deg,#151b39,#121632);
-  border: 1px solid #2b315f;
-  border-radius: 16px;
-  box-shadow: 0 18px 36px rgba(0,0,0,.45);
-  color: #e7e9f7;
-  transform: translateY(6px) scale(.98);
-  opacity: 0;
-  transition: transform .18s ease, opacity .18s ease;
-}
-#password-overlay.show .confirm-card{
-  transform: translateY(0) scale(1);
-  opacity: 1;
-}
-#password-input{
-  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #2b315f; background:#0e1430; color:#e7e9f7;
-}
-#password-toggle{ font-size: 16px; }
 </style><style id="standings-points-emphasis">
 /* === Classement: centré + pastille Points discrète + liserets groupés === */
 
