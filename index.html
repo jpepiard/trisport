@@ -2921,12 +2921,12 @@ function onEnter(e){
     if(act === 'setpass'){
       if(typeof isAdmin === 'function' && !isAdmin()){ alert('Réservé à l’admin.'); return; }
       openModal('set', tid);
-      e.preventDefault();
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
       return;
     }
     if(act === 'login'){
       openModal('login', tid);
-      e.preventDefault();
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
       return;
     }
   }, true);
