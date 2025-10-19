@@ -1877,40 +1877,29 @@ header > .container > div:last-child{
   .bonus-card { gap: 10px; padding: 8px; }
   .bonus-illu { width: 50px; height: 50px; }
 }
-/* ===== Restore H-scroll for tabs on mobile ===== */
-@media (max-width: 640px){
-  /* le conteneur ne doit pas couper la barre d’onglets */
-  header .container{ overflow: visible !important; }
 
-  /* cible large au cas où le nav.tabs n’est pas enfant direct du container */
-  header nav.tabs,
-  header > .container > nav.tabs{
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
 
-    /* une seule “rangée” continue */
-    white-space: nowrap !important;
-
-    /* H: oui — V: non */
-    overflow-x: auto !important;
+/* ======================================================================
+   iOS Safari fix — force horizontal scroll only for tabs
+   ====================================================================== */
+@supports (-webkit-touch-callout: none) {
+  header nav.tabs{
+    overflow-x: scroll !important;
     overflow-y: hidden !important;
-
-    /* tactile fluide */
     -webkit-overflow-scrolling: touch !important;
+    white-space: nowrap !important;
     touch-action: pan-x !important;
     overscroll-behavior-x: contain;
-    scrollbar-gutter: stable both-edges;
+    overscroll-behavior-y: contain;
+    pointer-events: auto;
   }
-
-  /* les onglets eux-mêmes doivent rester à la suite */
   header nav.tabs .tab{
     display: inline-flex !important;
     flex: 0 0 auto !important;
     white-space: nowrap !important;
-    margin-right: 6px;
-    height: 40px !important;          /* hauteur fixe pour éviter tout “saut” */
+    height: 40px !important;
     align-items: center; justify-content: center;
     box-sizing: border-box;
+    margin-right: 6px;
   }
 }
