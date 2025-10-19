@@ -1970,3 +1970,42 @@ header > .container > div:last-child{
   }
   header > .container > nav.tabs .tab{ padding: 6px 10px !important; }
 }
+/* ===== Onglets : scroll H autorisé, scroll V interdit (mobile) ===== */
+@media (max-width: 640px){
+  /* (si tu utilises déjà la grille mobile plus haut, conserve-la) */
+
+  /* Ligne 3 : barre d’onglets */
+  header > .container > nav.tabs{
+    /* visible en une seule “rangée” qui défile à l’horizontale */
+    display: block !important;
+    white-space: nowrap !important;
+
+    /* scroll horizontal OUI, vertical NON */
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+
+    /* inertie iOS + pas de rebond vertical */
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain;
+
+    /* éviter que le contenu pousse en hauteur */
+    line-height: 1.2;
+    padding-block: 6px;
+    min-width: 0 !important;
+    gap: 0 !important; /* l’espace vient des .tab */
+  }
+
+  /* chaque onglet est un “bloc” qui ne se casse pas à la ligne */
+  header > .container > nav.tabs .tab{
+    display: inline-flex !important;   /* reste sur la même ligne */
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px !important;
+    margin-right: 6px;                 /* espace entre onglets */
+  }
+
+  /* (optionnel) affiner la barre de défilement */
+  header > .container > nav.tabs::-webkit-scrollbar{ height: 6px; }
+}
