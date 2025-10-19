@@ -2684,25 +2684,30 @@ function onEnter(e){
   };
 
   // Open/close modal wiring — button lives in Admin card now
-  const modal = id('ts-log-modal');
-  document.addEventListener('DOMContentLoaded', function(){
-    var btn = document.getElementById('btn-open-logs');
-    if (btn) {
-      btn.addEventListener('click', function(){
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden','false');
-        renderList();
-      });
-    }
-  });
-  document.addEventListener('click', function(e){
-    var target = e.target;
-    if (target && target.id === 'ts-close') {
-      modal.classList.remove('show');
-      modal.setAttribute('aria-hidden','true');
-    }
-  });
-  if(id('ts-clear-local')) id('ts-clear-local').addEventListener('click', ()=>{ if(!confirm('Effacer les logs locaux ?')) return; logs=[]; saveLocal(); renderList(); });
+  
+document.addEventListener('DOMContentLoaded', function(){
+  var btn = document.getElementById('btn-open-logs');
+  if (btn) {
+    btn.addEventListener('click', function(){
+      var modal = document.getElementById('ts-log-modal');
+      if (!modal) return;
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden','false');
+      if (typeof renderList === 'function') renderList();
+    });
+  }
+});
+
+document.addEventListener('click', function(e){
+  var target = e.target;
+  if (target && (target.id === 'ts-close' || target.id === 'ts-log-modal')) {
+    var modal = document.getElementById('ts-log-modal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden','true');
+  }
+});
+if(id('ts-clear-local')) id('ts-clear-local').addEventListener('click', ()=>{ if(!confirm('Effacer les logs locaux ?')) return; logs=[]; saveLocal(); renderList(); });
   if(id('ts-download')) id('ts-download').addEventListener('click', ()=>{
     const blob = new Blob([JSON.stringify(logs, null, 2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
@@ -3730,8 +3735,4 @@ const place = (el) => {
     });
   });
 })();
-
-document.addEventListener('DOMContentLoaded', function(){
-  try{ if (typeof updateWho === 'function') updateWho(); }catch(_){}
-});
 </script>
