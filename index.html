@@ -452,6 +452,106 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </section>
 </div>
 </main>
+
+<!-- MODAL PASS (team & admin) -->
+<style id="pass-modal-style">
+#pass-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,6,18,.6);z-index:10000}
+#pass-modal.show{display:flex}
+.pass-dialog{width:min(520px,92vw);background:linear-gradient(180deg,#0f1331,#0b1025);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:0 12px 36px rgba(0,0,0,.6)}
+.pass-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-weight:700;color:var(--text)}
+.pass-body{display:flex;gap:10px;align-items:center}
+.pass-input{flex:1;position:relative}
+.pass-input input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:#0f1331;color:var(--text);font-size:15px}
+.pass-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:none;cursor:pointer;padding:6px;border-radius:8px}
+.pass-ft{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.pass-btn{appearance:none;border:1px solid var(--border);background:var(--chip);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer}
+.pass-btn.primary{background:linear-gradient(180deg,#2f3da2,#25337d);border-color:#3a4aa0}
+.help.small{font-size:13px;color:var(--muted);margin-top:6px}
+</style>
+<div id="pass-modal" aria-hidden="true">
+  <div class="pass-dialog" role="dialog" aria-modal="true" aria-labelledby="pass-hd">
+    <div class="pass-hd"><div id="pass-hd">Mot de passe</div><button id="pass-close" class="pass-btn" aria-label="Fermer">✖</button></div>
+    <div class="pass-body">
+      <div class="pass-input">
+        <label id="pass-label" class="help small">Mot de passe :</label>
+        <input id="pass-value" type="password" autocomplete="current-password" />
+        <button id="pass-toggle" class="pass-eye" aria-label="Afficher le mot de passe">👁️</button>
+      </div>
+    </div>
+    <div class="help small" id="pass-hint" style="display:none"></div>
+    <div class="pass-ft">
+      <button id="pass-cancel" class="pass-btn" type="button">Annuler</button>
+      <button id="pass-validate" class="pass-btn primary" type="button">Valider</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Reuse existing helpers: id(), hashPass(), showToast(), updateWho(), renderTeams(), persistSessionNow
+  const modal = document.getElementById('pass-modal');
+  const val = document.getElementById('pass-value');
+  const hd = document.getElementById('pass-hd');
+  const label = document.getElementById('pass-label');
+  const hint = document.getElementById('pass-hint');
+  let ctx = null; // { type: 'team'|'admin', tid: '...' }
+
+  function openPassModal(opts){
+    ctx = opts || { type: 'team' };
+    val.value = '';
+    val.type = 'password';
+    document.getElementById('pass-toggle').textContent = '👁️';
+    hint.style.display = 'none';
+    if(ctx.type === 'admin'){
+      hd.textContent = 'Connexion Administrateur';
+      label.textContent = 'PIN administrateur :';
+      hint.style.display = 'none';
+    } else if (ctx.type === 'team'){
+      const teamName = typeof teamName === 'function' ? (teamName(ctx.tid) || '') : '';
+      hd.textContent = 'Mot de passe de l\\'équipe « ' + teamName + ' »';
+      label.textContent = 'Mot de passe de l\\'équipe :';
+    }
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+    setTimeout(()=>val.focus(),80);
+  }
+  function closePassModal(){
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden','true');
+    ctx = null;
+  }
+  document.getElementById('pass-cancel').addEventListener('click', closePassModal);
+  document.getElementById('pass-close').addEventListener('click', closePassModal);
+  document.getElementById('pass-toggle').addEventListener('click', function(){
+    if(val.type==='password'){ val.type='text'; this.textContent='🙈'; }
+    else { val.type='password'; this.textContent='👁️'; }
+    val.focus();
+  });
+  // Validate action
+  document.getElementById('pass-validate').addEventListener('click', function(){
+    const v = (val.value||'').trim();
+    if(!v){ hint.style.display='block'; hint.textContent = 'Mot de passe vide.'; return; }
+    if(!ctx) return closePassModal();
+    if(ctx.type === 'admin'){
+      // PIN check (same as original)
+      if(v === '30041991'){ session.admin = true; session.claims = {}; if(typeof persistSessionNow==='function') persistSessionNow(); updateWho(); renderAll(); showToast('Mode administrateur activé (déconnexion des équipes sur cet appareil).'); closePassModal(); }
+      else { hint.style.display='block'; hint.textContent = 'PIN incorrect.'; }
+    } else if (ctx.type === 'team'){
+      const tid = ctx.tid;
+      const hashes = (state.protect && state.protect.teamPassHash) ? state.protect.teamPassHash : null;
+      if(!hashes || !hashes[tid]){ hint.style.display='block'; hint.textContent = 'Cette équipe n\\'a pas de mot de passe.'; return; }
+      if(hashPass(v) === hashes[tid]){
+        session.claims = session.claims || {}; session.claims[tid] = true; if(typeof persistSessionNow==='function') persistSessionNow(); updateWho(); renderAll(); showToast('Connecté à l\\'équipe.'); closePassModal();
+      } else { hint.style.display='block'; hint.textContent = 'Mot de passe incorrect.'; }
+    }
+  });
+
+  // Public bridge for other code
+  window.openPassModal = openPassModal;
+})();
+</script>
+<!-- END MODAL PASS -->
+
 <!-- MODAL BONUS -->
 <div aria-hidden="true" id="bonus-modal">
 <div class="bonus-panel bonus-dialog">
@@ -1476,10 +1576,10 @@ document.addEventListener("click",async(e)=>{
 
     /* --- ADMIN : activation => re-render immédiat --- */
     case "btn-admin-on-setup":
-    case "btn-admin-on":{const pin=prompt("PIN administrateur :");if(pin==="30041991"){session.admin=true;session.claims={};updateWho();renderAll();showToast("Mode administrateur activé (déconnexion des équipes sur cet appareil).")}else showToast("PIN incorrect.");break}
+    case "btn-admin-on":{ window.openPassModal({type:"admin"}); break }
     case "btn-admin-off":{session.admin=false;updateWho();renderAll();break}
 
-    case "btn-create-tournament":{if(!isAdmin()){const pin=prompt("PIN administrateur :");if(pin!=="30041991")return alert("PIN incorrect.");session.admin=true;session.claims={};updateWho();renderAll()}const code=(id("tcode-input").value||"").trim();if(!code)return alert("Code cloud obligatoire.");const name=(id("tname-input").value||"").trim()||"Tournoi";if(nameExistsLocally(name))return alert("Un tournoi portant ce nom existe déjà dans cette liste.");if(codeExistsLocally(code))return alert("Ce code cloud existe déjà dans votre liste.");const exists=await(async()=>{try{const db=cloud.db||initFB();if(!db)return false;const ref=db.ref("tournaments/"+code+"/payload");const snap=await ref.get?.()??await new Promise(res=>ref.once('value',res));return !!(snap&&snap.exists&&snap.exists())}catch(_){return false}})();if(exists)return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");const n=clampInt(id("teams-count-input").value,2,64);const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50),
+    case "btn-create-tournament":{if(!isAdmin()){ window.openPassModal({type:"admin"}); return; }const code=(id("tcode-input").value||"").trim();if(!code)return alert("Code cloud obligatoire.");const name=(id("tname-input").value||"").trim()||"Tournoi";if(nameExistsLocally(name))return alert("Un tournoi portant ce nom existe déjà dans cette liste.");if(codeExistsLocally(code))return alert("Ce code cloud existe déjà dans votre liste.");const exists=await(async()=>{try{const db=cloud.db||initFB();if(!db)return false;const ref=db.ref("tournaments/"+code+"/payload");const snap=await ref.get?.()??await new Promise(res=>ref.once('value',res));return !!(snap&&snap.exists&&snap.exists())}catch(_){return false}})();if(exists)return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");const n=clampInt(id("teams-count-input").value,2,64);const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50),
   bonusMaxPerTeam: clampInt(id("rule-bonus-max").value,0,50),};joinCloud(code);state={version:40,tid:uid(),cloudId:code,tournamentName:name,rules:R,teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false})),matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};saveState();pushCloud(true);renderAll();goto("equipes");break}
     case "btn-join-code":{const code=(id("join-code").value||"").trim();if(!code)return alert("Renseigne un code.");joinCloud(code);goto("equipes");break}
     case "btn-copy-link":{const code=(id("join-code").value||id("tcode-input").value||state.cloudId||"").trim();if(!code)return alert("Aucun code.");const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);navigator.clipboard?.writeText(url);showToast("Lien copié !\n"+url);break}
@@ -1589,7 +1689,7 @@ document.addEventListener("click",async(e)=>{
   const tab=e.target.closest(".tab");if(tab){let t=tab.getAttribute("data-tab");if(guardTab(t))t='setup';qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false"));qs('.tab[data-tab="'+t+'"]').setAttribute("aria-selected","true");qsa("main section").forEach(s=>s.classList.remove("active"));id(t).classList.add("active")}
   const actBtn=e.target.closest("[data-act]");if(actBtn){const act=actBtn.getAttribute("data-act"),tid=actBtn.getAttribute("data-id");if(act==="del"){if(!isAdmin()||state.locked)return;if(!confirm("Supprimer cette équipe ?"))return;state.teams=state.teams.filter(tt=>tt.id!==tid);state.matches=state.matches.filter(m=>m.a!==tid&&m.b!==tid);if(state.protect?.teamPassHash)delete state.protect.teamPassHash[tid];saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
     if(act==="setpass"){if(!isAdmin())return alert("Réservé à l’admin.");let pass=prompt("Mot de passe pour l’équipe « "+teamName(tid)+" » :");if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");state.protect=state.protect||{};state.protect.teamPassHash=state.protect.teamPassHash||{};state.protect.teamPassHash[tid]=hashPass(pass);saveState();renderTeams();showToast("Mot de passe défini.")}
-    if(act==="login"){const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null;if(!hashes||!hashes[tid])return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin).");let pass=prompt("Mot de passe de l’équipe « "+teamName(tid)+" » :");if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");if(hashPass(pass)===hashes[tid]){ session.admin=false; session.claims={}; session.claims[tid]=true; updateWho(); renderAll(); showToast("Connexion réussie. Mode admin désactivé sur cet appareil."); }
+    if(act==="login"){const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null;if(!hashes||!hashes[tid])return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin)."); window.openPassModal({type:"team", tid:tid});");let pass=prompt("Mot de passe de l’équipe « "+teamName(tid)+" » :");if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");if(hashPass(pass)===hashes[tid]){ session.admin=false; session.claims={}; session.claims[tid]=true; updateWho(); renderAll(); showToast("Connexion réussie. Mode admin désactivé sur cet appareil."); }
       else showToast("Mot de passe incorrect.") }
     if(act==="logout"){session.claims={};updateWho();renderAll()}
     if(act==="avatar"){const input=qs('[data-avatar="'+tid+'"]');if(input)input.click()}
@@ -2770,176 +2870,6 @@ function onEnter(e){
   .round-head:has(.round-chip.yellow) + .round-grid .pill.pill--blue::before{ animation: none !important; opacity: .4; }
 }
 </style>
-
-<!-- BEGIN: Team password modal (injected by assistant) -->
-<style>
-/* Styles pour la modal mot de passe */
-#team-pass-modal { display:none; position:fixed; inset:0; align-items:center; justify-content:center; z-index:10000; background:rgba(0,0,0,.45); }
-#team-pass-modal .tp-container { width:360px; max-width:92vw; padding:16px; border-radius:12px; background:linear-gradient(180deg,#141938,#0f1331); border:1px solid rgba(255,255,255,0.04); box-shadow:0 12px 32px rgba(0,0,0,.6); color:#e6eef8; }
-#team-pass-modal .tp-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-#team-pass-modal .tp-help { margin-bottom:8px; color:rgba(230,238,248,0.7); font-size:13px; }
-#team-pass-modal input[type="password"], #team-pass-modal input[type="text"]{ font-size:15px; width:100%; padding:10px 40px 10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:#0f1331; color:#fff; box-sizing:border-box; }
-#team-pass-modal .tp-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:6px; }
-#team-pass-modal .btn.small{ padding:6px 8px; }
-#team-pass-modal .btn.primary{ min-width:90px; }
-#team-pass-modal svg{ color: rgba(230,238,248,0.6); }
-#team-pass-modal button#team-pass-toggle:focus svg{ color: var(--accent, #6ea8fe); }
-</style>
-
-<div id="team-pass-modal" class="card" aria-hidden="true">
-  <div class="tp-container">
-    <div class="tp-head">
-      <strong id="team-pass-title">Mot de passe</strong>
-      <button type="button" id="team-pass-close" class="btn small" aria-label="Fermer">✖</button>
-    </div>
-    <div id="team-pass-help" class="tp-help">Saisis le mot de passe de l’équipe.</div>
-
-    <div style="position:relative;">
-      <input id="team-pass-input" type="password" placeholder="Mot de passe" autocomplete="current-password" />
-      <button id="team-pass-toggle" type="button" aria-label="Afficher le mot de passe"
-              style="position:absolute;right:6px;top:6px;border:none;background:transparent;padding:6px;border-radius:8px;cursor:pointer">
-        <svg id="team-pass-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-      </button>
-    </div>
-
-    <div class="tp-actions">
-      <button id="team-pass-cancel" class="btn">Annuler</button>
-      <button id="team-pass-save" class="btn primary">Valider</button>
-    </div>
-  </div>
-</div>
-
-<script>
-(function(){
-  // éléments
-  const modal = document.getElementById('team-pass-modal');
-  const input = document.getElementById('team-pass-input');
-  const toggle = document.getElementById('team-pass-toggle');
-  const eye = document.getElementById('team-pass-eye');
-  const title = document.getElementById('team-pass-title');
-  const helpTxt = document.getElementById('team-pass-help');
-  const btnSave = document.getElementById('team-pass-save');
-  const btnCancel = document.getElementById('team-pass-cancel');
-  const btnClose = document.getElementById('team-pass-close');
-
-  let current = { mode: null, teamId: null }; // mode: "set" | "login"
-
-  function teamName(tid){
-    try{
-      if(window.teams && window.teams[tid] && window.teams[tid].name) return window.teams[tid].name;
-    }catch(e){}
-    return null;
-  }
-
-  function openModal(mode, tid){
-    current.mode = mode;
-    current.teamId = tid;
-    input.value = '';
-    input.type = 'password';
-    modal.setAttribute('aria-hidden','false');
-    if(mode === 'set'){
-      title.textContent = 'Définir / changer mot de passe';
-      helpTxt.textContent = `Définir un mot de passe pour l’équipe « ${teamName(tid) || tid} ».`;
-      btnSave.textContent = 'Définir';
-    } else {
-      title.textContent = 'Connexion équipe';
-      helpTxt.textContent = `Saisis le mot de passe pour l’équipe « ${teamName(tid) || tid} ».`;
-      btnSave.textContent = 'Se connecter';
-    }
-    modal.style.display = 'flex';
-    setTimeout(()=> input.focus(), 150);
-  }
-
-  function closeModal(){
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden','true');
-    current = { mode: null, teamId: null };
-  }
-
-  // toggle show/hide password
-  toggle.addEventListener('click', function(e){
-    if (input.type === 'password'){ input.type = 'text'; eye.setAttribute('data-shown','1'); }
-    else { input.type = 'password'; eye.removeAttribute('data-shown'); }
-    input.focus();
-  });
-
-  // cancel / close handlers
-  btnCancel.addEventListener('click', closeModal);
-  btnClose.addEventListener('click', closeModal);
-
-  // save = set password (admin) OR login (team)
-  btnSave.addEventListener('click', function(){
-    const val = (input.value || '').trim();
-    if(!val){ alert('Mot de passe vide.'); input.focus(); return; }
-
-    if(current.mode === 'set'){
-      // admin sets password
-      if(typeof isAdmin === 'function' && !isAdmin()){ alert('Réservé à l’admin.'); closeModal(); return; }
-      if(!window.state) window.state = {};
-      if(!window.state.protect) window.state.protect = {};
-      window.state.protect.teamPassHash = window.state.protect.teamPassHash || {};
-      if(typeof hashPass !== 'function'){ alert('Fonction hashPass() introuvable.'); closeModal(); return; }
-      window.state.protect.teamPassHash[current.teamId] = hashPass(val); // utilise hashPass() existant
-      if(typeof saveState === 'function') try{ saveState(); }catch(e){}
-      if(typeof renderTeams === 'function') try{ renderTeams(); }catch(e){}
-      if(typeof showToast === 'function') showToast('Mot de passe défini.');
-      else console.log('Mot de passe défini.');
-      closeModal();
-      return;
-    }
-
-    if(current.mode === 'login'){
-      // login attempt: compare hash
-      const hashes = (window.state && window.state.protect && window.state.protect.teamPassHash) ? window.state.protect.teamPassHash : null;
-      if(!hashes || !hashes[current.teamId]){ alert("Cette équipe n’a pas de mot de passe défini."); closeModal(); return; }
-      if(typeof hashPass !== 'function'){ alert('Fonction hashPass() introuvable.'); closeModal(); return; }
-      if(hashPass(val) === hashes[current.teamId]){
-        // accord : marquer la session (session.claims existe dans ton code)
-        if(!window.session) window.session = {};
-        window.session.claims = window.session.claims || {};
-        window.session.claims[current.teamId] = true;
-        if(typeof persistSessionNow === 'function') try{ persistSessionNow(); }catch(e){}
-        if(typeof updateWho === 'function') try{ updateWho(); }catch(e){}
-        if(typeof renderTeams === 'function') try{ renderTeams(); }catch(e){}
-        if(typeof showToast === 'function') showToast('Connecté à l’équipe.');
-        else console.log('Connecté à l’équipe.');
-        closeModal();
-      }else{
-        alert('Mot de passe incorrect.');
-        input.focus();
-      }
-      return;
-    }
-  });
-
-  // Intercepte les clics sur les boutons data-act (exists already in your code)
-  document.addEventListener('click', function(e){
-    const btn = e.target.closest('[data-act]');
-    if(!btn) return;
-    const act = btn.getAttribute('data-act');
-    const tid = btn.getAttribute('data-id');
-    if(act === 'setpass'){
-      if(typeof isAdmin === 'function' && !isAdmin()){ alert('Réservé à l’admin.'); return; }
-      openModal('set', tid);
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      return;
-    }
-    if(act === 'login'){
-      openModal('login', tid);
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      return;
-    }
-  }, true);
-
-  // close modal on Escape
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape' && modal.style.display === 'flex') closeModal();
-  });
-
-})();
-</script>
-<!-- END: Team password modal (injected by assistant) -->
-
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
