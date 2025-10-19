@@ -1922,3 +1922,51 @@ header > .container > div:last-child{
   }
   header > .container > nav.tabs .tab{ padding: 6px 10px !important; }
 }
+/* ===== Header mobile : 3 lignes (Titre) / (Boutons) / (Onglets) ===== */
+@media (max-width: 640px){
+
+  /* Passe le header en GRID 1 colonne pour neutraliser tous les nowrap */
+  header > .container{
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    grid-auto-flow: row !important;
+    row-gap: 8px !important;
+
+    /* annule les contraintes qui provoquent le chevauchement */
+    flex-wrap: initial !important;
+    white-space: normal !important;
+    align-items: start !important;
+    justify-content: stretch !important;
+    min-width: 0 !important;
+  }
+
+  /* 1) Ligne 1 : logo + titre */
+  header > .container > .brand{
+    grid-row: 1 !important;
+    min-width: 0 !important;
+    white-space: normal !important;   /* autorise le retour à la ligne du titre */
+  }
+
+  /* 2) Ligne 2 : boutons/pastilles */
+  header > .container > div:last-child{
+    grid-row: 2 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  /* compacter un peu les pastilles */
+  header .pill{ padding: 4px 8px !important; font-size: 12px !important; line-height: 1.2 !important; }
+  /* option : cacher le plein écran sur mobile */
+  .header-chip, #btn-fullscreen{ display: none !important; }
+
+  /* 3) Ligne 3 : onglets (scrollables) */
+  header > .container > nav.tabs{
+    grid-row: 3 !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    white-space: nowrap !important;   /* les onglets restent sur une seule ligne, mais sous les boutons */
+    min-width: 0 !important;
+    gap: 6px !important;
+  }
+  header > .container > nav.tabs .tab{ padding: 6px 10px !important; }
+}
