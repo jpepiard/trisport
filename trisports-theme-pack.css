@@ -2099,3 +2099,63 @@ header > .container > div:last-child{
   /* Sécurité anti “rebond” qui peut déclencher un scroll vertical parent */
   header .container > nav.tabs{ overscroll-behavior-x: contain; }
 }
+
+
+/* === BONUS BLEU — fond plein + halo clignotant (global) ================== */
+/* Rend la pilule bleue très visible partout (pas seulement dans .match-card).
+   - Fond plein en dégradé cyan→bleu
+   - Bord plus lumineux
+   - Halo qui pulse / clignote
+   - Respect de prefers-reduced-motion
+*/
+.pill.blue{
+  position: relative;
+  color: #f7fbff !important;
+  border: 1px solid rgba(35,153,242,.55);
+  background: linear-gradient(135deg, rgb(35,153,242) 0%, rgb(28,107,224) 100%);
+  text-shadow: 0 0 2px rgba(28,107,224,.35);
+  box-shadow:
+    0 0 6px rgba(35,153,242,.24),
+    0 0 16px rgba(35,153,242,.16),
+    inset 0 0 6px rgba(255,255,255,.06);
+  animation: neonPulseBlue 1.5s ease-in-out infinite;
+}
+
+/* Halo qui clignote autour */
+.pill.blue::before{
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 0 rgba(35,153,242,.40),
+    0 0 22px rgba(35,153,242,.24);
+  animation: neonHaloBlue 1.4s ease-in-out infinite;
+  opacity: .6;
+}
+
+/* Léger highlight interne */
+.pill.blue::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 18% -10%, rgba(255,255,255,.18), transparent 35%);
+  pointer-events: none;
+}
+
+/* Au survol : un peu plus intense */
+.pill.blue:hover{
+  box-shadow:
+    0 0 10px rgba(35,153,242,.32),
+    0 0 22px rgba(35,153,242,.22),
+    inset 0 0 8px rgba(255,255,255,.10);
+  filter: saturate(1.05);
+}
+
+/* Préf. accessibilité : réduit les animations si demandé par l'utilisateur */
+@media (prefers-reduced-motion: reduce){
+  .pill.blue{ animation: none !important; }
+  .pill.blue::before{ animation: none !important; opacity: .35; }
+}
