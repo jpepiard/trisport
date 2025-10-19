@@ -2220,3 +2220,31 @@ header > .container > div:last-child{
   .pill.pill--blue, .pill.bonus-flashy{ animation: none !important; }
   .pill.pill--blue::before, .pill.bonus-flashy::before{ animation: none !important; opacity: .35; }
 }
+
+
+/* === Bulletproof override for bonus pill ============================== */
+body body :is(span.pill.bonus-flashy.bonus-force){
+  position: relative !important;
+  color: #f7fbff !important;
+  background: linear-gradient(135deg, rgb(35,153,242) 0%, rgb(28,107,224) 100%) !important;
+  border: 1px solid rgba(35,153,242,.6) !important;
+  box-shadow:
+    0 0 10px rgba(35,153,242,.35),
+    0 0 22px rgba(35,153,242,.22),
+    inset 0 0 6px rgba(255,255,255,.06) !important;
+}
+body body :is(span.pill.bonus-flashy.bonus-force)::before{
+  content:"";
+  position:absolute;
+  inset:-6px;
+  border-radius:999px;
+  pointer-events:none;
+  box-shadow:
+    0 0 0 0 rgba(35,153,242,.45),
+    0 0 22px rgba(35,153,242,.28);
+  animation: neonHaloBlue 1.4s ease-in-out infinite;
+  opacity:.7;
+}
+@media (prefers-reduced-motion: reduce){
+  body body :is(span.pill.bonus-flashy.bonus-force)::before{ animation:none !important; opacity:.4; }
+}

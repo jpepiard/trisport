@@ -1074,7 +1074,7 @@ function bonusChip(r, mTeam, rs){
       type==='melon'    ? 'Match au sport choisi : +5/manche gagnée (fléchettes & ping, différence appliquée). Palet : +PF si victoire, sinon −2×(11−PF).' :
                           'Aucun réglage. +2/manche gagnée (fléchettes & ping, simples/doubles) et +2 si palet.'
     );
-    return '<span class="pill bonus-flashy ' + valClass + '" aria-label="' + lblType + '">' +
+    return '<span class="pill bonus-flashy ' + valClass + ' bonus-force" style="position:relative;color:#f7fbff;background:linear-gradient(135deg, rgb(35,153,242) 0%, rgb(28,107,224) 100%);border:1px solid rgba(35,153,242,.6);box-shadow:0 0 10px rgba(35,153,242,.35),0 0 22px rgba(35,153,242,.22),inset 0 0 6px rgba(255,255,255,.06);" aria-label="' + lblType + '">' +
        'Bonus' +
        '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
        (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
