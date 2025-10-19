@@ -2863,6 +2863,40 @@ document.addEventListener('click', function (ev) {
 });
 
 </script>
+
+<script>
+// [PATCH v2] Binder direct et idempotent pour #btn-open-logs
+(function(){
+  function openLogs(){
+    try {
+      var m = document.getElementById('ts-log-modal');
+      if (m) {
+        m.classList.add('show');
+        m.setAttribute('aria-hidden','false');
+      }
+      if (typeof renderList === 'function') { renderList(); }
+    } catch(e){ try{ console.warn('openLogs error', e); }catch(_){} }
+  }
+  function bindOnce(){
+    var btn = document.getElementById('btn-open-logs');
+    if (!btn || btn.__logsBound) return;
+    btn.__logsBound = true;
+    btn.addEventListener('click', function(ev){ ev.preventDefault(); openLogs(); });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindOnce);
+  } else {
+    bindOnce();
+  }
+  // Si le bouton est révélé/masqué dynamiquement après coup, on observe la carte admin
+  try{
+    var adminCard = document.getElementById('admin-card') || document.body;
+    var mo = new MutationObserver(function(){ bindOnce(); });
+    mo.observe(adminCard, {subtree:true, attributes:true, childList:true});
+  }catch(_){}
+})();
+</script>
+
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
