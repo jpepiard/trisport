@@ -1206,7 +1206,7 @@ function renderMatches(){
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const can=(isAdmin()); sel.disabled=!(can && canEditScores(m,rCtl));
+        const can=(isAdmin()); sel.disabled=!canEditScores(m, rCtl);
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;window.logEvent('darts_set',{index:i,team:(v===0?m.a:m.b)});saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
@@ -1214,7 +1214,7 @@ function renderMatches(){
       // ping (vainqueur A/B)
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="ping"]').forEach(sel=>{
         const can = (isAdmin());
-        sel.disabled = !(can && canEditScores(m, rCtl));
+        sel.disabled = !canEditScores(m, rCtl);
         sel.addEventListener("change", ()=>{
           const i  = parseInt(sel.getAttribute("data-index"),10);
           const vv = sel.value==="" ? null : parseInt(sel.value,10);
@@ -1234,7 +1234,7 @@ updateMatchCompleteness(m.id);
 
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const can=(isAdmin()); inp.disabled=!(can && canEditScores(m,rCtl));
+        const can=(isAdmin()); inp.disabled=!canEditScores(m, rCtl);
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;window.logScoreUpdate(which==='a'?m.a:m.b,'palet',v);saveState();updateNote()});
@@ -1588,8 +1588,8 @@ document.addEventListener("click",async(e)=>{
   const av=e.target.closest('.avatar[data-click-avatar]');if(av){const tid=av.getAttribute('data-click-avatar');if(isAdmin()||hasClaim(tid)){const input=document.querySelector('input[type="file"][data-avatar="'+tid+'"]');if(input)input.click()}return}
   const tab=e.target.closest(".tab");if(tab){let t=tab.getAttribute("data-tab");if(guardTab(t))t='setup';qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false"));qs('.tab[data-tab="'+t+'"]').setAttribute("aria-selected","true");qsa("main section").forEach(s=>s.classList.remove("active"));id(t).classList.add("active")}
   const actBtn=e.target.closest("[data-act]");if(actBtn){const act=actBtn.getAttribute("data-act"),tid=actBtn.getAttribute("data-id");if(act==="del"){if(!isAdmin()||state.locked)return;if(!confirm("Supprimer cette équipe ?"))return;state.teams=state.teams.filter(tt=>tt.id!==tid);state.matches=state.matches.filter(m=>m.a!==tid&&m.b!==tid);if(state.protect?.teamPassHash)delete state.protect.teamPassHash[tid];saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
-    if(act==="setpass"){if(!isAdmin())return alert("Réservé à l’admin.");let pass=await showPasswordModal("Mot de passe pour l’équipe «  \'+teamName(tid)+\'");if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");state.protect=state.protect||{};state.protect.teamPassHash=state.protect.teamPassHash||{};state.protect.teamPassHash[tid]=hashPass(pass);saveState();renderTeams();showToast("Mot de passe défini.")}
-    if(act==="login"){const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null;if(!hashes||!hashes[tid])return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin).");let pass=await showPasswordModal("Mot de passe de l’équipe «  \'+teamName(tid)+\'");if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");if(hashPass(pass)===hashes[tid]){ session.admin=false; session.claims={}; session.claims[tid]=true; updateWho(); renderAll(); showToast("Connexion réussie. Mode admin désactivé sur cet appareil."); }
+    if(act==="setpass"){if(!isAdmin())return alert("Réservé à l’admin.");let pass=prompt("Mot de passe pour l’équipe « "+teamName(tid)+" » :");if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");state.protect=state.protect||{};state.protect.teamPassHash=state.protect.teamPassHash||{};state.protect.teamPassHash[tid]=hashPass(pass);saveState();renderTeams();showToast("Mot de passe défini.")}
+    if(act==="login"){const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null;if(!hashes||!hashes[tid])return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin).");let pass=prompt("Mot de passe de l’équipe « "+teamName(tid)+" » :");if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");if(hashPass(pass)===hashes[tid]){ session.admin=false; session.claims={}; session.claims[tid]=true; updateWho(); renderAll(); showToast("Connexion réussie. Mode admin désactivé sur cet appareil."); }
       else showToast("Mot de passe incorrect.") }
     if(act==="logout"){session.claims={};updateWho();renderAll()}
     if(act==="avatar"){const input=qs('[data-avatar="'+tid+'"]');if(input)input.click()}
@@ -2770,77 +2770,6 @@ function onEnter(e){
   .round-head:has(.round-chip.yellow) + .round-grid .pill.pill--blue::before{ animation: none !important; opacity: .4; }
 }
 </style>
-
-
-<!-- Password modal (styled) -->
-<style>
-  .pw-backdrop{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-    background:rgba(4,6,20,.55); backdrop-filter: blur(4px); z-index:9999; }
-  .pw-dialog{ width:min(560px,92vw); border-radius:14px; background:linear-gradient(180deg,#0f1324,#0c1020);
-    border:1px solid rgba(122,162,255,.25); box-shadow: 0 18px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(122,162,255,.12) inset;
-    color:#e6ebff; padding:18px; }
-  .pw-title{ font-size:16px; margin:0 0 10px; color:#cfd8ff; }
-  .pw-field{ position:relative; }
-  .pw-input{ width:100%; padding:14px 44px 14px 14px; background: #0b0f1f; color:#e6ebff;
-    border:1px solid rgba(122,162,255,.25); border-radius:12px; font-size:16px; outline:none;
-    transition: box-shadow .18s ease, border-color .18s ease; -webkit-text-security: disc; }
-  .pw-input:focus{ border-color:#4b5bd7; box-shadow:0 0 0 4px rgba(122,162,255,.15), 0 0 0 1px rgba(122,162,255,.35) inset; }
-  .pw-eye{ position:absolute; right:8px; top:50%; transform:translateY(-50%); width:34px; height:34px; border-radius:50%;
-    display:inline-flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#1b2246,#131a35);
-    border:1px solid rgba(122,162,255,.3); cursor:pointer; }
-  .pw-eye:hover{ box-shadow:0 8px 20px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.25) inset; }
-  .pw-row{ margin-top:14px; display:flex; gap:12px; justify-content:flex-end; }
-  .pw-btn{ padding:10px 16px; border-radius:12px; border:1px solid #2c3148; background:#171b2e; color:#e6ebff; cursor:pointer;
-           transition: transform .06s ease, box-shadow .18s ease, filter .18s ease; }
-  .pw-btn:hover{ box-shadow: 0 8px 18px rgba(0,0,0,.28), 0 0 0 1px rgba(122,162,255,.15) inset; filter:saturate(112%); }
-  .pw-btn.primary{ background:linear-gradient(180deg,#2a3aa6,#1f2b86); border-color:#4b5bd7; }
-  .pw-btn.primary:hover{ box-shadow:0 10px 22px rgba(75,139,255,.28), 0 0 0 1px rgba(75,139,255,.25) inset; }
-</style>
-<div id="pw-modal" class="pw-backdrop" role="dialog" aria-modal="true" aria-labelledby="pw-modal-title">
-  <div class="pw-dialog">
-    <h3 id="pw-modal-title" class="pw-title">Mot de passe</h3>
-    <div class="pw-field">
-      <input id="pw-modal-input" class="pw-input" type="password" inputmode="text" autocomplete="off" placeholder="••••••••" />
-      <button id="pw-modal-toggle" type="button" class="pw-eye" aria-label="Afficher/masquer le mot de passe">👁️</button>
-    </div>
-    <div class="pw-row">
-      <button id="pw-modal-cancel" type="button" class="pw-btn">Annuler</button>
-      <button id="pw-modal-ok" type="button" class="pw-btn primary">Valider</button>
-    </div>
-  </div>
-</div>
-<script>
-function showPasswordModal(message){
-  return new Promise(resolve=>{
-    const modal = document.getElementById('pw-modal');
-    const title = document.getElementById('pw-modal-title');
-    const input = document.getElementById('pw-modal-input');
-    const ok = document.getElementById('pw-modal-ok');
-    const cancel = document.getElementById('pw-modal-cancel');
-    const toggle = document.getElementById('pw-modal-toggle');
-
-    function open(){ modal.style.display='flex'; setTimeout(()=>input.focus(), 0); }
-    function close(){ modal.style.display='none';
-      ok.removeEventListener('click', onOk); cancel.removeEventListener('click', onCancel);
-      toggle.removeEventListener('click', onToggle); document.removeEventListener('keydown', onKey); }
-    function onOk(){ const v=input.value; close(); resolve(v); }
-    function onCancel(){ close(); resolve(null); }
-    function onToggle(){
-      input.type = (input.type==='password') ? 'text' : 'password';
-      // when showing text, reveal real characters; when hiding, keep webkit security bullets
-      if(input.type==='password'){ input.style.webkitTextSecurity='disc'; } else { input.style.webkitTextSecurity='none'; }
-    }
-    function onKey(e){ if(e.key==='Enter') onOk(); else if(e.key==='Escape') onCancel(); }
-
-    title.textContent = message || 'Mot de passe';
-    input.type='password'; input.style.webkitTextSecurity='disc'; input.value='';
-    ok.addEventListener('click', onOk); cancel.addEventListener('click', onCancel);
-    toggle.addEventListener('click', onToggle); document.addEventListener('keydown', onKey);
-    open();
-  });
-}
-</script>
-
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
