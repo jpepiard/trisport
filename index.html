@@ -2127,8 +2127,8 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     <div class="hd"><span class="icon">🔑</span><span id="password-title">Mot de passe</span></div>
     <div class="bd">
       <p id="password-message">Entrez votre mot de passe :</p>
-      <div id="password-field-wrap" style="display:flex;align-items:center;gap:8px;">
-        <input id="password-input" type="password" autocomplete="current-password" placeholder="Mot de passe" /> <button id="password-toggle" type="button" aria-label="Afficher le mot de passe" style="margin-left:8px;padding:4px 6px;cursor:pointer;border-radius:4px;border:1px solid rgba(0,0,0,0.08);background:transparent">👁️</button>
+      <div id="password-field-wrap" style="position:relative;display:block;">
+        <input id="password-input" style="padding-right:44px;" type="password" autocomplete="current-password" placeholder="Mot de passe" /> <button id="password-toggle" type="button" aria-label="Afficher le mot de passe" tabindex="0" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;display:inline-grid;place-items:center;border-radius:999px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);backdrop-filter:blur(2px);" style="margin-left:8px;padding:4px 6px;cursor:pointer;border-radius:4px;border:1px solid rgba(0,0,0,0.08);background:transparent">👁️</button>
       </div>
     <div class="ft">
       <button class="btn" type="button" id="password-cancel">Annuler</button>
@@ -2161,14 +2161,17 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
       toggle.setAttribute('aria-label','Afficher le mot de passe');
       toggle.addEventListener('click', function(ev){
         ev.preventDefault();
-        if(input.type === 'password'){
-          input.type = 'text';
+        var cur = input.getAttribute('type');
+        if(cur === 'password'){
+          input.setAttribute('type','text');
           toggle.textContent = '🙈';
           toggle.setAttribute('aria-label','Masquer le mot de passe');
+          toggle.setAttribute('aria-pressed','true');
         }else{
-          input.type = 'password';
+          input.setAttribute('type','password');
           toggle.textContent = '👁️';
           toggle.setAttribute('aria-label','Afficher le mot de passe');
+          toggle.setAttribute('aria-pressed','false');
         }
       });
     }
