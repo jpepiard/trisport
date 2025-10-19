@@ -1206,7 +1206,7 @@ function renderMatches(){
 
       // darts
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const can=(isAdmin()); sel.disabled=!canEditScores(m, rCtl);
+        const can=(isAdmin()); sel.disabled=!(can && canEditScores(m,rCtl));
         sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;window.logEvent('darts_set',{index:i,team:(v===0?m.a:m.b)});saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()});
       });
       // ping
@@ -1214,7 +1214,7 @@ function renderMatches(){
       // ping (vainqueur A/B)
       qsa('.match-card[data-id="'+m.id+'"] select[data-kind="ping"]').forEach(sel=>{
         const can = (isAdmin());
-        sel.disabled = !canEditScores(m, rCtl);
+        sel.disabled = !(can && canEditScores(m, rCtl));
         sel.addEventListener("change", ()=>{
           const i  = parseInt(sel.getAttribute("data-index"),10);
           const vv = sel.value==="" ? null : parseInt(sel.value,10);
@@ -1234,7 +1234,7 @@ updateMatchCompleteness(m.id);
 
       // palet
       qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const can=(isAdmin()); inp.disabled=!canEditScores(m, rCtl);
+        const can=(isAdmin()); inp.disabled=!(can && canEditScores(m,rCtl));
         const mid=m.id,which=inp.getAttribute("data-palet");
         const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
         inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;window.logScoreUpdate(which==='a'?m.a:m.b,'palet',v);saveState();updateNote()});
@@ -1588,8 +1588,8 @@ document.addEventListener("click",async(e)=>{
   const av=e.target.closest('.avatar[data-click-avatar]');if(av){const tid=av.getAttribute('data-click-avatar');if(isAdmin()||hasClaim(tid)){const input=document.querySelector('input[type="file"][data-avatar="'+tid+'"]');if(input)input.click()}return}
   const tab=e.target.closest(".tab");if(tab){let t=tab.getAttribute("data-tab");if(guardTab(t))t='setup';qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false"));qs('.tab[data-tab="'+t+'"]').setAttribute("aria-selected","true");qsa("main section").forEach(s=>s.classList.remove("active"));id(t).classList.add("active")}
   const actBtn=e.target.closest("[data-act]");if(actBtn){const act=actBtn.getAttribute("data-act"),tid=actBtn.getAttribute("data-id");if(act==="del"){if(!isAdmin()||state.locked)return;if(!confirm("Supprimer cette équipe ?"))return;state.teams=state.teams.filter(tt=>tt.id!==tid);state.matches=state.matches.filter(m=>m.a!==tid&&m.b!==tid);if(state.protect?.teamPassHash)delete state.protect.teamPassHash[tid];saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
-    if(act==="setpass"){if(!isAdmin())return alert("Réservé à l’admin.");let pass=await showPassword({title:"Définir le mot de passe",message:"Nouveau mot de passe pour l’équipe « "+teamName(tid)+" » :",placeholder:"Nouveau mot de passe"});if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");state.protect=state.protect||{};state.protect.teamPassHash=state.protect.teamPassHash||{};state.protect.teamPassHash[tid]=hashPass(pass);saveState();renderTeams();showToast("Mot de passe défini.")}
-    if(act==="login"){const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null;if(!hashes||!hashes[tid])return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin).");let pass=await showPassword({title:"Mot de passe",message:"Mot de passe de l’équipe « "+teamName(tid)+" » :",placeholder:"Mot de passe"});if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");if(hashPass(pass)===hashes[tid]){ session.admin=false; session.claims={}; session.claims[tid]=true; updateWho(); renderAll(); showToast("Connexion réussie. Mode admin désactivé sur cet appareil."); }
+    if(act==="setpass"){if(!isAdmin())return alert("Réservé à l’admin.");let pass=await showPasswordModal("Mot de passe pour l’équipe «  \'+teamName(tid)+\'");if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");state.protect=state.protect||{};state.protect.teamPassHash=state.protect.teamPassHash||{};state.protect.teamPassHash[tid]=hashPass(pass);saveState();renderTeams();showToast("Mot de passe défini.")}
+    if(act==="login"){const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null;if(!hashes||!hashes[tid])return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin).");let pass=await showPasswordModal("Mot de passe de l’équipe «  \'+teamName(tid)+\'");if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");if(hashPass(pass)===hashes[tid]){ session.admin=false; session.claims={}; session.claims[tid]=true; updateWho(); renderAll(); showToast("Connexion réussie. Mode admin désactivé sur cet appareil."); }
       else showToast("Mot de passe incorrect.") }
     if(act==="logout"){session.claims={};updateWho();renderAll()}
     if(act==="avatar"){const input=qs('[data-avatar="'+tid+'"]');if(input)input.click()}
@@ -2120,64 +2120,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     });
   }, true); // capture phase to beat existing listeners
 })();
-</script>
-<!-- Password Modal -->
-<div aria-hidden="true" id="password-overlay" style="position:fixed;inset:0;display:none;z-index:9999;background: rgba(10,12,24,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);">
-  <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="password-title" style="margin:0 auto;">
-    <div class="hd"><span class="icon">🔑</span><span id="password-title">Mot de passe</span></div>
-    <div class="bd">
-      <p id="password-message">Entrez votre mot de passe :</p>
-      <input id="password-input" type="password" autocomplete="current-password" placeholder="Mot de passe" />
-    </div>
-    <div class="ft">
-      <button class="btn" type="button" id="password-cancel">Annuler</button>
-      <button class="btn primary" type="button" id="password-ok">Valider</button>
-    </div>
-  </div>
-</div>
-<script id="password-modal-logic">
-(function(){
-  window.showPassword = function(opts){
-    opts = opts || {};
-    var overlay = document.getElementById('password-overlay');
-    var title = document.getElementById('password-title');
-    var msg = document.getElementById('password-message');
-    var input = document.getElementById('password-input');
-    var btnOk = document.getElementById('password-ok');
-    var btnCancel = document.getElementById('password-cancel');
-    title.textContent = opts.title || 'Mot de passe';
-    msg.textContent = opts.message || 'Entrez votre mot de passe :';
-    input.value = '';
-    input.placeholder = opts.placeholder || 'Mot de passe';
-    overlay.classList.add('show');
-    overlay.style.display = 'grid';
-    input.focus();
-    return new Promise(function(resolve){
-      function close(val){
-        overlay.classList.remove('show');
-        overlay.style.display = 'none';
-        btnOk.removeEventListener('click', onOk);
-        btnCancel.removeEventListener('click', onCancel);
-        overlay.removeEventListener('click', onBackdrop);
-        document.removeEventListener('keydown', onKey);
-        resolve(val);
-      }
-      function onOk(){ close(input.value); }
-      function onCancel(){ close(null); }
-      function onBackdrop(e){ if (e.target === overlay) onCancel(); }
-      function onKey(e){
-        if(e.key === 'Enter'){ e.preventDefault(); onOk(); }
-        if(e.key === 'Escape'){ e.preventDefault(); onCancel(); }
-      }
-      btnOk.addEventListener('click', onOk);
-      btnCancel.addEventListener('click', onCancel);
-      overlay.addEventListener('click', onBackdrop);
-      document.addEventListener('keydown', onKey);
-    });
-  };
-})();
-</script>
-<div class="toast" id="toast"></div><script id="toast-logic">
+</script><div class="toast" id="toast"></div><script id="toast-logic">
 (function(){
   window.showToast = function(msg, timeout){
     timeout = timeout || 2600;
@@ -2827,6 +2770,64 @@ function onEnter(e){
   .round-head:has(.round-chip.yellow) + .round-grid .pill.pill--blue::before{ animation: none !important; opacity: .4; }
 }
 </style>
+
+<!-- Password modal (injected) -->
+<div id="pw-modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);z-index:9999">
+  <div style="background:white;padding:16px;border-radius:8px;max-width:420px;width:90%;box-shadow:0 8px 24px rgba(0,0,0,0.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong id="pw-modal-title">Mot de passe</strong>
+      <button id="pw-modal-close" aria-label="Fermer" style="border:none;background:none;font-size:18px;cursor:pointer">✖</button>
+    </div>
+    <div style="margin-bottom:8px"><input id="pw-modal-input" type="password" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px" placeholder="Mot de passe"/></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="pw-modal-toggle" type="button" style="padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f8f8f8;cursor:pointer">👁️</button>
+      <button id="pw-modal-cancel" type="button" style="padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f0f0f0;cursor:pointer">Annuler</button>
+      <button id="pw-modal-ok" type="button" style="padding:6px 10px;border-radius:6px;border:1px solid #2b7cff;background:#2b7cff;color:white;cursor:pointer">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// showPasswordModal(message) -> Promise<string|null>
+function showPasswordModal(message){
+  return new Promise(resolve=>{
+    const modal = document.getElementById('pw-modal');
+    const title = document.getElementById('pw-modal-title');
+    const input = document.getElementById('pw-modal-input');
+    const ok = document.getElementById('pw-modal-ok');
+    const cancel = document.getElementById('pw-modal-cancel');
+    const close = document.getElementById('pw-modal-close');
+    const toggle = document.getElementById('pw-modal-toggle');
+    title.textContent = message || 'Mot de passe';
+    input.type = 'password';
+    input.value = '';
+    modal.style.display = 'flex';
+    input.focus();
+
+    function cleanup(){
+      modal.style.display = 'none';
+      ok.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      close.removeEventListener('click', onCancel);
+      toggle.removeEventListener('click', onToggle);
+    }
+    function onOk(){ const v = input.value; cleanup(); resolve(v); }
+    function onCancel(){ cleanup(); resolve(null); }
+    function onToggle(){ input.type = (input.type==='password') ? 'text' : 'password'; }
+    ok.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+    close.addEventListener('click', onCancel);
+    toggle.addEventListener('click', onToggle);
+
+    // allow Enter/Escape on input
+    input.onkeydown = function(e){
+      if(e.key === 'Enter'){ onOk(); }
+      else if(e.key === 'Escape'){ onCancel(); }
+    };
+  });
+}
+</script>
+
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
