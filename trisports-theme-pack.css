@@ -1794,3 +1794,47 @@ header > .container > div:last-child{
   .help { font-size: 12px; }
 }
 
+/* ===== Fix header mobile (<= 640px) ===== */
+@media (max-width: 640px){
+  /* Le conteneur peut enfin aller à la ligne */
+  header .container{
+    flex-wrap: wrap !important;
+    align-items: flex-start;
+    gap: 8px !important;
+  }
+
+  /* Logo + titre en 1ère ligne (gauche) */
+  header .brand{
+    order: 1;
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  /* Petites pastilles (visiteur / admin) en 1ère ligne (droite) */
+  header .container > div:last-child{
+    order: 2;
+    flex: 0 1 auto;
+    display: flex;
+    gap: 6px;
+  }
+  /* compacter les pastilles pour éviter le chevauchement */
+  header .pill{ padding: 4px 8px; font-size: 12px; line-height: 1.2; }
+  /* masquer le bouton plein écran sur mobile */
+  header .header-chip, #btn-fullscreen{ display:none !important; }
+
+  /* Les onglets passent en 2e ligne et scrollent horizontalement */
+  header nav.tabs{
+    order: 3;
+    flex: 1 1 100% !important;
+    justify-content: flex-start !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-width: 0;          /* évite les débordements */
+    white-space: nowrap;   /* les onglets restent sur une ligne */
+    gap: 6px;
+  }
+  header nav.tabs .tab{
+    padding: 6px 10px !important;  /* onglets plus compacts */
+  }
+}
+
