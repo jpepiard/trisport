@@ -1326,7 +1326,7 @@ function renderPalet(m){
 
 /* ===== Classement ===== */
 function baseLeaderboardStats(){const R=state.rules,stats={};state.teams.forEach(t=>stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,pointsBase:0,bonus:0,malus:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0});state.matches.forEach(m=>{const A=stats[m.a],B=stats[m.b];ensureLengths(m);m.darts.forEach(v=>{if(v===0){A.dartsW++;A.pointsBase+=R.dartsWinPoints}else if(v===1){B.dartsW++;B.pointsBase+=R.dartsWinPoints}});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b){A.pingW++;A.pointsBase+=R.pingWinPoints}else if(b>a){B.pingW++;B.pointsBase+=R.pingWinPoints}}});const pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);if(pa!=null&&pb!=null){A.palFor+=pa;B.palFor+=pb;A.palAg+=pb;B.palAg+=pa;A.pointsBase+=pa;B.pointsBase+=pb}if(isMatchComplete(m)){A.matchesComplete++;B.matchesComplete++}});Object.keys(state.bonusApplied||{}).forEach(r=>{const per=state.bonusApplied[r];Object.keys(per).forEach(tid=>{const v=per[tid]||0;if(stats[tid])stats[tid].bonus+=v})});return stats}
-function computeLeaderboard(){const stats=baseLeaderboardStats();const rows=Object.values(stats).map(x=>({teamId:x.teamId,name:x.name,avatar:x.avatar,points:x.pointsBase+x.bonus-x.malus,bonus:x.bonus,malus:x.malus,dartsW:x.dartsW,pingW:x.pingW,palFor:x.palFor,palAg:x.palAg,matchesComplete:x.matchesComplete}));rows.sort((x,y)=> (y.points-x.points) || ((y.palFor-y.palAg)-(x.palFor-x.palAg)) || (y.palFor-x.palFor) || ((y.dartsW+y.pingW)-(x.dartsW+x.pingW)) || x.name.localeCompare(y.name));rows.forEach((r,i)=>r.rank=i+1);return rows}
+function computeLeaderboard(){const stats=baseLeaderboardStats();const rows=Object.values(stats).map(x=>({teamId:x.teamId,name:x.name,avatar:x.avatar,points:x.pointsBase+x.bonus-x.malus,bonus:x.bonus,malus:x.malus,dartsW:x.dartsW,pingW:x.pingW,palFor:x.palFor,palAg:x.palAg,matchesComplete:x.matchesComplete}));rows.sort((x,y)=>(y.points-x.points)||((y.palFor-y.palAg)-(x.palFor-x.palAg))||((y.dartsW+y.pingW)-(x.dartsW+x.pingW))||x.name.localeCompare(y.name));rows.forEach((r,i)=>r.rank=i+1);return rows}
 
 function renderLeaderboard(){
   if (typeof recomputeAllBonuses==='function') recomputeAllBonuses();
@@ -1398,7 +1398,7 @@ function renderLeaderboard(){
     };
   });
 
-  rows.sort((a,b)=> (b.points - a.points) || ((b.palPF - b.palPA) - (a.palPF - a.palPA)) || (b.palPF - a.palPF) || a.name.localeCompare(b.name));
+  rows.sort((a,b)=> b.points - a.points || a.name.localeCompare(b.name));
 
   rows.forEach((r,i)=>{
     const avatar = avatarHtml ? avatarHtml(r.id, 22, '') : '';
@@ -2155,15 +2155,11 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     input.focus();
     var toggle = document.getElementById('password-toggle');
     if(toggle){
-      // reset any previous listeners by cloning the button
-      var _newT = toggle.cloneNode(true);
-      toggle.parentNode.replaceChild(_newT, toggle);
-      toggle = _newT;
       // reset to masked each time
       input.type = 'password';
       toggle.textContent = '👁️';
       toggle.setAttribute('aria-label','Afficher le mot de passe');
-      toggle.onclick = function(ev){
+      toggle.addEventListener('click', function(ev){
         ev.preventDefault();
         var cur = input.getAttribute('type');
         if(cur === 'password'){
@@ -2177,7 +2173,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
           toggle.setAttribute('aria-label','Afficher le mot de passe');
           toggle.setAttribute('aria-pressed','false');
         }
-      };
+      });
     }
     return new Promise(function(resolve){
       function close(val){
@@ -3206,6 +3202,15 @@ function onEnter(e){
 
 
 
+
+
+<style id="no-hover-points">
+/* Désactiver l'effet hover sur les pilules du tableau de classement */
+#table-classement .pill:hover{
+  filter: none !important;
+  box-shadow: none !important;
+}
+</style>
 
 </head></html>
 <style id="rencontres-polish">
