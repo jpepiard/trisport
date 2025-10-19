@@ -1838,3 +1838,45 @@ header > .container > div:last-child{
   }
 }
 
+/* ===== Header : boutons sur une 2e ligne en mobile ===== */
+@media (max-width: 640px){
+  /* autoriser le retour à la ligne dans le header */
+  header .container{
+    display: flex;
+    flex-wrap: wrap !important;
+    gap: 8px;
+  }
+
+  /* 1) Titre / logo en 1ère ligne */
+  header .brand{
+    order: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* 2) Boutons/pastilles en 2e ligne (prend 100% de largeur) */
+  /* Si tes boutons sont bien dans le dernier bloc du header, ce sélecteur suffit : */
+  header .container > div:last-child{
+    order: 2;
+    flex: 1 0 100%;
+    display: flex;
+    justify-content: flex-start; /* ou flex-end si tu préfères à droite */
+    gap: 6px;
+  }
+  /* Optionnel : compacter un peu les pastilles */
+  header .pill { padding: 4px 8px; font-size: 12px; line-height: 1.2; }
+  /* Masquer plein écran sur mobile si besoin */
+  .header-chip, #btn-fullscreen { display: none !important; }
+
+  /* 3) Onglets en 3e ligne, scrollables au doigt */
+  header nav.tabs{
+    order: 3;
+    flex: 1 0 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    min-width: 0;
+    gap: 6px;
+  }
+  header nav.tabs .tab{ padding: 6px 10px; }
+}
