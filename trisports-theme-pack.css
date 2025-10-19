@@ -1726,3 +1726,422 @@ header > .container > div:last-child{
   gap: 8px !important;
 }
 
+/* ===== Mobile-first helpers (TriSports) =============================== */
+/* 1) Entrées : empêcher le zoom auto iOS et améliorer la tap-area */
+@media (max-width: 520px){
+  input[type=text], input[type=number], select, button {
+    font-size: 16px;
+    min-height: 40px;
+  }
+}
+
+/* 2) Header : autoriser le wrap même si du style inline force nowrap */
+@media (max-width: 640px){
+  header .container { flex-wrap: wrap !important; gap: 8px !important; }
+  header .tabs { order: 3; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  header .tabs::-webkit-scrollbar{ height:6px; }
+  header .brand { flex: 1 1 auto; }
+  header .header-chip { display: none; } /* cache le bouton plein écran sur petit écran */
+}
+
+/* 3) Containers & cartes un peu plus compacts sur mobile */
+@media (max-width: 640px){
+  .container { padding-left: 12px; padding-right: 12px; }
+  .card .hd { padding: 12px; }
+  .card .bd { padding: 12px; }
+}
+
+/* 4) Grilles : tout empiler en 1 colonne quand l’espace manque */
+@media (max-width: 900px){
+  .grid.cols-4 { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 760px){
+  .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr !important; }
+}
+/* Grille "responsive" : plus souple en très petit */
+@media (max-width: 520px){
+  .grid.responsive { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important; }
+}
+
+/* 5) Match cards : passer en 1 colonne sur mobile */
+@media (max-width: 760px){
+  .match-two-col { grid-template-columns: 1fr !important; }
+}
+/* et réduire un peu les avatars pour gagner de la place */
+@media (max-width: 520px){
+  .avatar { width: 34px; height: 34px; font-size: 12px; }
+  .avatar .avatar-initials { line-height: 34px; }
+}
+
+/* 6) Tableaux : garder le scroll horizontal si besoin (classement) */
+@media (max-width: 640px){
+  #classement .bd { overflow-x: auto; }
+  #table-classement { min-width: 640px; } /* évite la casse des colonnes */
+}
+
+/* 7) Bonus modal : respirations un peu plus serrées */
+@media (max-width: 520px){
+  .bonus-dialog { width: 94vw; }
+  .bonus-dialog .bd { padding: 12px; }
+  .bonus-card { gap: 10px; padding: 8px; }
+  .bonus-illu { width: 50px; height: 50px; }
+}
+
+/* 8) Petits raffinements d’espacement */
+@media (max-width: 520px){
+  .tabs .tab { padding: 6px 10px; }
+  .btn.small { padding: 6px 10px; }
+  .help { font-size: 12px; }
+}
+
+/* ===== Fix header mobile (<= 640px) ===== */
+@media (max-width: 640px){
+  /* Le conteneur peut enfin aller à la ligne */
+  header .container{
+    flex-wrap: wrap !important;
+    align-items: flex-start;
+    gap: 8px !important;
+  }
+
+  /* Logo + titre en 1ère ligne (gauche) */
+  header .brand{
+    order: 1;
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  /* Petites pastilles (visiteur / admin) en 1ère ligne (droite) */
+  header .container > div:last-child{
+    order: 2;
+    flex: 0 1 auto;
+    display: flex;
+    gap: 6px;
+  }
+  /* compacter les pastilles pour éviter le chevauchement */
+  header .pill{ padding: 4px 8px; font-size: 12px; line-height: 1.2; }
+  /* masquer le bouton plein écran sur mobile */
+  header .header-chip, #btn-fullscreen{ display:none !important; }
+
+  /* Les onglets passent en 2e ligne et scrollent horizontalement */
+  header nav.tabs{
+    order: 3;
+    flex: 1 1 100% !important;
+    justify-content: flex-start !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-width: 0;          /* évite les débordements */
+    white-space: nowrap;   /* les onglets restent sur une ligne */
+    gap: 6px;
+  }
+  header nav.tabs .tab{
+    padding: 6px 10px !important;  /* onglets plus compacts */
+  }
+}
+
+/* ===== Header : boutons sur une 2e ligne en mobile ===== */
+@media (max-width: 640px){
+  /* autoriser le retour à la ligne dans le header */
+  header .container{
+    display: flex;
+    flex-wrap: wrap !important;
+    gap: 8px;
+  }
+
+  /* 1) Titre / logo en 1ère ligne */
+  header .brand{
+    order: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* 2) Boutons/pastilles en 2e ligne (prend 100% de largeur) */
+  /* Si tes boutons sont bien dans le dernier bloc du header, ce sélecteur suffit : */
+  header .container > div:last-child{
+    order: 2;
+    flex: 1 0 100%;
+    display: flex;
+    justify-content: flex-start; /* ou flex-end si tu préfères à droite */
+    gap: 6px;
+  }
+  /* Optionnel : compacter un peu les pastilles */
+  header .pill { padding: 4px 8px; font-size: 12px; line-height: 1.2; }
+  /* Masquer plein écran sur mobile si besoin */
+  .header-chip, #btn-fullscreen { display: none !important; }
+
+  /* 3) Onglets en 3e ligne, scrollables au doigt */
+  header nav.tabs{
+    order: 3;
+    flex: 1 0 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    min-width: 0;
+    gap: 6px;
+  }
+  header nav.tabs .tab{ padding: 6px 10px; }
+}
+/* ===== Header mobile : casser le nowrap + mettre les boutons sur une autre ligne ===== */
+@media (max-width: 640px){
+
+  /* 0) Conteneur principal : autoriser la ligne suivante + texte qui peut couper */
+  header > .container{
+    flex-wrap: wrap !important;
+    white-space: normal !important;   /* annule le nowrap global */
+    gap: 8px !important;
+  }
+
+  /* 1) Bloc brand (logo + titre) en 1ère ligne */
+  header > .container > .brand{
+    order: 1 !important;
+    flex: 1 1 100% !important;        /* occupe toute la ligne */
+    min-width: 0 !important;
+    white-space: normal !important;   /* autorise le titre à revenir à la ligne */
+  }
+
+  /* 2) Boutons/pastilles sur leur propre ligne */
+  header > .container > div:last-child{
+    order: 2 !important;
+    flex: 1 0 100% !important;        /* nouvelle ligne */
+    display: flex !important;
+    justify-content: flex-start !important;  /* mets flex-end si tu préfères à droite */
+    gap: 6px !important;
+  }
+  /* compacter les pastilles pour petit écran */
+  header .pill{ padding: 4px 8px !important; font-size: 12px !important; line-height: 1.2 !important; }
+  /* option : masquer le plein écran en mobile */
+  .header-chip, #btn-fullscreen{ display: none !important; }
+
+  /* 3) Onglets en 3e ligne, scrollables */
+  header > .container > nav.tabs{
+    order: 3 !important;
+    flex: 1 0 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    white-space: nowrap !important;   /* onglets sur une ligne, mais sous le titre/boutons */
+    gap: 6px !important;
+  }
+  header > .container > nav.tabs .tab{ padding: 6px 10px !important; }
+}
+/* ===== Header mobile : 3 lignes (Titre) / (Boutons) / (Onglets) ===== */
+@media (max-width: 640px){
+
+  /* Passe le header en GRID 1 colonne pour neutraliser tous les nowrap */
+  header > .container{
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    grid-auto-flow: row !important;
+    row-gap: 8px !important;
+
+    /* annule les contraintes qui provoquent le chevauchement */
+    flex-wrap: initial !important;
+    white-space: normal !important;
+    align-items: start !important;
+    justify-content: stretch !important;
+    min-width: 0 !important;
+  }
+
+  /* 1) Ligne 1 : logo + titre */
+  header > .container > .brand{
+    grid-row: 1 !important;
+    min-width: 0 !important;
+    white-space: normal !important;   /* autorise le retour à la ligne du titre */
+  }
+
+  /* 2) Ligne 2 : boutons/pastilles */
+  header > .container > div:last-child{
+    grid-row: 2 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  /* compacter un peu les pastilles */
+  header .pill{ padding: 4px 8px !important; font-size: 12px !important; line-height: 1.2 !important; }
+  /* option : cacher le plein écran sur mobile */
+  .header-chip, #btn-fullscreen{ display: none !important; }
+
+  /* 3) Ligne 3 : onglets (scrollables) */
+  header > .container > nav.tabs{
+    grid-row: 3 !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    white-space: nowrap !important;   /* les onglets restent sur une seule ligne, mais sous les boutons */
+    min-width: 0 !important;
+    gap: 6px !important;
+  }
+  header > .container > nav.tabs .tab{ padding: 6px 10px !important; }
+}
+/* ===== Onglets : scroll H autorisé, scroll V interdit (mobile) ===== */
+@media (max-width: 640px){
+  /* (si tu utilises déjà la grille mobile plus haut, conserve-la) */
+
+  /* Ligne 3 : barre d’onglets */
+  header > .container > nav.tabs{
+    /* visible en une seule “rangée” qui défile à l’horizontale */
+    display: block !important;
+    white-space: nowrap !important;
+
+    /* scroll horizontal OUI, vertical NON */
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+
+    /* inertie iOS + pas de rebond vertical */
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain;
+
+    /* éviter que le contenu pousse en hauteur */
+    line-height: 1.2;
+    padding-block: 6px;
+    min-width: 0 !important;
+    gap: 0 !important; /* l’espace vient des .tab */
+  }
+
+  /* chaque onglet est un “bloc” qui ne se casse pas à la ligne */
+  header > .container > nav.tabs .tab{
+    display: inline-flex !important;   /* reste sur la même ligne */
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px !important;
+    margin-right: 6px;                 /* espace entre onglets */
+  }
+
+  /* (optionnel) affiner la barre de défilement */
+  header > .container > nav.tabs::-webkit-scrollbar{ height: 6px; }
+}
+/* ===== Onglets mobile : défilement H fluide, sans "saut" vertical ===== */
+@media (max-width: 640px){
+  /* Conteneur d’onglets */
+  header > .container > nav.tabs{
+    display: block !important;
+    white-space: nowrap !important;
+
+    /* Scroll horizontal OUI, vertical NON */
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+
+    /* Limite le geste au pan horizontal (évite le drift vertical) */
+    touch-action: pan-x !important;
+
+    /* Évite la mise à jour de layout quand la scrollbar apparaît */
+    scrollbar-gutter: stable both-edges;
+
+    /* Désactive le rebond vertical iOS à l’intérieur */
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+
+    /* Hauteur fixée pour empêcher toute variation (régle la valeur si besoin) */
+    --tab-h: 40px;
+    padding: 6px 0 !important;
+    height: calc(var(--tab-h) + 12px) !important; /* 12px = padding vertical total */
+    box-sizing: content-box;
+    will-change: scroll-position;
+  }
+
+  /* Items onglets : taille stable */
+  header > .container > nav.tabs .tab{
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    height: var(--tab-h) !important;
+    line-height: 1 !important;         /* on centre avec flex, pas avec line-height */
+    box-sizing: border-box;
+    margin-right: 6px;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* S’assurer que l’état actif/hover ne modifie PAS la hauteur*
+
+/* ====== MOBILE : onglets en 2e ligne, rail horizontal stable ====== */
+@media (max-width: 680px){
+  /* Le conteneur du header peut passer sur 2 lignes */
+  header .container{
+    display: flex;
+    flex-wrap: wrap !important;       /* override l'attribut inline */
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* 1re ligne : marque (à gauche) + actions (à droite) */
+  header .container > .brand{ order: 1; flex: 1 1 auto; min-width: 0; }
+  header .container > .flex{  order: 2; flex: 0 0 auto; }
+
+  /* 2e ligne : la barre d’onglets en pleine largeur */
+  header .container > nav.tabs{
+    order: 3;
+    flex: 1 0 100%;
+    display: flex;
+    /* Rail horizontal fluide SANS scroll vertical */
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    /* Pas de "petits sauts" quand la scrollbar apparaît */
+    scrollbar-width: thin;
+    scrollbar-gutter: stable both-edges;
+    /* Empêche le wrap (sinon la ligne "gonfle" en hauteur) */
+    flex-wrap: nowrap !important;
+    white-space: nowrap;
+    gap: 8px;
+    /* Un léger padding réserve la place de la scrollbar WebKit */
+    padding-bottom: 4px;
+    margin: 0 -4px;  /* pour que la scrollbar reste bord à bord */
+  }
+  header .container > nav.tabs::-webkit-scrollbar{ height: 6px; }
+
+  /* Les boutons d’onglet gardent une largeur auto, sans reflow */
+  header .container > nav.tabs .tab{
+    flex: 0 0 auto;                 /* pas d’étirement, pas de wrap */
+    scroll-snap-align: start;       /* snap doux en glissant */
+  }
+  header .container > nav.tabs{ scroll-snap-type: x proximity; }
+
+  /* Sécurité anti “rebond” qui peut déclencher un scroll vertical parent */
+  header .container > nav.tabs{ overscroll-behavior-x: contain; }
+}
+
+
+/* === BONUS BLEU — SCOPÉ AUX MATCHS EN COURS ============================== */
+/* S'applique seulement si la carte de match n'est pas complète (data-complete="false") */
+.match-card[data-complete="false"] .pill.pill--blue,
+.match-card[data-complete="false"] .pill.bonus-flashy{
+  position: relative;
+  color: #f7fbff !important;
+  border: 1px solid rgba(35,153,242,.55);
+  background: linear-gradient(135deg, rgb(35,153,242) 0%, rgb(28,107,224) 100%) !important;
+  text-shadow: 0 0 2px rgba(28,107,224,.35);
+  box-shadow:
+    0 0 6px rgba(35,153,242,.24),
+    0 0 16px rgba(35,153,242,.16),
+    inset 0 0 6px rgba(255,255,255,.06);
+  animation: neonPulseBlue 1.5s ease-in-out infinite;
+}
+.match-card[data-complete="false"] .pill.pill--blue::before,
+.match-card[data-complete="false"] .pill.bonus-flashy::before{
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 0 rgba(35,153,242,.40),
+    0 0 22px rgba(35,153,242,.24);
+  animation: neonHaloBlue 1.4s ease-in-out infinite;
+  opacity: .6;
+}
+.match-card[data-complete="false"] .pill.pill--blue::after,
+.match-card[data-complete="false"] .pill.bonus-flashy::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 18% -10%, rgba(255,255,255,.18), transparent 35%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .match-card[data-complete="false"] .pill.pill--blue,
+  .match-card[data-complete="false"] .pill.bonus-flashy{ animation: none !important; }
+  .match-card[data-complete="false"] .pill.pill--blue::before,
+  .match-card[data-complete="false"] .pill.bonus-flashy::before{ animation: none !important; opacity: .35; }
+}
