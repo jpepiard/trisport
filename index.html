@@ -271,22 +271,6 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </style>
 
 
-<script>
-(function () {
-  var tabs = document.querySelector('header .container nav.tabs');
-  if (!tabs) return;
-  var x0 = 0, y0 = 0;
-  tabs.addEventListener('touchstart', function (e) {
-    var t = e.touches && e.touches[0]; if (!t) return;
-    x0 = t.clientX; y0 = t.clientY;
-  }, { passive: true });
-  tabs.addEventListener('touchmove', function (e) {
-    var t = e.touches && e.touches[0]; if (!t) return;
-    var dx = Math.abs(t.clientX - x0), dy = Math.abs(t.clientY - y0);
-    if (dy > dx) e.preventDefault();   // bloque le scroll vertical
-  }, { passive: false });
-})();
-</script>
 
 
 <link href="trisports-theme-pack.css" rel="stylesheet"/>
