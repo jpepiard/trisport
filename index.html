@@ -2897,6 +2897,45 @@ document.addEventListener('click', function (ev) {
 })();
 </script>
 
+
+<script>
+// [PATCH v3] Ouverture de journal infaillible + raccourci Alt+J
+(function(){
+  function openLogs(){
+    var m = document.getElementById('ts-log-modal');
+    if (m) {
+      m.classList.add('show');
+      m.setAttribute('aria-hidden','false');
+      try { m.focus && m.focus(); } catch(_){}
+    }
+    try{ if (typeof renderList === 'function') renderList(); }catch(_){}
+  }
+  // Expose pour le débogage et les handlers inline
+  try{ window.openLogs = openLogs; }catch(_){}
+  // Binder défensif (idempotent)
+  function bind(){
+    var btn = document.getElementById('btn-open-logs');
+    if (btn && !btn.__logsBound) {
+      btn.__logsBound = true;
+      btn.addEventListener('click', function(ev){ ev.preventDefault(); openLogs(); });
+    }
+    // Boutons avec data-open="logs"
+    document.querySelectorAll('[data-open="logs"]').forEach(function(el){
+      if (!el.__logsBound){ el.__logsBound = true; el.addEventListener('click', function(e){ e.preventDefault(); openLogs(); }); }
+    });
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', bind); } else { bind(); }
+  try{
+    var mo = new MutationObserver(function(){ bind(); });
+    mo.observe(document.body, {subtree:true, childList:true, attributes:true});
+  }catch(_){}
+  // Raccourci clavier Alt+J
+  document.addEventListener('keydown', function(e){
+    if ((e.altKey || e.metaKey) && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); openLogs(); }
+  });
+})();
+</script>
+
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
