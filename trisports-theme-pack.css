@@ -1880,3 +1880,45 @@ header > .container > div:last-child{
   }
   header nav.tabs .tab{ padding: 6px 10px; }
 }
+/* ===== Header mobile : casser le nowrap + mettre les boutons sur une autre ligne ===== */
+@media (max-width: 640px){
+
+  /* 0) Conteneur principal : autoriser la ligne suivante + texte qui peut couper */
+  header > .container{
+    flex-wrap: wrap !important;
+    white-space: normal !important;   /* annule le nowrap global */
+    gap: 8px !important;
+  }
+
+  /* 1) Bloc brand (logo + titre) en 1ère ligne */
+  header > .container > .brand{
+    order: 1 !important;
+    flex: 1 1 100% !important;        /* occupe toute la ligne */
+    min-width: 0 !important;
+    white-space: normal !important;   /* autorise le titre à revenir à la ligne */
+  }
+
+  /* 2) Boutons/pastilles sur leur propre ligne */
+  header > .container > div:last-child{
+    order: 2 !important;
+    flex: 1 0 100% !important;        /* nouvelle ligne */
+    display: flex !important;
+    justify-content: flex-start !important;  /* mets flex-end si tu préfères à droite */
+    gap: 6px !important;
+  }
+  /* compacter les pastilles pour petit écran */
+  header .pill{ padding: 4px 8px !important; font-size: 12px !important; line-height: 1.2 !important; }
+  /* option : masquer le plein écran en mobile */
+  .header-chip, #btn-fullscreen{ display: none !important; }
+
+  /* 3) Onglets en 3e ligne, scrollables */
+  header > .container > nav.tabs{
+    order: 3 !important;
+    flex: 1 0 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    white-space: nowrap !important;   /* onglets sur une ligne, mais sous le titre/boutons */
+    gap: 6px !important;
+  }
+  header > .container > nav.tabs .tab{ padding: 6px 10px !important; }
+}
