@@ -2711,6 +2711,56 @@ function onEnter(e){
 })();
 </script>
 <!-- END: Simple action logger -->
+
+<style id="bonus-boost-style">
+/* === Patch: Bonus posé — pilule bleue très visible ===================== */
+.pill.bonus-flashy{
+  position: relative;
+  color: #f7fbff !important;
+  background: linear-gradient(135deg, rgb(35,153,242) 0%, rgb(28,107,224) 100%) !important;
+  border: 1px solid rgba(35,153,242,.55) !important;
+  text-shadow: 0 0 2px rgba(28,107,224,.35);
+  box-shadow:
+    0 0 6px rgba(35,153,242,.24),
+    0 0 18px rgba(35,153,242,.18),
+    inset 0 0 6px rgba(255,255,255,.06) !important;
+  animation: neonPulseBlue 1.5s ease-in-out infinite;
+}
+.pill.bonus-flashy::before{
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 0 rgba(35,153,242,.45),
+    0 0 22px rgba(35,153,242,.28);
+  animation: neonHaloBlue 1.4s ease-in-out infinite;
+  opacity: .7;
+}
+.pill.bonus-flashy::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 18% -10%, rgba(255,255,255,.18), transparent 35%);
+  pointer-events: none;
+}
+@keyframes neonPulseBlue{
+  0%, 100%{ filter: brightness(1); }
+  50%{ filter: brightness(1.08); }
+}
+@keyframes neonHaloBlue{
+  0%{ transform: scale(1); opacity:.6; box-shadow: 0 0 0 0 rgba(35,153,242,.45), 0 0 20px rgba(35,153,242,.25); }
+  70%{ transform: scale(1.18); opacity:0; box-shadow: 0 0 0 12px rgba(35,153,242,0), 0 0 28px rgba(35,153,242,.08); }
+  100%{ transform: scale(1); opacity:0; }
+}
+@media (prefers-reduced-motion: reduce){
+  .pill.bonus-flashy{ animation: none !important; }
+  .pill.bonus-flashy::before{ animation: none !important; opacity: .4; }
+}
+</style>
+
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
