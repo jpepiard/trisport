@@ -2127,8 +2127,9 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     <div class="hd"><span class="icon">🔑</span><span id="password-title">Mot de passe</span></div>
     <div class="bd">
       <p id="password-message">Entrez votre mot de passe :</p>
-      <input id="password-input" type="password" autocomplete="current-password" placeholder="Mot de passe" /> <button id="password-toggle" type="button" aria-label="Afficher le mot de passe" style="margin-left:8px;padding:4px 6px;cursor:pointer;border-radius:4px;border:1px solid rgba(0,0,0,0.08);background:transparent">👁️</button>
-    </div>
+      <div id="password-field-wrap" style="display:flex;align-items:center;gap:8px;">
+        <input id="password-input" type="password" autocomplete="current-password" placeholder="Mot de passe" /> <button id="password-toggle" type="button" aria-label="Afficher le mot de passe" style="margin-left:8px;padding:4px 6px;cursor:pointer;border-radius:4px;border:1px solid rgba(0,0,0,0.08);background:transparent">👁️</button>
+      </div>
     <div class="ft">
       <button class="btn" type="button" id="password-cancel">Annuler</button>
       <button class="btn primary" type="button" id="password-ok">Valider</button>
@@ -2152,6 +2153,25 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     overlay.classList.add('show');
     overlay.style.display = 'grid';
     input.focus();
+    var toggle = document.getElementById('password-toggle');
+    if(toggle){
+      // reset to masked each time
+      input.type = 'password';
+      toggle.textContent = '👁️';
+      toggle.setAttribute('aria-label','Afficher le mot de passe');
+      toggle.addEventListener('click', function(ev){
+        ev.preventDefault();
+        if(input.type === 'password'){
+          input.type = 'text';
+          toggle.textContent = '🙈';
+          toggle.setAttribute('aria-label','Masquer le mot de passe');
+        }else{
+          input.type = 'password';
+          toggle.textContent = '👁️';
+          toggle.setAttribute('aria-label','Afficher le mot de passe');
+        }
+      });
+    }
     return new Promise(function(resolve){
       function close(val){
         overlay.classList.remove('show');
