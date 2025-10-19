@@ -1726,3 +1726,71 @@ header > .container > div:last-child{
   gap: 8px !important;
 }
 
+/* ===== Mobile-first helpers (TriSports) =============================== */
+/* 1) Entrées : empêcher le zoom auto iOS et améliorer la tap-area */
+@media (max-width: 520px){
+  input[type=text], input[type=number], select, button {
+    font-size: 16px;
+    min-height: 40px;
+  }
+}
+
+/* 2) Header : autoriser le wrap même si du style inline force nowrap */
+@media (max-width: 640px){
+  header .container { flex-wrap: wrap !important; gap: 8px !important; }
+  header .tabs { order: 3; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  header .tabs::-webkit-scrollbar{ height:6px; }
+  header .brand { flex: 1 1 auto; }
+  header .header-chip { display: none; } /* cache le bouton plein écran sur petit écran */
+}
+
+/* 3) Containers & cartes un peu plus compacts sur mobile */
+@media (max-width: 640px){
+  .container { padding-left: 12px; padding-right: 12px; }
+  .card .hd { padding: 12px; }
+  .card .bd { padding: 12px; }
+}
+
+/* 4) Grilles : tout empiler en 1 colonne quand l’espace manque */
+@media (max-width: 900px){
+  .grid.cols-4 { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 760px){
+  .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr !important; }
+}
+/* Grille "responsive" : plus souple en très petit */
+@media (max-width: 520px){
+  .grid.responsive { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important; }
+}
+
+/* 5) Match cards : passer en 1 colonne sur mobile */
+@media (max-width: 760px){
+  .match-two-col { grid-template-columns: 1fr !important; }
+}
+/* et réduire un peu les avatars pour gagner de la place */
+@media (max-width: 520px){
+  .avatar { width: 34px; height: 34px; font-size: 12px; }
+  .avatar .avatar-initials { line-height: 34px; }
+}
+
+/* 6) Tableaux : garder le scroll horizontal si besoin (classement) */
+@media (max-width: 640px){
+  #classement .bd { overflow-x: auto; }
+  #table-classement { min-width: 640px; } /* évite la casse des colonnes */
+}
+
+/* 7) Bonus modal : respirations un peu plus serrées */
+@media (max-width: 520px){
+  .bonus-dialog { width: 94vw; }
+  .bonus-dialog .bd { padding: 12px; }
+  .bonus-card { gap: 10px; padding: 8px; }
+  .bonus-illu { width: 50px; height: 50px; }
+}
+
+/* 8) Petits raffinements d’espacement */
+@media (max-width: 520px){
+  .tabs .tab { padding: 6px 10px; }
+  .btn.small { padding: 6px 10px; }
+  .help { font-size: 12px; }
+}
+
