@@ -2128,7 +2128,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     <div class="bd">
       <p id="password-message">Entrez votre mot de passe :</p>
       <div id="password-field-wrap" style="position:relative;display:block;">
-        <input id="password-input" style="padding-right:52px;" type="password" autocomplete="current-password" placeholder="Mot de passe" /> <button id="password-toggle" type="button" aria-label="Afficher le mot de passe" tabindex="0" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;display:inline-grid;place-items:center;border-radius:999px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);backdrop-filter:blur(2px);" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;text-align:center;font-size:18px;border-radius:999px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);backdrop-filter:blur(2px);"">👁️</button>
+        <input id="password-input" style="padding-right:52px;" type="password" autocomplete="current-password" placeholder="Mot de passe" /> <button id="password-toggle" type="button" aria-label="Afficher le mot de passe" tabindex="0" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;display:inline-grid;place-items:center;border-radius:999px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);backdrop-filter:blur(2px);" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:grid;place-items:center;padding:0;line-height:1;text-align:center;border-radius:999px;border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.06);backdrop-filter:blur(2px);"""><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" focusable="false"><path d="M12 5c-5 0-9 5-9 7s4 7 9 7 9-5 9-7-4-7-9-7z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/></svg></button>
       </div>
     <div class="ft">
       <button class="btn" type="button" id="password-cancel">Annuler</button>
@@ -2157,19 +2157,19 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     if(toggle){
       // reset to masked each time
       input.type = 'password';
-      toggle.textContent = '👁️';
+      toggle.innerHTML = "<svg aria-hidden=\"true\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" focusable=\"false\"><path d=\"M12 5c-5 0-9 5-9 7s4 7 9 7 9-5 9-7-4-7-9-7z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/><circle cx=\"12\" cy=\"12\" r=\"3.2\" fill=\"currentColor\"/></svg>";
       toggle.setAttribute('aria-label','Afficher le mot de passe');
       toggle.addEventListener('click', function(ev){
         ev.preventDefault();
         var cur = input.getAttribute('type');
         if(cur === 'password'){
           input.setAttribute('type','text');
-          toggle.textContent = '🙈';
+          toggle.innerHTML = "<svg aria-hidden=\"true\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" focusable=\"false\"><path d=\"M3 3l18 18\" stroke=\"currentColor\" stroke-width=\"1.7\"/><path d=\"M12 5c-5 0-9 5-9 7s4 7 9 7 9-5 9-7-4-7-9-7z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/><circle cx=\"12\" cy=\"12\" r=\"3.2\" fill=\"currentColor\"/></svg>";
           toggle.setAttribute('aria-label','Masquer le mot de passe');
           toggle.setAttribute('aria-pressed','true');
         }else{
           input.setAttribute('type','password');
-          toggle.textContent = '👁️';
+          toggle.innerHTML = "<svg aria-hidden=\"true\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" focusable=\"false\"><path d=\"M12 5c-5 0-9 5-9 7s4 7 9 7 9-5 9-7-4-7-9-7z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/><circle cx=\"12\" cy=\"12\" r=\"3.2\" fill=\"currentColor\"/></svg>";
           toggle.setAttribute('aria-label','Afficher le mot de passe');
           toggle.setAttribute('aria-pressed','false');
         }
