@@ -427,7 +427,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <button class="btn" id="btn-admin-off" type="button">Désactiver admin</button>
 <span class="pill" id="whoami">vous : visiteur (lecture seule)</span>
 </div>
-<div class="row" style="margin:8px 0 0 0"><button id="btn-open-logs" style="display:none" class="btn small" type="button" title="Ouvrir le journal">📜 Ouvrir le journal</button></div>
+<div class="row" style="margin:8px 0 0 0"><button id="btn-open-logs" style="display:none" class="btn small" type="button" title="Ouvrir le journal" onclick="(function(){var m=document.getElementById('ts-log-modal');if(m){m.classList.add('show');m.setAttribute('aria-hidden','false');}try{if(typeof renderList==='function'){renderList();}}catch(e){}})()">📜 Ouvrir le journal</button></div>
 </div>
 </div>
 <div class="card" style="margin-top:12px">
