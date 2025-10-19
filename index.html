@@ -2770,6 +2770,176 @@ function onEnter(e){
   .round-head:has(.round-chip.yellow) + .round-grid .pill.pill--blue::before{ animation: none !important; opacity: .4; }
 }
 </style>
+
+<!-- BEGIN: Team password modal (injected by assistant) -->
+<style>
+/* Styles pour la modal mot de passe */
+#team-pass-modal { display:none; position:fixed; inset:0; align-items:center; justify-content:center; z-index:10000; background:rgba(0,0,0,.45); }
+#team-pass-modal .tp-container { width:360px; max-width:92vw; padding:16px; border-radius:12px; background:linear-gradient(180deg,#141938,#0f1331); border:1px solid rgba(255,255,255,0.04); box-shadow:0 12px 32px rgba(0,0,0,.6); color:#e6eef8; }
+#team-pass-modal .tp-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+#team-pass-modal .tp-help { margin-bottom:8px; color:rgba(230,238,248,0.7); font-size:13px; }
+#team-pass-modal input[type="password"], #team-pass-modal input[type="text"]{ font-size:15px; width:100%; padding:10px 40px 10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:#0f1331; color:#fff; box-sizing:border-box; }
+#team-pass-modal .tp-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:6px; }
+#team-pass-modal .btn.small{ padding:6px 8px; }
+#team-pass-modal .btn.primary{ min-width:90px; }
+#team-pass-modal svg{ color: rgba(230,238,248,0.6); }
+#team-pass-modal button#team-pass-toggle:focus svg{ color: var(--accent, #6ea8fe); }
+</style>
+
+<div id="team-pass-modal" class="card" aria-hidden="true">
+  <div class="tp-container">
+    <div class="tp-head">
+      <strong id="team-pass-title">Mot de passe</strong>
+      <button type="button" id="team-pass-close" class="btn small" aria-label="Fermer">✖</button>
+    </div>
+    <div id="team-pass-help" class="tp-help">Saisis le mot de passe de l’équipe.</div>
+
+    <div style="position:relative;">
+      <input id="team-pass-input" type="password" placeholder="Mot de passe" autocomplete="current-password" />
+      <button id="team-pass-toggle" type="button" aria-label="Afficher le mot de passe"
+              style="position:absolute;right:6px;top:6px;border:none;background:transparent;padding:6px;border-radius:8px;cursor:pointer">
+        <svg id="team-pass-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+      </button>
+    </div>
+
+    <div class="tp-actions">
+      <button id="team-pass-cancel" class="btn">Annuler</button>
+      <button id="team-pass-save" class="btn primary">Valider</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // éléments
+  const modal = document.getElementById('team-pass-modal');
+  const input = document.getElementById('team-pass-input');
+  const toggle = document.getElementById('team-pass-toggle');
+  const eye = document.getElementById('team-pass-eye');
+  const title = document.getElementById('team-pass-title');
+  const helpTxt = document.getElementById('team-pass-help');
+  const btnSave = document.getElementById('team-pass-save');
+  const btnCancel = document.getElementById('team-pass-cancel');
+  const btnClose = document.getElementById('team-pass-close');
+
+  let current = { mode: null, teamId: null }; // mode: "set" | "login"
+
+  function teamName(tid){
+    try{
+      if(window.teams && window.teams[tid] && window.teams[tid].name) return window.teams[tid].name;
+    }catch(e){}
+    return null;
+  }
+
+  function openModal(mode, tid){
+    current.mode = mode;
+    current.teamId = tid;
+    input.value = '';
+    input.type = 'password';
+    modal.setAttribute('aria-hidden','false');
+    if(mode === 'set'){
+      title.textContent = 'Définir / changer mot de passe';
+      helpTxt.textContent = `Définir un mot de passe pour l’équipe « ${teamName(tid) || tid} ».`;
+      btnSave.textContent = 'Définir';
+    } else {
+      title.textContent = 'Connexion équipe';
+      helpTxt.textContent = `Saisis le mot de passe pour l’équipe « ${teamName(tid) || tid} ».`;
+      btnSave.textContent = 'Se connecter';
+    }
+    modal.style.display = 'flex';
+    setTimeout(()=> input.focus(), 150);
+  }
+
+  function closeModal(){
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden','true');
+    current = { mode: null, teamId: null };
+  }
+
+  // toggle show/hide password
+  toggle.addEventListener('click', function(e){
+    if (input.type === 'password'){ input.type = 'text'; eye.setAttribute('data-shown','1'); }
+    else { input.type = 'password'; eye.removeAttribute('data-shown'); }
+    input.focus();
+  });
+
+  // cancel / close handlers
+  btnCancel.addEventListener('click', closeModal);
+  btnClose.addEventListener('click', closeModal);
+
+  // save = set password (admin) OR login (team)
+  btnSave.addEventListener('click', function(){
+    const val = (input.value || '').trim();
+    if(!val){ alert('Mot de passe vide.'); input.focus(); return; }
+
+    if(current.mode === 'set'){
+      // admin sets password
+      if(typeof isAdmin === 'function' && !isAdmin()){ alert('Réservé à l’admin.'); closeModal(); return; }
+      if(!window.state) window.state = {};
+      if(!window.state.protect) window.state.protect = {};
+      window.state.protect.teamPassHash = window.state.protect.teamPassHash || {};
+      if(typeof hashPass !== 'function'){ alert('Fonction hashPass() introuvable.'); closeModal(); return; }
+      window.state.protect.teamPassHash[current.teamId] = hashPass(val); // utilise hashPass() existant
+      if(typeof saveState === 'function') try{ saveState(); }catch(e){}
+      if(typeof renderTeams === 'function') try{ renderTeams(); }catch(e){}
+      if(typeof showToast === 'function') showToast('Mot de passe défini.');
+      else console.log('Mot de passe défini.');
+      closeModal();
+      return;
+    }
+
+    if(current.mode === 'login'){
+      // login attempt: compare hash
+      const hashes = (window.state && window.state.protect && window.state.protect.teamPassHash) ? window.state.protect.teamPassHash : null;
+      if(!hashes || !hashes[current.teamId]){ alert("Cette équipe n’a pas de mot de passe défini."); closeModal(); return; }
+      if(typeof hashPass !== 'function'){ alert('Fonction hashPass() introuvable.'); closeModal(); return; }
+      if(hashPass(val) === hashes[current.teamId]){
+        // accord : marquer la session (session.claims existe dans ton code)
+        if(!window.session) window.session = {};
+        window.session.claims = window.session.claims || {};
+        window.session.claims[current.teamId] = true;
+        if(typeof persistSessionNow === 'function') try{ persistSessionNow(); }catch(e){}
+        if(typeof updateWho === 'function') try{ updateWho(); }catch(e){}
+        if(typeof renderTeams === 'function') try{ renderTeams(); }catch(e){}
+        if(typeof showToast === 'function') showToast('Connecté à l’équipe.');
+        else console.log('Connecté à l’équipe.');
+        closeModal();
+      }else{
+        alert('Mot de passe incorrect.');
+        input.focus();
+      }
+      return;
+    }
+  });
+
+  // Intercepte les clics sur les boutons data-act (exists already in your code)
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('[data-act]');
+    if(!btn) return;
+    const act = btn.getAttribute('data-act');
+    const tid = btn.getAttribute('data-id');
+    if(act === 'setpass'){
+      if(typeof isAdmin === 'function' && !isAdmin()){ alert('Réservé à l’admin.'); return; }
+      openModal('set', tid);
+      e.preventDefault();
+      return;
+    }
+    if(act === 'login'){
+      openModal('login', tid);
+      e.preventDefault();
+      return;
+    }
+  }, true);
+
+  // close modal on Escape
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && modal.style.display === 'flex') closeModal();
+  });
+
+})();
+</script>
+<!-- END: Team password modal (injected by assistant) -->
+
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
