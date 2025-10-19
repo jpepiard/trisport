@@ -1726,213 +1726,42 @@ header > .container > div:last-child{
   gap: 8px !important;
 }
 
-/* ===== Mobile-first helpers (TriSports) =============================== */
-/* 1) Entrées : empêcher le zoom auto iOS et améliorer la tap-area */
+/* ======================================================================
+   TriSports — Responsive & Mobile Fixes
+   Appended by ChatGPT, date: 2025-10-19
+   ----------------------------------------------------------------------
+   Objectifs :
+   - Header en 3 lignes sur mobile : (Titre) / (Boutons) / (Onglets)
+   - Empêcher le chevauchement du titre et des pastilles
+   - Onglets : scroll horizontal fluide uniquement, pas de scroll vertical
+   - Inputs >=16px pour éviter le zoom iOS
+   - Grilles et cartes plus souples en mobile
+   ====================================================================== */
+
+/* 0) Mobile-first helpers (tap targets & spacing) */
 @media (max-width: 520px){
   input[type=text], input[type=number], select, button {
     font-size: 16px;
     min-height: 40px;
   }
-}
-
-/* 2) Header : autoriser le wrap même si du style inline force nowrap */
-@media (max-width: 640px){
-  header .container { flex-wrap: wrap !important; gap: 8px !important; }
-  header .tabs { order: 3; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  header .tabs::-webkit-scrollbar{ height:6px; }
-  header .brand { flex: 1 1 auto; }
-  header .header-chip { display: none; } /* cache le bouton plein écran sur petit écran */
-}
-
-/* 3) Containers & cartes un peu plus compacts sur mobile */
-@media (max-width: 640px){
-  .container { padding-left: 12px; padding-right: 12px; }
-  .card .hd { padding: 12px; }
-  .card .bd { padding: 12px; }
-}
-
-/* 4) Grilles : tout empiler en 1 colonne quand l’espace manque */
-@media (max-width: 900px){
-  .grid.cols-4 { grid-template-columns: 1fr !important; }
-}
-@media (max-width: 760px){
-  .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr !important; }
-}
-/* Grille "responsive" : plus souple en très petit */
-@media (max-width: 520px){
-  .grid.responsive { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important; }
-}
-
-/* 5) Match cards : passer en 1 colonne sur mobile */
-@media (max-width: 760px){
-  .match-two-col { grid-template-columns: 1fr !important; }
-}
-/* et réduire un peu les avatars pour gagner de la place */
-@media (max-width: 520px){
-  .avatar { width: 34px; height: 34px; font-size: 12px; }
-  .avatar .avatar-initials { line-height: 34px; }
-}
-
-/* 6) Tableaux : garder le scroll horizontal si besoin (classement) */
-@media (max-width: 640px){
-  #classement .bd { overflow-x: auto; }
-  #table-classement { min-width: 640px; } /* évite la casse des colonnes */
-}
-
-/* 7) Bonus modal : respirations un peu plus serrées */
-@media (max-width: 520px){
-  .bonus-dialog { width: 94vw; }
-  .bonus-dialog .bd { padding: 12px; }
-  .bonus-card { gap: 10px; padding: 8px; }
-  .bonus-illu { width: 50px; height: 50px; }
-}
-
-/* 8) Petits raffinements d’espacement */
-@media (max-width: 520px){
-  .tabs .tab { padding: 6px 10px; }
   .btn.small { padding: 6px 10px; }
   .help { font-size: 12px; }
 }
 
-/* ===== Fix header mobile (<= 640px) ===== */
+/* 1) Header layout mobile : 3 lignes fixes
+      - grid 1 colonne pour neutraliser tout nowrap imposé par le thème
+      - ligne 1 : .brand (logo + titre)
+      - ligne 2 : pastilles/boutons
+      - ligne 3 : nav.tabs (scroll horizontal uniquement)
+*/
 @media (max-width: 640px){
-  /* Le conteneur peut enfin aller à la ligne */
-  header .container{
-    flex-wrap: wrap !important;
-    align-items: flex-start;
-    gap: 8px !important;
-  }
-
-  /* Logo + titre en 1ère ligne (gauche) */
-  header .brand{
-    order: 1;
-    flex: 0 1 auto;
-    min-width: 0;
-  }
-
-  /* Petites pastilles (visiteur / admin) en 1ère ligne (droite) */
-  header .container > div:last-child{
-    order: 2;
-    flex: 0 1 auto;
-    display: flex;
-    gap: 6px;
-  }
-  /* compacter les pastilles pour éviter le chevauchement */
-  header .pill{ padding: 4px 8px; font-size: 12px; line-height: 1.2; }
-  /* masquer le bouton plein écran sur mobile */
-  header .header-chip, #btn-fullscreen{ display:none !important; }
-
-  /* Les onglets passent en 2e ligne et scrollent horizontalement */
-  header nav.tabs{
-    order: 3;
-    flex: 1 1 100% !important;
-    justify-content: flex-start !important;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    min-width: 0;          /* évite les débordements */
-    white-space: nowrap;   /* les onglets restent sur une ligne */
-    gap: 6px;
-  }
-  header nav.tabs .tab{
-    padding: 6px 10px !important;  /* onglets plus compacts */
-  }
-}
-
-/* ===== Header : boutons sur une 2e ligne en mobile ===== */
-@media (max-width: 640px){
-  /* autoriser le retour à la ligne dans le header */
-  header .container{
-    display: flex;
-    flex-wrap: wrap !important;
-    gap: 8px;
-  }
-
-  /* 1) Titre / logo en 1ère ligne */
-  header .brand{
-    order: 1;
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  /* 2) Boutons/pastilles en 2e ligne (prend 100% de largeur) */
-  /* Si tes boutons sont bien dans le dernier bloc du header, ce sélecteur suffit : */
-  header .container > div:last-child{
-    order: 2;
-    flex: 1 0 100%;
-    display: flex;
-    justify-content: flex-start; /* ou flex-end si tu préfères à droite */
-    gap: 6px;
-  }
-  /* Optionnel : compacter un peu les pastilles */
-  header .pill { padding: 4px 8px; font-size: 12px; line-height: 1.2; }
-  /* Masquer plein écran sur mobile si besoin */
-  .header-chip, #btn-fullscreen { display: none !important; }
-
-  /* 3) Onglets en 3e ligne, scrollables au doigt */
-  header nav.tabs{
-    order: 3;
-    flex: 1 0 100%;
-    overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-    min-width: 0;
-    gap: 6px;
-  }
-  header nav.tabs .tab{ padding: 6px 10px; }
-}
-/* ===== Header mobile : casser le nowrap + mettre les boutons sur une autre ligne ===== */
-@media (max-width: 640px){
-
-  /* 0) Conteneur principal : autoriser la ligne suivante + texte qui peut couper */
-  header > .container{
-    flex-wrap: wrap !important;
-    white-space: normal !important;   /* annule le nowrap global */
-    gap: 8px !important;
-  }
-
-  /* 1) Bloc brand (logo + titre) en 1ère ligne */
-  header > .container > .brand{
-    order: 1 !important;
-    flex: 1 1 100% !important;        /* occupe toute la ligne */
-    min-width: 0 !important;
-    white-space: normal !important;   /* autorise le titre à revenir à la ligne */
-  }
-
-  /* 2) Boutons/pastilles sur leur propre ligne */
-  header > .container > div:last-child{
-    order: 2 !important;
-    flex: 1 0 100% !important;        /* nouvelle ligne */
-    display: flex !important;
-    justify-content: flex-start !important;  /* mets flex-end si tu préfères à droite */
-    gap: 6px !important;
-  }
-  /* compacter les pastilles pour petit écran */
-  header .pill{ padding: 4px 8px !important; font-size: 12px !important; line-height: 1.2 !important; }
-  /* option : masquer le plein écran en mobile */
-  .header-chip, #btn-fullscreen{ display: none !important; }
-
-  /* 3) Onglets en 3e ligne, scrollables */
-  header > .container > nav.tabs{
-    order: 3 !important;
-    flex: 1 0 100% !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    white-space: nowrap !important;   /* onglets sur une ligne, mais sous le titre/boutons */
-    gap: 6px !important;
-  }
-  header > .container > nav.tabs .tab{ padding: 6px 10px !important; }
-}
-/* ===== Header mobile : 3 lignes (Titre) / (Boutons) / (Onglets) ===== */
-@media (max-width: 640px){
-
-  /* Passe le header en GRID 1 colonne pour neutraliser tous les nowrap */
   header > .container{
     display: grid !important;
     grid-template-columns: 1fr !important;
     grid-auto-flow: row !important;
     row-gap: 8px !important;
 
-    /* annule les contraintes qui provoquent le chevauchement */
+    /* Neutralise les contraintes problématiques */
     flex-wrap: initial !important;
     white-space: normal !important;
     align-items: start !important;
@@ -1940,43 +1769,32 @@ header > .container > div:last-child{
     min-width: 0 !important;
   }
 
-  /* 1) Ligne 1 : logo + titre */
+  /* Ligne 1 : titre */
   header > .container > .brand{
     grid-row: 1 !important;
     min-width: 0 !important;
-    white-space: normal !important;   /* autorise le retour à la ligne du titre */
+    white-space: normal !important;
   }
 
-  /* 2) Ligne 2 : boutons/pastilles */
+  /* Ligne 2 : boutons / pastilles (wrappable) */
   header > .container > div:last-child{
     grid-row: 2 !important;
     display: flex !important;
     flex-wrap: wrap !important;
     gap: 6px !important;
   }
-  /* compacter un peu les pastilles */
-  header .pill{ padding: 4px 8px !important; font-size: 12px !important; line-height: 1.2 !important; }
-  /* option : cacher le plein écran sur mobile */
+  header .pill{
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+  }
   .header-chip, #btn-fullscreen{ display: none !important; }
 
-  /* 3) Ligne 3 : onglets (scrollables) */
+  /* Ligne 3 : onglets — scroll horizontal SEUL, pas de scroll vertical */
   header > .container > nav.tabs{
     grid-row: 3 !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    white-space: nowrap !important;   /* les onglets restent sur une seule ligne, mais sous les boutons */
-    min-width: 0 !important;
-    gap: 6px !important;
-  }
-  header > .container > nav.tabs .tab{ padding: 6px 10px !important; }
-}
-/* ===== Onglets : scroll H autorisé, scroll V interdit (mobile) ===== */
-@media (max-width: 640px){
-  /* (si tu utilises déjà la grille mobile plus haut, conserve-la) */
 
-  /* Ligne 3 : barre d’onglets */
-  header > .container > nav.tabs{
-    /* visible en une seule “rangée” qui défile à l’horizontale */
+    /* une seule “rangée” qui défile à l'horizontale */
     display: block !important;
     white-space: nowrap !important;
 
@@ -1984,71 +1802,78 @@ header > .container > div:last-child{
     overflow-x: auto !important;
     overflow-y: hidden !important;
 
-    /* inertie iOS + pas de rebond vertical */
+    /* fluide sur iOS + pas de drift vertical */
     -webkit-overflow-scrolling: touch !important;
-    overscroll-behavior-y: contain;
-
-    /* éviter que le contenu pousse en hauteur */
-    line-height: 1.2;
-    padding-block: 6px;
-    min-width: 0 !important;
-    gap: 0 !important; /* l’espace vient des .tab */
-  }
-
-  /* chaque onglet est un “bloc” qui ne se casse pas à la ligne */
-  header > .container > nav.tabs .tab{
-    display: inline-flex !important;   /* reste sur la même ligne */
-    flex: 0 0 auto !important;
-    white-space: nowrap !important;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 10px !important;
-    margin-right: 6px;                 /* espace entre onglets */
-  }
-
-  /* (optionnel) affiner la barre de défilement */
-  header > .container > nav.tabs::-webkit-scrollbar{ height: 6px; }
-}
-/* ===== Onglets mobile : défilement H fluide, sans "saut" vertical ===== */
-@media (max-width: 640px){
-  /* Conteneur d’onglets */
-  header > .container > nav.tabs{
-    display: block !important;
-    white-space: nowrap !important;
-
-    /* Scroll horizontal OUI, vertical NON */
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-
-    /* Limite le geste au pan horizontal (évite le drift vertical) */
     touch-action: pan-x !important;
-
-    /* Évite la mise à jour de layout quand la scrollbar apparaît */
+    overscroll-behavior-y: contain;
     scrollbar-gutter: stable both-edges;
 
-    /* Désactive le rebond vertical iOS à l’intérieur */
-    overscroll-behavior-y: contain;
-    -webkit-overflow-scrolling: touch;
-
-    /* Hauteur fixée pour empêcher toute variation (régle la valeur si besoin) */
+    /* hauteur stable pour éviter les micro-sauts */
     --tab-h: 40px;
     padding: 6px 0 !important;
     height: calc(var(--tab-h) + 12px) !important; /* 12px = padding vertical total */
     box-sizing: content-box;
-    will-change: scroll-position;
+    min-width: 0 !important;
   }
-
-  /* Items onglets : taille stable */
   header > .container > nav.tabs .tab{
-    display: inline-flex !important;
+    display: inline-flex !important;     /* reste sur la même ligne */
     align-items: center;
     justify-content: center;
     height: var(--tab-h) !important;
-    line-height: 1 !important;         /* on centre avec flex, pas avec line-height */
-    box-sizing: border-box;
+    line-height: 1 !important;
+    padding: 6px 10px !important;
     margin-right: 6px;
     white-space: nowrap !important;
     flex: 0 0 auto !important;
+    box-sizing: border-box;
   }
+  /* états : ne doivent pas changer la hauteur */
+  header > .container > nav.tabs .tab,
+  header > .container > nav.tabs .tab:hover,
+  header > .container > nav.tabs .tab:focus,
+  header > .container > nav.tabs .tab.active{
+    border-width: 1px;
+    transform: none !important;
+    font-weight: 600;
+  }
+}
 
-  /* S’assurer que l’état actif/hover ne modifie PAS la hauteur*
+/* 2) Containers & cards spacing on mobile */
+@media (max-width: 640px){
+  .container { padding-left: 12px; padding-right: 12px; }
+  .card .hd, .card .bd { padding: 12px; }
+}
+
+/* 3) Grids : stack on small screens */
+@media (max-width: 900px){
+  .grid.cols-4 { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 760px){
+  .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 520px){
+  .grid.responsive { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important; }
+}
+
+/* 4) Match cards : 1 colonne sur mobile */
+@media (max-width: 760px){
+  .match-two-col { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 520px){
+  .avatar { width: 34px; height: 34px; font-size: 12px; }
+  .avatar .avatar-initials { line-height: 34px; }
+}
+
+/* 5) Classement : scroll horizontal contrôlé si nécessaire */
+@media (max-width: 640px){
+  #classement .bd { overflow-x: auto; }
+  #table-classement { min-width: 640px; }
+}
+
+/* 6) Bonus modal tweaks */
+@media (max-width: 520px){
+  .bonus-dialog { width: 94vw; }
+  .bonus-dialog .bd { padding: 12px; }
+  .bonus-card { gap: 10px; padding: 8px; }
+  .bonus-illu { width: 50px; height: 50px; }
+}
