@@ -488,64 +488,65 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 
 <script>
 (function(){
-  const modal = document.getElementById("pass-modal");
-  const val = document.getElementById("pass-value");
-  const hd = document.getElementById("pass-hd");
-  const label = document.getElementById("pass-label");
-  const hint = document.getElementById("pass-hint");
-  let ctx = null; // { type: "team"|"admin", tid: "..." }
+  // Reuse existing helpers: id(), hashPass(), showToast(), updateWho(), renderTeams(), persistSessionNow
+  const modal = document.getElementById('pass-modal');
+  const val = document.getElementById('pass-value');
+  const hd = document.getElementById('pass-hd');
+  const label = document.getElementById('pass-label');
+  const hint = document.getElementById('pass-hint');
+  let ctx = null; // { type: 'team'|'admin', tid: '...' }
 
   function openPassModal(opts){
-    ctx = opts || { type: "team" };
-    val.value = "";
-    val.type = "password";
-    document.getElementById("pass-toggle").textContent = "👁️";
-    hint.style.display = "none";
-    if(ctx.type === "admin"){
-      hd.textContent = "Connexion Administrateur";
-      label.textContent = "PIN administrateur :";
-      hint.style.display = "none";
-    } else if (ctx.type === "team"){
-      try {
-        const tn = (typeof teamName === "function") ? (teamName(ctx.tid) || "") : "";
-        hd.textContent = "Mot de passe de l’équipe « " + tn + " »";
-      } catch(_) {
-        hd.textContent = "Mot de passe de l’équipe";
-      }
-      label.textContent = "Mot de passe de l’équipe :";
+    ctx = opts || { type: 'team' };
+    val.value = '';
+    val.type = 'password';
+    document.getElementById('pass-toggle').textContent = '👁️';
+    hint.style.display = 'none';
+    if(ctx.type === 'admin'){
+      hd.textContent = 'Connexion Administrateur';
+      label.textContent = 'PIN administrateur :';
+      hint.style.display = 'none';
+    } else if (ctx.type === 'team'){
+      const teamName = typeof teamName === 'function' ? (teamName(ctx.tid) || '') : '';
+      hd.textContent = 'Mot de passe de l\\'équipe « ' + teamName + ' »';
+      label.textContent = 'Mot de passe de l\\'équipe :';
     }
-    modal.classList.add("show");
-    modal.setAttribute("aria-hidden","false");
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
     setTimeout(()=>val.focus(),80);
   }
   function closePassModal(){
-    modal.classList.remove("show");
-    modal.setAttribute("aria-hidden","true");
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden','true');
     ctx = null;
   }
-  document.getElementById("pass-cancel").addEventListener("click", closePassModal);
-  document.getElementById("pass-close").addEventListener("click", closePassModal);
-  document.getElementById("pass-toggle").addEventListener("click", function(){
-    if(val.type==="password"){ val.type="text"; this.textContent="🙈"; }
-    else { val.type="password"; this.textContent="👁️"; }
+  document.getElementById('pass-cancel').addEventListener('click', closePassModal);
+  document.getElementById('pass-close').addEventListener('click', closePassModal);
+  document.getElementById('pass-toggle').addEventListener('click', function(){
+    if(val.type==='password'){ val.type='text'; this.textContent='🙈'; }
+    else { val.type='password'; this.textContent='👁️'; }
     val.focus();
   });
-  document.getElementById("pass-validate").addEventListener("click", function(){
-    const v = (val.value||"").trim();
-    if(!v){ hint.style.display="block"; hint.textContent = "Mot de passe vide."; return; }
+  // Validate action
+  document.getElementById('pass-validate').addEventListener('click', function(){
+    const v = (val.value||'').trim();
+    if(!v){ hint.style.display='block'; hint.textContent = 'Mot de passe vide.'; return; }
     if(!ctx) return closePassModal();
-    if(ctx.type === "admin"){
-      if(v === "30041991"){ session.admin = true; session.claims = {}; if(typeof persistSessionNow==="function") persistSessionNow(); updateWho(); renderAll(); showToast("Mode administrateur activé (déconnexion des équipes sur cet appareil)."); closePassModal(); }
-      else { hint.style.display="block"; hint.textContent = "PIN incorrect."; }
-    } else if (ctx.type === "team"){
+    if(ctx.type === 'admin'){
+      // PIN check (same as original)
+      if(v === '30041991'){ session.admin = true; session.claims = {}; if(typeof persistSessionNow==='function') persistSessionNow(); updateWho(); renderAll(); showToast('Mode administrateur activé (déconnexion des équipes sur cet appareil).'); closePassModal(); }
+      else { hint.style.display='block'; hint.textContent = 'PIN incorrect.'; }
+    } else if (ctx.type === 'team'){
       const tid = ctx.tid;
       const hashes = (state.protect && state.protect.teamPassHash) ? state.protect.teamPassHash : null;
-      if(!hashes || !hashes[tid]){ hint.style.display="block"; hint.textContent = "Cette équipe n’a pas de mot de passe."; return; }
-      if(hashPass(v) === hashes[tid]){
-        session.claims = session.claims || {}; session.claims[tid] = true; if(typeof persistSessionNow==="function") persistSessionNow(); updateWho(); renderAll(); showToast("Connecté à l’équipe."); closePassModal();
-      } else { hint.style.display="block"; hint.textContent = "Mot de passe incorrect."; }
+      if(!hashes || !hashes[tid]){ hint.style.display='block'; hint.textContent = 'Cette équipe n\\'a pas de mot de passe.'; return; }
+      if(hashPass(v) === hashes[tid]){ session.admin=false; 
+        session.claims = session.claims || {}; session.claims[tid] = true; if(typeof persistSessionNow==='function') persistSessionNow(); updateWho(); renderAll(); showToast('Connecté à l\\'équipe.'); closePassModal();
+      } else { hint.style.display='block'; hint.textContent = 'Mot de passe incorrect.'; }
     }
   });
+
+  // Public bridge for other code
   window.openPassModal = openPassModal;
 })();
 </script>
@@ -801,7 +802,7 @@ function canEditScores(m, rCtl){
 function teamObj(tid){return state.teams.find(t=>t.id===tid)||null} function teamName(tid){const t=teamObj(tid);return t?t.name:"—"}
 function initials(name){const s=(name||"").trim();if(!s)return"?";const p=s.split(/\s+/);return(p[0][0]+(p[1]?.[0]||"")).toUpperCase()}
 function avatarHtml(tid,size,attrs){const t=teamObj(tid)||{name:"?"};const url=t.avatar;const cls=size==='lg'?'avatar-lg':(size==='sm'?'avatar-sm':'');const extra=attrs?(' '+attrs):'';const content=url?('<img src="'+esc(url)+'" alt="avatar">'):('<span class="avatar-initials">'+esc(initials(t.name))+'</span>');return '<span class="avatar '+cls+'" title="'+esc(t.name)+'"'+extra+'>'+content+'</span>'}
-function updateWho(){try{var lb=document.getElementById("btn-open-logs");if(lb)lb.style.display=isAdmin()?"inline-block":"none"}catch(e){};const names=Object.keys(session.claims||{}).map(teamName).filter(Boolean);const who=isAdmin()?(names.length?("Admin · "+names.join(", ")):"Admin"):(names[0]||"visiteur");id("whoami").textContent="vous : "+who;id("whoami-top").textContent=who;const s=id("whoami-setup");if(s)s.textContent=who;const b=id("btn-add-team");if(b)b.style.display=isAdmin()?"inline-block":"none";const ba=id("btn-admin-on-setup");if(ba)ba.style.display=isAdmin()?"none":"inline-block"}
+function updateWho(){try{var lb=document.getElementById("btn-open-logs");if(lb)lb.style.display=isAdmin()?"inline-block":"none"}catch(e){};const names=Object.keys(session.claims||{}).map(teamName).filter(Boolean);const who=isAdmin()?"Admin":(names[0]||"visiteur");id("whoami").textContent="vous : "+who;id("whoami-top").textContent=who;const s=id("whoami-setup");if(s)s.textContent=who;const b=id("btn-add-team");if(b)b.style.display=isAdmin()?"inline-block":"none";const ba=id("btn-admin-on-setup");if(ba)ba.style.display=isAdmin()?"none":"inline-block"}
 function renderTitle(){const name=(state.tournamentName||"").trim();document.title=(name?name+" — ":"")+"TriSports — Fléchettes • Ping-pong • Palet";const pill=id("tname-top");if(name){pill.style.display="inline-block";pill.textContent=name}else{pill.style.display="none";pill.textContent=""}}
 function dartsTotal(){return (state.rules?.dartsSingles||0)+(state.rules?.dartsDoubles||0)}
 function pingTotal(){return (state.rules?.pingSingles||0)+(state.rules?.pingDoubles||0)}
@@ -1575,10 +1576,10 @@ document.addEventListener("click",async(e)=>{
 
     /* --- ADMIN : activation => re-render immédiat --- */
     case "btn-admin-on-setup":
-    case "btn-admin-on":{window.openPassModal({type:"admin"});break}
+    case "btn-admin-on":{ window.openPassModal({type:"admin"}); break }
     case "btn-admin-off":{session.admin=false;updateWho();renderAll();break}
 
-    case "btn-create-tournament":{if(!isAdmin()){window.openPassModal({type:"admin"});return}const code=(id("tcode-input").value||"").trim();if(!code)return alert("Code cloud obligatoire.");const name=(id("tname-input").value||"").trim()||"Tournoi";if(nameExistsLocally(name))return alert("Un tournoi portant ce nom existe déjà dans cette liste.");if(codeExistsLocally(code))return alert("Ce code cloud existe déjà dans votre liste.");const exists=await(async()=>{try{const db=cloud.db||initFB();if(!db)return false;const ref=db.ref("tournaments/"+code+"/payload");const snap=await ref.get?.()??await new Promise(res=>ref.once('value',res));return !!(snap&&snap.exists&&snap.exists())}catch(_){return false}})();if(exists)return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");const n=clampInt(id("teams-count-input").value,2,64);const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50),
+    case "btn-create-tournament":{if(!isAdmin()){ window.openPassModal({type:"admin"}); return; }const code=(id("tcode-input").value||"").trim();if(!code)return alert("Code cloud obligatoire.");const name=(id("tname-input").value||"").trim()||"Tournoi";if(nameExistsLocally(name))return alert("Un tournoi portant ce nom existe déjà dans cette liste.");if(codeExistsLocally(code))return alert("Ce code cloud existe déjà dans votre liste.");const exists=await(async()=>{try{const db=cloud.db||initFB();if(!db)return false;const ref=db.ref("tournaments/"+code+"/payload");const snap=await ref.get?.()??await new Promise(res=>ref.once('value',res));return !!(snap&&snap.exists&&snap.exists())}catch(_){return false}})();if(exists)return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");const n=clampInt(id("teams-count-input").value,2,64);const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50),
   bonusMaxPerTeam: clampInt(id("rule-bonus-max").value,0,50),};joinCloud(code);state={version:40,tid:uid(),cloudId:code,tournamentName:name,rules:R,teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false})),matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};saveState();pushCloud(true);renderAll();goto("equipes");break}
     case "btn-join-code":{const code=(id("join-code").value||"").trim();if(!code)return alert("Renseigne un code.");joinCloud(code);goto("equipes");break}
     case "btn-copy-link":{const code=(id("join-code").value||id("tcode-input").value||state.cloudId||"").trim();if(!code)return alert("Aucun code.");const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);navigator.clipboard?.writeText(url);showToast("Lien copié !\n"+url);break}
@@ -1688,7 +1689,9 @@ document.addEventListener("click",async(e)=>{
   const tab=e.target.closest(".tab");if(tab){let t=tab.getAttribute("data-tab");if(guardTab(t))t='setup';qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false"));qs('.tab[data-tab="'+t+'"]').setAttribute("aria-selected","true");qsa("main section").forEach(s=>s.classList.remove("active"));id(t).classList.add("active")}
   const actBtn=e.target.closest("[data-act]");if(actBtn){const act=actBtn.getAttribute("data-act"),tid=actBtn.getAttribute("data-id");if(act==="del"){if(!isAdmin()||state.locked)return;if(!confirm("Supprimer cette équipe ?"))return;state.teams=state.teams.filter(tt=>tt.id!==tid);state.matches=state.matches.filter(m=>m.a!==tid&&m.b!==tid);if(state.protect?.teamPassHash)delete state.protect.teamPassHash[tid];saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
     if(act==="setpass"){if(!isAdmin())return alert("Réservé à l’admin.");let pass=prompt("Mot de passe pour l’équipe « "+teamName(tid)+" » :");if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");state.protect=state.protect||{};state.protect.teamPassHash=state.protect.teamPassHash||{};state.protect.teamPassHash[tid]=hashPass(pass);saveState();renderTeams();showToast("Mot de passe défini.")}
-    if(act==="login"){ const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null; if(!hashes||!hashes[tid]) return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin)."); window.openPassModal({type:"team", tid:tid}); return } if(act==="logout"){session.claims={};updateWho();renderAll()}
+    if(act==="login"){const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null;if(!hashes||!hashes[tid])return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin)."); window.openPassModal({type:"team", tid:tid});");let pass=prompt("Mot de passe de l’équipe « "+teamName(tid)+" » :");if(pass==null)return;pass=pass.trim();if(!pass)return alert("Mot de passe vide.");if(hashPass(pass)===hashes[tid]){ session.admin=false; session.claims={}; session.claims[tid]=true; updateWho(); renderAll(); showToast("Connexion réussie. Mode admin désactivé sur cet appareil."); }
+      else showToast("Mot de passe incorrect.") }
+    if(act==="logout"){session.claims={};updateWho();renderAll()}
     if(act==="avatar"){const input=qs('[data-avatar="'+tid+'"]');if(input)input.click()}
     if(act==="avatar-clear"){const t=teamObj(tid);if(!t)return;t.avatar=null;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
   }
