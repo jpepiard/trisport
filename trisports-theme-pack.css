@@ -2101,72 +2101,10 @@ header > .container > div:last-child{
 }
 
 
-/* === BONUS BLEU — fond plein + halo clignotant (global) ================== */
-/* Rend la pilule bleue très visible partout (pas seulement dans .match-card).
-   - Fond plein en dégradé cyan→bleu
-   - Bord plus lumineux
-   - Halo qui pulse / clignote
-   - Respect de prefers-reduced-motion
-*/
-.pill.blue{
-  position: relative;
-  color: #f7fbff !important;
-  border: 1px solid rgba(35,153,242,.55);
-  background: linear-gradient(135deg, rgb(35,153,242) 0%, rgb(28,107,224) 100%);
-  text-shadow: 0 0 2px rgba(28,107,224,.35);
-  box-shadow:
-    0 0 6px rgba(35,153,242,.24),
-    0 0 16px rgba(35,153,242,.16),
-    inset 0 0 6px rgba(255,255,255,.06);
-  animation: neonPulseBlue 1.5s ease-in-out infinite;
-}
-
-/* Halo qui clignote autour */
-.pill.blue::before{
-  content: "";
-  position: absolute;
-  inset: -6px;
-  border-radius: 999px;
-  pointer-events: none;
-  box-shadow:
-    0 0 0 0 rgba(35,153,242,.40),
-    0 0 22px rgba(35,153,242,.24);
-  animation: neonHaloBlue 1.4s ease-in-out infinite;
-  opacity: .6;
-}
-
-/* Léger highlight interne */
-.pill.blue::after{
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(circle at 18% -10%, rgba(255,255,255,.18), transparent 35%);
-  pointer-events: none;
-}
-
-/* Au survol : un peu plus intense */
-.pill.blue:hover{
-  box-shadow:
-    0 0 10px rgba(35,153,242,.32),
-    0 0 22px rgba(35,153,242,.22),
-    inset 0 0 8px rgba(255,255,255,.10);
-  filter: saturate(1.05);
-}
-
-/* Préf. accessibilité : réduit les animations si demandé par l'utilisateur */
-@media (prefers-reduced-motion: reduce){
-  .pill.blue{ animation: none !important; }
-  .pill.blue::before{ animation: none !important; opacity: .35; }
-}
-
-
-/* === GLOBAL BLUE BONUS PILL (BEM classes) ================================
-   Applies outside of .match-card too.
-   Uses actual classes found in HTML: .pill--blue and .bonus-flashy
-*/
-.pill.pill--blue,
-.pill.bonus-flashy{
+/* === BONUS BLEU — SCOPÉ AUX MATCHS EN COURS ============================== */
+/* S'applique seulement si la carte de match n'est pas complète (data-complete="false") */
+.match-card[data-complete="false"] .pill.pill--blue,
+.match-card[data-complete="false"] .pill.bonus-flashy{
   position: relative;
   color: #f7fbff !important;
   border: 1px solid rgba(35,153,242,.55);
@@ -2178,10 +2116,8 @@ header > .container > div:last-child{
     inset 0 0 6px rgba(255,255,255,.06);
   animation: neonPulseBlue 1.5s ease-in-out infinite;
 }
-
-/* Blinking halo */
-.pill.pill--blue::before,
-.pill.bonus-flashy::before{
+.match-card[data-complete="false"] .pill.pill--blue::before,
+.match-card[data-complete="false"] .pill.bonus-flashy::before{
   content: "";
   position: absolute;
   inset: -6px;
@@ -2193,10 +2129,8 @@ header > .container > div:last-child{
   animation: neonHaloBlue 1.4s ease-in-out infinite;
   opacity: .6;
 }
-
-/* Light inner highlight */
-.pill.pill--blue::after,
-.pill.bonus-flashy::after{
+.match-card[data-complete="false"] .pill.pill--blue::after,
+.match-card[data-complete="false"] .pill.bonus-flashy::after{
   content: "";
   position: absolute;
   inset: 0;
@@ -2205,46 +2139,9 @@ header > .container > div:last-child{
   pointer-events: none;
 }
 
-/* Hover: a tad stronger */
-.pill.pill--blue:hover,
-.pill.bonus-flashy:hover{
-  box-shadow:
-    0 0 10px rgba(35,153,242,.32),
-    0 0 22px rgba(35,153,242,.22),
-    inset 0 0 8px rgba(255,255,255,.10);
-  filter: saturate(1.05);
-}
-
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce){
-  .pill.pill--blue, .pill.bonus-flashy{ animation: none !important; }
-  .pill.pill--blue::before, .pill.bonus-flashy::before{ animation: none !important; opacity: .35; }
-}
-
-
-/* === Bulletproof override for bonus pill ============================== */
-body body :is(span.pill.bonus-flashy.bonus-force){
-  position: relative !important;
-  color: #f7fbff !important;
-  background: linear-gradient(135deg, rgb(35,153,242) 0%, rgb(28,107,224) 100%) !important;
-  border: 1px solid rgba(35,153,242,.6) !important;
-  box-shadow:
-    0 0 10px rgba(35,153,242,.35),
-    0 0 22px rgba(35,153,242,.22),
-    inset 0 0 6px rgba(255,255,255,.06) !important;
-}
-body body :is(span.pill.bonus-flashy.bonus-force)::before{
-  content:"";
-  position:absolute;
-  inset:-6px;
-  border-radius:999px;
-  pointer-events:none;
-  box-shadow:
-    0 0 0 0 rgba(35,153,242,.45),
-    0 0 22px rgba(35,153,242,.28);
-  animation: neonHaloBlue 1.4s ease-in-out infinite;
-  opacity:.7;
-}
-@media (prefers-reduced-motion: reduce){
-  body body :is(span.pill.bonus-flashy.bonus-force)::before{ animation:none !important; opacity:.4; }
+  .match-card[data-complete="false"] .pill.pill--blue,
+  .match-card[data-complete="false"] .pill.bonus-flashy{ animation: none !important; }
+  .match-card[data-complete="false"] .pill.pill--blue::before,
+  .match-card[data-complete="false"] .pill.bonus-flashy::before{ animation: none !important; opacity: .35; }
 }
