@@ -2771,24 +2771,45 @@ function onEnter(e){
 }
 </style>
 
-<!-- Password modal (injected) -->
-<div id="pw-modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);z-index:9999">
-  <div style="background:white;padding:16px;border-radius:8px;max-width:420px;width:90%;box-shadow:0 8px 24px rgba(0,0,0,0.2)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <strong id="pw-modal-title">Mot de passe</strong>
-      <button id="pw-modal-close" aria-label="Fermer" style="border:none;background:none;font-size:18px;cursor:pointer">✖</button>
+
+<!-- Password modal (styled) -->
+<style>
+  .pw-backdrop{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(4,6,20,.55); backdrop-filter: blur(4px); z-index:9999; }
+  .pw-dialog{ width:min(560px,92vw); border-radius:14px; background:linear-gradient(180deg,#0f1324,#0c1020);
+    border:1px solid rgba(122,162,255,.25); box-shadow: 0 18px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(122,162,255,.12) inset;
+    color:#e6ebff; padding:18px; }
+  .pw-title{ font-size:16px; margin:0 0 10px; color:#cfd8ff; }
+  .pw-field{ position:relative; }
+  .pw-input{ width:100%; padding:14px 44px 14px 14px; background: #0b0f1f; color:#e6ebff;
+    border:1px solid rgba(122,162,255,.25); border-radius:12px; font-size:16px; outline:none;
+    transition: box-shadow .18s ease, border-color .18s ease; -webkit-text-security: disc; }
+  .pw-input:focus{ border-color:#4b5bd7; box-shadow:0 0 0 4px rgba(122,162,255,.15), 0 0 0 1px rgba(122,162,255,.35) inset; }
+  .pw-eye{ position:absolute; right:8px; top:50%; transform:translateY(-50%); width:34px; height:34px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#1b2246,#131a35);
+    border:1px solid rgba(122,162,255,.3); cursor:pointer; }
+  .pw-eye:hover{ box-shadow:0 8px 20px rgba(75,139,255,.25), 0 0 0 1px rgba(75,139,255,.25) inset; }
+  .pw-row{ margin-top:14px; display:flex; gap:12px; justify-content:flex-end; }
+  .pw-btn{ padding:10px 16px; border-radius:12px; border:1px solid #2c3148; background:#171b2e; color:#e6ebff; cursor:pointer;
+           transition: transform .06s ease, box-shadow .18s ease, filter .18s ease; }
+  .pw-btn:hover{ box-shadow: 0 8px 18px rgba(0,0,0,.28), 0 0 0 1px rgba(122,162,255,.15) inset; filter:saturate(112%); }
+  .pw-btn.primary{ background:linear-gradient(180deg,#2a3aa6,#1f2b86); border-color:#4b5bd7; }
+  .pw-btn.primary:hover{ box-shadow:0 10px 22px rgba(75,139,255,.28), 0 0 0 1px rgba(75,139,255,.25) inset; }
+</style>
+<div id="pw-modal" class="pw-backdrop" role="dialog" aria-modal="true" aria-labelledby="pw-modal-title">
+  <div class="pw-dialog">
+    <h3 id="pw-modal-title" class="pw-title">Mot de passe</h3>
+    <div class="pw-field">
+      <input id="pw-modal-input" class="pw-input" type="password" inputmode="text" autocomplete="off" placeholder="••••••••" />
+      <button id="pw-modal-toggle" type="button" class="pw-eye" aria-label="Afficher/masquer le mot de passe">👁️</button>
     </div>
-    <div style="margin-bottom:8px"><input id="pw-modal-input" type="password" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px" placeholder="Mot de passe"/></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button id="pw-modal-toggle" type="button" style="padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f8f8f8;cursor:pointer">👁️</button>
-      <button id="pw-modal-cancel" type="button" style="padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#f0f0f0;cursor:pointer">Annuler</button>
-      <button id="pw-modal-ok" type="button" style="padding:6px 10px;border-radius:6px;border:1px solid #2b7cff;background:#2b7cff;color:white;cursor:pointer">OK</button>
+    <div class="pw-row">
+      <button id="pw-modal-cancel" type="button" class="pw-btn">Annuler</button>
+      <button id="pw-modal-ok" type="button" class="pw-btn primary">Valider</button>
     </div>
   </div>
 </div>
-
 <script>
-// showPasswordModal(message) -> Promise<string|null>
 function showPasswordModal(message){
   return new Promise(resolve=>{
     const modal = document.getElementById('pw-modal');
@@ -2796,34 +2817,26 @@ function showPasswordModal(message){
     const input = document.getElementById('pw-modal-input');
     const ok = document.getElementById('pw-modal-ok');
     const cancel = document.getElementById('pw-modal-cancel');
-    const close = document.getElementById('pw-modal-close');
     const toggle = document.getElementById('pw-modal-toggle');
-    title.textContent = message || 'Mot de passe';
-    input.type = 'password';
-    input.value = '';
-    modal.style.display = 'flex';
-    input.focus();
 
-    function cleanup(){
-      modal.style.display = 'none';
-      ok.removeEventListener('click', onOk);
-      cancel.removeEventListener('click', onCancel);
-      close.removeEventListener('click', onCancel);
-      toggle.removeEventListener('click', onToggle);
+    function open(){ modal.style.display='flex'; setTimeout(()=>input.focus(), 0); }
+    function close(){ modal.style.display='none';
+      ok.removeEventListener('click', onOk); cancel.removeEventListener('click', onCancel);
+      toggle.removeEventListener('click', onToggle); document.removeEventListener('keydown', onKey); }
+    function onOk(){ const v=input.value; close(); resolve(v); }
+    function onCancel(){ close(); resolve(null); }
+    function onToggle(){
+      input.type = (input.type==='password') ? 'text' : 'password';
+      // when showing text, reveal real characters; when hiding, keep webkit security bullets
+      if(input.type==='password'){ input.style.webkitTextSecurity='disc'; } else { input.style.webkitTextSecurity='none'; }
     }
-    function onOk(){ const v = input.value; cleanup(); resolve(v); }
-    function onCancel(){ cleanup(); resolve(null); }
-    function onToggle(){ input.type = (input.type==='password') ? 'text' : 'password'; }
-    ok.addEventListener('click', onOk);
-    cancel.addEventListener('click', onCancel);
-    close.addEventListener('click', onCancel);
-    toggle.addEventListener('click', onToggle);
+    function onKey(e){ if(e.key==='Enter') onOk(); else if(e.key==='Escape') onCancel(); }
 
-    // allow Enter/Escape on input
-    input.onkeydown = function(e){
-      if(e.key === 'Enter'){ onOk(); }
-      else if(e.key === 'Escape'){ onCancel(); }
-    };
+    title.textContent = message || 'Mot de passe';
+    input.type='password'; input.style.webkitTextSecurity='disc'; input.value='';
+    ok.addEventListener('click', onOk); cancel.addEventListener('click', onCancel);
+    toggle.addEventListener('click', onToggle); document.addEventListener('keydown', onKey);
+    open();
   });
 }
 </script>
