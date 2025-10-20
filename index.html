@@ -1599,7 +1599,7 @@ document.addEventListener("click",async(e)=>{
     state.protect.teamPassHash[tid] = hashPass(pass);
     saveState(); renderTeams(); showToast("Mot de passe défini.");
   });
-if(act==="login"){
+}if(act==="login"){
   const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null;
   if(!hashes||!hashes[tid]) return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin).");
   openPasswordModal('login', { tid, teamName: teamName(tid) }).then(res=>{
@@ -1613,7 +1613,12 @@ if(act==="login"){
       showToast("Mot de passe incorrect.");
     }
   });
-}
+}if(act==="logout"){session.claims={};updateWho();renderAll()}
+    if(act==="avatar"){const input=qs('[data-avatar="'+tid+'"]');if(input)input.click()}
+    if(act==="avatar-clear"){const t=teamObj(tid);if(!t)return;t.avatar=null;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
+  }
+});
+
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
 
@@ -2787,8 +2792,7 @@ function onEnter(e){
   .round-head:has(.round-chip.yellow) + .round-grid .pill.pill--blue::before{ animation: none !important; opacity: .4; }
 }
 </style>
-
-<!-- PASSWORD MODAL -->
+<!-- PASSWORD MODAL (inserted) -->
 <div id="pw-modal" aria-hidden="true" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;align-items:center;justify-content:center;">
   <div role="dialog" aria-modal="true" aria-labelledby="pw-modal-title"
        style="width:min(420px,92vw);background:#0f1331;border:1px solid #2b315f;border-radius:12px;padding:14px;box-shadow:0 12px 32px rgba(0,0,0,.6);">
@@ -2836,7 +2840,6 @@ function onEnter(e){
   window.openPasswordModal = openModal;
 })();
 </script>
-
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
