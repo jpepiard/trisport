@@ -1599,8 +1599,7 @@ document.addEventListener("click",async(e)=>{
     state.protect.teamPassHash[tid] = hashPass(pass);
     saveState(); renderTeams(); showToast("Mot de passe défini.");
   });
-};state.protect.teamPassHash=state.protect.teamPassHash||{};state.protect.teamPassHash[tid]=hashPass(pass);saveState();renderTeams();showToast("Mot de passe défini.")}
-    if(act==="login"){
+if(act==="login"){
   const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null;
   if(!hashes||!hashes[tid]) return alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin).");
   openPasswordModal('login', { tid, teamName: teamName(tid) }).then(res=>{
@@ -1608,12 +1607,13 @@ document.addEventListener("click",async(e)=>{
     const pass = (res.value||'').trim();
     if(!pass) return alert("Mot de passe vide.");
     if(hashPass(pass) === hashes[tid]){
-      session.admin = false; session.claims = {if(act==="logout"){session.claims={};updateWho();renderAll()}
-    if(act==="avatar"){const input=qs('[data-avatar="'+tid+'"]');if(input)input.click()}
-    if(act==="avatar-clear"){const t=teamObj(tid);if(!t)return;t.avatar=null;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
-  }
-});
-
+      session.admin = false; session.claims = {}; session.claims[tid] = true;
+      updateWho(); renderAll(); showToast("Connexion réussie. Mode admin désactivé sur cet appareil.");
+    } else {
+      showToast("Mot de passe incorrect.");
+    }
+  });
+}
 /* ===== Modal bonus ===== */
 let bonusCTX={round:null,teamId:null};
 
