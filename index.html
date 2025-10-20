@@ -1476,14 +1476,111 @@ document.addEventListener("click",async(e)=>{
 
     /* --- ADMIN : activation => re-render immédiat --- */
     case "btn-admin-on-setup":
-    case "btn-admin-on":{
-openPasswordModal('admin-pin', {}).then(res=>{
-  if(!res || !res.ok) return;
-  const pin = (res.value||'').trim();
-  if(pin !== "30041991"){ showToast("PIN incorrect."); return; }
-  session.admin = true; updateWho(); renderAll(); showToast("Mode administrateur activé (déconnexion des équipes sur cet appareil).");
-});
-break;
+    case "btn-admin-on":{const pin=prompt("PIN administrateur :");if(pin==="30041991"){session.admin=true;session.claims={};updateWho();renderAll();showToast("Mode administrateur activé (déconnexion des équipes sur cet appareil).")}else showToast("PIN incorrect.");break}
+    case "btn-admin-off":{session.admin=false;updateWho();renderAll();break}
+
+    case "btn-create-tournament":{if(!isAdmin()){const pin=prompt("PIN administrateur :");if(pin!=="30041991")return alert("PIN incorrect.");session.admin=true;session.claims={};updateWho();renderAll()}const code=(id("tcode-input").value||"").trim();if(!code)return alert("Code cloud obligatoire.");const name=(id("tname-input").value||"").trim()||"Tournoi";if(nameExistsLocally(name))return alert("Un tournoi portant ce nom existe déjà dans cette liste.");if(codeExistsLocally(code))return alert("Ce code cloud existe déjà dans votre liste.");const exists=await(async()=>{try{const db=cloud.db||initFB();if(!db)return false;const ref=db.ref("tournaments/"+code+"/payload");const snap=await ref.get?.()??await new Promise(res=>ref.once('value',res));return !!(snap&&snap.exists&&snap.exists())}catch(_){return false}})();if(exists)return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");const n=clampInt(id("teams-count-input").value,2,64);const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50),
+  bonusMaxPerTeam: clampInt(id("rule-bonus-max").value,0,50),};joinCloud(code);state={version:40,tid:uid(),cloudId:code,tournamentName:name,rules:R,teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false})),matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};saveState();pushCloud(true);renderAll();goto("equipes");break}
+    case "btn-join-code":{const code=(id("join-code").value||"").trim();if(!code)return alert("Renseigne un code.");joinCloud(code);goto("equipes");break}
+    case "btn-copy-link":{const code=(id("join-code").value||id("tcode-input").value||state.cloudId||"").trim();if(!code)return alert("Aucun code.");const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);navigator.clipboard?.writeText(url);showToast("Lien copié !\n"+url);break}
+
+    case "btn-add-team":{if(!isAdmin())return alert("Réservé à l’admin.");if(state.locked)return alert("Calendrier figé.");state.teams.push({id:uid(),name:"Équipe "+(state.teams.length+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false});saveState();renderTeams();break}
+    case "btn-generate":{if(!isAdmin())return alert("Seul l’admin peut générer.");if(state.locked)return;generateSchedule();state.locked=true;saveState();renderAll();goto("calendrier");break}
+
+    case "btn-refresh-standings":
+    case "btn-refresh-standings-2":{renderLeaderboard();renderH2H();if(btn.id==="btn-refresh-standings-2")goto("classement");break}
+    case "btn-show-summary":{id("view-summary").style.display="block";id("view-h2h").style.display="none";id("btn-show-summary").setAttribute("aria-pressed","true");id("btn-show-h2h").setAttribute("aria-pressed","false");break}
+    case "btn-show-h2h":{id("view-summary").style.display="none";id("view-h2h").style.display="block";id("btn-show-summary").setAttribute("aria-pressed","false");id("btn-show-h2h").setAttribute("aria-pressed","true");break}
+    case "btn-collapse":{qsa('#match-list .match-card').forEach(c=>c.setAttribute('aria-expanded','false'));ui.open={};break}
+
+    case "btn-export":{const data=JSON.stringify(state,null,2);const url=URL.createObjectURL(new Blob([data],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download=("tournoi-"+(state.tournamentName||"TriSports")).replace(/\s+/g,'_')+".json";a.click();URL.revokeObjectURL(url);break}
+    case "btn-import":{const f=id("file-import").files?.[0];if(!f)return alert("Sélectionnez un fichier JSON.");f.text().then(t=>{try{const data=JSON.parse(t);state=data;normalize();saveState();renderAll();showToast("Import réussi !")}catch(_){showToast("Fichier invalide.")}});break}
+
+    case "btn-cloud-copy":{const code=state.cloudId||cloud.id;if(!code)return alert("Pas de code cloud.");const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);navigator.clipboard?.writeText(url);showToast("Lien copié !\n"+url);break}
+    case "btn-cloud-delete":{if(!isAdmin())return alert("Suppression cloud réservée à l’admin.");const code=state.cloudId||cloud.id;if(!code)return alert("Aucun code actif.");if(!confirm("Supprimer définitivement ce tournoi du cloud ?"))return;deleteCloud(code).then(()=>{setIndex(getIndex().filter(e=>e.id!==code));unsubscribeCloud();resetState();renderSetupRecent();renderAll();history.replaceState(null,"",location.pathname);showToast("Tournoi supprimé.");goto('setup')});break}
+
+    /* ---- Réinitialiser scores => réinitialise aussi BONUS + journées ---- */
+    case "btn-reset-scores":{
+      if (!isAdmin()) return alert("Réservé à l’admin.");
+      if (!confirm("Réinitialiser les SCORES et les BONUS ?")) return;
+      (state.matches || []).forEach(m=>{
+        m.darts = Array(dartsTotal()).fill(null);
+        m.ping  = Array(pingTotal()).fill(null);
+        m.pingPts = Array(pingTotal()).fill({a:null,b:null});
+        m.palet = { a:null, b:null };
+      });
+      state.roundCtl = {};
+      state.bonusSelections = {};
+      state.bonusApplied = {};
+      state.bonusUsed = {};
+      (state.teams||[]).forEach(t=>{ if(t) t.bonusCapitaineUsed=false; });
+      saveState();
+      renderAll();
+      goto("calendrier");
+      break}
+
+    case "btn-unlock":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Déverrouiller le calendrier ?"))return;state.locked=false;saveState();renderTeams();renderMatches();updateLock();break}
+
+    case "btn-start-round":{if(!isAdmin())return;const r=CURRENT_ROUND,rs=roundState(r);if(rs.started||rs.finished)return;rs.started=true;saveState();renderMatches();showToast("Journée #"+r+" démarrée — bonus verrouillés.");break}
+
+    /* ---- Fin de journée : blocage si incomplet + bonus appliqués ---- */
+    case "btn-end-round": {
+      if (!isAdmin()) return;
+      const r  = CURRENT_ROUND;
+      const rs = roundState(r);
+      if (!rs.started || rs.finished) return;
+
+      const matchesOfRound = state.matches.filter(m => m.round === r);
+      const incomplets = matchesOfRound.filter(m => !isMatchComplete(m));
+      if (incomplets.length) { showToast(`Impossible de terminer la journée #${r} : ${incomplets.length} match(s) incomplet(s).`); return; }
+
+      
+      
+      const sels = state.bonusSelections[r] || {};
+      Object.keys(sels).forEach(tid=>{
+        const sel = sels[tid]; if (!sel) return;
+        if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
+        let total = 0;
+
+        if (sel.type === 'capitaine') {
+          matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
+        } else if (sel.type === 'melon') {
+          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (oppSel && oppSel.type === 'miroir') {
+              // Melon se retourne : rien pour l'équipe Melon, Miroir prendra le total dans sa propre branche
+              total = 0;
+            } else {
+              const sport = sel.sport || 'darts';
+              total = computeMelonBonusForMatch(m, tid, sport);
+            }
+          }
+        } else if (sel.type === 'miroir') {
+          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (oppSel && oppSel.type === 'melon') {
+              // Miroir récupère le Melon d’or de l’adversaire, même sport
+              const sport = oppSel.sport || 'darts';
+              total = computeMelonBonusForMatch(m, tid, sport);
+            } else {
+              total = 0;
+            }
+          }
+        } else {
+          total = 0; // autres
+        }
+
+        setBonusApplied(r, tid, total); 
+        state.bonusUsed = state.bonusUsed || {}; state.bonusUsed[r] = state.bonusUsed[r] || {}; state.bonusUsed[r][tid]=true; 
+        markTeamBonusUsed(tid);
+      });
+
+      rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
+      showToast(`Journée #${r} terminée — bonus appliqués et révélés.`); break;
     }
   }}
   const openBtn=e.target.closest("[data-open-id]");if(openBtn){const code=openBtn.getAttribute("data-open-id").replace(/^cloud:/,"");id("join-code").value=code;joinCloud(code);goto("equipes")}
@@ -2740,7 +2837,6 @@ function onEnter(e){
   cancel.addEventListener('click', ()=> closeModal({ok:false}));
   closeBtn.addEventListener('click', ()=> closeModal({ok:false}));
   toggle.addEventListener('click', ()=>{ input.type = input.type==='password' ? 'text' : 'password'; toggle.textContent = input.type==='password'?'👁':'🙈'; input.focus(); });
-  input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ ok.click(); } });
   window.openPasswordModal = openModal;
 })();
 </script>
