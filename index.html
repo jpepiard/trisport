@@ -1491,13 +1491,10 @@ case "btn-admin-on":{
   if(!isAdmin()){ alert("Réservé à l’admin."); return; }
   modalSetTeamPass(tid, teamName(tid));
   return;
-};state.protect.teamPassHash=state.protect.teamPassHash||{};state.protect.teamPassHash[tid]=hashPass(pass);saveState();renderTeams();showToast("Mot de passe défini.")}
-    if(act==="login"){
+if(act==="login"){
   modalTeamLogin(tid, teamName(tid));
   return;
-}; session.claims[tid]=true; updateWho(); renderAll(); showToast("Connexion réussie. Mode admin désactivé sur cet appareil."); }
-      else showToast("Mot de passe incorrect.") }
-    if(act==="logout"){session.claims={};updateWho();renderAll()}
+if(act==="logout"){session.claims={};updateWho();renderAll()}
     if(act==="avatar"){const input=qs('[data-avatar="'+tid+'"]');if(input)input.click()}
     if(act==="avatar-clear"){const t=teamObj(tid);if(!t)return;t.avatar=null;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
   }
