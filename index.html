@@ -1491,9 +1491,11 @@ case "btn-admin-on":{
   if(!isAdmin()){ alert("Réservé à l’admin."); return; }
   modalSetTeamPass(tid, teamName(tid));
   return;
-if(act==="login"){
+}
+    if(act==="login"){
   modalTeamLogin(tid, teamName(tid));
   return;
+}
 if(act==="logout"){session.claims={};updateWho();renderAll()}
     if(act==="avatar"){const input=qs('[data-avatar="'+tid+'"]');if(input)input.click()}
     if(act==="avatar-clear"){const t=teamObj(tid);if(!t)return;t.avatar=null;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
