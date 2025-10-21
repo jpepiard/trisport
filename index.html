@@ -1476,30 +1476,10 @@ document.addEventListener("click",async(e)=>{
 
     /* --- ADMIN : activation => re-render immédiat --- */
     case "btn-admin-on-setup":
-case "btn-admin-on":{
-  const res = await openPasswordModal('admin-pin');
-  if (!res || !res.ok) break;
-  if (res.value === "30041991") {
-    session.admin = true;
-    session.claims = {};
-    updateWho(); renderAll();
-    showToast("Mode administrateur activé (déconnexion des équipes sur cet appareil).");
-  } else {
-    showToast("PIN incorrect.");
-  }
-  break;
-}
+    case "btn-admin-on":{const __p = await openPasswordModal('admin-pin'); const pin = (__p && __p.ok) ? __p.value : null;if(pin==="30041991"){session.admin=true;session.claims={};updateWho();renderAll();showToast("Mode administrateur activé (déconnexion des équipes sur cet appareil).")}else showToast("PIN incorrect.");break}
     case "btn-admin-off":{session.admin=false;updateWho();renderAll();break}
 
-    case "btn-create-tournament":{
-  if (!isAdmin()) {
-    const check = await openPasswordModal('admin-pin');
-    if (!check || !check.ok) break;
-    if (check.value !== "30041991") { alert("PIN incorrect."); break; }
-    session.admin = true;
-    session.claims = {};
-    updateWho(); renderAll();
-  };updateWho();renderAll()}const code=(id("tcode-input").value||"").trim();if(!code)return alert("Code cloud obligatoire.");const name=(id("tname-input").value||"").trim()||"Tournoi";if(nameExistsLocally(name))return alert("Un tournoi portant ce nom existe déjà dans cette liste.");if(codeExistsLocally(code))return alert("Ce code cloud existe déjà dans votre liste.");const exists=await(async()=>{try{const db=cloud.db||initFB();if(!db)return false;const ref=db.ref("tournaments/"+code+"/payload");const snap=await ref.get?.()??await new Promise(res=>ref.once('value',res));return !!(snap&&snap.exists&&snap.exists())}catch(_){return false}})();if(exists)return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");const n=clampInt(id("teams-count-input").value,2,64);const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50),
+    case "btn-create-tournament":{if(!isAdmin()){const __p = await openPasswordModal('admin-pin'); const pin = (__p && __p.ok) ? __p.value : null;if(pin!=="30041991")return alert("PIN incorrect.");session.admin=true;session.claims={};updateWho();renderAll()}const code=(id("tcode-input").value||"").trim();if(!code)return alert("Code cloud obligatoire.");const name=(id("tname-input").value||"").trim()||"Tournoi";if(nameExistsLocally(name))return alert("Un tournoi portant ce nom existe déjà dans cette liste.");if(codeExistsLocally(code))return alert("Ce code cloud existe déjà dans votre liste.");const exists=await(async()=>{try{const db=cloud.db||initFB();if(!db)return false;const ref=db.ref("tournaments/"+code+"/payload");const snap=await ref.get?.()??await new Promise(res=>ref.once('value',res));return !!(snap&&snap.exists&&snap.exists())}catch(_){return false}})();if(exists)return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");const n=clampInt(id("teams-count-input").value,2,64);const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50),
   bonusMaxPerTeam: clampInt(id("rule-bonus-max").value,0,50),};joinCloud(code);state={version:40,tid:uid(),cloudId:code,tournamentName:name,rules:R,teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false})),matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};saveState();pushCloud(true);renderAll();goto("equipes");break}
     case "btn-join-code":{const code=(id("join-code").value||"").trim();if(!code)return alert("Renseigne un code.");joinCloud(code);goto("equipes");break}
     case "btn-copy-link":{const code=(id("join-code").value||id("tcode-input").value||state.cloudId||"").trim();if(!code)return alert("Aucun code.");const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);navigator.clipboard?.writeText(url);showToast("Lien copié !\n"+url);break}
@@ -1836,7 +1816,7 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     ensureBrandImages();
   }
   // garder la réécriture d'aide capitaine en async léger
-  document.addEventListener('click', async function(){ if (typeof rewriteCapitaineHelp==='function') setTimeout(rewriteCapitaineHelp,0); }, true);
+  document.addEventListener('click', function(){ if (typeof rewriteCapitaineHelp==='function') setTimeout(rewriteCapitaineHelp,0); }, true);
   
   // --- Affichage après révélation : ne pas afficher joueur/sport pour Capitaine ---
   if (typeof window.bonusChip === 'function'){
@@ -2635,7 +2615,7 @@ function onEnter(e){
       });
     }
   });
-  document.addEventListener('click', function(e){
+  document.addEventListener('click', async function(e){
     var target = e.target;
     if (target && target.id === 'ts-close') {
       modal.classList.remove('show');
@@ -2790,6 +2770,54 @@ function onEnter(e){
   .round-head:has(.round-chip.yellow) + .round-grid .pill.pill--blue::before{ animation: none !important; opacity: .4; }
 }
 </style>
+<!-- PASSWORD MODAL -->
+<div id="pw-modal" aria-hidden="true" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;align-items:center;justify-content:center;">
+  <div role="dialog" aria-modal="true" aria-labelledby="pw-modal-title"
+       style="width:min(420px,92vw);background:#0f1331;border:1px solid #2b315f;border-radius:12px;padding:14px;box-shadow:0 12px 32px rgba(0,0,0,.6);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong id="pw-modal-title">Mot de passe</strong>
+      <button id="pw-modal-close" type="button" aria-label="Fermer" style="background:transparent;border:0;color:#9ab4ff;font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div id="pw-modal-desc" class="help" style="margin-bottom:8px">Saisis le mot de passe.</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="pw-modal-input" type="password" autocomplete="current-password"
+             placeholder="Mot de passe" style="flex:1;padding:10px;border-radius:8px;border:1px solid #2b315f;background:#0b1230;color:#fff" />
+      <button id="pw-modal-show" type="button" title="Afficher / masquer" style="border:1px solid #2b315f;background:#111435;color:#fff;padding:8px;border-radius:8px">👁</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+      <button id="pw-modal-cancel" class="btn small" type="button">Annuler</button>
+      <button id="pw-modal-ok" class="btn primary small" type="button">Valider</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const modal = document.getElementById('pw-modal');
+  const input = document.getElementById('pw-modal-input');
+  const ok = document.getElementById('pw-modal-ok');
+  const cancel = document.getElementById('pw-modal-cancel');
+  const closeBtn = document.getElementById('pw-modal-close');
+  const desc = document.getElementById('pw-modal-desc');
+  const toggle = document.getElementById('pw-modal-show');
+  let resolveFn = null, currentMode=null, currentTid=null;
+  function openModal(mode, opts){
+    currentMode = mode; currentTid = (opts&&opts.tid)||null;
+    input.value=''; input.type='password'; toggle.textContent='👁';
+    if(mode==='setpass'){ desc.textContent = `Définir le mot de passe pour l’équipe « ${(opts&&opts.teamName)||''} »`; input.placeholder='Nouveau mot de passe'; }
+    else if(mode==='login'){ desc.textContent = `Saisis le mot de passe de l’équipe « ${(opts&&opts.teamName)||''} »`; input.placeholder='Mot de passe'; }
+    else if(mode==='admin-pin'){ desc.textContent='Saisis le PIN administrateur'; input.placeholder='PIN admin'; }
+    else { desc.textContent='Saisis le mot de passe'; input.placeholder='Mot de passe'; }
+    modal.removeAttribute('aria-hidden'); modal.style.display='flex'; setTimeout(()=>input.focus(),50);
+    return new Promise((resolve)=>{ resolveFn=resolve; });
+  }
+  function closeModal(result){ modal.setAttribute('aria-hidden','true'); modal.style.display='none'; if(typeof resolveFn==='function') resolveFn(result); resolveFn=null; currentMode=null; currentTid=null; }
+  ok.addEventListener('click', ()=>{ const val=(input.value||'').trim(); closeModal({ok:true,value:val,mode:currentMode,tid:currentTid}); });
+  cancel.addEventListener('click', ()=> closeModal({ok:false}));
+  closeBtn.addEventListener('click', ()=> closeModal({ok:false}));
+  toggle.addEventListener('click', ()=>{ input.type = input.type==='password' ? 'text' : 'password'; toggle.textContent = input.type==='password'?'👁':'🙈'; input.focus(); });
+  window.openPasswordModal = openModal;
+})();
+</script>
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
