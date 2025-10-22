@@ -1487,9 +1487,14 @@ case "btn-admin-on":{
   const av=e.target.closest('.avatar[data-click-avatar]');if(av){const tid=av.getAttribute('data-click-avatar');if(isAdmin()||hasClaim(tid)){const input=document.querySelector('input[type="file"][data-avatar="'+tid+'"]');if(input)input.click()}return}
   const tab=e.target.closest(".tab");if(tab){let t=tab.getAttribute("data-tab");if(guardTab(t))t='setup';qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false"));qs('.tab[data-tab="'+t+'"]').setAttribute("aria-selected","true");qsa("main section").forEach(s=>s.classList.remove("active"));id(t).classList.add("active")}
   const actBtn=e.target.closest("[data-act]");if(actBtn){const act=actBtn.getAttribute("data-act"),tid=actBtn.getAttribute("data-id");if(act==="del"){if(!isAdmin()||state.locked)return;if(!confirm("Supprimer cette équipe ?"))return;state.teams=state.teams.filter(tt=>tt.id!==tid);state.matches=state.matches.filter(m=>m.a!==tid&&m.b!==tid);if(state.protect?.teamPassHash)delete state.protect.teamPassHash[tid];saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
-    else if (act==="setpass") { if (!isAdmin()) { alert("Réservé à l’admin."); } else { modalSetTeamPass(tid, teamName(tid)); } }
-    else if (act==="login") { modalTeamLogin(tid, teamName(tid)); }
-      else showToast("Mot de passe incorrect.") }
+    else if (act==="setpass") {
+      if (!isAdmin()) { alert("Réservé à l’admin."); }
+      else { modalSetTeamPass(tid, teamName(tid)); }
+    
+    else if (act==="login") {
+      modalTeamLogin(tid, teamName(tid));
+    
+      
     if(act==="logout"){session.claims={};updateWho();renderAll()}
     if(act==="avatar"){const input=qs('[data-avatar="'+tid+'"]');if(input)input.click()}
     if(act==="avatar-clear"){const t=teamObj(tid);if(!t)return;t.avatar=null;saveState();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
@@ -2689,15 +2694,37 @@ function onEnter(e){
     </div>
   </div>
 </div>
-<script>(function(){if(window.openPasswordModal)return;const m=document.getElementById('pw-modal'),inp=id('pw-modal-input'),ok=id('pw-modal-ok'),ko=id('pw-modal-cancel'),x=id('pw-modal-close'),d=id('pw-modal-desc'),tg=id('pw-modal-show');let res;function open(mode,opts){inp.value='';inp.type='password';tg.textContent='👁';d.textContent=(mode==='admin-pin'?'Saisis le PIN administrateur':(mode==='setpass'?'Définir le mot de passe pour l’équipe « '+(opts?.teamName||'')+' »':(mode==='login'?'Saisis le mot de passe de l’équipe « '+(opts?.teamName||'')+' »':'Saisis le mot de passe')));m.style.display='flex';m.removeAttribute('aria-hidden');setTimeout(()=>{try{inp.focus()}catch(_){}} ,30);return new Promise(r=>res=r)}function close(v){m.setAttribute('aria-hidden','true');m.style.display='none';try{res&&res(v)}finally{res=null}}ok.addEventListener('click',()=>close({ok:true,value:inp.value}));ko.addEventListener('click',()=>close({ok:false}));x.addEventListener('click',()=>close({ok:false}));tg.addEventListener('click',()=>{inp.type=inp.type==='password'?'text':'password';tg.textContent=inp.type==='password'?'👁':'🙈';inp.focus()});window.openPasswordModal=open})();</script>
-<script>
-(function(){
+<script>(function(){
+  function id(x){ return document.getElementById(x); }
+  if (window.openPasswordModal) return;
+  const m = id('pw-modal'), inp = id('pw-modal-input'), ok = id('pw-modal-ok'),
+        ko = id('pw-modal-cancel'), x = id('pw-modal-close'), d = id('pw-modal-desc'),
+        tg = id('pw-modal-show');
+  let resolveFn = null, currentMode = null, currentTid = null;
+  function open(mode, opts){
+    currentMode = mode; currentTid = (opts && opts.tid) || null;
+    inp.value=''; inp.type='password'; tg.textContent='👁';
+    if(mode==='setpass'){ d.textContent='Définir le mot de passe pour l’équipe « '+((opts&&opts.teamName)||'')+' »'; inp.placeholder='Nouveau mot de passe'; }
+    else if(mode==='login'){ d.textContent='Saisis le mot de passe de l’équipe « '+((opts&&opts.teamName)||'')+' »'; inp.placeholder='Mot de passe'; }
+    else if(mode==='admin-pin'){ d.textContent='Saisis le PIN administrateur'; inp.placeholder='PIN admin'; }
+    else { d.textContent='Saisis le mot de passe'; inp.placeholder='Mot de passe'; }
+    m.style.display='flex'; setTimeout(function(){ try{inp.focus();}catch(_){}} ,30);
+    return new Promise(function(resolve){ resolveFn = resolve; });
+  }
+  function close(result){ m.style.display='none'; if (typeof resolveFn==='function') resolveFn(result); resolveFn=null; currentMode=null; currentTid=null; }
+  ok.addEventListener('click', function(){ const v=(inp.value||'').trim(); close({ok:true, value:v, mode:currentMode, tid:currentTid}); });
+  ko.addEventListener('click', function(){ close({ok:false}); });
+  x.addEventListener('click', function(){ close({ok:false}); });
+  tg.addEventListener('click', function(){ inp.type = (inp.type==='password' ? 'text' : 'password'); tg.textContent = (inp.type==='password'?'👁':'🙈'); try{inp.focus();}catch(_){}});
+  window.openPasswordModal = open;
+})();</script>
+<script>(function(){
   if (window.__pwHelpersInstalled) return; window.__pwHelpersInstalled = true;
   window.askAdminPin = function(){
-    return openPasswordModal('admin-pin').then(r => (r && r.ok) ? (r.value||'').trim() : null);
+    return openPasswordModal('admin-pin').then(function(r){ return (r&&r.ok)?(r.value||'').trim():null; });
   };
   window.ensureAdmin = function(onSuccess){
-    return askAdminPin().then(pin=>{
+    return window.askAdminPin().then(function(pin){
       if (pin===null) return false;
       if (pin!=="30041991"){ try{showToast("PIN incorrect.");}catch(_){alert("PIN incorrect.");} return false; }
       try{ session.admin=true; session.claims={}; updateWho(); renderAll(); showToast("Mode administrateur activé (déconnexion des équipes sur cet appareil)."); }catch(_){}
@@ -2706,24 +2733,23 @@ function onEnter(e){
     });
   };
   window.modalSetTeamPass = function(tid, teamName){
-    return openPasswordModal('setpass', { tid, teamName }).then(r=>{
-      if(!r||!r.ok) return false; const pass=(r.value||'').trim(); if(!pass){ alert("Mot de passe vide."); return false; }
+    return openPasswordModal('setpass', { tid:tid, teamName:teamName }).then(function(r){
+      if(!r||!r.ok) return false; var pass=(r.value||'').trim(); if(!pass){ alert("Mot de passe vide."); return false; }
       try{ state.protect=state.protect||{}; state.protect.teamPassHash=state.protect.teamPassHash||{}; state.protect.teamPassHash[tid]=hashPass(pass); saveState(); renderTeams(); showToast("Mot de passe défini."); }catch(_){}
       return true;
     });
   };
   window.modalTeamLogin = function(tid, teamName){
-    try{ const hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null; if(!hashes||!hashes[tid]){ alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin)."); return Promise.resolve(false);} }catch(_){}
-    return openPasswordModal('login', { tid, teamName }).then(r=>{
-      if(!r||!r.ok) return false; const pass=(r.value||'').trim(); if(!pass){ alert("Mot de passe vide."); return false; }
+    try{ var hashes=(state.protect&&state.protect.teamPassHash)?state.protect.teamPassHash:null; if(!hashes||!hashes[tid]){ alert("Cette équipe n’a pas encore de mot de passe (demandez à l’admin)."); return Promise.resolve(false);} }catch(_){}
+    return openPasswordModal('login', { tid:tid, teamName:teamName }).then(function(r){
+      if(!r||!r.ok) return false; var pass=(r.value||'').trim(); if(!pass){ alert("Mot de passe vide."); return false; }
       try{
         if(hashPass(pass)===state.protect.teamPassHash[tid]){ session.admin=false; session.claims={}; session.claims[tid]=true; updateWho(); renderAll(); showToast("Connexion réussie. Mode admin désactivé sur cet appareil."); return true; }
         else { showToast("Mot de passe incorrect."); return false; }
-      }catch(_){ showToast && showToast("Erreur de connexion."); return false; }
+      }catch(_){ try{showToast("Erreur de connexion.");}catch(__){} return false; }
     });
   };
-})();
-</script>
+})();</script>
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
