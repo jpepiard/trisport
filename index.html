@@ -2770,6 +2770,133 @@ function onEnter(e){
   .round-head:has(.round-chip.yellow) + .round-grid .pill.pill--blue::before{ animation: none !important; opacity: .4; }
 }
 </style>
+
+<!-- Injected by ChatGPT: Password modal + masked input + action interceptors -->
+<style>
+  #pw-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2147483646;background:rgba(0,0,0,.45)}
+  #pw-modal.show{display:flex}
+  #pw-panel{width:min(520px,92vw);background:var(--card,#111);border:1px solid rgba(255,255,255,.08);padding:14px 14px 12px;border-radius:12px;box-shadow:0 18px 48px rgba(0,0,0,.5);color:var(--text,#fff);font-family:inherit}
+  #pw-panel .hd{font-weight:700;margin-bottom:8px}
+  #pw-panel .controls{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  #pw-panel input[type="password"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:inherit}
+  #pw-panel .btn{padding:8px 12px;border-radius:10px;cursor:pointer}
+  #pw-panel .btn.cancel{background:transparent;border:1px solid rgba(255,255,255,.16);color:inherit}
+  #pw-panel .btn.ok{background:linear-gradient(180deg,#2f3da2,#25337d);border:1px solid #3a4aa0;color:#fff}
+</style>
+<div id="pw-modal" aria-hidden="true">
+  <div id="pw-panel" role="dialog" aria-modal="true" aria-label="Saisie du mot de passe">
+    <div class="hd" id="pw-title">Mot de passe</div>
+    <div>
+      <input id="pw-input" type="password" autocomplete="current-password" placeholder="Tapez le mot de passe…" aria-label="Mot de passe"/>
+      <div class="help" style="margin-top:6px;font-size:12px;opacity:.8"><em>La saisie est masquée.</em></div>
+    </div>
+    <div class="controls">
+      <button class="btn cancel" id="pw-cancel" type="button">Annuler</button>
+      <button class="btn ok" id="pw-ok" type="button">Valider</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const modal = document.getElementById('pw-modal');
+  const input = document.getElementById('pw-input');
+  const title = document.getElementById('pw-title');
+  let resolver = null;
+  function openModal(label){
+    title.textContent = label || 'Mot de passe';
+    input.value = '';
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+    setTimeout(()=>input.focus(), 30);
+    document.addEventListener('keydown', onKey);
+  }
+  function closeModal(){
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden','true');
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e){
+    if(e.key === 'Escape'){ closeModal(); if(resolver){ const r=resolver; resolver=null; r(null); } }
+    if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('pw-ok').click(); }
+  }
+  document.getElementById('pw-cancel').addEventListener('click', ()=>{ closeModal(); if(resolver){ const r=resolver; resolver=null; r(null); } });
+  document.getElementById('pw-ok').addEventListener('click', ()=>{ const v = input.value.trim(); closeModal(); if(resolver){ const r=resolver; resolver=null; r(v||null); } });
+
+  // Expose a helper
+  window.askPassword = function askPassword(label){
+    return new Promise(resolve=>{ resolver = resolve; openModal(label); });
+  };
+
+  // Utility helpers we rely on from app (soft-fallbacks)
+  function showToast(msg){ try{ window.showToast?window.showToast(msg):alert(msg);}catch(e){ alert(msg); } }
+  function isAdmin(){ try{ return !!(window.session && window.session.admin); }catch(e){ return false; } }
+  function hashPass(x){ try{ return window.hashPass?window.hashPass(x):x; }catch(e){ return x; } }
+  function teamName(tid){ try{ return window.teamName?window.teamName(tid):('Équipe '+tid); }catch(e){ return 'Équipe'; } }
+  function saveState(){ try{ window.saveState && window.saveState(); }catch(e){} }
+  function renderTeams(){ try{ window.renderTeams && window.renderTeams(); }catch(e){} }
+  function updateWho(){ try{ window.updateWho && window.updateWho(); }catch(e){} }
+  function renderAll(){ try{ window.renderAll && window.renderAll(); }catch(e){} }
+
+  // Intercept clicks for setpass / login to replace native prompt by masked modal
+  document.addEventListener('click', async function(ev){
+    const btn = ev.target.closest('[data-act]');
+    if(!btn) return;
+
+    const act = btn.getAttribute('data-act');
+    if(act !== 'setpass' && act !== 'login') return;
+
+    // Prevent the app's default handler from running
+    ev.stopImmediatePropagation();
+    ev.preventDefault();
+
+    const tid = btn.getAttribute('data-id');
+
+    // SET PASSWORD flow (admin only)
+    if(act === 'setpass'){
+      if(!isAdmin()){ showToast("Réservé à l’administrateur."); return; }
+      const pass = await askPassword("Mot de passe pour l'équipe « "+ teamName(tid) +" » :");
+      if(pass==null || pass===''){ return; }
+      try{
+        window.state = window.state || {};
+        window.state.protect = window.state.protect || {};
+        window.state.protect.teamPassHash = window.state.protect.teamPassHash || {};
+        window.state.protect.teamPassHash[tid] = hashPass(pass);
+        saveState(); renderTeams();
+        showToast("Mot de passe défini.");
+      }catch(e){
+        console.error(e); showToast("Erreur lors de l’enregistrement du mot de passe.");
+      }
+      return;
+    }
+
+    // LOGIN flow
+    if(act === 'login'){
+      try{
+        const hashes = (window.state && window.state.protect && window.state.protect.teamPassHash) ? window.state.protect.teamPassHash : null;
+        if(!hashes || !hashes[tid]){ showToast("Cette équipe n’a pas encore de mot de passe (demandez à l’admin)."); return; }
+        const pass = await askPassword("Mot de passe pour l'équipe « "+ teamName(tid) +" » :");
+        if(pass==null){ return; }
+        if(hashPass(pass) === hashes[tid]){
+          // mark claim session as in the app
+          window.session = window.session || {};
+          window.session.claims = window.session.claims || {};
+          window.session.claims[tid] = true;
+          window.session.admin = false; // as per original UX after login success
+          updateWho(); renderAll();
+          showToast("Connexion réussie. Mode admin désactivé sur cet appareil.");
+        }else{
+          showToast("Mot de passe incorrect.");
+        }
+      }catch(e){
+        console.error(e); showToast("Erreur de connexion.");
+      }
+      return;
+    }
+  }, true); // capture phase to pre-empt the app handler
+
+})();
+</script>
+
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
