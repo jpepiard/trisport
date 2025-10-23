@@ -2940,10 +2940,7 @@ function onEnter(e){
         if(!hashes || !hashes[tid]){ showToast("Cette équipe n’a pas encore de mot de passe (demandez à l’admin)."); return; }
         const pass = await askPassword("Mot de passe pour l'équipe « "+ teamName(tid) +" » :");
         if(pass==null){ return; }
-        if(hashPass(pass) === hashes[tid]){
-          session.claims = session.claims || {};
-          session.claims[tid] = true;
-          session.admin = false;
+        if(hashPass(pass) === hashes[tid]){ session.claims = {}; session.claims[tid] = true; session.admin = false;
           updateWho(); renderAll();
           showToast("Connexion réussie. Mode admin désactivé sur cet appareil.");
         }else{
