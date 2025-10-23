@@ -2853,6 +2853,55 @@ function onEnter(e){
     return new Promise(resolve=>{ resolver = resolve; openModal(label); });
   };
 
+  
+  // === Admin PIN via masked modal ===
+  const ADMIN_PIN = (typeof window.ADMIN_PIN !== 'undefined') ? String(window.ADMIN_PIN) : '30041991';
+
+  let _adminReclick = false;
+  document.addEventListener('click', async function(ev){
+    const btn = ev.target.closest && ev.target.closest('button');
+    if(!btn) return;
+
+    // Handle the explicit "enable admin" buttons
+    if(btn.id === 'btn-admin-on-setup' || btn.id === 'btn-admin-on'){
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      const pin = await askPassword('PIN administrateur :');
+      if(pin===null) return;
+      if(String(pin) === ADMIN_PIN){
+        session.admin = true;
+        session.claims = {};
+        updateWho(); renderAll();
+        showToast("Mode administrateur activé (déverrouillage sur cet appareil).");
+      } else {
+        showToast("PIN incorrect.");
+      }
+      return;
+    }
+
+    // For flows that ask for admin PIN only when not admin (e.g. btn-create-tournament),
+    // we pre-empt the default handler if not admin, ask PIN, then re-click once.
+    if(btn.id === 'btn-create-tournament' && !isAdmin()){
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      const pin = await askPassword('PIN administrateur :');
+      if(pin===null) return;
+      if(String(pin) === ADMIN_PIN){
+        session.admin = true;
+        session.claims = {};
+        updateWho(); renderAll();
+        // re-dispatch the click once to continue normal flow
+        if(!_adminReclick){
+          _adminReclick = true;
+          setTimeout(()=>{ btn.click(); _adminReclick = false; }, 0);
+        }
+      } else {
+        showToast("PIN incorrect.");
+      }
+      return;
+    }
+  }, true);
+
   // Intercept clicks for setpass / login to replace native prompt by masked modal
   document.addEventListener('click', async function(ev){
     const btn = ev.target.closest && ev.target.closest('[data-act]');
