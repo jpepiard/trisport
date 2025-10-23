@@ -2771,7 +2771,8 @@ function onEnter(e){
 }
 </style>
 
-<!-- Injected by ChatGPT: Password modal + masked input + action interceptors -->
+
+<!-- Injected by ChatGPT: Password modal + masked input + action interceptors (v2) -->
 <style>
   #pw-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2147483646;background:rgba(0,0,0,.45)}
   #pw-modal.show{display:flex}
@@ -2827,19 +2828,9 @@ function onEnter(e){
     return new Promise(resolve=>{ resolver = resolve; openModal(label); });
   };
 
-  // Utility helpers we rely on from app (soft-fallbacks)
-  function showToast(msg){ try{ window.showToast?window.showToast(msg):alert(msg);}catch(e){ alert(msg); } }
-  function isAdmin(){ try{ return !!(window.session && window.session.admin); }catch(e){ return false; } }
-  function hashPass(x){ try{ return window.hashPass?window.hashPass(x):x; }catch(e){ return x; } }
-  function teamName(tid){ try{ return window.teamName?window.teamName(tid):('Équipe '+tid); }catch(e){ return 'Équipe'; } }
-  function saveState(){ try{ window.saveState && window.saveState(); }catch(e){} }
-  function renderTeams(){ try{ window.renderTeams && window.renderTeams(); }catch(e){} }
-  function updateWho(){ try{ window.updateWho && window.updateWho(); }catch(e){} }
-  function renderAll(){ try{ window.renderAll && window.renderAll(); }catch(e){} }
-
   // Intercept clicks for setpass / login to replace native prompt by masked modal
   document.addEventListener('click', async function(ev){
-    const btn = ev.target.closest('[data-act]');
+    const btn = ev.target.closest && ev.target.closest('[data-act]');
     if(!btn) return;
 
     const act = btn.getAttribute('data-act');
@@ -2857,10 +2848,9 @@ function onEnter(e){
       const pass = await askPassword("Mot de passe pour l'équipe « "+ teamName(tid) +" » :");
       if(pass==null || pass===''){ return; }
       try{
-        window.state = window.state || {};
-        window.state.protect = window.state.protect || {};
-        window.state.protect.teamPassHash = window.state.protect.teamPassHash || {};
-        window.state.protect.teamPassHash[tid] = hashPass(pass);
+        state.protect = state.protect || {};
+        state.protect.teamPassHash = state.protect.teamPassHash || {};
+        state.protect.teamPassHash[tid] = hashPass(pass);
         saveState(); renderTeams();
         showToast("Mot de passe défini.");
       }catch(e){
@@ -2872,16 +2862,14 @@ function onEnter(e){
     // LOGIN flow
     if(act === 'login'){
       try{
-        const hashes = (window.state && window.state.protect && window.state.protect.teamPassHash) ? window.state.protect.teamPassHash : null;
+        const hashes = (state && state.protect && state.protect.teamPassHash) ? state.protect.teamPassHash : null;
         if(!hashes || !hashes[tid]){ showToast("Cette équipe n’a pas encore de mot de passe (demandez à l’admin)."); return; }
         const pass = await askPassword("Mot de passe pour l'équipe « "+ teamName(tid) +" » :");
         if(pass==null){ return; }
         if(hashPass(pass) === hashes[tid]){
-          // mark claim session as in the app
-          window.session = window.session || {};
-          window.session.claims = window.session.claims || {};
-          window.session.claims[tid] = true;
-          window.session.admin = false; // as per original UX after login success
+          session.claims = session.claims || {};
+          session.claims[tid] = true;
+          session.admin = false;
           updateWho(); renderAll();
           showToast("Connexion réussie. Mode admin désactivé sur cet appareil.");
         }else{
@@ -2896,6 +2884,7 @@ function onEnter(e){
 
 })();
 </script>
+
 
 </body>
 <style id="pretty-confirm-modal">
