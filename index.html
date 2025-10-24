@@ -2958,19 +2958,45 @@ function onEnter(e){
 
 
 
-<!-- Auto-reconnect to cloud tournament on page load -->
+<!-- Auto-reconnect to cloud tournament and restore last tab on page load -->
 <script>
 (function(){
+  // --- Config keys ---
+  const TAB_KEY = 'trisports_last_tab_v1';
+  const STORAGE_KEY = 'trisports_cloud_only_v1';
+
+  // --- Wrap goto(tabId) to persist the last visited tab ---
+  function wrapGoto(){
+    if (typeof window.goto !== 'function') return false;
+    if (window.goto.__wrapped) return true;
+    const _orig = window.goto;
+    const wrapped = function(tabId){
+      try { localStorage.setItem(TAB_KEY, tabId); } catch(_){}
+      return _orig(tabId);
+    };
+    wrapped.__wrapped = true;
+    window.goto = wrapped;
+    return true;
+  }
+
+  // Try immediately, otherwise on DOMContentLoaded
+  if (!wrapGoto()){
+    if (document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', wrapGoto, { once: true });
+    } else {
+      wrapGoto();
+    }
+  }
+
+  // --- Auto-reconnect to cloud on refresh (uses ?id=... or last cloudId) ---
   function autoReconnectCloud(){
     try{
-      // 1) Priority: ?id=XXXX in URL
       const params = new URLSearchParams(location.search);
       let code = (params.get('id') || '').trim();
 
-      // 2) Fallback: last opened cloud tournament from localStorage
       if (!code){
         try{
-          const raw = localStorage.getItem('trisports_cloud_only_v1'); // STORAGE_KEY
+          const raw = localStorage.getItem(STORAGE_KEY);
           const saved = raw ? JSON.parse(raw) : null;
           if (saved && typeof saved === 'object' && saved.cloudId){
             code = String(saved.cloudId || '').trim();
@@ -2978,23 +3004,38 @@ function onEnter(e){
         }catch(_){}
       }
 
-      // 3) If we have a code, relaunch the cloud connection
       if (code){
         const inp = document.getElementById('join-code');
         if (inp) inp.value = code;
         if (typeof window.joinCloud === 'function'){
           window.joinCloud(code);
-          // Optional: navigate to a default tab after reconnect
-          // if (typeof window.goto === 'function') window.goto('equipes');
         }
       }
     }catch(_){}
   }
 
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', autoReconnectCloud);
-  } else {
+  // --- Restore the last tab after render & (optional) cloud reconnect ---
+  function restoreLastTab(){
+    try{
+      const tab = localStorage.getItem(TAB_KEY);
+      if (tab && typeof window.goto === 'function'){
+        // Delay slightly to let renderAll() and joinCloud() finish wiring UI
+        setTimeout(function(){ window.goto(tab); }, 150);
+      }
+    }catch(_){}
+  }
+
+  function onReady(){
+    // 1) Try to reconnect cloud (if applicable)
     autoReconnectCloud();
+    // 2) Restore the last visited tab
+    restoreLastTab();
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', onReady);
+  } else {
+    onReady();
   }
 })();
 </script>
