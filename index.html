@@ -369,7 +369,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <span class="pill" id="stats-matches">0 / 0 matches complets</span>
 <button class="btn small" id="btn-start-round" style="display:none" type="button">Démarrer journée</button>
 <button class="btn small" id="btn-end-round" style="display:none" type="button">Fin de journée</button>
-<button class="btn small" id="btn-refresh-standings" type="button">Mettre à jour le classement</button>
+<button class="btn small" id="btn-refresh-standings" type="button">Mise à jour Score</button>
 <button class="btn small" id="btn-collapse" type="button">Tout replier</button>
 </div>
 </div>
@@ -1488,7 +1488,8 @@ document.addEventListener("click",async(e)=>{
     case "btn-generate":{if(!isAdmin())return alert("Seul l’admin peut générer.");if(state.locked)return;generateSchedule();state.locked=true;saveState();renderAll();goto("calendrier");break}
 
     case "btn-refresh-standings":
-    case "btn-refresh-standings-2":{renderLeaderboard();renderH2H();if(btn.id==="btn-refresh-standings-2")goto("classement");break}
+    case "btn-refresh-standings-2":{renderMatches();
+      renderLeaderboard();renderH2H();if(btn.id==="btn-refresh-standings-2")goto("classement");break}
     case "btn-show-summary":{id("view-summary").style.display="block";id("view-h2h").style.display="none";id("btn-show-summary").setAttribute("aria-pressed","true");id("btn-show-h2h").setAttribute("aria-pressed","false");break}
     case "btn-show-h2h":{id("view-summary").style.display="none";id("view-h2h").style.display="block";id("btn-show-summary").setAttribute("aria-pressed","false");id("btn-show-h2h").setAttribute("aria-pressed","true");break}
     case "btn-collapse":{qsa('#match-list .match-card').forEach(c=>c.setAttribute('aria-expanded','false'));ui.open={};break}
