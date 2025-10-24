@@ -2958,78 +2958,59 @@ function onEnter(e){
 
 
 
-<!-- Auto-reconnect to cloud tournament and restore last tab on page load -->
+<!-- Keep same page on refresh: remember & restore active tab -->
 <script>
 (function(){
-  // --- Config keys ---
   const TAB_KEY = 'trisports_last_tab_v1';
-  const STORAGE_KEY = 'trisports_cloud_only_v1';
 
-  // --- Wrap goto(tabId) to persist the last visited tab ---
-  function wrapGoto(){
-    if (typeof window.goto !== 'function') return false;
-    if (window.goto.__wrapped) return true;
-    const _orig = window.goto;
-    const wrapped = function(tabId){
-      try { localStorage.setItem(TAB_KEY, tabId); } catch(_){}
-      return _orig(tabId);
-    };
-    wrapped.__wrapped = true;
-    window.goto = wrapped;
-    return true;
-  }
+  // Persist last chosen tab on any tab button click AND when goto() is called
+  function installPersisters(){
+    // 1) Clicks on .tab[data-tab]
+    document.addEventListener('click', function(e){
+      const btn = e.target.closest('.tab[data-tab]');
+      if (!btn) return;
+      const tab = btn.getAttribute('data-tab');
+      try { localStorage.setItem(TAB_KEY, tab); } catch(_){}
+    });
 
-  // Try immediately, otherwise on DOMContentLoaded
-  if (!wrapGoto()){
-    if (document.readyState === 'loading'){
-      document.addEventListener('DOMContentLoaded', wrapGoto, { once: true });
-    } else {
-      wrapGoto();
+    // 2) Wrap goto() if present
+    if (typeof window.goto === 'function' && !window.goto.__wrappedSave){
+      const _orig = window.goto;
+      window.goto = function(tabId){
+        try { localStorage.setItem(TAB_KEY, tabId); } catch(_){}
+        return _orig(tabId);
+      };
+      window.goto.__wrappedSave = true;
     }
   }
 
-  // --- Auto-reconnect to cloud on refresh (uses ?id=... or last cloudId) ---
-  function autoReconnectCloud(){
-    try{
-      const params = new URLSearchParams(location.search);
-      let code = (params.get('id') || '').trim();
+  // Try repeatedly to restore the last tab after the app finishes booting
+  function restoreWithRetry(){
+    const saved = (function(){
+      try { return localStorage.getItem(TAB_KEY) || ''; } catch(_){ return ''; }
+    })().trim();
 
-      if (!code){
-        try{
-          const raw = localStorage.getItem(STORAGE_KEY);
-          const saved = raw ? JSON.parse(raw) : null;
-          if (saved && typeof saved === 'object' && saved.cloudId){
-            code = String(saved.cloudId || '').trim();
-          }
-        }catch(_){}
-      }
+    if (!saved) return; // Nothing to restore
 
-      if (code){
-        const inp = document.getElementById('join-code');
-        if (inp) inp.value = code;
-        if (typeof window.joinCloud === 'function'){
-          window.joinCloud(code);
-        }
+    let attempts = 0;
+    const maxAttempts = 50; // ~5s at 100ms
+    const timer = setInterval(function(){
+      attempts++;
+      // Conditions to attempt restore:
+      const hasGoto = (typeof window.goto === 'function');
+      const hasTabs = !!document.querySelector('.tabs .tab[data-tab]');
+      if (hasGoto && hasTabs){
+        // Call goto; it will internally guard and switch to setup if forbidden
+        try { window.goto(saved); } catch(_){ /* ignore */ }
+        clearInterval(timer);
       }
-    }catch(_){}
-  }
-
-  // --- Restore the last tab after render & (optional) cloud reconnect ---
-  function restoreLastTab(){
-    try{
-      const tab = localStorage.getItem(TAB_KEY);
-      if (tab && typeof window.goto === 'function'){
-        // Delay slightly to let renderAll() and joinCloud() finish wiring UI
-        setTimeout(function(){ window.goto(tab); }, 150);
-      }
-    }catch(_){}
+      if (attempts >= maxAttempts) clearInterval(timer);
+    }, 100);
   }
 
   function onReady(){
-    // 1) Try to reconnect cloud (if applicable)
-    autoReconnectCloud();
-    // 2) Restore the last visited tab
-    restoreLastTab();
+    installPersisters();
+    restoreWithRetry();
   }
 
   if (document.readyState === 'loading'){
