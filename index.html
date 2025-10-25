@@ -2983,11 +2983,12 @@ document.addEventListener('click', function(e){
 
 
 
+
 function exportSummaryPDF(){
   try { window.renderMatches && window.renderMatches(); } catch(_) {}
   try { window.renderLeaderboard && window.renderLeaderboard(); } catch(_) {}
 
-  // 1) Classement compact (copie de la version précédente)
+  // 1) Classement compact
   const srcTable = document.getElementById('table-classement');
   let compactRows = [];
   if (srcTable && srcTable.tBodies && srcTable.tBodies[0]){
@@ -3012,14 +3013,13 @@ function exportSummaryPDF(){
   }
   const compactLeaderboardHTML = buildCompactLeaderboard();
 
-  // 2) Détail des matchs (depuis state.matches)
+  // 2) Détail des matchs
   function teamName(id){
     try{
       const t = (window.state && Array.isArray(state.teams)) ? state.teams.find(x=>x.id===id) : null;
       return t ? (t.name || t.title || t.label || '') : String(id||'');
     }catch(_){ return String(id||''); }
   }
-  function isPingValid(a,b){ const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
   function paletWinner(a,b){ const T = +((window.state && state.rules && state.rules.paletTarget) ?? 11); if(a==null||b==null) return null; if(a>=T && a>b) return 'A'; if(b>=T && b>a) return 'B'; return null; }
 
   function buildMatchesFromState(){
@@ -3032,9 +3032,10 @@ function exportSummaryPDF(){
       // darts: count 0 as A wins, 1 as B wins
       let dA=0,dB=0;
       if (Array.isArray(m.darts)) m.darts.forEach(v=>{ if(v===0) dA++; else if(v===1) dB++; });
-      // ping: use pingPts [{a,b}] to count set winners
+      // ping wins
       let pA=0,pB=0;
       const ppts = Array.isArray(m.pingPts) ? m.pingPts : [];
+      const isPingValid=(a,b)=>{const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2);}
       ppts.forEach(s=>{
         const a = (s && s.a!=null) ? +s.a : null;
         const b = (s && s.b!=null) ? +s.b : null;
@@ -3046,7 +3047,7 @@ function exportSummaryPDF(){
       if (m.palet && m.palet.a!=null && m.palet.b!=null){
         lA = +m.palet.a; lB = +m.palet.b;
       }
-      // score global = nombre d'épreuves gagnées
+      // global
       let gA=0,gB=0;
       if (dA>dB){ gA++; } else if (dB>dA){ gB++; }
       if (pA>pB){ gA++; } else if (pB>pA){ gB++; }
@@ -3063,7 +3064,39 @@ function exportSummaryPDF(){
     return list;
   }
 
-  const matchesItems = buildMatchesFromState();
+  function buildMatchesFromCards(){
+    const items = [];
+    const cards = document.querySelectorAll('#match-list .match-card');
+    cards.forEach(card=>{
+      const roundTxt = (card.querySelector('.round-chip')?.textContent || '').trim().replace('#','');
+      const nameA = (card.querySelector('.team.left .name')?.textContent || '').trim();
+      const nameB = (card.querySelector('.team.right .name')?.textContent || '').trim();
+      const chips = Array.from(card.querySelectorAll('.sports-row .chip .score-compact')).map(el=> (el.textContent||'').trim());
+      const d = chips[0] || '';
+      const p = chips[1] || '';
+      const l = chips[2] || '';
+      const parts = [];
+      if (d) parts.push(`Fléchettes ${d}`);
+      if (p) parts.push(`Ping-pong ${p}`);
+      if (l) parts.push(`Palet ${l}`);
+      const details = parts.join(' · ');
+      // Try to extract the big global score if present
+      const big = (card.querySelector('.score-big, .score')?.textContent || '').trim();
+      const global = big && /\d+\s*[–-]\s*\d+/.test(big) ? big.match(/\d+\s*[–-]\s*\d+/)[0].replace(/\s+/g,'') : '';
+      if (nameA || nameB || details){
+        items.push({ round: roundTxt, nameA, nameB, details, global });
+      }
+    });
+    return items;
+  }
+
+  let matchesItems = buildMatchesFromState();
+  if (!matchesItems.length){
+    // Forcer le rendu au cas où et lire les cartes
+    try { window.renderMatches && window.renderMatches(); } catch(_) {}
+    matchesItems = buildMatchesFromCards();
+  }
+
   function buildMatchesTable(items){
     if (!items.length) return '';
     let html = '<table class="compact"><thead><tr><th>J</th><th>Équipe A</th><th></th><th>Équipe B</th><th>Détails</th><th>Score</th></tr></thead><tbody>';
@@ -3150,6 +3183,7 @@ function exportSummaryPDF(){
   function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
 }
 </script>
+
 
 
 
