@@ -418,7 +418,8 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <div class="bd grid" style="gap:10px">
 <button class="btn" id="btn-export" type="button">Exporter en JSON</button>
 <input accept="application/json" id="file-import" type="file"/>
-<button class="btn" id="btn-import" type="button">Importer le fichier JSON</button>
+<button class="btn" id="btn-import" type="button">
+    <button class="btn" id="btn-export-pdf" type="button">📄 Exporter le résumé (PDF)</button>Importer le fichier JSON</button>
 </div>
 </div>
 <div class="card"><div class="hd"><strong>Accès administrateur</strong></div>
@@ -2966,6 +2967,82 @@ function onEnter(e){
 </script>
 
 
+
+<script>
+document.addEventListener('click', function(e){
+  const t = e.target;
+  if (!t) return;
+  if (t.id === 'btn-export-pdf') {
+    try { exportSummaryPDF(); } catch (err) {
+      console.error(err);
+      alert("Échec de l’export PDF.");
+    }
+  }
+});
+
+function exportSummaryPDF(){
+  // 1) Rafraîchir l'affichage si des helpers existent
+  try { window.renderMatches && window.renderMatches(); } catch(_) {}
+  try { window.renderLeaderboard && window.renderLeaderboard(); } catch(_) {}
+
+  // 2) Récupération du classement
+  const table = document.getElementById('table-classement');
+  const tbodyHTML = table ? (table.tBodies[0] ? table.tBodies[0].outerHTML : '') : '';
+  const theadHTML = table ? (table.tHead ? table.tHead.outerHTML : '') : '';
+
+  // 3) Métadonnées
+  const title = (window.state && window.state.tournamentName) ? window.state.tournamentName : 'TriSports';
+  const when  = new Date().toLocaleString('fr-FR', { dateStyle:'medium', timeStyle:'short' });
+
+  // 4) Styles pour impression
+  const css = `
+    <style>
+      @page{ size:A4; margin:14mm; }
+      body{ font: 12px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial; color:#111; }
+      h1{ font-size:20px; margin:0 0 2mm; }
+      .muted{ color:#555; margin-bottom:6mm; }
+      table{ width:100%; border-collapse:collapse; }
+      th, td{ border:1px solid #ddd; padding:6px 8px; text-align:center; }
+      th:nth-child(2), td:nth-child(2){ text-align:left; }
+      thead th{ background:#f3f4f6; }
+      td, th { font-variant-numeric: tabular-nums; }
+    </style>`;
+
+  // 5) HTML imprimable
+  const html = `
+    <!doctype html><html lang="fr"><head>
+      <meta charset="utf-8" />
+      <title>Résumé — ${escapeHtml(title)}</title>
+      ${css}
+    </head><body>
+      <h1>Résumé — ${escapeHtml(title)}</h1>
+      <div class="muted">Généré le ${escapeHtml(when)}</div>
+      <h2 style="font-size:16px;margin:0 0 6px">Classement</h2>
+      <table>
+        ${theadHTML || `
+          <thead>
+            <tr>
+              <th>#</th><th>Équipe</th><th>Points</th>
+              <th>Fléchettes</th><th>Ping-pong</th><th>Palet (PF–PA)</th>
+              <th>Bonus</th><th>Malus</th><th>Matchs complets</th>
+            </tr>
+          </thead>`}
+        ${tbodyHTML}
+      </table>
+      <script>window.onload = function(){ setTimeout(function(){ window.print(); window.close(); }, 50); }<\/script>
+    </body></html>`;
+
+  // 6) Ouvrir une fenêtre et déclencher l'impression
+  const w = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
+  if(!w){ alert("Le navigateur a bloqué l’ouverture de la fenêtre d’impression."); return; }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+
+  // Utilitaire anti-XSS (titre/horodatage)
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+}
+</script>
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
