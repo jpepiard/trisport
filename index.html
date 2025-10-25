@@ -2981,26 +2981,25 @@ document.addEventListener('click', function(e){
 });
 
 
+
 function exportSummaryPDF(){
   // 0) Rafraîchir vues si dispo
   try { window.renderMatches && window.renderMatches(); } catch(_) {}
   try { window.renderLeaderboard && window.renderLeaderboard(); } catch(_) {}
 
-  // 1) Lire le classement depuis le DOM et le "compacter"
+  // 1) Lire le classement et compacter (comme avant)
   const srcTable = document.getElementById('table-classement');
   let compactRows = [];
   if (srcTable && srcTable.tBodies && srcTable.tBodies[0]){
     for (const tr of Array.from(srcTable.tBodies[0].rows)){
       const cells = Array.from(tr.cells || []);
-      // On ne garde que les lignes "riches" (au moins 5 cellules)
       if (cells.length >= 5){
         const values = cells.map(td => (td.innerText || '').replace(/\s+/g,' ').trim());
-        compactRows.push(values);
+        // Skip rows that are entirely empty
+        if (values.join('').trim().length > 0) compactRows.push(values);
       }
     }
   }
-
-  // Si rien n'a été collecté, on tente une lecture "texte" cellule par cellule
   if (compactRows.length === 0 && srcTable){
     const rows = Array.from(srcTable.querySelectorAll('tbody tr'));
     for (const tr of rows){
@@ -3008,11 +3007,7 @@ function exportSummaryPDF(){
       if (vs.filter(Boolean).length >= 5) compactRows.push(vs);
     }
   }
-
-  // Colonnes attendues (on prendra ce qui existe)
   const headers = ["#", "Équipe", "Pts", "Fléchettes", "Ping-pong", "Palet (PF–PA)", "Bonus", "Malus", "Matchs"];
-
-  // Reconstruire un tableau compact (une ligne par équipe)
   function buildCompactLeaderboard(){
     let thead = `<thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>`;
     let body = "<tbody>";
@@ -3023,21 +3018,122 @@ function exportSummaryPDF(){
     body += "</tbody>";
     return `<table class="compact">${thead}${body}</table>`;
   }
-
   const compactLeaderboardHTML = buildCompactLeaderboard();
 
-  // 2) Récupérer la liste/tables des matchs existants
-  function findMatchesHTML(){
-    const ids = ['table-matchs','table-matches','matches-table','matches','liste-matchs','list-matches','tab-matches'];
-    for (const id of ids){
-      const el = document.getElementById(id);
-      if (el) return el.outerHTML;
-    }
-    const q = document.querySelector('.matches, .match-list, table[data-role="matches"], #matches, section[data-tab="matches"]');
-    if (q) return q.outerHTML;
-    return "";
+  // 2) Construire un tableau "Détail des matchs" en lisant d'abord window.state, puis fallback DOM
+  function toName(x){
+    if (!x) return "";
+    if (typeof x === 'string') return x;
+    return x.name || x.label || x.team || x.title || '';
   }
-  const matchesHTMLraw = findMatchesHTML();
+  function pick(obj, keys){
+    for (const k of keys){ if (obj && obj[k] != null) return obj[k]; }
+    return undefined;
+  }
+  function parseMatchesFromState(){
+    const st = window.state || {};
+    let list = [];
+    // a) formats courants
+    const candidates = [].concat(
+      Array.isArray(st.matches) ? st.matches : [],
+      Array.isArray(st.fixtures) ? st.fixtures : [],
+      (Array.isArray(st.rounds) ? st.rounds.flatMap(r => r.matches || r.fixtures || []) : [])
+    );
+    for (const m of candidates){
+      if (!m) continue;
+      const A = pick(m, ['teamA','a','home','team1','left','blue','tA']);
+      const B = pick(m, ['teamB','b','away','team2','right','red','tB']);
+      const nameA = toName(A);
+      const nameB = toName(B);
+      if (!nameA && !nameB) continue;
+
+      // Détails par épreuve
+      const detailParts = [];
+      // darts / flechettes
+      const darts = pick(m, ['darts','flechettes','dart']);
+      if (darts){
+        const sA = pick(darts, ['a','A','home','left','teamA','scoreA','score1','us']) ?? pick(m,['dartsA','flechettesA']);
+        const sB = pick(darts, ['b','B','away','right','teamB','scoreB','score2','them']) ?? pick(m,['dartsB','flechettesB']);
+        if (sA!=null && sB!=null) detailParts.push(`Fléchettes ${sA}–${sB}`);
+      }
+      // ping / pingpong / pp
+      const ping = pick(m, ['ping','pingpong','pp','tableTennis','tt']);
+      if (ping){
+        const sA = pick(ping, ['a','A','home','left','teamA','scoreA','score1','us']) ?? pick(m,['pingA','ppA']);
+        const sB = pick(ping, ['b','B','away','right','teamB','scoreB','score2','them']) ?? pick(m,['pingB','ppB']);
+        if (sA!=null && sB!=null) detailParts.push(`Ping-pong ${sA}–${sB}`);
+      }
+      // palet / shuffle
+      const palet = pick(m, ['palet','shuffle','pal']);
+      if (palet){
+        const pfA = pick(palet, ['pfA','forA','pf1','aFor','usFor','pf']);
+        const paA = pick(palet, ['paA','agaA','pa1','aAga','usAga','pa']);
+        const pfB = pick(palet, ['pfB','forB','pf2','bFor','themFor']);
+        const paB = pick(palet, ['paB','agaB','pa2','bAga','themAga']);
+        if (pfA!=null && paA!=null && pfB!=null && paB!=null){
+          detailParts.push(`Palet ${pfA}-${paA} / ${pfB}-${paB}`);
+        } else {
+          const sA = pick(palet, ['a','A','scoreA','home']);
+          const sB = pick(palet, ['b','B','scoreB','away']);
+          if (sA!=null && sB!=null) detailParts.push(`Palet ${sA}–${sB}`);
+        }
+      }
+      // score global si dispo
+      const totalA = pick(m, ['scoreA','pointsA','totalA','sumA','winsA']);
+      const totalB = pick(m, ['scoreB','pointsB','totalB','sumB','winsB']);
+      const global = (totalA!=null && totalB!=null) ? ` — Score ${totalA}–${totalB}` : '';
+
+      const round = pick(m, ['round','journee','week','day','r']);
+      const label = round!=null ? `J${round}` : (m.label || m.id || '');
+
+      list.push({
+        label,
+        nameA, nameB,
+        details: detailParts.join(' · '),
+        global
+      });
+    }
+    return list;
+  }
+
+  function parseMatchesFromDOM(){
+    // Cherche lignes "match" courantes
+    const rows = [];
+    const containers = document.querySelectorAll('[data-role="matches"], .matches, .match-list, #matches, [id*="match"] table');
+    containers.forEach(ct => {
+      const trs = ct.querySelectorAll('tr');
+      trs.forEach(tr => {
+        const tds = Array.from(tr.querySelectorAll('td,th')).map(x => (x.innerText||'').replace(/\s+/g,' ').trim());
+        if (tds.length >= 3 && /vs|–|-/.test(tds.join(' '))){
+          rows.push(tds);
+        }
+      });
+    });
+    return rows.map((arr,i)=>({ label: '', nameA: arr[0]||'', nameB: arr[2]||'', details: arr.slice(3).join(' · ') }));
+  }
+
+  const matchesFromState = parseMatchesFromState();
+  const matchesFromDOM = matchesFromState.length ? [] : parseMatchesFromDOM();
+
+  function buildMatchesTable(items){
+    if (!items.length) return '';
+    let html = '<table class="compact"><thead><tr><th>J</th><th>Équipe A</th><th></th><th>Équipe B</th><th>Détails</th></tr></thead><tbody>';
+    for (const m of items){
+      const j = (m.label || '').toString().replace(/^J/i,'') || '';
+      html += '<tr>'
+           + `<td style="text-align:center">${escapeHtml(j)}</td>`
+           + `<td style="text-align:right">${escapeHtml(m.nameA||'')}</td>`
+           + `<td style="text-align:center">–</td>`
+           + `<td style="text-align:left">${escapeHtml(m.nameB||'')}</td>`
+           + `<td style="text-align:left">${escapeHtml([m.details||'', m.global||''].filter(Boolean).join(' '))}</td>`
+           + '</tr>';
+    }
+    html += '</tbody></table>';
+    return html;
+  }
+
+  const matchesHTML = matchesFromState.length ? buildMatchesTable(matchesFromState) :
+                      (matchesFromDOM.length ? buildMatchesTable(matchesFromDOM) : '');
 
   // 3) Métadonnées
   const title = (window.state && window.state.tournamentName) ? window.state.tournamentName : 'TriSports';
@@ -3056,9 +3152,6 @@ function exportSummaryPDF(){
     table.compact th:nth-child(2), table.compact td:nth-child(2){ text-align:left; max-width:120px; }
     thead th{ background:#f3f4f6; }
     td, th { font-variant-numeric: tabular-nums; }
-    .matches-print img, .matches-print svg{ max-height:14px; max-width:14px; vertical-align:middle; }
-    .matches-print table th, .matches-print table td{ border:1px solid #e5e7eb; padding:3px 5px; }
-    .matches-print table{ margin-bottom:6px; }
     .section{ break-inside: avoid; }
   </style>`;
 
@@ -3077,10 +3170,10 @@ function exportSummaryPDF(){
         ${compactLeaderboardHTML}
       </div>
 
-      ${matchesHTMLraw ? `<div class="section matches-print"><h2>Détail des matchs</h2>${matchesHTMLraw}</div>` : ""}
+      ${matchesHTML ? `<div class="section"><h2>Détail des matchs</h2>${matchesHTML}</div>` : ""}
     </body></html>`;
 
-  // 6) Impression via iframe invisible (évite les bloqueurs)
+  // 6) Impression via iframe invisible
   const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
   const iframe = document.createElement('iframe');
@@ -3109,6 +3202,7 @@ function exportSummaryPDF(){
   function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
 }
 </script>
+
 
 
 </body>
