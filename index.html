@@ -2982,12 +2982,12 @@ document.addEventListener('click', function(e){
 
 
 
+
 function exportSummaryPDF(){
-  // 0) Rafraîchir vues si dispo
   try { window.renderMatches && window.renderMatches(); } catch(_) {}
   try { window.renderLeaderboard && window.renderLeaderboard(); } catch(_) {}
 
-  // 1) Lire le classement et compacter (comme avant)
+  // 1) Classement compact (copie de la version précédente)
   const srcTable = document.getElementById('table-classement');
   let compactRows = [];
   if (srcTable && srcTable.tBodies && srcTable.tBodies[0]){
@@ -2995,16 +2995,8 @@ function exportSummaryPDF(){
       const cells = Array.from(tr.cells || []);
       if (cells.length >= 5){
         const values = cells.map(td => (td.innerText || '').replace(/\s+/g,' ').trim());
-        // Skip rows that are entirely empty
         if (values.join('').trim().length > 0) compactRows.push(values);
       }
-    }
-  }
-  if (compactRows.length === 0 && srcTable){
-    const rows = Array.from(srcTable.querySelectorAll('tbody tr'));
-    for (const tr of rows){
-      const vs = Array.from(tr.querySelectorAll('th,td')).map(td => (td.innerText||'').replace(/\s+/g,' ').trim());
-      if (vs.filter(Boolean).length >= 5) compactRows.push(vs);
     }
   }
   const headers = ["#", "Équipe", "Pts", "Fléchettes", "Ping-pong", "Palet (PF–PA)", "Bonus", "Malus", "Matchs"];
@@ -3020,126 +3012,81 @@ function exportSummaryPDF(){
   }
   const compactLeaderboardHTML = buildCompactLeaderboard();
 
-  // 2) Construire un tableau "Détail des matchs" en lisant d'abord window.state, puis fallback DOM
-  function toName(x){
-    if (!x) return "";
-    if (typeof x === 'string') return x;
-    return x.name || x.label || x.team || x.title || '';
+  // 2) Détail des matchs (depuis state.matches)
+  function teamName(id){
+    try{
+      const t = (window.state && Array.isArray(state.teams)) ? state.teams.find(x=>x.id===id) : null;
+      return t ? (t.name || t.title || t.label || '') : String(id||'');
+    }catch(_){ return String(id||''); }
   }
-  function pick(obj, keys){
-    for (const k of keys){ if (obj && obj[k] != null) return obj[k]; }
-    return undefined;
-  }
-  function parseMatchesFromState(){
-    const st = window.state || {};
-    let list = [];
-    // a) formats courants
-    const candidates = [].concat(
-      Array.isArray(st.matches) ? st.matches : [],
-      Array.isArray(st.fixtures) ? st.fixtures : [],
-      (Array.isArray(st.rounds) ? st.rounds.flatMap(r => r.matches || r.fixtures || []) : [])
-    );
-    for (const m of candidates){
-      if (!m) continue;
-      const A = pick(m, ['teamA','a','home','team1','left','blue','tA']);
-      const B = pick(m, ['teamB','b','away','team2','right','red','tB']);
-      const nameA = toName(A);
-      const nameB = toName(B);
-      if (!nameA && !nameB) continue;
+  function isPingValid(a,b){ const max=Math.max(a,b), diff=Math.abs(a-b); return (max>=11)&&(diff>=2); }
+  function paletWinner(a,b){ const T = +((window.state && state.rules && state.rules.paletTarget) ?? 11); if(a==null||b==null) return null; if(a>=T && a>b) return 'A'; if(b>=T && b>a) return 'B'; return null; }
 
-      // Détails par épreuve
-      const detailParts = [];
-      // darts / flechettes
-      const darts = pick(m, ['darts','flechettes','dart']);
-      if (darts){
-        const sA = pick(darts, ['a','A','home','left','teamA','scoreA','score1','us']) ?? pick(m,['dartsA','flechettesA']);
-        const sB = pick(darts, ['b','B','away','right','teamB','scoreB','score2','them']) ?? pick(m,['dartsB','flechettesB']);
-        if (sA!=null && sB!=null) detailParts.push(`Fléchettes ${sA}–${sB}`);
-      }
-      // ping / pingpong / pp
-      const ping = pick(m, ['ping','pingpong','pp','tableTennis','tt']);
-      if (ping){
-        const sA = pick(ping, ['a','A','home','left','teamA','scoreA','score1','us']) ?? pick(m,['pingA','ppA']);
-        const sB = pick(ping, ['b','B','away','right','teamB','scoreB','score2','them']) ?? pick(m,['pingB','ppB']);
-        if (sA!=null && sB!=null) detailParts.push(`Ping-pong ${sA}–${sB}`);
-      }
-      // palet / shuffle
-      const palet = pick(m, ['palet','shuffle','pal']);
-      if (palet){
-        const pfA = pick(palet, ['pfA','forA','pf1','aFor','usFor','pf']);
-        const paA = pick(palet, ['paA','agaA','pa1','aAga','usAga','pa']);
-        const pfB = pick(palet, ['pfB','forB','pf2','bFor','themFor']);
-        const paB = pick(palet, ['paB','agaB','pa2','bAga','themAga']);
-        if (pfA!=null && paA!=null && pfB!=null && paB!=null){
-          detailParts.push(`Palet ${pfA}-${paA} / ${pfB}-${paB}`);
-        } else {
-          const sA = pick(palet, ['a','A','scoreA','home']);
-          const sB = pick(palet, ['b','B','scoreB','away']);
-          if (sA!=null && sB!=null) detailParts.push(`Palet ${sA}–${sB}`);
-        }
-      }
-      // score global si dispo
-      const totalA = pick(m, ['scoreA','pointsA','totalA','sumA','winsA']);
-      const totalB = pick(m, ['scoreB','pointsB','totalB','sumB','winsB']);
-      const global = (totalA!=null && totalB!=null) ? ` — Score ${totalA}–${totalB}` : '';
-
-      const round = pick(m, ['round','journee','week','day','r']);
-      const label = round!=null ? `J${round}` : (m.label || m.id || '');
-
-      list.push({
-        label,
-        nameA, nameB,
-        details: detailParts.join(' · '),
-        global
+  function buildMatchesFromState(){
+    const list = [];
+    const matches = (window.state && Array.isArray(state.matches)) ? state.matches.slice() : [];
+    matches.sort((x,y)=> (x.round-y.round) || (x.order-y.order) || (x.id>y.id?1:-1));
+    matches.forEach(m=>{
+      if(!m) return;
+      const nameA = teamName(m.a), nameB = teamName(m.b);
+      // darts: count 0 as A wins, 1 as B wins
+      let dA=0,dB=0;
+      if (Array.isArray(m.darts)) m.darts.forEach(v=>{ if(v===0) dA++; else if(v===1) dB++; });
+      // ping: use pingPts [{a,b}] to count set winners
+      let pA=0,pB=0;
+      const ppts = Array.isArray(m.pingPts) ? m.pingPts : [];
+      ppts.forEach(s=>{
+        const a = (s && s.a!=null) ? +s.a : null;
+        const b = (s && s.b!=null) ? +s.b : null;
+        if (!isPingValid(a,b)) return;
+        if (a>b) pA++; else if (b>a) pB++;
       });
-    }
+      // palet
+      let lA=null,lB=null;
+      if (m.palet && m.palet.a!=null && m.palet.b!=null){
+        lA = +m.palet.a; lB = +m.palet.b;
+      }
+      // score global = nombre d'épreuves gagnées
+      let gA=0,gB=0;
+      if (dA>dB){ gA++; } else if (dB>dA){ gB++; }
+      if (pA>pB){ gA++; } else if (pB>pA){ gB++; }
+      const w = paletWinner(lA,lB); if (w==='A') gA++; else if (w==='B') gB++;
+
+      const round = (m.round!=null) ? m.round : '';
+      const detailsParts = [];
+      detailsParts.push(`Fléchettes ${dA}–${dB}`);
+      detailsParts.push(`Ping-pong ${pA}–${pB}`);
+      if (lA!=null && lB!=null) detailsParts.push(`Palet ${lA}–${lB}`);
+      const details = detailsParts.join(' · ');
+      list.push({ round, nameA, nameB, details, global: `${gA}–${gB}` });
+    });
     return list;
   }
 
-  function parseMatchesFromDOM(){
-    // Cherche lignes "match" courantes
-    const rows = [];
-    const containers = document.querySelectorAll('[data-role="matches"], .matches, .match-list, #matches, [id*="match"] table');
-    containers.forEach(ct => {
-      const trs = ct.querySelectorAll('tr');
-      trs.forEach(tr => {
-        const tds = Array.from(tr.querySelectorAll('td,th')).map(x => (x.innerText||'').replace(/\s+/g,' ').trim());
-        if (tds.length >= 3 && /vs|–|-/.test(tds.join(' '))){
-          rows.push(tds);
-        }
-      });
-    });
-    return rows.map((arr,i)=>({ label: '', nameA: arr[0]||'', nameB: arr[2]||'', details: arr.slice(3).join(' · ') }));
-  }
-
-  const matchesFromState = parseMatchesFromState();
-  const matchesFromDOM = matchesFromState.length ? [] : parseMatchesFromDOM();
-
+  const matchesItems = buildMatchesFromState();
   function buildMatchesTable(items){
     if (!items.length) return '';
-    let html = '<table class="compact"><thead><tr><th>J</th><th>Équipe A</th><th></th><th>Équipe B</th><th>Détails</th></tr></thead><tbody>';
+    let html = '<table class="compact"><thead><tr><th>J</th><th>Équipe A</th><th></th><th>Équipe B</th><th>Détails</th><th>Score</th></tr></thead><tbody>';
     for (const m of items){
-      const j = (m.label || '').toString().replace(/^J/i,'') || '';
       html += '<tr>'
-           + `<td style="text-align:center">${escapeHtml(j)}</td>`
+           + `<td style="text-align:center">${escapeHtml(String(m.round||''))}</td>`
            + `<td style="text-align:right">${escapeHtml(m.nameA||'')}</td>`
            + `<td style="text-align:center">–</td>`
            + `<td style="text-align:left">${escapeHtml(m.nameB||'')}</td>`
-           + `<td style="text-align:left">${escapeHtml([m.details||'', m.global||''].filter(Boolean).join(' '))}</td>`
+           + `<td style="text-align:left">${escapeHtml(m.details||'')}</td>`
+           + `<td style="text-align:center">${escapeHtml(m.global||'')}</td>`
            + '</tr>';
     }
     html += '</tbody></table>';
     return html;
   }
-
-  const matchesHTML = matchesFromState.length ? buildMatchesTable(matchesFromState) :
-                      (matchesFromDOM.length ? buildMatchesTable(matchesFromDOM) : '');
+  const matchesHTML = buildMatchesTable(matchesItems);
 
   // 3) Métadonnées
-  const title = (window.state && window.state.tournamentName) ? window.state.tournamentName : 'TriSports';
+  const title = (window.state && state.tournamentName) ? state.tournamentName : 'TriSports';
   const when  = new Date().toLocaleString('fr-FR', { dateStyle:'medium', timeStyle:'short' });
 
-  // 4) CSS compact + impression
+  // 4) CSS impression compact
   const css = `
   <style>
     @page{ size:A4; margin:10mm; }
@@ -3149,13 +3096,14 @@ function exportSummaryPDF(){
     .muted{ color:#555; margin-bottom:4mm; }
     table{ width:100%; border-collapse:collapse; table-layout:fixed; }
     table.compact th, table.compact td{ border:1px solid #ddd; padding:4px 6px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    table.compact th:nth-child(2), table.compact td:nth-child(2){ text-align:left; max-width:120px; }
+    table.compact th:nth-child(2), table.compact td:nth-child(2){ text-align:left; max-width:140px; }
+    table.compact td:nth-child(5){ text-align:left; }
     thead th{ background:#f3f4f6; }
     td, th { font-variant-numeric: tabular-nums; }
     .section{ break-inside: avoid; }
   </style>`;
 
-  // 5) Construire le HTML imprimable
+  // 5) HTML imprimable
   const html = `
     <!doctype html><html lang="fr"><head>
       <meta charset="utf-8" />
@@ -3202,6 +3150,7 @@ function exportSummaryPDF(){
   function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
 }
 </script>
+
 
 
 
