@@ -1076,7 +1076,7 @@ function bonusChip(r, mTeam, rs){
       type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
       type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
       type==='melon'    ? 'Match au sport choisi : +5/manche gagnée (fléchettes & ping, différence appliquée). Palet : +PF si victoire, sinon −2×(11−PF).' :
-                          'Aucun réglage. +2/manche gagnée (fléchettes & ping, simples/doubles) et +2 si palet.'
+                          '+2pts/manche gagnée (fléchettes & ping, simples/doubles) et +2pts si palet.'
     );
     return '<span class="pill bonus-flashy ' + valClass + '" aria-label="' + lblType + '">' +
        'Bonus' +
@@ -2272,10 +2272,10 @@ function onEnter(e){
 // === Bonus tooltip — large, hover only (fixed to body) ===================
 (function bonusTooltipHoverOnly(){
   const DESCS = {
-    "Capitaine": "Aucun réglage. +2 par manche gagnée (fléchettes & ping, simples et doubles) et +2 si palet gagné.",
-    "Miroir": "Inverse le bonus adverse sur tout le match. Si l’adversaire choisit Capitaine, son effet s’applique à votre équipe.",
-    "René la taupe": "Lunettes gênantes imposées à l’adversaire dans le sport choisi. Si l’adversaire joue « Miroir », vous portez les lunettes.",
-    "10 pouces 2 mains gauche": "L’adversaire doit jouer un sous-match avec sa mauvaise main. Choisissez le sport concerné.",
+    "Capitaine": "+2pts par manche gagnée (fléchettes & ping, simples et doubles) et +2 si match de palet gagné.",
+    "Miroir": "Inverse le bonus adverse sur tout le match.",
+    "René la taupe": "Lunettes gênantes imposées à l’adversaire dans le sport choisi.",
+    "10 pouces 2 mains gauche": "L’adversaire doit jouer avec sa mauvaise main. Choisissez le sport concerné.",
     "Melon d'or": "Nouveau bonus — détails à venir."
   };
 
