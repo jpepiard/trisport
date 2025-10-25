@@ -3856,3 +3856,223 @@ const place = (el) => {
   });
 })();
 </script>
+<!-- Modal recadrage avatar -->
+<div id="avatar-cropper" aria-hidden="true" style="display:none">
+  <div class="cropper-card">
+    <div class="hd"><strong>Recadrer l’avatar</strong></div>
+    <div class="bd">
+      <div class="crop-stage">
+        <img id="crop-img" alt="" />
+        <div class="mask"></div>
+        <div class="preview">
+          <canvas id="preview-canvas" width="48" height="48"></canvas>
+        </div>
+      </div>
+      <div class="controls">
+        <label>Zoom</label>
+        <input id="crop-zoom" type="range" min="1" max="4" step="0.01" value="1"/>
+        <label style="margin-left:8px">Rotation</label>
+        <input id="crop-rotate" type="range" min="-45" max="45" step="1" value="0"/>
+      </div>
+      <div class="help">Astuce : glisse l’image sous le rond pour la recadrer.</div>
+    </div>
+    <div class="ft">
+      <button type="button" class="btn" id="crop-cancel">Annuler</button>
+      <button type="button" class="btn primary" id="crop-apply">Utiliser cet avatar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const modal   = document.getElementById('avatar-cropper');
+  if(!modal) return;
+  const imgEl   = document.getElementById('crop-img');
+  const zoomEl  = document.getElementById('crop-zoom');
+  const rotEl   = document.getElementById('crop-rotate');
+  const prevCv  = document.getElementById('preview-canvas');
+  const prevCtx = prevCv.getContext('2d');
+  const mask    = modal.querySelector('.mask');
+
+  let state = null;
+
+  function openModal(){ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); modal.style.display='flex'; }
+  function closeModal(){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); modal.style.display='none'; }
+
+  function fitInitial(){
+    const stage = modal.querySelector('.crop-stage');
+    const rect  = stage.getBoundingClientRect();
+    const R = parseFloat(getComputedStyle(mask).getPropertyValue('--r')) || 160;
+    const need = R;
+    const s = Math.max(need / state.naturalW, need / state.naturalH);
+    state.scale = Math.max(1, s);
+    state.tx = 0; state.ty = 0; state.rot = 0;
+    zoomEl.value = state.scale.toFixed(2);
+    rotEl.value  = 0;
+    updateTransform();
+    drawPreview();
+  }
+
+  function updateTransform(){
+    const z = parseFloat(zoomEl.value || '1');
+    state.scale = z;
+    const r = parseFloat(rotEl.value || '0');
+    state.rot = r;
+    imgEl.style.transform =
+      `translate(calc(-50% + ${state.tx}px), calc(-50% + ${state.ty}px)) rotate(${r}deg) scale(${z})`;
+  }
+
+  function drawPreview(){
+    const size = prevCv.width;
+    prevCtx.clearRect(0,0,size,size);
+    prevCtx.save();
+    prevCtx.beginPath();
+    prevCtx.arc(size/2, size/2, size/2, 0, Math.PI*2);
+    prevCtx.closePath();
+    prevCtx.clip();
+
+    const stage = modal.querySelector('.crop-stage');
+    const rect  = stage.getBoundingClientRect();
+    const R = parseFloat(getComputedStyle(mask).getPropertyValue('--r')) || 160;
+    const target = { cx: rect.width/2, cy: rect.height/2, r: R/2 };
+
+    const off = document.createElement('canvas');
+    off.width  = rect.width; off.height = rect.height;
+    const octx = off.getContext('2d');
+    octx.translate(rect.width/2 + state.tx, rect.height/2 + state.ty);
+    octx.rotate(state.rot * Math.PI / 180);
+    octx.scale(state.scale, state.scale);
+    octx.drawImage(state.img, -state.naturalW/2, -state.naturalH/2);
+
+    const cut = octx.getImageData(target.cx - target.r, target.cy - target.r, target.r*2, target.r*2);
+    const temp = document.createElement('canvas');
+    temp.width = target.r*2; temp.height = target.r*2;
+    temp.getContext('2d').putImageData(cut, 0, 0);
+    prevCtx.drawImage(temp, 0, 0, size, size);
+
+    prevCtx.restore();
+  }
+
+  (function enableDrag(){
+    const stage = modal.querySelector('.crop-stage');
+    let dragging = false, sx=0, sy=0, ox=0, oy=0;
+    function down(e){
+      dragging = true;
+      const p = (e.touches && e.touches[0]) || e;
+      sx = p.clientX; sy = p.clientY; ox = state.tx; oy = state.ty;
+      e.preventDefault();
+    }
+    function move(e){
+      if(!dragging) return;
+      const p = (e.touches && e.touches[0]) || e;
+      state.tx = ox + (p.clientX - sx);
+      state.ty = oy + (p.clientY - sy);
+      updateTransform(); drawPreview();
+      e.preventDefault();
+    }
+    function up(){ dragging=false; }
+    stage.addEventListener('mousedown', down);
+    stage.addEventListener('mousemove', move);
+    stage.addEventListener('mouseup', up);
+    stage.addEventListener('mouseleave', up);
+    stage.addEventListener('touchstart', down, {passive:false});
+    stage.addEventListener('touchmove',  move, {passive:false});
+    stage.addEventListener('touchend',   up);
+  })();
+
+  zoomEl.addEventListener('input', ()=>{ updateTransform(); drawPreview(); });
+  rotEl.addEventListener('input',  ()=>{ updateTransform(); drawPreview(); });
+  document.getElementById('crop-cancel').addEventListener('click', ()=> closeModal());
+
+  window.openAvatarCropperForDataURL = function(file, exportSize=160, previewSize=48){
+    return new Promise((resolve, reject)=>{
+      try{
+        const fr = new FileReader();
+        fr.onerror = ()=>reject(new Error('read'));
+        fr.onload = ()=>{
+          const img = new Image();
+          img.onload = ()=>{
+            state = {
+              exportSize,
+              img,
+              naturalW: img.naturalWidth,
+              naturalH: img.naturalHeight,
+              scale: 1, rot: 0, tx: 0, ty: 0
+            };
+            imgEl.src = fr.result;
+            openModal();
+            requestAnimationFrame(()=>{
+              const stage = modal.querySelector('.crop-stage');
+              const rect  = stage.getBoundingClientRect();
+              stage.querySelector('.mask').style.setProperty('--r', Math.round(rect.width*0.6) + 'px');
+              if(previewSize && previewSize !== prevCv.width){
+                prevCv.width = previewSize; prevCv.height = previewSize;
+              }
+              fitInitial();
+            });
+
+            const applyBtn = document.getElementById('crop-apply');
+            const onApply = ()=>{
+              try{
+                const N = exportSize || 160;
+                const out = document.createElement('canvas');
+                out.width = N; out.height = N;
+                const ctx = out.getContext('2d');
+                ctx.clearRect(0,0,N,N);
+                ctx.save();
+                ctx.beginPath(); ctx.arc(N/2,N/2,N/2,0,Math.PI*2); ctx.clip();
+
+                const stage = modal.querySelector('.crop-stage');
+                const rect  = stage.getBoundingClientRect();
+                const R = parseFloat(getComputedStyle(mask).getPropertyValue('--r')) || 160;
+                const target = { cx: rect.width/2, cy: rect.height/2, r: R/2 };
+
+                const off = document.createElement('canvas');
+                off.width  = rect.width; off.height = rect.height;
+                const octx = off.getContext('2d');
+                octx.translate(rect.width/2 + state.tx, rect.height/2 + state.ty);
+                octx.rotate(state.rot * Math.PI / 180);
+                octx.scale(state.scale, state.scale);
+                octx.drawImage(state.img, -state.naturalW/2, -state.naturalH/2);
+
+                const cut = octx.getImageData(target.cx - target.r, target.cy - target.r, target.r*2, target.r*2);
+                const temp = document.createElement('canvas');
+                temp.width = target.r*2; temp.height = target.r*2;
+                temp.getContext('2d').putImageData(cut, 0, 0);
+                ctx.drawImage(temp, 0, 0, N, N);
+                ctx.restore();
+
+                const url = out.toDataURL('image/jpeg', .9);
+                applyBtn.removeEventListener('click', onApply);
+                closeModal();
+                resolve(url);
+              }catch(e){
+                applyBtn.removeEventListener('click', onApply);
+                reject(e);
+              }
+            };
+            applyBtn.addEventListener('click', onApply, {once:true});
+          };
+          img.onerror = ()=>reject(new Error('img'));
+          img.src = fr.result;
+        };
+        fr.readAsDataURL(file);
+      }catch(e){ reject(e); }
+    });
+  };
+
+  // Monkey-patch fileToSquareDataURL AFTER it is defined somewhere else
+  document.addEventListener('DOMContentLoaded', ()=>{
+    if(typeof window.fileToSquareDataURL === 'function'){
+      const orig = window.fileToSquareDataURL;
+      window.fileToSquareDataURL = function(file, size){
+        if(size && size <= 256){
+          return window.openAvatarCropperForDataURL(file, size, 48);
+        }else{
+          return orig(file, size);
+        }
+      };
+    }
+  });
+})();
+</script>

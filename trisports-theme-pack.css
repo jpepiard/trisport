@@ -2146,7 +2146,6 @@ header > .container > div:last-child{
   .match-card[data-complete="false"] .pill.bonus-flashy::before{ animation: none !important; opacity: .35; }
 }
 
-
 /* === Avatar Cropper Modal ============================================= */
 #avatar-cropper{
   position: fixed; inset: 0; z-index: 9999;
