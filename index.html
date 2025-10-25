@@ -3032,17 +3032,39 @@ function exportSummaryPDF(){
       <script>window.onload = function(){ setTimeout(function(){ window.print(); window.close(); }, 50); }<\/script>
     </body></html>`;
 
-  // 6) Ouvrir une fenêtre et déclencher l'impression
-  const w = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
-  if(!w){ alert("Le navigateur a bloqué l’ouverture de la fenêtre d’impression."); return; }
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
+  
+  // 6) Imprimer via un iframe invisible (évite les bloqueurs de pop-up)
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.src = url;
+  iframe.onload = function(){
+    try {
+      setTimeout(function(){
+        iframe.contentWindow && iframe.contentWindow.focus();
+        iframe.contentWindow && iframe.contentWindow.print();
+        URL.revokeObjectURL(url);
+        setTimeout(function(){ iframe.remove(); }, 1000);
+      }, 50);
+    } catch(err){
+      console.error(err);
+      alert("Échec de l’impression.");
+    }
+  };
+  document.body.appendChild(iframe);
 
   // Utilitaire anti-XSS (titre/horodatage)
   function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
 }
 </script>
+
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
