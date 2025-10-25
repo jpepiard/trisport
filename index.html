@@ -1398,7 +1398,15 @@ function renderLeaderboard(){
     };
   });
 
-  rows.sort((a,b)=> b.points - a.points || a.name.localeCompare(b.name));
+  rows.sort((a, b) =>
+  // 1) Points (desc)
+  (b.points - a.points) ||
+  // 2) Différence palet (PF-PA) (desc)
+  ((b.palPF - b.palPA) - (a.palPF - a.palPA)) ||
+  // 3) Nom (asc) pour stabiliser
+  a.name.localeCompare(b.name)
+);
+
 
   rows.forEach((r,i)=>{
     const avatar = avatarHtml ? avatarHtml(r.id, 22, '') : '';
