@@ -2989,6 +2989,13 @@ const matchesHTML=buildTable(items);
 const title=(window.state&&state.tournamentName)?state.tournamentName:'TriSports';const when=new Date().toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'});
 const css=`<style>@page{size:A4;margin:10mm;}body{font:11px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111}h1{font-size:18px;margin:0 0 2mm}h2{font-size:14px;margin:8mm 0 3mm}.muted{color:#555;margin-bottom:4mm}table{width:100%;border-collapse:collapse}table.compact{table-layout:auto}table.compact th,table.compact td{border:1px solid #ddd;padding:4px 6px;text-align:center}table.compact th:nth-child(2),table.compact td:nth-child(2){text-align:left;max-width:160px}table.compact td:nth-child(5){text-align:left;white-space:normal}thead th{background:#f3f4f6}td,th{font-variant-numeric:tabular-nums}.section{break-inside:avoid}</style>`;
 const html=`<!doctype html><html lang="fr"><head><meta charset="utf-8"/><title>Résumé — ${escapeHtml(title)}</title>${css}</head><body><h1>Résumé — ${escapeHtml(title)}</h1><div class="muted">Généré le ${escapeHtml(when)}</div><div class="section"><h2>Classement</h2>${compact}</div>${matchesHTML?`<div class="section"><h2>Détail des matchs</h2>${matchesHTML}</div>`:''}
+
+
+</body></html>`;
+const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const f=document.createElement('iframe');f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='0';f.style.height='0';f.style.border='0';f.src=url;f.onload=function(){try{setTimeout(function(){f.contentWindow&&f.contentWindow.focus();f.contentWindow&&f.contentWindow.print();URL.revokeObjectURL(url);setTimeout(function(){f.remove();},1000);},50);}catch(err){console.error(err);alert('Échec de l’impression.');}};document.body.appendChild(f);
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+}
+</script>
 <!-- jsPDF + AutoTable -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -3239,11 +3246,6 @@ const html=`<!doctype html><html lang="fr"><head><meta charset="utf-8"/><title>R
 })();
 </script>
 
-</body></html>`;
-const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const f=document.createElement('iframe');f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='0';f.style.height='0';f.style.border='0';f.src=url;f.onload=function(){try{setTimeout(function(){f.contentWindow&&f.contentWindow.focus();f.contentWindow&&f.contentWindow.print();URL.revokeObjectURL(url);setTimeout(function(){f.remove();},1000);},50);}catch(err){console.error(err);alert('Échec de l’impression.');}};document.body.appendChild(f);
-function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-}
-</script>
 <!-- jsPDF + AutoTable -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
