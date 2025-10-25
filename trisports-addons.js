@@ -2,29 +2,24 @@
 (function(){
   'use strict';
 
-  // ====== 1) Persist selected tab in localStorage ======
   const LS_KEY = 'trisports.lastTab';
 
-  function getTabsWrap(){
-    return document.getElementById('tabs');
-  }
+  function getTabsWrap(){ return document.getElementById('tabs'); }
   function getAllTabs(){
     const w = getTabsWrap(); if(!w) return [];
     return Array.from(w.querySelectorAll('[role="tab"][data-tab]'));
   }
-  function getSections(){
-    return Array.from(document.querySelectorAll('main section[id]'));
-  }
+  function getSections(){ return Array.from(document.querySelectorAll('main section[id]')); }
 
   function openTab(name){
     const tabs = getAllTabs();
     const sections = getSections();
-    // buttons
+    // Buttons
     tabs.forEach(btn=>{
       const isActive = btn.getAttribute('data-tab') === name;
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
-    // sections
+    // Sections
     sections.forEach(sec=>{
       const isActive = sec.id === name;
       sec.classList.toggle('active', isActive);
@@ -36,7 +31,7 @@
     const tabs = getAllTabs();
     if(!tabs.length) return;
 
-    // click handler
+    // Generic click: persist name; do NOT interfere with app logic for known tabs
     tabs.forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const name = btn.getAttribute('data-tab');
@@ -44,26 +39,23 @@
       });
     });
 
-    // restore
-    const saved = (()=>{
-      try{ return localStorage.getItem(LS_KEY) }catch(_){ return null }
-    })();
+    // Restore at load
+    const saved = ( ()=>{ try{ return localStorage.getItem(LS_KEY) }catch(_){ return null } } )();
     if(saved && getSections().some(s=>s.id===saved)){
       openTab(saved);
-      // If there is an existing click behavior elsewhere, attempt to trigger it too
       const target = getAllTabs().find(t=>t.getAttribute('data-tab')===saved);
       if(target){ target.dispatchEvent(new Event('click', {bubbles:true})); }
     }
   }
 
-  // ====== 2) Stats tab injection (button + section) ======
+  // ====== Inject Stats tab + section ======
   function ensureStatsTab(){
     const tabsWrap = getTabsWrap();
     if(!tabsWrap) return null;
+    let btn = tabsWrap.querySelector('[data-tab="stats"]');
+    if(btn) return btn;
 
-    if (tabsWrap.querySelector('[data-tab="stats"]')) return tabsWrap.querySelector('[data-tab="stats"]');
-
-    const btn = document.createElement('button');
+    btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'tab gta gta';
     btn.setAttribute('role','tab');
@@ -75,11 +67,12 @@
   }
 
   function ensureStatsSection(){
-    if (document.getElementById('stats')) return document.getElementById('stats');
+    let sec = document.getElementById('stats');
+    if(sec) return sec;
     const container = document.querySelector('main .container') || document.querySelector('main');
     if(!container) return null;
 
-    const sec = document.createElement('section');
+    sec = document.createElement('section');
     sec.id = 'stats';
     sec.style.display = 'none';
     sec.innerHTML = `
@@ -110,7 +103,7 @@
     return sec;
   }
 
-  // ====== 3) Charts rendering (vanilla canvas) ======
+  // ====== Charts ======
   function drawBars(canvas, labels, values, opts){
     if(!canvas) return;
     const options = Object.assign({title:"", padding:24}, opts||{});
@@ -118,11 +111,9 @@
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0,0,W,H);
 
-    // background
     ctx.fillStyle = '#121632';
     ctx.fillRect(0,0,W,H);
 
-    // title
     if (options.title){
       ctx.fillStyle = '#e7e9f7';
       ctx.font = '600 14px system-ui, -apple-system, Segoe UI, Roboto';
@@ -140,25 +131,15 @@
     const barW = Math.max(16, Math.min(48, cw / (values.length * 1.5)));
     const gap = (cw - barW * values.length) / Math.max(values.length - 1, 1);
 
-    // axes
     ctx.strokeStyle = 'rgba(255,255,255,.12)';
-    ctx.beginPath();
-    ctx.moveTo(left, top);
-    ctx.lineTo(left, top + ch);
-    ctx.lineTo(left + cw, top + ch);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(left, top); ctx.lineTo(left, top + ch); ctx.lineTo(left + cw, top + ch); ctx.stroke();
 
-    // grid
     ctx.strokeStyle = 'rgba(255,255,255,.08)';
-    [0.25, 0.5, 0.75].forEach(p=>{
+    [0.25,0.5,0.75].forEach(p=>{
       const y = top + ch * (1 - p);
-      ctx.beginPath();
-      ctx.moveTo(left, y);
-      ctx.lineTo(left + cw, y);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + cw, y); ctx.stroke();
     });
 
-    // bars
     ctx.fillStyle = '#7aa2ff';
     labels.forEach((lab, i)=>{
       const x = left + i * (barW + gap);
@@ -166,14 +147,12 @@
       const y = top + (ch - h);
       ctx.fillRect(x, y, barW, h);
 
-      // label
       ctx.fillStyle = '#8b94b8';
       ctx.font = '600 11px system-ui, -apple-system, Segoe UI, Roboto';
-      const txt = lab.length > 10 ? (lab.slice(0, 9) + '…') : lab;
+      const txt = lab.length > 10 ? (lab.slice(0,9)+'…') : lab;
       const tw = ctx.measureText(txt).width;
       ctx.fillText(txt, x + (barW - tw)/2, H - 14);
 
-      // value
       ctx.fillStyle = '#e7e9f7';
       ctx.font = '700 11px system-ui, -apple-system, Segoe UI, Roboto';
       const vtxt = String(values[i]);
@@ -192,12 +171,10 @@
       if (tds.length < 9) return;
       const name = (tds[1]?.innerText || '').trim();
       const pts  = parseInt((tds[2]?.innerText || '0'), 10) || 0;
-
       const bonusTxt = (tds[6]?.innerText || '0').replace(/[^\-0-9]/g,'') || '0';
       const malusTxt = (tds[7]?.innerText || '0').replace(/[^\-0-9]/g,'') || '0';
       const bonus = parseInt(bonusTxt, 10) || 0;
       const malus = Math.abs(parseInt(malusTxt, 10) || 0);
-
       const complets = parseInt((tds[8]?.innerText || '0'), 10) || 0;
       if (name) data.push({ name, points: pts, bonus, malus, complets });
     });
@@ -224,63 +201,66 @@
       return;
     }
 
-    drawBars(
-      canvases.points,
-      d.map(x=>x.name),
-      d.map(x=>x.points),
-      { title: 'Points par équipe' }
-    );
-
-    drawBars(
-      canvases.bonusmalus,
-      d.map(x=>x.name),
-      d.map(x=>x.bonus + x.malus),
-      { title: 'Bonus + Malus (absolus cumulés)' }
-    );
-
-    drawBars(
-      canvases.complets,
-      d.map(x=>x.name),
-      d.map(x=>x.complets),
-      { title: 'Matchs complets par équipe' }
-    );
+    drawBars(canvases.points,      d.map(x=>x.name), d.map(x=>x.points),   { title: 'Points par équipe' });
+    drawBars(canvases.bonusmalus,  d.map(x=>x.name), d.map(x=>x.bonus + x.malus), { title: 'Bonus + Malus (absolus cumulés)' });
+    drawBars(canvases.complets,    d.map(x=>x.name), d.map(x=>x.complets), { title: 'Matchs complets par équipe' });
   }
 
   function installStatsHooks(){
     const tabsWrap = getTabsWrap();
     if (tabsWrap){
+      // Event delegation for the injected tab
       tabsWrap.addEventListener('click', (ev)=>{
-        const btn = ev.target.closest('[role="tab"][data-tab="stats"]');
-        if (btn){
-          // render after tab becomes visible
-          setTimeout(renderStats, 0);
+        const statsBtn = ev.target.closest('[role="tab"][data-tab="stats"]');
+        if (statsBtn){
+          // Ensure the tab content gets shown even if the app doesn't know this tab
+          try{ localStorage.setItem(LS_KEY, 'stats'); }catch(_){}
+          openTab('stats');
+          // Render after layout
+          requestAnimationFrame(()=> setTimeout(renderStats, 0));
         }
       });
     }
-    // If persistent tab is stats at load, render quickly after paint
+
+    // If "stats" is the saved tab, we show and render after load
     try{
       if (localStorage.getItem(LS_KEY) === 'stats'){
-        requestAnimationFrame(()=> setTimeout(renderStats, 60));
+        openTab('stats');
+        requestAnimationFrame(()=> setTimeout(renderStats, 80));
       }
     }catch(_){}
-    // If "refresh standings" is clicked while stats open, re-render
+
+    // If standings get refreshed while stats is open, re-render
     ['btn-refresh-standings','btn-refresh-standings-2'].forEach(id=>{
       const b = document.getElementById(id);
       if (b){
         b.addEventListener('click', ()=>{
           const statsOpen = document.getElementById('stats')?.classList.contains('active');
-          if (statsOpen) setTimeout(renderStats, 80);
+          if (statsOpen) setTimeout(renderStats, 120);
         });
       }
     });
+
+    // Observe classement table for changes (rows added/updated)
+    const tbody = document.querySelector('#table-classement tbody');
+    if (tbody && 'MutationObserver' in window){
+      const obs = new MutationObserver(()=>{
+        const statsOpen = document.getElementById('stats')?.classList.contains('active');
+        if (statsOpen) renderStats();
+      });
+      obs.observe(tbody, {childList:true, subtree:true, characterData:true});
+    }
+
+    // Safety: delayed retry if initial render missed
+    setTimeout(()=>{
+      const statsOpen = document.getElementById('stats')?.classList.contains('active');
+      if (statsOpen) renderStats();
+    }, 1000);
   }
 
-  // ====== Bootstrapping ======
   function boot(){
-    // Inject stats tab + section without modifying original HTML
     ensureStatsTab();
     ensureStatsSection();
-    // Install behaviors
     installTabPersistence();
     installStatsHooks();
   }
