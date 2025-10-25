@@ -2995,7 +2995,78 @@ function buildTable(it){if(!it.length)return'';let h='<table class="compact"><th
 const matchesHTML=buildTable(items);
 const title=(window.state&&state.tournamentName)?state.tournamentName:'TriSports';const when=new Date().toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'});
 const css=`<style>@page{size:A4;margin:10mm;}body{font:11px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111}h1{font-size:18px;margin:0 0 2mm}h2{font-size:14px;margin:8mm 0 3mm}.muted{color:#555;margin-bottom:4mm}table{width:100%;border-collapse:collapse}table.compact{table-layout:auto}table.compact th,table.compact td{border:1px solid #ddd;padding:4px 6px;text-align:center}table.compact th:nth-child(2),table.compact td:nth-child(2){text-align:left;max-width:160px}table.compact td:nth-child(5){text-align:left;white-space:normal}thead th{background:#f3f4f6}td,th{font-variant-numeric:tabular-nums}.section{break-inside:avoid}</style>`;
-const html=`<!doctype html><html lang="fr"><head><meta charset="utf-8"/><title>Résumé — ${escapeHtml(title)}</title>${css}</head><body><h1>Résumé — ${escapeHtml(title)}</h1><div class="muted">Généré le ${escapeHtml(when)}</div><div class="section"><h2>Classement</h2>${compact}</div>${matchesHTML?`<div class="section"><h2>Détail des matchs</h2>${matchesHTML}</div>`:''}</body></html>`;
+const html=`<!doctype html><html lang="fr"><head><meta charset="utf-8"/><title>Résumé — ${escapeHtml(title)}</title>${css}
+<style id="neon-inline-theme">
+/* =========================================================
+   TriSports — NEON SCOREBOARD THEME (INLINE FAILSAFE)
+   ========================================================= */
+[data-skin="neon"] {
+  --neon-cyan: #2399f2;
+  --neon-blue2: #1c6be0;
+  --neon-border: rgba(35,153,242,.42);
+  --neon-shadow-1: 0 0 6px rgba(35,153,242,.24), 0 0 16px rgba(35,153,242,.16);
+  --neon-shadow-2: 0 0 10px rgba(35,153,242,.32), 0 0 22px rgba(35,153,242,.22);
+}
+[data-skin="neon"] .match-card{
+  border:1px solid var(--neon-border);
+  background: radial-gradient(1200px 800px at -10% -20%, rgba(35,153,242,.10), transparent 50%),
+              linear-gradient(145deg,#151b39,#10142f);
+  box-shadow: var(--neon-shadow-1);
+  position: relative;
+}
+[data-skin="neon"] .match-card:hover{
+  box-shadow: var(--neon-shadow-2);
+  transform: translateY(-1px);
+}
+[data-skin="neon"] .match-card .hd{
+  background: linear-gradient(180deg, rgba(18,22,50,.6), rgba(18,22,50,.2));
+  border-bottom: 1px solid rgba(35,153,242,.25);
+}
+[data-skin="neon"] .match-card .team-name{ color:#e9f1ff; text-shadow:0 1px 0 rgba(0,0,0,.35); }
+[data-skin="neon"] .match-card .avatar{
+  border-color: rgba(35,153,242,.35);
+  background: #0f1331;
+  box-shadow: 0 0 10px rgba(35,153,242,.22) inset;
+}
+[data-skin="neon"] .match-card .score-compact{
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #eaf6ff;
+  text-shadow: 0 0 10px rgba(35,153,242,.65), 0 2px 0 rgba(0,0,0,.35);
+}
+[data-skin="neon"] .match-card .pill{
+  color:#f7fbff;
+  border:1px solid var(--neon-border);
+  background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-blue2) 100%);
+  text-shadow: 0 0 2px rgba(35,153,242,.35);
+  box-shadow: var(--neon-shadow-1), inset 0 0 6px rgba(255,255,255,.06);
+}
+[data-skin="neon"] .match-card .pill:hover{
+  box-shadow: var(--neon-shadow-2), inset 0 0 8px rgba(255,255,255,.10);
+  filter: saturate(1.04);
+}
+[data-skin="neon"] .match-card .bd .chip,
+[data-skin="neon"] .match-card .bd .help{
+  color:#a9c6ff;
+}
+[data-skin="neon"] .match-card .btn.small{ border-color: var(--neon-border); }
+[data-skin="neon"] .match-card[aria-expanded="true"]{
+  box-shadow: 0 0 0 1px rgba(35,153,242,.25) inset, var(--neon-shadow-1);
+}
+[data-skin="neon"] .match-card .pill.red{
+  border-color: rgba(239,68,68,.6);
+  background: linear-gradient(135deg, #c02626 0%, #8a1f1f 100%);
+  box-shadow: 0 0 8px rgba(239,68,68,.35), inset 0 0 6px rgba(255,255,255,.06);
+}
+[data-skin="neon"] .match-card .pill.green{
+  border-color: rgba(34,197,94,.6);
+  background: linear-gradient(135deg, #0e9f6e 0%, #0b7d58 100%);
+  box-shadow: 0 0 8px rgba(34,197,94,.35), inset 0 0 6px rgba(255,255,255,.06);
+}
+</style>
+
+</head><body><h1>Résumé — ${escapeHtml(title)}</h1><div class="muted">Généré le ${escapeHtml(when)}</div><div class="section"><h2>Classement</h2>${compact}</div>${matchesHTML?`<div class="section"><h2>Détail des matchs</h2>${matchesHTML}</div>`:''}</body></html>`;
 const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const f=document.createElement('iframe');f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='0';f.style.height='0';f.style.border='0';f.src=url;f.onload=function(){try{setTimeout(function(){f.contentWindow&&f.contentWindow.focus();f.contentWindow&&f.contentWindow.print();URL.revokeObjectURL(url);setTimeout(function(){f.remove();},1000);},50);}catch(err){console.error(err);alert('Échec de l’impression.');}};document.body.appendChild(f);
 function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 }
