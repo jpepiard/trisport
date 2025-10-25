@@ -422,6 +422,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <button class="btn" id="btn-export" type="button">Exporter en JSON</button>
 <input accept="application/json" id="file-import" type="file"/>
 <button class="btn" id="btn-import" type="button">Importer le fichier JSON</button>
+<button class="btn" id="btn-export-pdf" type="button">📄 Exporter le résumé (PDF)</button>
 </div>
 </div>
 <div class="card"><div class="hd"><strong>Accès administrateur</strong></div>
@@ -2969,7 +2970,29 @@ function onEnter(e){
 </script>
 
 
-</body>
+<script>
+document.addEventListener('click', function(e){
+  const t = e.target; if (t && t.id === 'btn-export-pdf'){ try{ exportSummaryPDF(); } catch(err){ console.error(err); alert('Échec de l’export PDF.'); } }
+});
+function exportSummaryPDF(){
+try{window.renderMatches&&window.renderMatches();}catch(_){};try{window.renderLeaderboard&&window.renderLeaderboard();}catch(_){};
+const srcTable=document.getElementById('table-classement');let rows=[];if(srcTable&&srcTable.tBodies&&srcTable.tBodies[0]){Array.from(srcTable.tBodies[0].rows).forEach(tr=>{const vals=Array.from(tr.cells||[]).map(td=>(td.innerText||'').replace(/\s+/g,' ').trim());if(vals.join('').trim())rows.push(vals);});}
+const headers=['#','Équipe','Pts','Fléchettes','Ping-pong','Palet (PF–PA)','Bonus','Malus','Matchs'];
+const compact=(()=>{let th='<thead><tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr></thead>';let tb='<tbody>';rows.forEach(r=>{const v=r.slice(0,headers.length);tb+='<tr>'+v.map((x,i)=>`<td${i===1?' style="text-align:left"':''}>${escapeHtml(x)}</td>`).join('')+'</tr>';});tb+='</tbody>';return `<table class="compact">${th}${tb}</table>`;})();
+function teamName(id){try{const t=(window.state&&Array.isArray(state.teams))?state.teams.find(x=>x.id===id):null;return t?(t.name||t.title||t.label||''):String(id||'');}catch(_){return String(id||'');}}
+function palW(a,b){const T=+((window.state&&state.rules&&state.rules.paletTarget)??11);if(a==null||b==null)return null;if(a>=T&&a>b)return'A';if(b>=T&&b>a)return'B';return null;}
+function matchesFromState(){const out=[];const ms=(window.state&&Array.isArray(state.matches))?state.matches.slice():[];ms.sort((x,y)=>(x.round-y.round)||(x.order-y.order)||((x.id>y.id)?1:-1));ms.forEach(m=>{if(!m)return;const A=teamName(m.a),B=teamName(m.b);let dA=0,dB=0;Array.isArray(m.darts)&&m.darts.forEach(v=>{if(v===0)dA++;else if(v===1)dB++;});let pA=0,pB=0;const P=Array.isArray(m.pingPts)?m.pingPts:[];const ok=(a,b)=>{const max=Math.max(a,b),diff=Math.abs(a-b);return(max>=11)&&(diff>=2)};P.forEach(s=>{const a=(s&&s.a!=null)?+s.a:null,b=(s&&s.b!=null)?+s.b:null;if(!ok(a,b))return;if(a>b)pA++;else if(b>a)pB++;});let lA=null,lB=null;if(m.palet&&m.palet.a!=null&&m.palet.b!=null){lA=+m.palet.a;lB=+m.palet.b;}let gA=0,gB=0;if(dA>dB)gA++;else if(dB>dA)gB++;if(pA>pB)gA++;else if(pB>pA)gB++;const w=palW(lA,lB);if(w==='A')gA++;else if(w==='B')gB++;const det=['Fléchettes '+dA+'–'+dB,'Ping-pong '+pA+'–'+pB];if(lA!=null&&lB!=null)det.push('Palet '+lA+'–'+lB);out.push({round:(m.round!=null)?m.round:'',nameA:A,nameB:B,details:det.join(' · '),global:`${gA}–${gB}`});});return out;}
+function matchesFromCards(){const items=[];document.querySelectorAll('#match-list .match-card').forEach(card=>{const r=(card.querySelector('.round-chip')?.textContent||'').trim().replace('#','');const A=(card.querySelector('.team.left .name')?.textContent||'').trim();const B=(card.querySelector('.team.right .name')?.textContent||'').trim();const chips=Array.from(card.querySelectorAll('.sports-row .chip .score-compact')).map(el=>(el.textContent||'').trim());const d=chips[0]||'',p=chips[1]||'',l=chips[2]||'';const parts=[];if(d)parts.push('Fléchettes '+d);if(p)parts.push('Ping-pong '+p);if(l)parts.push('Palet '+l);const det=parts.join(' · ');const big=(card.querySelector('.score-big, .score')?.textContent||'').trim();const glob=(/\d+\s*[–-]\s*\d+/.test(big)?big.match(/\d+\s*[–-]\s*\d+/)[0].replace(/\s+/g,''):'');items.push({round:r,nameA:A,nameB:B,details:det,global:glob});});return items;}
+let items=matchesFromState();if(!items.length){try{window.renderMatches&&window.renderMatches();}catch(_){}items=matchesFromCards();}
+function buildTable(it){if(!it.length)return'';let h='<table class="compact"><thead><tr><th>J</th><th>Équipe A</th><th></th><th>Équipe B</th><th>Détails</th><th>Score</th></tr></thead><tbody>';it.forEach(m=>{const det=(m.details||'').replace(/\s*·\s*/g,'<br>');h+='<tr>' + `<td style="text-align:center">${escapeHtml(String(m.round||''))}</td>` + `<td style="text-align:right">${escapeHtml(m.nameA||'')}</td>` + `<td style="text-align:center">–</td>` + `<td style="text-align:left">${escapeHtml(m.nameB||'')}</td>` + `<td class="details" style="text-align:left">${det}</td>` + `<td style="text-align:center">${escapeHtml(m.global||'')}</td>` + '</tr>';});h+='</tbody></table>';return h;}
+const matchesHTML=buildTable(items);
+const title=(window.state&&state.tournamentName)?state.tournamentName:'TriSports';const when=new Date().toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'});
+const css=`<style>@page{size:A4;margin:10mm;}body{font:11px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111}h1{font-size:18px;margin:0 0 2mm}h2{font-size:14px;margin:8mm 0 3mm}.muted{color:#555;margin-bottom:4mm}table{width:100%;border-collapse:collapse}table.compact{table-layout:auto}table.compact th,table.compact td{border:1px solid #ddd;padding:4px 6px;text-align:center}table.compact th:nth-child(2),table.compact td:nth-child(2){text-align:left;max-width:160px}table.compact td:nth-child(5){text-align:left;white-space:normal}thead th{background:#f3f4f6}td,th{font-variant-numeric:tabular-nums}.section{break-inside:avoid}</style>`;
+const html=`<!doctype html><html lang="fr"><head><meta charset="utf-8"/><title>Résumé — ${escapeHtml(title)}</title>${css}</head><body><h1>Résumé — ${escapeHtml(title)}</h1><div class="muted">Généré le ${escapeHtml(when)}</div><div class="section"><h2>Classement</h2>${compact}</div>${matchesHTML?`<div class="section"><h2>Détail des matchs</h2>${matchesHTML}</div>`:''}</body></html>`;
+const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const f=document.createElement('iframe');f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='0';f.style.height='0';f.style.border='0';f.src=url;f.onload=function(){try{setTimeout(function(){f.contentWindow&&f.contentWindow.focus();f.contentWindow&&f.contentWindow.print();URL.revokeObjectURL(url);setTimeout(function(){f.remove();},1000);},50);}catch(err){console.error(err);alert('Échec de l’impression.');}};document.body.appendChild(f);
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+}
+</script></body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
 #confirm-overlay{
