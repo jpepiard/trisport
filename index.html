@@ -5,7 +5,6 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>TriSports — Fléchettes • Ping-pong • Palet</title>
-
 <!-- Garde-fou : certaines extensions injectent du React minifié qui loggue "Minified React error #...".
      On évite que ça remonte et perturbe l'app (ça n'affecte PAS ton site). -->
 <script>
@@ -254,17 +253,12 @@ h1, h2, h3, h4, h5, h6{
 .compact td.details br{ line-height:1.2; }
 .compact td:nth-child(5){ white-space:normal; overflow:visible; text-overflow:clip; }
 </style>
-
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDomain:"trisport-9a7b2.firebaseapp.com",databaseURL:"https://trisport-9a7b2-default-rtdb.europe-west1.firebasedatabase.app",projectId:"trisport-9a7b2",messagingSenderId:"132024051367",appId:"1:132024051367:web:f9aa39785a3d4a43875d82"};
 </script>
-
-
-
-
 <style id="capitaine-teamwide-v2">
 /* Capitaine : suppression des champs joueur/sport dans l'UI (masqués) */
 #capitaine-fields,
@@ -272,23 +266,19 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 #capitaine-params .grid,
 #capitaine-params .row { display: none !important; }
 </style>
-
-
-
-
-<link href="trisports-theme-pack.css" rel="stylesheet"/>
+<link href="trisports-theme-pack.css" rel="stylesheet"/><link href="trisports-addons.css" rel="stylesheet"/>
 <body>
 <header>
 <div class="container flex items-center gap-16 justify-between" style="flex-wrap:nowrap">
-  <div class="brand"></div>
-  <nav aria-label="Sections" class="tabs" id="tabs" role="tablist">
+<div class="brand"></div>
+<nav aria-label="Sections" class="tabs" id="tabs" role="tablist">
 <button aria-selected="true" class="tab gta gta" data-tab="setup" role="tab" type="button">Tournoi</button>
 <button aria-selected="false" class="tab gta gta" data-tab="equipes" role="tab" type="button">Équipes</button>
 <button aria-selected="false" class="tab gta gta" data-tab="calendrier" role="tab" type="button">Rencontres</button>
 <button aria-selected="false" class="tab gta gta" data-tab="classement" role="tab" type="button">Classement</button>
 <button aria-selected="false" class="tab gta gta" data-tab="options" role="tab" type="button">Options</button>
 </nav>
-  <div class="flex items-center gap-8">
+<div class="flex items-center gap-8">
 <span class="pill" id="tname-top" style="display:none"></span>
 <span class="pill" id="whoami-top" style="">visiteur</span>
 <button class="btn small header-chip gta header-chip gta" id="btn-fullscreen" type="button">⛶ Plein écran</button>
@@ -321,7 +311,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <div></div>
 <div><label>Palet – Score cible (victoire)</label><input id="rule-l-target" max="50" min="1" type="number" value="11"/>
 <div><label>Bonus max par équipe (saison)</label>
-  <input id="rule-bonus-max" type="number" min="0" max="50" value="3"/>
+<input id="rule-bonus-max" max="50" min="0" type="number" value="3"/>
 </div>
 </div>
 <div style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -332,7 +322,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </div>
 <div class="card" style="margin-top:12px">
 <div class="hd"><strong>Ouvrir un tournoi existant (Cloud)</strong></div>
-<div class="bd" class="flex gap-8 flex-wrap items-center">
+<div class="flex gap-8 flex-wrap items-center">
 <input id="join-code" placeholder="code du tournoi" style="max-width:220px" type="text"/>
 <button class="btn primary" id="btn-join-code" type="button">Rejoindre</button>
 <button class="btn" id="btn-copy-link" type="button">Copier lien ?id=code</button>
@@ -394,7 +384,6 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </div>
 <div class="bd" style="overflow:auto">
 <div id="view-summary">
-
 <table id="table-classement">
 <thead>
 <tr>
@@ -426,17 +415,17 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </div>
 </div>
 <div class="card"><div class="hd"><strong>Accès administrateur</strong></div>
-<div class="bd" class="flex gap-8 flex-wrap items-center">
+<div class="flex gap-8 flex-wrap items-center">
 <button class="btn" id="btn-admin-on" type="button">Activer admin</button>
 <button class="btn" id="btn-admin-off" type="button">Désactiver admin</button>
 <span class="pill" id="whoami">vous : visiteur (lecture seule)</span>
 </div>
-<div class="row" style="margin:8px 0 0 0"><button id="btn-open-logs" style="display:none" class="btn small" type="button" title="Ouvrir le journal">📜 Ouvrir le journal</button></div>
+<div class="row" style="margin:8px 0 0 0"><button class="btn small" id="btn-open-logs" style="display:none" title="Ouvrir le journal" type="button">📜 Ouvrir le journal</button></div>
 </div>
 </div>
 <div class="card" style="margin-top:12px">
 <div class="hd"><strong>Gestion Cloud</strong></div>
-<div class="bd" class="flex gap-8 flex-wrap items-center">
+<div class="flex gap-8 flex-wrap items-center">
 <span class="pill">Statut : <span id="cloud-status-2">hors ligne</span></span>
 <button class="btn" id="btn-cloud-copy" type="button">Copier le lien de partage</button>
 <button class="btn danger" id="btn-cloud-delete" type="button">Supprimer ce tournoi du cloud</button>
@@ -487,8 +476,8 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <div class="help">
 				Sur l'ensemble des 3 sports :<br/>
               Inverse le bonus adverse sur <b>tout le match</b>.<br/>
-			  <br/>
-            </div>
+<br/>
+</div>
 </div>
 </div>
 <div class="bonus-sep"></div>
@@ -502,8 +491,8 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <div class="help">
               Impose des lunettes troublant la vision à l’adversaire dans un sport choisi.<br/>
 			  • Aux <b>fléchettes</b> et <b>Ping</b> : Le joueur 1 porte les lunettes. Le joueur 2 a le choix entre son simple ou son double.<br/>
-			  • Au <b>palet</b> : Un seul joueur porte les lunettes. Le choix du joueur se fera au shifumi avec l'adversaire.<br/>  
-            </div>
+			  • Au <b>palet</b> : Un seul joueur porte les lunettes. Le choix du joueur se fera au shifumi avec l'adversaire.<br/>
+</div>
 </div>
 </div>
 <div class="bonus-sep"></div>
@@ -2273,8 +2262,6 @@ function onEnter(e){
   document.addEventListener('mouseleave', onLeave, true);
 })();
 </script>
-
-
 <script>
 // === Bonus tooltip — large, hover only (fixed to body) ===================
 (function bonusTooltipHoverOnly(){
@@ -2374,12 +2361,6 @@ function onEnter(e){
   window.refreshBonusTooltips = enhanceAll;
 })();
 </script>
-
-
-
-
-
-
 <!-- START: Simple action logger (Firebase + local fallback) -->
 <style>
 #ts-log-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:99999;background:rgba(0,0,0,0.45)}
@@ -2392,21 +2373,19 @@ function onEnter(e){
 .ts-log-item .meta{flex:1;white-space:pre-wrap}
 .ts-log-controls{display:flex;gap:8px}
 </style>
-
-<div id="ts-log-modal" aria-hidden="true">
-  <div id="ts-log-panel" role="dialog" aria-label="Journal des actions">
-    <div class="hd">
-      <strong>Journal des actions</strong>
-      <div class="ts-log-controls">
-        <button id="ts-clear-local" class="btn small">Effacer local</button>
-        <button id="ts-download" class="btn small">Télécharger</button>
-        <button id="ts-close" class="btn small">Fermer</button>
-      </div>
-    </div>
-    <div class="list" id="ts-log-list" aria-live="polite"></div>
-  </div>
+<div aria-hidden="true" id="ts-log-modal">
+<div aria-label="Journal des actions" id="ts-log-panel" role="dialog">
+<div class="hd">
+<strong>Journal des actions</strong>
+<div class="ts-log-controls">
+<button class="btn small" id="ts-clear-local">Effacer local</button>
+<button class="btn small" id="ts-download">Télécharger</button>
+<button class="btn small" id="ts-close">Fermer</button>
 </div>
-
+</div>
+<div aria-live="polite" class="list" id="ts-log-list"></div>
+</div>
+</div>
 <script>
 (function(){
   const LS_KEY = 'trisports_logs_v1';
@@ -2790,8 +2769,6 @@ function onEnter(e){
   .round-head:has(.round-chip.yellow) + .round-grid .pill.pill--blue::before{ animation: none !important; opacity: .4; }
 }
 </style>
-
-
 <!-- Injected by ChatGPT: Password modal + masked input + action interceptors (v2) -->
 <style>
   #pw-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2147483646;background:rgba(0,0,0,.45)}
@@ -2804,18 +2781,18 @@ function onEnter(e){
   #pw-panel .btn.cancel{background:transparent;border:1px solid rgba(255,255,255,.16);color:inherit}
   #pw-panel .btn.ok{background:linear-gradient(180deg,#2f3da2,#25337d);border:1px solid #3a4aa0;color:#fff}
 </style>
-<div id="pw-modal" aria-hidden="true">
-  <div id="pw-panel" role="dialog" aria-modal="true" aria-label="Saisie du mot de passe">
-    <div class="hd" id="pw-title">Mot de passe</div>
-    <div>
-      <div class="pw-input-wrap" style="position:relative;"><input id="pw-input" type="password" autocomplete="current-password" placeholder="Tapez le mot de passe…" aria-label="Mot de passe"/><button id="pw-toggle" type="button" aria-label="Afficher le mot de passe" title="Afficher le mot de passe" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;padding:6px;cursor:pointer;font-size:16px;line-height:1;">👁️</button></div>
-      <!-- <div class="help" style="margin-top:6px;font-size:12px;opacity:.8"><em>La saisie est masquée.</em></div> -->
-    </div>
-    <div class="controls">
-      <button class="btn cancel" id="pw-cancel" type="button">Annuler</button>
-      <button class="btn ok" id="pw-ok" type="button">Valider</button>
-    </div>
-  </div>
+<div aria-hidden="true" id="pw-modal">
+<div aria-label="Saisie du mot de passe" aria-modal="true" id="pw-panel" role="dialog">
+<div class="hd" id="pw-title">Mot de passe</div>
+<div>
+<div class="pw-input-wrap" style="position:relative;"><input aria-label="Mot de passe" autocomplete="current-password" id="pw-input" placeholder="Tapez le mot de passe…" type="password"/><button aria-label="Afficher le mot de passe" id="pw-toggle" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;padding:6px;cursor:pointer;font-size:16px;line-height:1;" title="Afficher le mot de passe" type="button">👁️</button></div>
+<!-- <div class="help" style="margin-top:6px;font-size:12px;opacity:.8"><em>La saisie est masquée.</em></div> -->
+</div>
+<div class="controls">
+<button class="btn cancel" id="pw-cancel" type="button">Annuler</button>
+<button class="btn ok" id="pw-ok" type="button">Valider</button>
+</div>
+</div>
 </div>
 <script>
 (function(){
@@ -2975,8 +2952,6 @@ function onEnter(e){
 
 })();
 </script>
-
-
 <script>
 document.addEventListener('click', function(e){
   const t = e.target; if (t && t.id === 'btn-export-pdf'){ try{ exportSummaryPDF(); } catch(err){ console.error(err); alert('Échec de l’export PDF.'); } }
@@ -2999,7 +2974,7 @@ const html=`<!doctype html><html lang="fr"><head><meta charset="utf-8"/><title>R
 const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const f=document.createElement('iframe');f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='0';f.style.height='0';f.style.border='0';f.src=url;f.onload=function(){try{setTimeout(function(){f.contentWindow&&f.contentWindow.focus();f.contentWindow&&f.contentWindow.print();URL.revokeObjectURL(url);setTimeout(function(){f.remove();},1000);},50);}catch(err){console.error(err);alert('Échec de l’impression.');}};document.body.appendChild(f);
 function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 }
-</script></body>
+</script><script defer="defer" src="trisports-addons.js"></script></body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
 #confirm-overlay{
@@ -3078,7 +3053,6 @@ function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','
   }
 }
 </style>
-
 <style id="classement-tweaks">
   /* Align everything to the left in the classement table */
   #table-classement th,
@@ -3107,9 +3081,6 @@ function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','
     box-shadow:0 1px 0 rgba(30,58,138,.08), inset 0 0 0 1px rgba(255,255,255,.4);
   }
 </style>
-
-
-
 <style id="classement-align-left-and-strong-points-v2">
   /* 1) CLASSEMENT — tout à gauche, sauf le rang (#) que l’on garde centré */
   #table-classement thead th,
@@ -3161,7 +3132,6 @@ function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','
     }
   }
 </style>
-
 <style id="classement-center-stats-cols">
   /* Garder ces colonnes centrées : fléchettes (4), ping-pong (5), palet (6), bonus (7), malus (8), matchs complets (9) */
   #table-classement thead th:nth-child(4),
@@ -3180,9 +3150,6 @@ function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','
     justify-content: center !important;
   }
 </style>
-
-
-
 <style id="gta-tabs">
 /* ===== Onglets style "GTA" — version blanche lisible =================== */
 @import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
@@ -3256,14 +3223,6 @@ function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','
   .tab.gta, .header-chip.gta{ transition: none; }
 }
 </style>
-
-
-
-
-
-
-
-
 <style id="gta-selected-and-classement-dark">
 :root{
   /* Rouge-violet désaturé (crimson violet) */
@@ -3321,11 +3280,6 @@ function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','
 #table-classement tbody tr:nth-child(2){ box-shadow: inset 4px 0 0 0 rgba(192,192,192,.9), 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02); }
 #table-classement tbody tr:nth-child(3){ box-shadow: inset 4px 0 0 0 rgba(205,127,50,.9), 0 1px 0 rgba(0,0,0,.25) inset, 0 0 0 1px rgba(255,255,255,.02); }
 </style>
-
-
-
-
-
 </head></html>
 <style id="rencontres-polish">
 /* Card container */
@@ -3662,7 +3616,6 @@ function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','
 @keyframes chipWarnPulse { 0%{ box-shadow:0 0 0 0 rgba(255,180,0,.0); /* keep existing shadow */} 50%{ box-shadow:0 0 0 6px rgba(255,180,0,.22); /* keep existing shadow */} 100%{ box-shadow:0 0 0 0 rgba(255,180,0,.0); /* keep existing shadow */} }
 .chip.warn.pulse{ animation: chipWarnPulse .6s ease-out 1; }
 </style>
-
 <style id="ts-popover-styles">
 /* Accessible Popover (progressive enhancement)
    Upgrades any element with [data-popover] || legacy [data-tip]. */
@@ -3722,12 +3675,10 @@ function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','
   border-radius: 10px;
 }
 </style>
-
 <style id="ts-popover-override-legacy">
 .pill.bonus-flashy[data-has-js-popover]::after,
 .pill.bonus-flashy[data-has-js-popover]::before{ display:none !important; content:none !important; }
 </style>
-
 <script id="ts-popover-script">
 (function(){
   const PADDING = 12; // viewport padding

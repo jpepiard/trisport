@@ -1,0 +1,19 @@
+
+/* Add-on styles for the injected Stats tab / charts */
+.charts-grid{
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.chart-card{
+  background: linear-gradient(180deg,#171d3a,#121632);
+  border: 1px solid var(--border, #2b315f);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
+}
+.chart-card canvas{
+  width: 100%;
+  height: auto;
+  display: block;
+}
