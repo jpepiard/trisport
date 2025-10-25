@@ -2980,35 +2980,89 @@ document.addEventListener('click', function(e){
   }
 });
 
+
 function exportSummaryPDF(){
-  // 1) Rafraîchir l'affichage si des helpers existent
+  // 0) Rafraîchir vues si dispo
   try { window.renderMatches && window.renderMatches(); } catch(_) {}
   try { window.renderLeaderboard && window.renderLeaderboard(); } catch(_) {}
 
-  // 2) Récupération du classement
-  const table = document.getElementById('table-classement');
-  const tbodyHTML = table ? (table.tBodies[0] ? table.tBodies[0].outerHTML : '') : '';
-  const theadHTML = table ? (table.tHead ? table.tHead.outerHTML : '') : '';
+  // 1) Lire le classement depuis le DOM et le "compacter"
+  const srcTable = document.getElementById('table-classement');
+  let compactRows = [];
+  if (srcTable && srcTable.tBodies && srcTable.tBodies[0]){
+    for (const tr of Array.from(srcTable.tBodies[0].rows)){
+      const cells = Array.from(tr.cells || []);
+      // On ne garde que les lignes "riches" (au moins 5 cellules)
+      if (cells.length >= 5){
+        const values = cells.map(td => (td.innerText || '').replace(/\s+/g,' ').trim());
+        compactRows.push(values);
+      }
+    }
+  }
+
+  // Si rien n'a été collecté, on tente une lecture "texte" cellule par cellule
+  if (compactRows.length === 0 && srcTable){
+    const rows = Array.from(srcTable.querySelectorAll('tbody tr'));
+    for (const tr of rows){
+      const vs = Array.from(tr.querySelectorAll('th,td')).map(td => (td.innerText||'').replace(/\s+/g,' ').trim());
+      if (vs.filter(Boolean).length >= 5) compactRows.push(vs);
+    }
+  }
+
+  // Colonnes attendues (on prendra ce qui existe)
+  const headers = ["#", "Équipe", "Pts", "Fléchettes", "Ping-pong", "Palet (PF–PA)", "Bonus", "Malus", "Matchs"];
+
+  // Reconstruire un tableau compact (une ligne par équipe)
+  function buildCompactLeaderboard(){
+    let thead = `<thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>`;
+    let body = "<tbody>";
+    for (const row of compactRows){
+      const vals = row.slice(0, headers.length);
+      body += `<tr>${vals.map((v,i)=>`<td${i===1?' style="text-align:left"':''}>${escapeHtml(v)}</td>`).join('')}</tr>`;
+    }
+    body += "</tbody>";
+    return `<table class="compact">${thead}${body}</table>`;
+  }
+
+  const compactLeaderboardHTML = buildCompactLeaderboard();
+
+  // 2) Récupérer la liste/tables des matchs existants
+  function findMatchesHTML(){
+    const ids = ['table-matchs','table-matches','matches-table','matches','liste-matchs','list-matches','tab-matches'];
+    for (const id of ids){
+      const el = document.getElementById(id);
+      if (el) return el.outerHTML;
+    }
+    const q = document.querySelector('.matches, .match-list, table[data-role="matches"], #matches, section[data-tab="matches"]');
+    if (q) return q.outerHTML;
+    return "";
+  }
+  const matchesHTMLraw = findMatchesHTML();
 
   // 3) Métadonnées
   const title = (window.state && window.state.tournamentName) ? window.state.tournamentName : 'TriSports';
   const when  = new Date().toLocaleString('fr-FR', { dateStyle:'medium', timeStyle:'short' });
 
-  // 4) Styles pour impression
+  // 4) CSS compact + impression
   const css = `
-    <style>
-      @page{ size:A4; margin:14mm; }
-      body{ font: 12px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial; color:#111; }
-      h1{ font-size:20px; margin:0 0 2mm; }
-      .muted{ color:#555; margin-bottom:6mm; }
-      table{ width:100%; border-collapse:collapse; }
-      th, td{ border:1px solid #ddd; padding:6px 8px; text-align:center; }
-      th:nth-child(2), td:nth-child(2){ text-align:left; }
-      thead th{ background:#f3f4f6; }
-      td, th { font-variant-numeric: tabular-nums; }
-    </style>`;
+  <style>
+    @page{ size:A4; margin:10mm; }
+    body{ font: 11px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial; color:#111; }
+    h1{ font-size:18px; margin:0 0 2mm; }
+    h2{ font-size:14px; margin:8mm 0 3mm; }
+    .muted{ color:#555; margin-bottom:4mm; }
+    table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+    table.compact th, table.compact td{ border:1px solid #ddd; padding:4px 6px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    table.compact th:nth-child(2), table.compact td:nth-child(2){ text-align:left; max-width:120px; }
+    thead th{ background:#f3f4f6; }
+    td, th { font-variant-numeric: tabular-nums; }
+    .matches-print img, .matches-print svg{ max-height:14px; max-width:14px; vertical-align:middle; }
+    .matches-print table th, .matches-print table td{ border:1px solid #e5e7eb; padding:3px 5px; }
+    .matches-print table{ margin-bottom:6px; }
+    .section{ break-inside: avoid; }
+  </style>`;
 
-  // 5) HTML imprimable
+  // 5) Construire le HTML imprimable
   const html = `
     <!doctype html><html lang="fr"><head>
       <meta charset="utf-8" />
@@ -3017,26 +3071,18 @@ function exportSummaryPDF(){
     </head><body>
       <h1>Résumé — ${escapeHtml(title)}</h1>
       <div class="muted">Généré le ${escapeHtml(when)}</div>
-      <h2 style="font-size:16px;margin:0 0 6px">Classement</h2>
-      <table>
-        ${theadHTML || `
-          <thead>
-            <tr>
-              <th>#</th><th>Équipe</th><th>Points</th>
-              <th>Fléchettes</th><th>Ping-pong</th><th>Palet (PF–PA)</th>
-              <th>Bonus</th><th>Malus</th><th>Matchs complets</th>
-            </tr>
-          </thead>`}
-        ${tbodyHTML}
-      </table>
-      <script>window.onload = function(){ setTimeout(function(){ window.print(); window.close(); }, 50); }<\/script>
+
+      <div class="section">
+        <h2>Classement</h2>
+        ${compactLeaderboardHTML}
+      </div>
+
+      ${matchesHTMLraw ? `<div class="section matches-print"><h2>Détail des matchs</h2>${matchesHTMLraw}</div>` : ""}
     </body></html>`;
 
-  
-  // 6) Imprimer via un iframe invisible (évite les bloqueurs de pop-up)
+  // 6) Impression via iframe invisible (évite les bloqueurs)
   const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
-
   const iframe = document.createElement('iframe');
   iframe.style.position = 'fixed';
   iframe.style.right = '0';
@@ -3060,10 +3106,10 @@ function exportSummaryPDF(){
   };
   document.body.appendChild(iframe);
 
-  // Utilitaire anti-XSS (titre/horodatage)
   function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
 }
 </script>
+
 
 </body>
 <style id="pretty-confirm-modal">
