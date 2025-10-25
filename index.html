@@ -250,6 +250,9 @@ h1, h2, h3, h4, h5, h6{
 .bonus-illu img{width:100%;height:100%;object-fit:cover;border-radius:12px}
 .pill .mini-bonus{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;overflow:hidden;margin-left:6px;vertical-align:middle}
 .pill .mini-bonus img{width:100%;height:100%;object-fit:cover}
+.compact td.details{ white-space:normal; vertical-align:top; }
+.compact td.details br{ line-height:1.2; }
+.compact td:nth-child(5){ white-space:normal; overflow:visible; text-overflow:clip; }
 </style>
 
 <!-- Firebase compat -->
@@ -419,6 +422,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <button class="btn" id="btn-export" type="button">Exporter en JSON</button>
 <input accept="application/json" id="file-import" type="file"/>
 <button class="btn" id="btn-import" type="button">Importer le fichier JSON</button>
+<button class="btn" id="btn-export-pdf" type="button">📄 Exporter le résumé (PDF)</button>
 </div>
 </div>
 <div class="card"><div class="hd"><strong>Accès administrateur</strong></div>
@@ -2966,116 +2970,530 @@ function onEnter(e){
 </script>
 
 
+<script>
+document.addEventListener('click', function(e){
+  const t = e.target; if (t && t.id === 'btn-export-pdf'){ try{ exportSummaryPDF(); } catch(err){ console.error(err); alert('Échec de l’export PDF.'); } }
+});
+function exportSummaryPDF(){
+try{window.renderMatches&&window.renderMatches();}catch(_){};try{window.renderLeaderboard&&window.renderLeaderboard();}catch(_){};
+const srcTable=document.getElementById('table-classement');let rows=[];if(srcTable&&srcTable.tBodies&&srcTable.tBodies[0]){Array.from(srcTable.tBodies[0].rows).forEach(tr=>{const vals=Array.from(tr.cells||[]).map(td=>(td.innerText||'').replace(/\s+/g,' ').trim());if(vals.join('').trim())rows.push(vals);});}
+const headers=['#','Équipe','Pts','Fléchettes','Ping-pong','Palet (PF–PA)','Bonus','Malus','Matchs'];
+const compact=(()=>{let th='<thead><tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr></thead>';let tb='<tbody>';rows.forEach(r=>{const v=r.slice(0,headers.length);tb+='<tr>'+v.map((x,i)=>`<td${i===1?' style="text-align:left"':''}>${escapeHtml(x)}</td>`).join('')+'</tr>';});tb+='</tbody>';return `<table class="compact">${th}${tb}</table>`;})();
+function teamName(id){try{const t=(window.state&&Array.isArray(state.teams))?state.teams.find(x=>x.id===id):null;return t?(t.name||t.title||t.label||''):String(id||'');}catch(_){return String(id||'');}}
+function palW(a,b){const T=+((window.state&&state.rules&&state.rules.paletTarget)??11);if(a==null||b==null)return null;if(a>=T&&a>b)return'A';if(b>=T&&b>a)return'B';return null;}
+function matchesFromState(){const out=[];const ms=(window.state&&Array.isArray(state.matches))?state.matches.slice():[];ms.sort((x,y)=>(x.round-y.round)||(x.order-y.order)||((x.id>y.id)?1:-1));ms.forEach(m=>{if(!m)return;const A=teamName(m.a),B=teamName(m.b);let dA=0,dB=0;Array.isArray(m.darts)&&m.darts.forEach(v=>{if(v===0)dA++;else if(v===1)dB++;});let pA=0,pB=0;const P=Array.isArray(m.pingPts)?m.pingPts:[];const ok=(a,b)=>{const max=Math.max(a,b),diff=Math.abs(a-b);return(max>=11)&&(diff>=2)};P.forEach(s=>{const a=(s&&s.a!=null)?+s.a:null,b=(s&&s.b!=null)?+s.b:null;if(!ok(a,b))return;if(a>b)pA++;else if(b>a)pB++;});let lA=null,lB=null;if(m.palet&&m.palet.a!=null&&m.palet.b!=null){lA=+m.palet.a;lB=+m.palet.b;}let gA=0,gB=0;if(dA>dB)gA++;else if(dB>dA)gB++;if(pA>pB)gA++;else if(pB>pA)gB++;const w=palW(lA,lB);if(w==='A')gA++;else if(w==='B')gB++;const det=['Fléchettes '+dA+'–'+dB,'Ping-pong '+pA+'–'+pB];if(lA!=null&&lB!=null)det.push('Palet '+lA+'–'+lB);out.push({round:(m.round!=null)?m.round:'',nameA:A,nameB:B,details:det.join(' · '),global:`${gA}–${gB}`});});return out;}
+function matchesFromCards(){const items=[];document.querySelectorAll('#match-list .match-card').forEach(card=>{const r=(card.querySelector('.round-chip')?.textContent||'').trim().replace('#','');const A=(card.querySelector('.team.left .name')?.textContent||'').trim();const B=(card.querySelector('.team.right .name')?.textContent||'').trim();const chips=Array.from(card.querySelectorAll('.sports-row .chip .score-compact')).map(el=>(el.textContent||'').trim());const d=chips[0]||'',p=chips[1]||'',l=chips[2]||'';const parts=[];if(d)parts.push('Fléchettes '+d);if(p)parts.push('Ping-pong '+p);if(l)parts.push('Palet '+l);const det=parts.join(' · ');const big=(card.querySelector('.score-big, .score')?.textContent||'').trim();const glob=(/\d+\s*[–-]\s*\d+/.test(big)?big.match(/\d+\s*[–-]\s*\d+/)[0].replace(/\s+/g,''):'');items.push({round:r,nameA:A,nameB:B,details:det,global:glob});});return items;}
+let items=matchesFromState();if(!items.length){try{window.renderMatches&&window.renderMatches();}catch(_){}items=matchesFromCards();}
+function buildTable(it){if(!it.length)return'';let h='<table class="compact"><thead><tr><th>J</th><th>Équipe A</th><th></th><th>Équipe B</th><th>Détails</th><th>Score</th></tr></thead><tbody>';it.forEach(m=>{const det=(m.details||'').replace(/\s*·\s*/g,'<br>');h+='<tr>' + `<td style="text-align:center">${escapeHtml(String(m.round||''))}</td>` + `<td style="text-align:right">${escapeHtml(m.nameA||'')}</td>` + `<td style="text-align:center">–</td>` + `<td style="text-align:left">${escapeHtml(m.nameB||'')}</td>` + `<td class="details" style="text-align:left">${det}</td>` + `<td style="text-align:center">${escapeHtml(m.global||'')}</td>` + '</tr>';});h+='</tbody></table>';return h;}
+const matchesHTML=buildTable(items);
+const title=(window.state&&state.tournamentName)?state.tournamentName:'TriSports';const when=new Date().toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'});
+const css=`<style>@page{size:A4;margin:10mm;}body{font:11px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111}h1{font-size:18px;margin:0 0 2mm}h2{font-size:14px;margin:8mm 0 3mm}.muted{color:#555;margin-bottom:4mm}table{width:100%;border-collapse:collapse}table.compact{table-layout:auto}table.compact th,table.compact td{border:1px solid #ddd;padding:4px 6px;text-align:center}table.compact th:nth-child(2),table.compact td:nth-child(2){text-align:left;max-width:160px}table.compact td:nth-child(5){text-align:left;white-space:normal}thead th{background:#f3f4f6}td,th{font-variant-numeric:tabular-nums}.section{break-inside:avoid}</style>`;
+const html=`<!doctype html><html lang="fr"><head><meta charset="utf-8"/><title>Résumé — ${escapeHtml(title)}</title>${css}</head><body><h1>Résumé — ${escapeHtml(title)}</h1><div class="muted">Généré le ${escapeHtml(when)}</div><div class="section"><h2>Classement</h2>${compact}</div>${matchesHTML?`<div class="section"><h2>Détail des matchs</h2>${matchesHTML}</div>`:''}
+<!-- jsPDF + AutoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
-// --- Override exportSummaryPDF with better layout + bonuses ---
-window.exportSummaryPDF = (function(){
-  function exportSummaryPDF(){
-    try{window.renderMatches&&window.renderMatches();}catch(_){}
-    try{window.renderLeaderboard&&window.renderLeaderboard();}catch(_){}
+(function(){
+  const ACCENT = "#7aa2ff"; // cohérent avec ton thème
+  const PADDING_X = 40;
 
-    const srcTable=document.getElementById('table-classement');
-    let rows=[];
-    if(srcTable&&srcTable.tBodies&&srcTable.tBodies[0]){
-      Array.from(srcTable.tBodies[0].rows).forEach(tr=>{
-        const vals=Array.from(tr.cells||[]).map(td=>(td.innerText||'').replace(/\s+/g,' ').trim());
-        if(vals.join('').trim()) rows.push(vals);
-      });
-    }
-    const headers=['#','Équipe','Pts','Fléchettes','Ping-pong','Palet (PF–PA)','Bonus','Malus','Matchs'];
-    const compact=(()=>{
-      let th='<thead><tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr></thead>';
-      let tb='<tbody>';
-      rows.forEach(r=>{const v=r.slice(0,headers.length);
-        tb+='<tr>'+v.map((x,i)=>`<td${i===1?' style="text-align:left"':''}>${escapeHtml(x)}</td>`).join('')+'</tr>';
-      });
-      tb+='</tbody>';
-      return `<table class="compact">${th}${tb}</table>`;
-    })();
+  const has = (o,k) => Object.prototype.hasOwnProperty.call(o||{}, k);
 
-    function teamName(id){try{const t=(window.state&&Array.isArray(state.teams))?state.teams.find(x=>x.id===id):null;return t?(t.name||t.title||t.label||''):String(id||'');}catch(_){return String(id||'');}}
-    const palTarget=+((window.state&&state.rules&&state.rules.paletTarget)??11);
-    const isPingValid=(a,b)=>{const max=Math.max(a,b),diff=Math.abs(a-b);return(max>=11)&&(diff>=2)};
+  function textOr(el){ return (el && el.textContent || '').trim(); }
 
-    function matchesFromState(){
-      const out=[]; const ms=(window.state&&Array.isArray(state.matches))?state.matches.slice():[];
-      ms.sort((x,y)=>(x.round-y.round)||(x.order-y.order)||((x.id>y.id)?1:-1));
-      ms.forEach(m=>{
-        if(!m) return;
-        const A=teamName(m.a), B=teamName(m.b);
-        let dA=0,dB=0; Array.isArray(m.darts)&&m.darts.forEach(v=>{if(v===0)dA++; else if(v===1)dB++;});
-        let pA=0,pB=0; const P=Array.isArray(m.pingPts)?m.pingPts:[];
-        P.forEach(s=>{const a=(s&&s.a!=null)?+s.a:null, b=(s&&s.b!=null)?+s.b:null; if(!isPingValid(a,b))return; if(a>b)pA++; else if(b>a)pB++;});
-        let lA=null,lB=null; if(m.palet && m.palet.a!=null && m.palet.b!=null){ lA=+m.palet.a; lB=+m.palet.b; }
-        const r=m.round; const bA=+(((state.bonusApplied||{})[r]||{})[m.a] ?? 0); const bB=+(((state.bonusApplied||{})[r]||{})[m.b] ?? 0);
-        let gA=0,gB=0; if(dA>dB)gA++; else if(dB>dA)gB++; if(pA>pB)gA++; else if(pB>pA)gB++; if(lA!=null&&lB!=null){if(lA>=palTarget&&lA>lB)gA++; else if(lB>=palTarget&&lB>lA)gB++;}
-        out.push({round:r,nameA:A,nameB:B,darts:`${dA}–${dB}`,ping:`${pA}–${pB}`,palet:(lA==null||lB==null)?'–':`${lA}–${lB}`,bonusA:bA?`+${bA}`:'—',bonusB:bB?`+${bB}`:'—',global:`${gA}–${gB}`});
-      }); return out;
-    }
-
-    function matchesFromCards(){
-      const items=[];
-      document.querySelectorAll('#match-list .match-card').forEach(card=>{
-        const r=(card.querySelector('.round-chip')?.textContent||'').trim().replace('#','');
-        const A=(card.querySelector('.team.left .name')?.textContent||'').trim();
-        const B=(card.querySelector('.team.right .name')?.textContent||'').trim();
-        const chips=Array.from(card.querySelectorAll('.sports-row .chip .score-compact')).map(el=>(el.textContent||'').trim());
-        const darts=chips[0]||'', ping=chips[1]||'', pal=chips[2]||'';
-        const big=(card.querySelector('.score-big, .score')?.textContent||'').trim();
-        const glob=(/\d+\s*[–-]\s*\d+/.test(big)?big.match(/\d+\s*[–-]\s*\d+/)[0].replace(/\s+/g,''):'');
-        items.push({round:r,nameA:A,nameB:B,darts, ping, palet:pal||'–', bonusA:'', bonusB:'', global:glob});
-      });
-      return items;
-    }
-
-    let items=matchesFromState(); if(!items.length){ try{window.renderMatches&&window.renderMatches();}catch(_){} items=matchesFromCards(); }
-
-    function buildTable(it){
-      if(!it.length) return '';
-      let h='<table class="compact"><thead><tr><th>J</th><th>Équipe A</th><th></th><th>Équipe B</th><th>🎯</th><th>🏓</th><th>🥏</th><th>Bonus A</th><th>Bonus B</th><th>Score</th></tr></thead><tbody>';
-      it.forEach(m=>{
-        h+='<tr>'
-         + `<td style="text-align:center">${escapeHtml(String(m.round||''))}</td>`
-         + `<td style="text-align:right">${escapeHtml(m.nameA||'')}</td>`
-         + `<td style="text-align:center">–</td>`
-         + `<td style="text-align:left">${escapeHtml(m.nameB||'')}</td>`
-         + `<td>${escapeHtml(m.darts||'')}</td>`
-         + `<td>${escapeHtml(m.ping||'')}</td>`
-         + `<td>${escapeHtml(m.palet||'')}</td>`
-         + `<td>${escapeHtml(m.bonusA||'')}</td>`
-         + `<td>${escapeHtml(m.bonusB||'')}</td>`
-         + `<td style="font-weight:600">${escapeHtml(m.global||'')}</td>`
-         + '</tr>';
-      });
-      h+='</tbody></table>'; return h;
-    }
-    const matchesHTML=buildTable(items);
-
-    const title=(window.state&&state.tournamentName)?state.tournamentName:'TriSports';
-    const when=new Date().toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'});
-    const css=`<style>@page{size:A4;margin:10mm;}body{font:11px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111}
-    h1{font-size:18px;margin:0 0 2mm}h2{font-size:14px;margin:8mm 0 3mm}.muted{color:#555;margin-bottom:4mm}
-    table{width:100%;border-collapse:collapse}table.compact{table-layout:auto}
-    table.compact th,table.compact td{border:1px solid #ddd;padding:4px 6px;text-align:center}
-    table.compact th:nth-child(2),table.compact td:nth-child(2){text-align:left;max-width:170px}
-    thead th{background:#f3f4f6}td,th{font-variant-numeric:tabular-nums}.section{break-inside:avoid}</style>`;
-
-    const html=`<!doctype html><html lang="fr"><head><meta charset="utf-8"/><title>Résumé — ${escapeHtml(title)}</title>${css}</head><body>
-      <h1>Résumé — ${escapeHtml(title)}</h1><div class="muted">Généré le ${escapeHtml(when)}</div>
-      <div class="section"><h2>Classement</h2>${compact}</div>
-      ${matchesHTML?`<div class="section"><h2>Détail des matchs</h2>${matchesHTML}</div>`:''}
-    </body></html>`;
-
-    const blob=new Blob([html],{type:'text/html'}), url=URL.createObjectURL(blob);
-    const f=document.createElement('iframe'); Object.assign(f.style,{position:'fixed',right:'0',bottom:'0',width:'0',height:'0',border:'0'});
-    f.src=url; f.onload=function(){ try{ setTimeout(function(){f.contentWindow&&f.contentWindow.focus();f.contentWindow&&f.contentWindow.print();URL.revokeObjectURL(url);setTimeout(function(){f.remove();},1000);},50);}catch(e){console.error(e);alert('Échec de l’impression.');} };
-    document.body.appendChild(f);
-
-    function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+  // 1) Classement : on essaie d'abord de lire le tableau HTML existant (#table-classement)
+  function getStandingsFromDOM(){
+    const rows = Array.from(document.querySelectorAll('#table-classement tbody tr'));
+    if(!rows.length) return null;
+    return rows.map(tr=>{
+      const tds = Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim());
+      // Attendu depuis ta table: # | Équipe | Points | Fléchettes | Ping | Palet (PF–PA) | Bonus | Malus | Matchs complets
+      return {
+        rank: tds[0] || '',
+        team: tds[1] || '',
+        points: tds[2] || '',
+        darts: tds[3] || '',
+        ping: tds[4] || '',
+        palet: tds[5] || '',
+        bonus: tds[6] || '',
+        malus: tds[7] || '',
+        full:  tds[8] || ''
+      };
+    });
   }
-  return exportSummaryPDF;
+
+  // 2) Fallback : si le DOM n’est pas prêt, on tente de synthétiser depuis state
+  function getStandingsFromState(){
+    try{
+      const teams = (window.state && Array.isArray(state.teams)) ? state.teams.slice() : [];
+      if(!teams.length) return null;
+
+      teams.sort((a,b)=>((b.points||0)-(a.points||0)));
+
+      return teams.map((t,i)=>({
+        rank: String(i+1),
+        team: t.name || ('Équipe ' + (i+1)),
+        points: String(t.points || 0),
+        darts: (t.stats && (t.stats.darts!=null)) ? String(t.stats.darts) : '—',
+        ping:  (t.stats && (t.stats.ping!=null))  ? String(t.stats.ping)  : '—',
+        palet: (t.stats && (t.stats.palet_diff!=null))
+                  ? String(t.stats.palet_diff) : (t.stats && t.stats.palet!=null ? String(t.stats.palet) : '—'),
+        bonus: '—',
+        malus: '—',
+        full:  '—'
+      }));
+    }catch(_){ return null; }
+  }
+
+  // 3) Bonus agrégés (bonusApplied : { round: { teamId: number } })
+  function getBonusAggregates(){
+    const agg = {}; // { teamId: { name, pos, neg, net } }
+    const nameById = {};
+
+    if (window.state && Array.isArray(state.teams)) {
+      state.teams.forEach(t=>{
+        nameById[t.id] = t.name || t.id;
+      });
+    }
+
+    const applied = (window.state && state.bonusApplied) || {};
+    Object.keys(applied).forEach(round=>{
+      const perTeam = applied[round] || {};
+      Object.keys(perTeam).forEach(teamId=>{
+        const delta = perTeam[teamId]||0;
+        if(!agg[teamId]) agg[teamId] = { name: nameById[teamId] || teamId, pos:0, neg:0, net:0 };
+        if(delta>=0) agg[teamId].pos += delta; else agg[teamId].neg += delta;
+        agg[teamId].net += delta;
+      });
+    });
+
+    return Object.values(agg);
+  }
+
+  // 4) Journal des bonus choisis (bonusSelections : { round: { teamId: {type,sport,...} } })
+  function getBonusJournal(){
+    const res = [];
+    const selections = (window.state && state.bonusSelections) || {};
+    const nameById = {};
+    if (window.state && Array.isArray(state.teams)) {
+      state.teams.forEach(t=>{ nameById[t.id] = t.name || t.id; });
+    }
+    const applied = (window.state && state.bonusApplied) || {};
+
+    const labelForType = (window.BONUS && BONUS.labelForType) ? BONUS.labelForType : (t=>{
+      switch(t){
+        case 'miroir': return 'Miroir';
+        case 'taupe': return 'René la taupe';
+        case 'lefthand': return '10 pouces 2 mains gauche';
+        case 'melon': return "Melon d'or";
+        default: return 'Capitaine';
+      }
+    });
+    const sportLabel = (window.BONUS && BONUS.sportLabel) ? BONUS.sportLabel : (s=>{
+      return s==='darts' ? 'Fléchettes' : (s==='ping' ? 'Ping' : (s==='palet' ? 'Palet' : '—'));
+    });
+
+    Object.keys(selections).sort((a,b)=>parseInt(a,10)-parseInt(b,10)).forEach(round=>{
+      const perTeam = selections[round] || {};
+      Object.keys(perTeam).forEach(teamId=>{
+        const sel = perTeam[teamId] || {};
+        const impact = (applied[round] && (applied[round][teamId]!=null)) ? applied[round][teamId] : null;
+        res.push({
+          round: String(round),
+          team: nameById[teamId] || teamId,
+          type: labelForType(sel.type),
+          sport: sel.sport ? sportLabel(sel.sport) : '—',
+          impact: (impact==null) ? '—' : (impact>0 ? `+${impact}` : `${impact}`)
+        });
+      });
+    });
+    return res;
+  }
+
+  function decoratePage(doc, title){
+    const { width } = doc.internal.pageSize;
+    doc.setFillColor(ACCENT);
+    doc.rect(0, 0, width, 6, 'F');
+
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(ACCENT);
+    doc.setFontSize(18);
+    doc.text(title, PADDING_X, 28);
+
+    doc.setFont('helvetica','normal');
+    doc.setTextColor('#555');
+    doc.setFontSize(10);
+    const d = new Date();
+    const fmt = d.toLocaleString('fr-FR', { dateStyle:'medium', timeStyle:'short' });
+    doc.text(`Généré le ${fmt}`, PADDING_X, 42);
+  }
+
+  function footer(doc){
+    const { width, height } = doc.internal.pageSize;
+    const page = doc.internal.getNumberOfPages();
+    doc.setFontSize(9);
+    doc.setTextColor('#6b7280');
+    doc.text(`Page ${page}`, width - PADDING_X, height - 18, { align:'right' });
+  }
+
+  async function buildPdf(){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'pt', format:'a4' });
+
+    const tname = (window.state && state.tournamentName) ? state.tournamentName : 'Tournoi';
+    const title = `🏆 Résumé du tournoi — ${tname}`;
+
+    // Page 1 — Titre + Classement
+    decoratePage(doc, title);
+
+    const standings = getStandingsFromDOM() || getStandingsFromState() || [];
+    const head = [
+      { header:'#', dataKey:'rank' },
+      { header:'Équipe', dataKey:'team' },
+      { header:'Points', dataKey:'points' },
+      { header:'Fléchettes', dataKey:'darts' },
+      { header:'Ping', dataKey:'ping' },
+      { header:'Palet (PF–PA)', dataKey:'palet' },
+      { header:'Bonus', dataKey:'bonus' },
+      { header:'Malus', dataKey:'malus' },
+      { header:'Matchs complets', dataKey:'full' },
+    ];
+
+    doc.autoTable({
+      head: [ head.map(h=>h.header) ],
+      body: standings.map(r=> head.map(h=> r[h.dataKey] ?? '')),
+      startY: 60,
+      styles: { fontSize: 10, lineColor: [230,235,255], lineWidth: 0.4, cellPadding: 6 },
+      headStyles: { fillColor: ACCENT, textColor: 255, halign:'left' },
+      alternateRowStyles: { fillColor: [245,247,255] },
+      margin: { left: PADDING_X, right: PADDING_X },
+      didDrawPage: function(data){
+        decoratePage(doc, title);
+        footer(doc);
+      },
+    });
+
+    // Page 2 — Bonus agrégés + Journal des bonus
+    doc.addPage();
+    decoratePage(doc, title);
+
+    // Section “Bonus/Malus par équipe”
+    doc.setFontSize(14);
+    doc.setTextColor(ACCENT);
+    doc.text('Bonus / Malus par équipe (agrégés)', PADDING_X, 64);
+
+    const agg = getBonusAggregates();
+    if(agg.length){
+      const aggHead = ['Équipe','Bonus (+)','Malus (−)','Total'];
+      const aggBody = agg
+        .sort((a,b)=> (b.net||0) - (a.net||0))
+        .map(a => [a.name, `+${a.pos}`, `${a.neg}`, (a.net>0?`+${a.net}`:String(a.net))]);
+
+      doc.autoTable({
+        head:[aggHead], body:aggBody, startY: 74,
+        styles:{ fontSize:10, lineColor:[230,235,255], lineWidth:.4, cellPadding:6 },
+        headStyles:{ fillColor: ACCENT, textColor:255, halign:'left' },
+        alternateRowStyles:{ fillColor:[245,247,255] },
+        margin: { left: PADDING_X, right: PADDING_X },
+        didDrawPage(){ decoratePage(doc, title); footer(doc); }
+      });
+    }else{
+      doc.setFontSize(11);
+      doc.setTextColor('#444');
+      doc.text('Aucun bonus appliqué pour le moment.', PADDING_X, 84);
+    }
+
+    // Section “Journal des bonus”
+    let y = doc.lastAutoTable ? doc.lastAutoTable.finalY + 26 : 120;
+    doc.setFontSize(14);
+    doc.setTextColor(ACCENT);
+    doc.text('Journal des bonus par rencontre', PADDING_X, y);
+
+    const journal = getBonusJournal();
+    if(journal.length){
+      const jHead = ['Journée','Équipe','Type','Sport','Impact'];
+      const jBody = journal.map(r => [r.round, r.team, r.type, r.sport, r.impact]);
+      doc.autoTable({
+        head:[jHead], body:jBody, startY: y+10,
+        styles:{ fontSize:10, lineColor:[230,235,255], lineWidth:.4, cellPadding:6 },
+        headStyles:{ fillColor: ACCENT, textColor:255, halign:'left' },
+        alternateRowStyles:{ fillColor:[245,247,255] },
+        margin: { left: PADDING_X, right: PADDING_X },
+        didDrawPage(){ decoratePage(doc, title); footer(doc); }
+      });
+    }else{
+      doc.setFontSize(11);
+      doc.setTextColor('#444');
+      doc.text('Aucun bonus sélectionné pour le moment.', PADDING_X, y+12);
+    }
+
+    const safeName = (tname || 'Tournoi').replace(/[^\w\s-]+/g,'').trim().replace(/\s+/g,'_');
+    doc.save(`Resume_${safeName}.pdf`);
+  }
+
+  const btn = document.getElementById('btn-export-pdf');
+  if(btn){
+    btn.addEventListener('click', buildPdf);
+  }
 })();
 </script>
+
+</body></html>`;
+const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const f=document.createElement('iframe');f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='0';f.style.height='0';f.style.border='0';f.src=url;f.onload=function(){try{setTimeout(function(){f.contentWindow&&f.contentWindow.focus();f.contentWindow&&f.contentWindow.print();URL.revokeObjectURL(url);setTimeout(function(){f.remove();},1000);},50);}catch(err){console.error(err);alert('Échec de l’impression.');}};document.body.appendChild(f);
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+}
+</script>
+<!-- jsPDF + AutoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+(function(){
+  const ACCENT = "#7aa2ff"; // cohérent avec ton thème
+  const PADDING_X = 40;
+
+  const has = (o,k) => Object.prototype.hasOwnProperty.call(o||{}, k);
+
+  function textOr(el){ return (el && el.textContent || '').trim(); }
+
+  // 1) Classement : on essaie d'abord de lire le tableau HTML existant (#table-classement)
+  function getStandingsFromDOM(){
+    const rows = Array.from(document.querySelectorAll('#table-classement tbody tr'));
+    if(!rows.length) return null;
+    return rows.map(tr=>{
+      const tds = Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim());
+      // Attendu depuis ta table: # | Équipe | Points | Fléchettes | Ping | Palet (PF–PA) | Bonus | Malus | Matchs complets
+      return {
+        rank: tds[0] || '',
+        team: tds[1] || '',
+        points: tds[2] || '',
+        darts: tds[3] || '',
+        ping: tds[4] || '',
+        palet: tds[5] || '',
+        bonus: tds[6] || '',
+        malus: tds[7] || '',
+        full:  tds[8] || ''
+      };
+    });
+  }
+
+  // 2) Fallback : si le DOM n’est pas prêt, on tente de synthétiser depuis state
+  function getStandingsFromState(){
+    try{
+      const teams = (window.state && Array.isArray(state.teams)) ? state.teams.slice() : [];
+      if(!teams.length) return null;
+
+      teams.sort((a,b)=>((b.points||0)-(a.points||0)));
+
+      return teams.map((t,i)=>({
+        rank: String(i+1),
+        team: t.name || ('Équipe ' + (i+1)),
+        points: String(t.points || 0),
+        darts: (t.stats && (t.stats.darts!=null)) ? String(t.stats.darts) : '—',
+        ping:  (t.stats && (t.stats.ping!=null))  ? String(t.stats.ping)  : '—',
+        palet: (t.stats && (t.stats.palet_diff!=null))
+                  ? String(t.stats.palet_diff) : (t.stats && t.stats.palet!=null ? String(t.stats.palet) : '—'),
+        bonus: '—',
+        malus: '—',
+        full:  '—'
+      }));
+    }catch(_){ return null; }
+  }
+
+  // 3) Bonus agrégés (bonusApplied : { round: { teamId: number } })
+  function getBonusAggregates(){
+    const agg = {}; // { teamId: { name, pos, neg, net } }
+    const nameById = {};
+
+    if (window.state && Array.isArray(state.teams)) {
+      state.teams.forEach(t=>{
+        nameById[t.id] = t.name || t.id;
+      });
+    }
+
+    const applied = (window.state && state.bonusApplied) || {};
+    Object.keys(applied).forEach(round=>{
+      const perTeam = applied[round] || {};
+      Object.keys(perTeam).forEach(teamId=>{
+        const delta = perTeam[teamId]||0;
+        if(!agg[teamId]) agg[teamId] = { name: nameById[teamId] || teamId, pos:0, neg:0, net:0 };
+        if(delta>=0) agg[teamId].pos += delta; else agg[teamId].neg += delta;
+        agg[teamId].net += delta;
+      });
+    });
+
+    return Object.values(agg);
+  }
+
+  // 4) Journal des bonus choisis (bonusSelections : { round: { teamId: {type,sport,...} } })
+  function getBonusJournal(){
+    const res = [];
+    const selections = (window.state && state.bonusSelections) || {};
+    const nameById = {};
+    if (window.state && Array.isArray(state.teams)) {
+      state.teams.forEach(t=>{ nameById[t.id] = t.name || t.id; });
+    }
+    const applied = (window.state && state.bonusApplied) || {};
+
+    const labelForType = (window.BONUS && BONUS.labelForType) ? BONUS.labelForType : (t=>{
+      switch(t){
+        case 'miroir': return 'Miroir';
+        case 'taupe': return 'René la taupe';
+        case 'lefthand': return '10 pouces 2 mains gauche';
+        case 'melon': return "Melon d'or";
+        default: return 'Capitaine';
+      }
+    });
+    const sportLabel = (window.BONUS && BONUS.sportLabel) ? BONUS.sportLabel : (s=>{
+      return s==='darts' ? 'Fléchettes' : (s==='ping' ? 'Ping' : (s==='palet' ? 'Palet' : '—'));
+    });
+
+    Object.keys(selections).sort((a,b)=>parseInt(a,10)-parseInt(b,10)).forEach(round=>{
+      const perTeam = selections[round] || {};
+      Object.keys(perTeam).forEach(teamId=>{
+        const sel = perTeam[teamId] || {};
+        const impact = (applied[round] && (applied[round][teamId]!=null)) ? applied[round][teamId] : null;
+        res.push({
+          round: String(round),
+          team: nameById[teamId] || teamId,
+          type: labelForType(sel.type),
+          sport: sel.sport ? sportLabel(sel.sport) : '—',
+          impact: (impact==null) ? '—' : (impact>0 ? `+${impact}` : `${impact}`)
+        });
+      });
+    });
+    return res;
+  }
+
+  function decoratePage(doc, title){
+    const { width } = doc.internal.pageSize;
+    doc.setFillColor(ACCENT);
+    doc.rect(0, 0, width, 6, 'F');
+
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(ACCENT);
+    doc.setFontSize(18);
+    doc.text(title, PADDING_X, 28);
+
+    doc.setFont('helvetica','normal');
+    doc.setTextColor('#555');
+    doc.setFontSize(10);
+    const d = new Date();
+    const fmt = d.toLocaleString('fr-FR', { dateStyle:'medium', timeStyle:'short' });
+    doc.text(`Généré le ${fmt}`, PADDING_X, 42);
+  }
+
+  function footer(doc){
+    const { width, height } = doc.internal.pageSize;
+    const page = doc.internal.getNumberOfPages();
+    doc.setFontSize(9);
+    doc.setTextColor('#6b7280');
+    doc.text(`Page ${page}`, width - PADDING_X, height - 18, { align:'right' });
+  }
+
+  async function buildPdf(){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'pt', format:'a4' });
+
+    const tname = (window.state && state.tournamentName) ? state.tournamentName : 'Tournoi';
+    const title = `🏆 Résumé du tournoi — ${tname}`;
+
+    // Page 1 — Titre + Classement
+    decoratePage(doc, title);
+
+    const standings = getStandingsFromDOM() || getStandingsFromState() || [];
+    const head = [
+      { header:'#', dataKey:'rank' },
+      { header:'Équipe', dataKey:'team' },
+      { header:'Points', dataKey:'points' },
+      { header:'Fléchettes', dataKey:'darts' },
+      { header:'Ping', dataKey:'ping' },
+      { header:'Palet (PF–PA)', dataKey:'palet' },
+      { header:'Bonus', dataKey:'bonus' },
+      { header:'Malus', dataKey:'malus' },
+      { header:'Matchs complets', dataKey:'full' },
+    ];
+
+    doc.autoTable({
+      head: [ head.map(h=>h.header) ],
+      body: standings.map(r=> head.map(h=> r[h.dataKey] ?? '')),
+      startY: 60,
+      styles: { fontSize: 10, lineColor: [230,235,255], lineWidth: 0.4, cellPadding: 6 },
+      headStyles: { fillColor: ACCENT, textColor: 255, halign:'left' },
+      alternateRowStyles: { fillColor: [245,247,255] },
+      margin: { left: PADDING_X, right: PADDING_X },
+      didDrawPage: function(data){
+        decoratePage(doc, title);
+        footer(doc);
+      },
+    });
+
+    // Page 2 — Bonus agrégés + Journal des bonus
+    doc.addPage();
+    decoratePage(doc, title);
+
+    // Section “Bonus/Malus par équipe”
+    doc.setFontSize(14);
+    doc.setTextColor(ACCENT);
+    doc.text('Bonus / Malus par équipe (agrégés)', PADDING_X, 64);
+
+    const agg = getBonusAggregates();
+    if(agg.length){
+      const aggHead = ['Équipe','Bonus (+)','Malus (−)','Total'];
+      const aggBody = agg
+        .sort((a,b)=> (b.net||0) - (a.net||0))
+        .map(a => [a.name, `+${a.pos}`, `${a.neg}`, (a.net>0?`+${a.net}`:String(a.net))]);
+
+      doc.autoTable({
+        head:[aggHead], body:aggBody, startY: 74,
+        styles:{ fontSize:10, lineColor:[230,235,255], lineWidth:.4, cellPadding:6 },
+        headStyles:{ fillColor: ACCENT, textColor:255, halign:'left' },
+        alternateRowStyles:{ fillColor:[245,247,255] },
+        margin: { left: PADDING_X, right: PADDING_X },
+        didDrawPage(){ decoratePage(doc, title); footer(doc); }
+      });
+    }else{
+      doc.setFontSize(11);
+      doc.setTextColor('#444');
+      doc.text('Aucun bonus appliqué pour le moment.', PADDING_X, 84);
+    }
+
+    // Section “Journal des bonus”
+    let y = doc.lastAutoTable ? doc.lastAutoTable.finalY + 26 : 120;
+    doc.setFontSize(14);
+    doc.setTextColor(ACCENT);
+    doc.text('Journal des bonus par rencontre', PADDING_X, y);
+
+    const journal = getBonusJournal();
+    if(journal.length){
+      const jHead = ['Journée','Équipe','Type','Sport','Impact'];
+      const jBody = journal.map(r => [r.round, r.team, r.type, r.sport, r.impact]);
+      doc.autoTable({
+        head:[jHead], body:jBody, startY: y+10,
+        styles:{ fontSize:10, lineColor:[230,235,255], lineWidth:.4, cellPadding:6 },
+        headStyles:{ fillColor: ACCENT, textColor:255, halign:'left' },
+        alternateRowStyles:{ fillColor:[245,247,255] },
+        margin: { left: PADDING_X, right: PADDING_X },
+        didDrawPage(){ decoratePage(doc, title); footer(doc); }
+      });
+    }else{
+      doc.setFontSize(11);
+      doc.setTextColor('#444');
+      doc.text('Aucun bonus sélectionné pour le moment.', PADDING_X, y+12);
+    }
+
+    const safeName = (tname || 'Tournoi').replace(/[^\w\s-]+/g,'').trim().replace(/\s+/g,'_');
+    doc.save(`Resume_${safeName}.pdf`);
+  }
+
+  const btn = document.getElementById('btn-export-pdf');
+  if(btn){
+    btn.addEventListener('click', buildPdf);
+  }
+})();
+</script>
+
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
