@@ -158,18 +158,29 @@ function prepareBonusOptions(){
   const wL = ensureLeftHandWrapper(); if (leftTxt  && wL && wL.parentElement   !== leftTxt)  leftTxt.appendChild(wL);
   const wM = ensureMelonWrapper();    if (melonTxt && wM && wM.parentElement !== melonTxt) melonTxt.appendChild(wM);
 
+  // Prevent picking disabled bonus cards
+  try{
+    const wrap = document.querySelector('.bonus-select');
+    if (wrap && !wrap.__guarded){
+      wrap.addEventListener('click', function(ev){
+        const card = ev.target.closest('.bonus-card');
+        if (card && card.classList.contains('disabled')){ ev.stopPropagation(); ev.preventDefault(); }
+      }, true);
+      wrap.__guarded = true;
+    }
+  }catch(_){ }
+
   // init sélection
   // (apply pairing rule UI states)
-      // Disable paired cards if either was used earlier in the tournament
+          // Disable paired cards (miroir/braquage) if either used in the tournament
     try{
-      const usedBraq = isBonusUsedTournamentWide('braquage');
-      const usedMir  = isBonusUsedTournamentWide('miroir');
-      const usedEither = usedBraq || usedMir;
-      if (usedEither && mir){ mir.classList.add('disabled'); mir.title = 'Indisponible : Miroir/Braquage déjà utilisé dans le tournoi.'; }
-      if (usedEither && braq){ braq.classList.add('disabled'); braq.title = 'Indisponible : Miroir/Braquage déjà utilisé dans le tournoi.'; }
+      const usedEither = isBonusUsedTournamentWide('braquage') || isBonusUsedTournamentWide('miroir');
+      const mirCard  = document.querySelector('.bonus-select .bonus-card[data-bonus-type="miroir"]');
+      const braqCard = document.querySelector('.bonus-select .bonus-card[data-bonus-type="braquage"]');
+      if (usedEither && mirCard){ mirCard.classList.add('disabled'); mirCard.setAttribute('aria-disabled','true'); mirCard.title = 'Indisponible : Miroir/Braquage déjà utilisé dans le tournoi.'; }
+      if (usedEither && braqCard){ braqCard.classList.add('disabled'); braqCard.setAttribute('aria-disabled','true'); braqCard.title = 'Indisponible : Miroir/Braquage déjà utilisé dans le tournoi.'; }
     }catch(_){ }
-
-  selectBonusType(window._bonusType || 'capitaine');
+selectBonusType(window._bonusType || 'capitaine');
   // safety: if selected card is disabled (pair rule), fallback to 'capitaine'
   try{
     const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
