@@ -84,10 +84,9 @@ function selectBonusType(t){
         melon = cards[5];
 
   // 3) reset + sélection
-  [cap, mir, braq, tau, leftc, melon].forEach(c => c && c.classList.remove('selected'));
+  [cap, mir, tau, leftc, melon].forEach(c => c && c.classList.remove('selected'));
   if (cap   && window._bonusType === 'capitaine') cap.classList.add('selected');
   if (mir   && window._bonusType === 'miroir')    mir.classList.add('selected');
-  if (braq  && window._bonusType === 'braquage')  braq.classList.add('selected');
   if (tau   && window._bonusType === 'taupe')     tau.classList.add('selected');
   if (leftc && window._bonusType === 'lefthand')  leftc.classList.add('selected');
   if (melon && window._bonusType === 'melon')     melon.classList.add('selected');
@@ -99,8 +98,8 @@ function selectBonusType(t){
     const pressed =
       (i===0 && window._bonusType==='capitaine') ||
       (i===1 && window._bonusType==='miroir')    ||
-      (i===2 && window._bonusType==='braquage')  ||
-      (i===3 && window._bonusType==='taupe')     ||
+      (i===2 && window._bonusType==='braquage') ||
+      (i===2 && window._bonusType==='taupe')     ||
       (i===4 && window._bonusType==='lefthand')  ||
       (i===5 && window._bonusType==='melon');
     c.setAttribute('aria-pressed', pressed ? 'true' : 'false');
@@ -495,22 +494,6 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </div>
 </div>
 <div class="bonus-sep"></div>
-<!-- Braquage -->
-<div class="bonus-card">
-  <div aria-hidden="true" class="bonus-illu">
-    <img alt="" src="img/braquage.png"/>
-  </div>
-  <div class="bonus-text">
-    <div class="bonus-title">Braquage</div>
-    <div class="help">
-      Sur <b>tout le match</b> face aux autres bonus :<br/>
-      • vs <b>Melon d’or</b> ou <b>Capitaine</b> : vous volez <b>100%</b> de son bonus (même signe) et l’adversaire tombe à <b>0</b>.<br/>
-      • vs <b>René la taupe</b> ou <b>10 pouces 2 mains gauche</b> : transfert fixe de <b>5 pts</b> → vous gagnez <b>+5</b> et l’adversaire perd <b>−5</b>.<br/>
-      • vs <b>Miroir</b> : aucun effet.
-    </div>
-  </div>
-</div>
-<div class="bonus-sep"></div>
 <!-- René la taupe -->
 <div class="bonus-card">
 <div aria-hidden="true" class="bonus-illu">
@@ -631,7 +614,9 @@ const BONUS = {
   labelForType(type){
     switch(type){
       case "miroir":   return "Miroir";
+      case "braquage": return "Braquage";
       case "taupe":    return "René la taupe";
+      case "braquage": return "Braquage";
       case "lefthand": return "10 pouces 2 mains gauche";
       case "melon":    return "Melon d'or";
       default:         return "Capitaine";
@@ -640,7 +625,9 @@ const BONUS = {
   imgForType(type){
     switch(type){
       case "miroir":   return "miroir.jpg";
+      case "braquage": return "braquage.png";
       case "taupe":    return "taupe.png";
+      case "braquage": return "braquage.png";
       case "lefthand": return "main-gauche.png";
       case "melon":    return "melon.png";
       default:         return "capitaine.jpg";
@@ -927,6 +914,38 @@ function computeMelonBonusForMatch(m, tid, sport){
     }
   }catch(e){ return 0; }
 }
+
+/* Base points (without bonuses/malus) earned by team on a single match */
+function computeBasePointsForMatch(m, tid){
+  try{
+    const R = (window.state && state.rules) || {};
+    const isA = (m.a === tid);
+    const isB = (m.b === tid);
+    if(!isA && !isB) return 0;
+
+    // darts
+    let aw=0, bw=0;
+    (m.darts||[]).forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
+    let pts = (isA ? aw : bw) * +(R.dartsWinPoints ?? 5);
+
+    // ping sets
+    (getPingPts(m) || []).forEach(s=>{
+      const a = (s && s.a!=null) ? +s.a : null;
+      const b = (s && s.b!=null) ? +s.b : null;
+      if (!isPingValid(a,b)) return;
+      if (a>b) { if (isA) pts += +(R.pingWinPoints ?? 5); }
+      else if (b>a) { if (isB) pts += +(R.pingWinPoints ?? 5); }
+    });
+
+    // palet : raw points for the team
+    const a = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
+    const b = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
+    if (a!=null && b!=null) pts += (isA ? a : b);
+
+    return pts||0;
+  }catch(e){ return 0; }
+}
+
 /* === Recompute all bonuses for finished rounds (used when admin edits scores after closure) === */
 function recomputeAllBonuses(){
   try{
@@ -983,7 +1002,24 @@ function recomputeAllBonuses(){
               total += computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
             }
           }
-        }
+
+        } else if (sel.type === 'braquage'){
+          const m = matches.find(x=>x.a===tid || x.b===tid);
+          if (m){
+            const oppId  = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (oppSel && oppSel.type === 'melon'){
+              const sport = oppSel.sport || 'darts';
+              const oppMelon = computeMelonBonusForMatch(m, oppId, sport);
+              total = (oppMelon < 0) ? -Math.floor(Math.abs(oppMelon)/3) : Math.floor(oppMelon/3);
+            } else if (oppSel && (oppSel.type==='taupe' || oppSel.type==='lefthand')){
+              const oppBase = computeBasePointsForMatch(m, oppId);
+              total = Math.floor(Math.abs(oppBase)/3);
+            } else {
+              total = 0;
+            }
+          }
+
         state.bonusApplied[r][tid] = total;
       });
     });
@@ -1061,6 +1097,7 @@ function bonusChip(r, mTeam, rs){
   const type = sel.type || 'capitaine';
   const lblType =
     type === 'miroir'   ? 'Miroir' :
+    type === 'braquage' ? 'Braquage' :
     type === 'taupe'    ? 'René la taupe' :
     type === 'lefthand' ? '10 pouces 2 mains gauche' :
     type === 'melon'    ? 'Melon d\'or' :
@@ -1068,6 +1105,7 @@ function bonusChip(r, mTeam, rs){
 
   const img =
     type === 'miroir'   ? 'miroir.jpg' :
+    type === 'braquage' ? 'braquage.png' :
     type === 'taupe'    ? 'taupe.png' :
     type === 'lefthand' ? 'main-gauche.png' :
     type === 'melon'    ? 'melon.png' :
@@ -1609,6 +1647,22 @@ document.addEventListener("click",async(e)=>{
               total = 0;
             }
           }
+        } else if (sel.type === 'braquage') {
+          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (oppSel && oppSel.type === 'melon'){
+              const sport = oppSel.sport || 'darts';
+              const oppMelon = computeMelonBonusForMatch(m, oppId, sport);
+              total = (oppMelon < 0) ? -Math.floor(Math.abs(oppMelon)/3) : Math.floor(oppMelon/3);
+            } else if (oppSel && (oppSel.type==='taupe' || oppSel.type==='lefthand')){
+              const oppBase = computeBasePointsForMatch(m, oppId);
+              total = Math.floor(Math.abs(oppBase)/3); // vol sur le score brut
+            } else {
+              total = 0;
+            }
+          }
         } else {
           total = 0; // autres
         }
@@ -1659,7 +1713,7 @@ function rebuildCategoryLocksFromSelections(){
   }catch(_){}
 }
 
-const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir' };
+const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir', braquage:'miroir' };
 
 function markCategoryLocked(teamId, type){
   const cat = BONUS_CATEGORY[type];
@@ -1775,8 +1829,11 @@ id('bonus-save').addEventListener('click',()=>{
 
  const type =
   (window._bonusType === 'miroir')   ? 'miroir'   :
+  (window._bonusType === 'braquage') ? 'braquage' :
   (window._bonusType === 'taupe')    ? 'taupe'    :
   (window._bonusType === 'lefthand') ? 'lefthand' :
+  (window._bonusType === 'melon')    ? 'melon'    :
+                                       'capitaine';
   (window._bonusType === 'melon')    ? 'melon'    :
                                        'capitaine';
 // Nouveau : 'capitaine' et 'melon' n'ont pas de paramètres à lire
@@ -1794,6 +1851,10 @@ if (type === 'capitaine') {
   const sport = document.getElementById('lefthand-sport')?.value || 'darts';
   setBonusSelection(r, t, { type: 'lefthand', sport });
   if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'lefthand');
+  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
+} else if (type === 'braquage') {
+  setBonusSelection(r, t, { type: 'braquage' });
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'braquage');
   if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else if (type === 'miroir') {
   setBonusSelection(r, t, { type: 'miroir' });
