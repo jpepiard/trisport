@@ -535,6 +535,8 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 				Choisissez le sport concerné.
 				</div>
 </div>
+</div>
+<div class="bonus-sep"></div>
 <!-- Braquage -->
 <div class="bonus-card" data-bonus-type="braquage">
   <div aria-hidden="true" class="bonus-illu">
@@ -548,6 +550,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
       • Face au <b>Miroir</b> : aucun effet.
     </div>
   </div>
+<div class="bonus-sep"></div>
 </div>
 
 </div>
@@ -655,7 +658,7 @@ function ensure(obj, key, defFactory){
 }
 
 const id=x=>document.getElementById(x), qs=s=>document.querySelector(s), qsa=s=>Array.from(document.querySelectorAll(s));
-const esc=s=>(s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;","\"":"&quot;","'":"&#39;"}[c]));
+const esc=s=>(s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",""":"&quot;","'":"&#39;"}[c]));
 const uid=()=>Math.random().toString(36).slice(2,10);
 const clampInt=(v,min,max)=>{v=parseInt(v,10);if(isNaN(v))return null;return Math.max(min,Math.min(max,v));}
 const help=t=>{const d=document.createElement("div");d.className="help";d.textContent=t;return d;}
@@ -1453,7 +1456,7 @@ function renderLeaderboard(){
   return (i+1);
 })()}</td>
       <td><span class="team-name">${avatar} ${esc(r.name||'')}</span></td>
-      <td class=\"points-cell\"><span class="points-pill"><b>${r.points}</b></span></td>
+      <td class="points-cell"><span class="points-pill"><b>${r.points}</b></span></td>
       <td>${r.dartsPF}</td>
       <td>${r.pingPF}</td>
       <td>${r.palPF}-${r.palPA} <span class="muted">(${signPal}${diffPal})</span></td>
@@ -2535,7 +2538,7 @@ function onEnter(e){
       const d = new Date(l.ts || Date.now());
       const ts = d.toLocaleString();
       const msg = escape(l.msg || l.type || 'action');
-      return `<div class="ts-log-item"><div class=\"ts\">${ts}</div><div class=\"meta\">${msg}</div></div>`;
+      return `<div class="ts-log-item"><div class="ts">${ts}</div><div class="meta">${msg}</div></div>`;
     }).join('');
     wrap.innerHTML = out || '<div class="help">Aucun log.</div>';
     wrap.scrollTop = wrap.scrollHeight;
