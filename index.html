@@ -507,8 +507,8 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
     <div class="bonus-title">Braquage</div>
     <div class="help">
       Sur <b>tout le match</b> contre les autres bonus :<br/>
-      • vs <b>Melon d’or</b> : volez <b>⅓</b> de ses points bonus/malus (arrondi à l’inférieur).<br/>
-      • vs <b>René la taupe</b> ou <b>10 pouces 2 mains gauche</b> : volez <b>⅓</b> du <b>score brut</b> adverse (arrondi à l’inférieur).<br/>
+      • vs <b>Melon d’or</b> ou <b>Capitaine</b> : vous volez <b>tous les points</b> de son bonus (même signe).<br/>
+      • vs <b>René la taupe</b> ou <b>10 pouces 2 mains gauche</b> : vous piquez <b>−5 pts</b> à l’adversaire (malus pour lui).<br/>
       • vs <b>Miroir</b> : aucun effet.
     </div>
   </div>
@@ -1029,10 +1029,12 @@ function recomputeAllBonuses(){
             if (oppSel && oppSel.type === 'melon'){
               const sport = oppSel.sport || 'darts';
               const oppMelon = computeMelonBonusForMatch(m, oppId, sport);
-              total = (oppMelon < 0) ? -Math.floor(Math.abs(oppMelon)/3) : Math.floor(oppMelon/3);
+              total = oppMelon;
+            } else if (oppSel && oppSel.type === 'capitaine'){
+              total = 0;
+              total += computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
             } else if (oppSel && (oppSel.type==='taupe' || oppSel.type==='lefthand')){
-              const oppBase = computeBasePointsForMatch(m, oppId);
-              total = Math.floor(Math.abs(oppBase)/3);
+              total = 5;
             } else {
               total = 0;
             }
