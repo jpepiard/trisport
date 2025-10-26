@@ -58,6 +58,11 @@ function setParamsOpen(openCap, openTaupe, openLeft, openMelon){
 }
 
 function selectBonusType(t){
+// Pairing rule guard
+try{
+  if (t === 'braquage' && isBonusUsedTournamentWide('miroir')) return;
+  if (t === 'miroir'   && isBonusUsedTournamentWide('braquage')) return;
+}catch(_){}
   // lock guard per category
   try{
     const teamId = (window.bonusCTX && window.bonusCTX.teamId);
@@ -72,37 +77,37 @@ function selectBonusType(t){
   }catch(_){}
 
   // 1) type valide (inclut 'melon')
-  window._bonusType = (['capitaine','miroir','braquage','taupe','lefthand','melon'].includes(t) ? t : 'capitaine');
+  window._bonusType = (['capitaine','miroir','taupe','lefthand','melon','braquage'].includes(t) ? t : 'capitaine');
 
   // 2) cartes (5 cartes désormais)
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   const cap   = cards[0],
         mir   = cards[1],
-        braq  = cards[2],
-        tau   = cards[3],
-        leftc = cards[4],
-        melon = cards[5];
+        tau   = cards[2],
+        leftc = cards[3],
+        melon = cards[4],
+        braq  = cards[5];
 
   // 3) reset + sélection
-  [cap, mir, braq, tau, leftc, melon].forEach(c => c && c.classList.remove('selected'));
+  [cap, mir, tau, leftc, melon, braq].forEach(c => c && c.classList.remove('selected'));
   if (cap   && window._bonusType === 'capitaine') cap.classList.add('selected');
   if (mir   && window._bonusType === 'miroir')    mir.classList.add('selected');
-  if (braq  && window._bonusType === 'braquage')  braq.classList.add('selected');
   if (tau   && window._bonusType === 'taupe')     tau.classList.add('selected');
   if (leftc && window._bonusType === 'lefthand')  leftc.classList.add('selected');
   if (melon && window._bonusType === 'melon')     melon.classList.add('selected');
+  if (braq && window._bonusType === 'braquage') braq.classList.add('selected');
 
   
   // 3bis) a11y state
-  [cap, mir, braq, tau, leftc, melon].forEach((c,i)=>{
+  [cap, mir, tau, leftc, melon, braq].forEach((c,i)=>{
     if(!c) return;
     const pressed =
       (i===0 && window._bonusType==='capitaine') ||
       (i===1 && window._bonusType==='miroir')    ||
-      (i===2 && window._bonusType==='braquage')  ||
-      (i===3 && window._bonusType==='taupe')     ||
-      (i===4 && window._bonusType==='lefthand')  ||
-      (i===5 && window._bonusType==='melon');
+      (i===2 && window._bonusType==='taupe')     ||
+      (i===3 && window._bonusType==='lefthand')  ||
+      (i===4 && window._bonusType==='melon')     ||
+      (i===5 && window._bonusType==='braquage');
     c.setAttribute('aria-pressed', pressed ? 'true' : 'false');
   });
 // 4) texte d’aide
@@ -113,6 +118,7 @@ function selectBonusType(t){
       window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
       window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
       window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport." :
+      window._bonusType === 'braquage' ? "Braquage : vole le bonus adverse (Melon/Capitaine) ou 5pts si Taupe/Mauvaise main. Aucun effet vs Miroir." :
                                           "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.";
   }
 
@@ -122,7 +128,7 @@ function selectBonusType(t){
 
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const map   = ['capitaine','miroir','braquage','taupe','lefthand','melon']; // 6 cartes
+  const map   = ['capitaine','miroir','taupe','lefthand','melon','braquage']; // 5 cartes
 
   cards.forEach((c, i)=>{
     c.classList.add('selectable');
@@ -141,7 +147,7 @@ function prepareBonusOptions(){
   });
 
   // déplacer/afficher les panneaux de paramètres (Capitaine n’en a plus)
-  const cap = cards[0], tau = cards[3], leftc = cards[4], melon = cards[5];
+  const cap = cards[0], tau = cards[2], leftc = cards[3], melon = cards[4], braq = cards[5];
   const capTxt = cap?.querySelector('.bonus-text');
   const tauTxt = tau?.querySelector('.bonus-text');
   const leftTxt = leftc?.querySelector('.bonus-text');
@@ -153,6 +159,15 @@ function prepareBonusOptions(){
   const wM = ensureMelonWrapper();    if (melonTxt && wM && wM.parentElement !== melonTxt) melonTxt.appendChild(wM);
 
   // init sélection
+  // (apply pairing rule UI states)
+  // Disable paired card if needed (tournament-wide)
+try{
+  const usedBraq = isBonusUsedTournamentWide('braquage');
+  const usedMir  = isBonusUsedTournamentWide('miroir');
+  if (usedBraq && mir){ mir.classList.add('disabled'); mir.title = 'Indisponible : Braquage a déjà été utilisé dans le tournoi.'; }
+  if (usedMir  && braq){ braq.classList.add('disabled'); braq.title = 'Indisponible : Miroir a déjà été utilisé dans le tournoi.'; }
+}catch(_){}
+
   selectBonusType(window._bonusType || 'capitaine');
 }
 
@@ -495,22 +510,6 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </div>
 </div>
 <div class="bonus-sep"></div>
-<!-- Braquage -->
-<div class="bonus-card">
-  <div aria-hidden="true" class="bonus-illu">
-    <img alt="" src="img/braquage.png"/>
-  </div>
-  <div class="bonus-text">
-    <div class="bonus-title">Braquage</div>
-    <div class="help">
-      Sur <b>tout le match</b> face aux autres bonus :<br/>
-      • vs <b>Melon d’or</b> ou <b>Capitaine</b> : vous volez <b>100%</b> de son bonus (même signe) et l’adversaire tombe à <b>0</b>.<br/>
-      • vs <b>René la taupe</b> ou <b>10 pouces 2 mains gauche</b> : transfert fixe de <b>5 pts</b> → vous gagnez <b>+5</b> et l’adversaire perd <b>−5</b>.<br/>
-      • vs <b>Miroir</b> : aucun effet.
-    </div>
-  </div>
-</div>
-<div class="bonus-sep"></div>
 <!-- René la taupe -->
 <div class="bonus-card">
 <div aria-hidden="true" class="bonus-illu">
@@ -550,10 +549,26 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <div class="bonus-text">
 <div class="bonus-title">Melon d'or</div>
 <div class="help">• En cas de <b>victoire</b> : double le nombre de points.<br/>
-					• En cas de <b>défaite</b> : soustrait le double de la différence de points.<br/>
+					• En cas de <b>défaite</b> : soustrait la différence de points.<br/>
 				Choisissez le sport concerné.
 				</div>
 </div>
+</div>
+<div class="bonus-sep"></div>
+<!-- Braquage -->
+<div class="bonus-card" data-bonus-type="braquage">
+  <div aria-hidden="true" class="bonus-illu">
+    <img alt="Braquage" src="img/braquage.png"/>
+  </div>
+  <div class="bonus-text">
+    <div class="bonus-title">Braquage</div>
+    <div class="help">
+      Si l’adversaire choisit <b>Melon</b> ou <b>Capitaine</b>, vous lui volez ses points de bonus (y compris négatifs).<br/>
+      Si l’adversaire choisit <b>Taupe</b> ou <b>Mauvaise main</b>, vous lui volez <b>5 points de score</b> (‑5 pour l’adversaire).<br/>
+      Face à <b>Miroir</b> ou à un <b>Braquage</b> adverse : aucun effet.<br/>
+      ⚠️ Incompatible avec le bonus <b>Miroir</b> (au niveau du tournoi).
+    </div>
+  </div>
 </div>
 </div>
 <!-- Texte d'aide dynamique -->
@@ -634,6 +649,7 @@ const BONUS = {
       case "taupe":    return "René la taupe";
       case "lefthand": return "10 pouces 2 mains gauche";
       case "melon":    return "Melon d'or";
+      case "braquage": return "Braquage";
       default:         return "Capitaine";
     }
   },
@@ -643,6 +659,7 @@ const BONUS = {
       case "taupe":    return "taupe.png";
       case "lefthand": return "main-gauche.png";
       case "melon":    return "melon.png";
+      case "braquage": return "braquage.png";
       default:         return "capitaine.jpg";
     }
   },
@@ -664,6 +681,21 @@ const help=t=>{const d=document.createElement("div");d.className="help";d.textCo
 function hashPass(s){s=(s||"").trim();let h=0x811c9dc5>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return("00000000"+h.toString(16)).slice(-8)}
 const hy=(a,b)=>`${a}\u2011${b}`;
 const BONUS_VAL=5;
+
+// === Pairing rule: Braquage <-> Miroir (tournament-wide) ==================
+function isBonusUsedTournamentWide(type){
+  try{
+    const sel = (state && state.bonusSelections) || {};
+    for (const roundKey of Object.keys(sel)){
+      const perTeam = sel[roundKey] || {};
+      for (const teamId of Object.keys(perTeam)){
+        const s = perTeam[teamId];
+        if (s && s.type === type) return true;
+      }
+    }
+  }catch(_){}
+  return false;
+}
 
 /* ===== Erreurs visibles ===== */
 window.onerror=(msg,src,line,col)=>{const el=id("storage-warning");if(el){el.style.display="block";el.textContent="Erreur JS : "+msg+" @"+(src||"")+":"+(line||0)+":"+(col||0)} const p=id("js-ok");if(p){p.textContent='JS chargé avec erreurs ⚠️';p.style.background='#8a2a2a'}};
@@ -922,7 +954,7 @@ function computeMelonBonusForMatch(m, tid, sport){
       const R = (window.state && state.rules) || {};
       const target = +(R.paletTarget ?? 11);
       if (myPF > oppPF) return myPF;                 // victoire => +PF
-      if (myPF < oppPF) return - (2 * Math.max(0, target - myPF));  // défaite => -2×(T−PF équipe)
+      if (myPF < oppPF) return - (1 * Math.max(0, target - myPF));  // défaite => -1×(T−PF équipe)
       return 0;
     }
   }catch(e){ return 0; }
@@ -1686,7 +1718,7 @@ function applyBonusLocks(teamId){
     const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
 
     const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-    const map   = ['capitaine','miroir','taupe','lefthand','melon'];
+    const map   = ['capitaine','miroir','taupe','lefthand','melon','braquage'];
     cards.forEach((c,i)=>{
       const type = map[i] || 'capitaine';
       const cat = BONUS_CATEGORY[type];
@@ -2302,7 +2334,7 @@ function onEnter(e){
     "Miroir": "Inverse le bonus adverse sur tout le match.",
     "René la taupe": "Lunettes gênantes imposées à l’adversaire dans le sport choisi.",
     "10 pouces 2 mains gauche": "L’adversaire doit jouer avec sa mauvaise main. Choisissez le sport concerné.",
-    "Melon d'or": "En cas de victoire : double le nombre de points.	En cas de défaite : soustrait le double de la différence de points."
+    "Melon d'or": "En cas de victoire : double le nombre de points.	En cas de défaite : au ping/fléchettes -> soustrait le nbr de pts de l'adversaire. Au palet soustrait la différence de points"
   };
 
   // Single tooltip node (no backdrop)
