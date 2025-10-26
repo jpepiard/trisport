@@ -72,40 +72,34 @@ function selectBonusType(t){
   }catch(_){}
 
   // 1) type valide (inclut 'melon')
-  window._bonusType = (['capitaine','miroir','braquage','taupe','lefthand','melon'].includes(t) ? t : 'capitaine');
+  window._bonusType = (['capitaine','miroir','taupe','lefthand','melon'].includes(t) ? t : 'capitaine');
 
   // 2) cartes (5 cartes désormais)
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   const cap   = cards[0],
         mir   = cards[1],
-        braq  = cards[2],
-        tau   = cards[3],
-        leftc = cards[4],
-        melon = cards[5];
+        tau   = cards[2],
+        leftc = cards[3],
+        melon = cards[4];
 
   // 3) reset + sélection
-  [cap, mir, braq, tau, leftc, melon].forEach(c => c && c.classList.remove('selected'));
+  [cap, mir, tau, leftc, melon].forEach(c => c && c.classList.remove('selected'));
   if (cap   && window._bonusType === 'capitaine') cap.classList.add('selected');
   if (mir   && window._bonusType === 'miroir')    mir.classList.add('selected');
-  if (braq  && window._bonusType === 'braquage')  braq.classList.add('selected');
-  if (braq  && window._bonusType === 'braquage')  braq.classList.add('selected');
   if (tau   && window._bonusType === 'taupe')     tau.classList.add('selected');
   if (leftc && window._bonusType === 'lefthand')  leftc.classList.add('selected');
   if (melon && window._bonusType === 'melon')     melon.classList.add('selected');
 
   
   // 3bis) a11y state
-  [cap, mir, braq, tau, leftc, melon].forEach((c,i)=>{
+  [cap, mir, tau, leftc, melon].forEach((c,i)=>{
     if(!c) return;
     const pressed =
       (i===0 && window._bonusType==='capitaine') ||
       (i===1 && window._bonusType==='miroir')    ||
-      (i===2 && window._bonusType==='braquage') ||
-      (i===2 && window._bonusType==='braquage') ||
-      (i===2 && window._bonusType==='braquage') ||
       (i===2 && window._bonusType==='taupe')     ||
-      (i===4 && window._bonusType==='lefthand')  ||
-      (i===5 && window._bonusType==='melon');
+      (i===3 && window._bonusType==='lefthand')  ||
+      (i===4 && window._bonusType==='melon');
     c.setAttribute('aria-pressed', pressed ? 'true' : 'false');
   });
 // 4) texte d’aide
@@ -113,7 +107,6 @@ function selectBonusType(t){
   if (ctx) {
     ctx.textContent =
       window._bonusType === 'miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
-      window._bonusType === 'braquage' ? "Braquage : 1/3 du Melon adverse (troncature) ou 1/3 du score brut si l’adversaire est Taupe/Mauvaise main. Aucun effet face à Miroir." :
       window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
       window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
       window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport." :
@@ -126,7 +119,7 @@ function selectBonusType(t){
 
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const map   = ['capitaine','miroir','braquage','taupe','lefthand','melon']; // 6 cartes
+  const map   = ['capitaine','miroir','taupe','lefthand','melon']; // 5 cartes
 
   cards.forEach((c, i)=>{
     c.classList.add('selectable');
@@ -145,7 +138,7 @@ function prepareBonusOptions(){
   });
 
   // déplacer/afficher les panneaux de paramètres (Capitaine n’en a plus)
-  const cap = cards[0], tau = cards[3], leftc = cards[4], melon = cards[5];
+  const cap = cards[0], tau = cards[2], leftc = cards[3], melon = cards[4];
   const capTxt = cap?.querySelector('.bonus-text');
   const tauTxt = tau?.querySelector('.bonus-text');
   const leftTxt = leftc?.querySelector('.bonus-text');
@@ -495,23 +488,8 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 				Sur l'ensemble des 3 sports :<br/>
               Inverse le bonus adverse sur <b>tout le match</b>.<br/>
 			  <br/>
+            </div>
 </div>
-</div>
-</div>
-<div class="bonus-sep"></div>
-<div class="bonus-card">
-  <div aria-hidden="true" class="bonus-illu">
-    <img alt="" src="img/braquage.png"/>
-  </div>
-  <div class="bonus-text">
-    <div class="bonus-title">Braquage</div>
-    <div class="help">
-      Sur <b>tout le match</b> contre les autres bonus :<br/>
-      • vs <b>Melon d’or</b> ou <b>Capitaine</b> : vous volez <b>tous les points</b> de son bonus (même signe).<br/>
-      • vs <b>René la taupe</b> ou <b>10 pouces 2 mains gauche</b> : vous piquez <b>−5 pts</b> à l’adversaire (malus pour lui).<br/>
-      • vs <b>Miroir</b> : aucun effet.
-    </div>
-  </div>
 </div>
 <div class="bonus-sep"></div>
 <!-- René la taupe -->
@@ -634,7 +612,6 @@ const BONUS = {
   labelForType(type){
     switch(type){
       case "miroir":   return "Miroir";
-      case "braquage": return "Braquage";
       case "taupe":    return "René la taupe";
       case "lefthand": return "10 pouces 2 mains gauche";
       case "melon":    return "Melon d'or";
@@ -644,7 +621,6 @@ const BONUS = {
   imgForType(type){
     switch(type){
       case "miroir":   return "miroir.jpg";
-      case "braquage": return "braquage.png";
       case "taupe":    return "taupe.png";
       case "lefthand": return "main-gauche.png";
       case "melon":    return "melon.png";
@@ -932,38 +908,6 @@ function computeMelonBonusForMatch(m, tid, sport){
     }
   }catch(e){ return 0; }
 }
-
-/* Base points (without bonuses/malus) earned by a team on a single match */
-function computeBasePointsForMatch(m, tid){
-  try{
-    const R = (window.state && state.rules) || {};
-    const isA = (m.a === tid);
-    const isB = (m.b === tid);
-    if(!isA && !isB) return 0;
-
-    // darts -> wins * 5
-    let aw=0, bw=0;
-    (m.darts||[]).forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
-    let pts = (isA ? aw : bw) * +(R.dartsWinPoints ?? 5);
-
-    // ping (each set win = 5)
-    (getPingPts(m) || []).forEach(s=>{
-      const a = (s && s.a!=null) ? +s.a : null;
-      const b = (s && s.b!=null) ? +s.b : null;
-      if (!isPingValid(a,b)) return;
-      if (a>b) { if (isA) pts += +(R.pingWinPoints ?? 5); }
-      else if (b>a) { if (isB) pts += +(R.pingWinPoints ?? 5); }
-    });
-
-    // palet raw points
-    const a = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
-    const b = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
-    if (a!=null && b!=null) pts += (isA ? a : b);
-
-    return pts||0;
-  }catch(e){ return 0; }
-}
-
 /* === Recompute all bonuses for finished rounds (used when admin edits scores after closure) === */
 function recomputeAllBonuses(){
   try{
@@ -1020,27 +964,7 @@ function recomputeAllBonuses(){
               total += computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
             }
           }
-
-        } else if (sel.type === 'braquage'){
-          const m = matches.find(x=>x.a===tid || x.b===tid);
-          if (m){
-            const oppId  = (m.a===tid ? m.b : m.a);
-            const oppSel = sels[oppId];
-            if (oppSel && oppSel.type === 'melon'){
-              const sport = oppSel.sport || 'darts';
-              const oppMelon = computeMelonBonusForMatch(m, oppId, sport);
-              total = oppMelon;
-            } else if (oppSel && oppSel.type === 'capitaine'){
-              total = 0;
-              total += computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-            } else if (oppSel && (oppSel.type==='taupe' || oppSel.type==='lefthand')){
-              total = 5;
-            } else {
-              total = 0;
-            }
-          }
         }
-
         state.bonusApplied[r][tid] = total;
       });
     });
@@ -1118,7 +1042,6 @@ function bonusChip(r, mTeam, rs){
   const type = sel.type || 'capitaine';
   const lblType =
     type === 'miroir'   ? 'Miroir' :
-    type === 'braquage' ? 'Braquage' :
     type === 'taupe'    ? 'René la taupe' :
     type === 'lefthand' ? '10 pouces 2 mains gauche' :
     type === 'melon'    ? 'Melon d\'or' :
@@ -1126,7 +1049,6 @@ function bonusChip(r, mTeam, rs){
 
   const img =
     type === 'miroir'   ? 'miroir.jpg' :
-    type === 'braquage' ? 'braquage.png' :
     type === 'taupe'    ? 'taupe.png' :
     type === 'lefthand' ? 'main-gauche.png' :
     type === 'melon'    ? 'melon.png' :
@@ -1718,7 +1640,7 @@ function rebuildCategoryLocksFromSelections(){
   }catch(_){}
 }
 
-const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir', braquage:'miroir' };
+const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir' };
 
 function markCategoryLocked(teamId, type){
   const cat = BONUS_CATEGORY[type];
@@ -1745,7 +1667,7 @@ function applyBonusLocks(teamId){
     const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
 
     const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-    const map   = ['capitaine','miroir','braquage','taupe','lefthand','melon'];
+    const map   = ['capitaine','miroir','taupe','lefthand','melon'];
     cards.forEach((c,i)=>{
       const type = map[i] || 'capitaine';
       const cat = BONUS_CATEGORY[type];
@@ -1834,7 +1756,6 @@ id('bonus-save').addEventListener('click',()=>{
 
  const type =
   (window._bonusType === 'miroir')   ? 'miroir'   :
-  (window._bonusType === 'braquage') ? 'braquage' :
   (window._bonusType === 'taupe')    ? 'taupe'    :
   (window._bonusType === 'lefthand') ? 'lefthand' :
   (window._bonusType === 'melon')    ? 'melon'    :
@@ -1854,10 +1775,6 @@ if (type === 'capitaine') {
   const sport = document.getElementById('lefthand-sport')?.value || 'darts';
   setBonusSelection(r, t, { type: 'lefthand', sport });
   if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'lefthand');
-  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
-} else if (type === 'braquage') {
-  setBonusSelection(r, t, { type: 'braquage' });
-  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'braquage');
   if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else if (type === 'miroir') {
   setBonusSelection(r, t, { type: 'miroir' });
