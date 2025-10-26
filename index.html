@@ -1116,6 +1116,7 @@ function bonusChip(r, mTeam, rs){
   const type = sel.type || 'capitaine';
   const lblType =
     type === 'miroir'   ? 'Miroir' :
+    type === 'braquage' ? 'Braquage' :
     type === 'taupe'    ? 'René la taupe' :
     type === 'lefthand' ? '10 pouces 2 mains gauche' :
     type === 'melon'    ? 'Melon d\'or' :
@@ -1123,6 +1124,7 @@ function bonusChip(r, mTeam, rs){
 
   const img =
     type === 'miroir'   ? 'miroir.jpg' :
+    type === 'braquage' ? 'braquage.png' :
     type === 'taupe'    ? 'taupe.png' :
     type === 'lefthand' ? 'main-gauche.png' :
     type === 'melon'    ? 'melon.png' :
