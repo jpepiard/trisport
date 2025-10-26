@@ -88,6 +88,7 @@ function selectBonusType(t){
   if (cap   && window._bonusType === 'capitaine') cap.classList.add('selected');
   if (mir   && window._bonusType === 'miroir')    mir.classList.add('selected');
   if (braq  && window._bonusType === 'braquage')  braq.classList.add('selected');
+  if (braq  && window._bonusType === 'braquage')  braq.classList.add('selected');
   if (tau   && window._bonusType === 'taupe')     tau.classList.add('selected');
   if (leftc && window._bonusType === 'lefthand')  leftc.classList.add('selected');
   if (melon && window._bonusType === 'melon')     melon.classList.add('selected');
@@ -99,6 +100,8 @@ function selectBonusType(t){
     const pressed =
       (i===0 && window._bonusType==='capitaine') ||
       (i===1 && window._bonusType==='miroir')    ||
+      (i===2 && window._bonusType==='braquage') ||
+      (i===2 && window._bonusType==='braquage') ||
       (i===2 && window._bonusType==='braquage') ||
       (i===2 && window._bonusType==='taupe')     ||
       (i===4 && window._bonusType==='lefthand')  ||
@@ -498,7 +501,8 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 				Sur l'ensemble des 3 sports :<br/>
               Inverse le bonus adverse sur <b>tout le match</b>.<br/>
 			  <br/>
-            <div class="bonus-card">
+<div class="bonus-sep"></div>
+<div class="bonus-card">
   <div aria-hidden="true" class="bonus-illu">
     <img alt="" src="img/braquage.png"/>
   </div>
@@ -1740,7 +1744,7 @@ function applyBonusLocks(teamId){
     const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
 
     const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-    const map   = ['capitaine','miroir','taupe','lefthand','melon'];
+    const map   = ['capitaine','miroir','braquage','taupe','lefthand','melon'];
     cards.forEach((c,i)=>{
       const type = map[i] || 'capitaine';
       const cat = BONUS_CATEGORY[type];
