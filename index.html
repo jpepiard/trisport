@@ -134,13 +134,7 @@ function prepareBonusOptions(){
     c.setAttribute('role','button');
     c.setAttribute('aria-pressed','false');
 
-    const type =
-  (window._bonusType === 'miroir')   ? 'miroir'   :
-  (window._bonusType === 'braquage') ? 'braquage' :
-  (window._bonusType === 'taupe')    ? 'taupe'    :
-  (window._bonusType === 'lefthand') ? 'lefthand' :
-  (window._bonusType === 'melon')    ? 'melon'    :
-                                       'capitaine';
+    const type = map[i] || 'capitaine';
     c.addEventListener('click', ()=>selectBonusType(type));
     c.addEventListener('keydown', ev=>{
       if(ev.key===' '||ev.key==='Enter'){
