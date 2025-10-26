@@ -1853,6 +1853,10 @@ if (type === 'capitaine') {
   setBonusSelection(r, t, { type: 'lefthand', sport });
   if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'lefthand');
   if (typeof applyBonusLocks==='function') applyBonusLocks(t);
+} else if (type === 'braquage') {
+  setBonusSelection(r, t, { type: 'braquage' });
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'braquage');
+  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else if (type === 'miroir') {
   setBonusSelection(r, t, { type: 'miroir' });
   if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'miroir');
