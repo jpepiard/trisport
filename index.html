@@ -160,15 +160,24 @@ function prepareBonusOptions(){
 
   // init sélection
   // (apply pairing rule UI states)
-  // Disable paired card if needed (tournament-wide)
-try{
-  const usedBraq = isBonusUsedTournamentWide('braquage');
-  const usedMir  = isBonusUsedTournamentWide('miroir');
-  if (usedBraq && mir){ mir.classList.add('disabled'); mir.title = 'Indisponible : Braquage a déjà été utilisé dans le tournoi.'; }
-  if (usedMir  && braq){ braq.classList.add('disabled'); braq.title = 'Indisponible : Miroir a déjà été utilisé dans le tournoi.'; }
-}catch(_){}
+      // Disable paired cards if either was used earlier in the tournament
+    try{
+      const usedBraq = isBonusUsedTournamentWide('braquage');
+      const usedMir  = isBonusUsedTournamentWide('miroir');
+      const usedEither = usedBraq || usedMir;
+      if (usedEither && mir){ mir.classList.add('disabled'); mir.title = 'Indisponible : Miroir/Braquage déjà utilisé dans le tournoi.'; }
+      if (usedEither && braq){ braq.classList.add('disabled'); braq.title = 'Indisponible : Miroir/Braquage déjà utilisé dans le tournoi.'; }
+    }catch(_){ }
 
   selectBonusType(window._bonusType || 'capitaine');
+  // safety: if selected card is disabled (pair rule), fallback to 'capitaine'
+  try{
+    const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
+    const map   = ['capitaine','miroir','taupe','lefthand','melon','braquage'];
+    const idx   = map.indexOf(window._bonusType || 'capitaine');
+    const card  = (idx>=0?cards[idx]:null);
+    if (card && card.classList.contains('disabled')) selectBonusType('capitaine');
+  }catch(_){ }
 }
 
 </script>
