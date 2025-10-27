@@ -1745,7 +1745,7 @@ function applyBonusLocks(teamId){
     const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
 
     const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-    const map   = ['capitaine','miroir','taupe','lefthand','melon'];
+    const map   = ['capitaine','miroir','braquage','taupe','lefthand','melon'];
     cards.forEach((c,i)=>{
       const type = map[i] || 'capitaine';
       const cat = BONUS_CATEGORY[type];
@@ -1825,12 +1825,6 @@ const rCtl = roundState(round);
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
-  // Block saving if category already used this season
-  try{
-    const locks = getTeamCategoryLocks(t);
-    const cat = BONUS_CATEGORY[type];
-    if (cat && locks.has(cat)) { showToast("Bonus déjà utilisé pour cette catégorie."); return; }
-  }catch(_){}
 
  const type =
   (window._bonusType === 'miroir')   ? 'miroir'   :
@@ -1839,6 +1833,14 @@ id('bonus-save').addEventListener('click',()=>{
   (window._bonusType === 'melon')    ? 'melon'    :
   (window._bonusType === 'braquage') ? 'braquage' :
                                        'capitaine';
+
+  // Block saving if category already used this season
+  try{
+    const locks = getTeamCategoryLocks(t);
+    const cat = BONUS_CATEGORY[type];
+    if (cat && locks.has(cat)) { showToast("Bonus déjà utilisé pour cette catégorie."); return; }
+  }catch(_){}
+
 // Nouveau : 'capitaine' et 'melon' n'ont pas de paramètres à lire
 if (type === 'capitaine') {
   setBonusSelection(r, t, { type });
