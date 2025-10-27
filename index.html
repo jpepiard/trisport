@@ -931,6 +931,7 @@ function computeMelonBonusForMatch(m, tid, sport){
     }
   }catch(e){ return 0; }
 }
+
 /* === Recompute all bonuses for finished rounds (used when admin edits scores after closure) === */
 function recomputeAllBonuses(){
   try{
@@ -941,6 +942,7 @@ function recomputeAllBonuses(){
       if (!rs || !rs.finished) return;
       const matches = (state.matches || []).filter(m=>m.round===r);
       const sels = (state.bonusSelections && state.bonusSelections[r]) || {};
+
       // reset applied
       state.bonusApplied[r] = state.bonusApplied[r] || {};
       Object.keys(sels).forEach(tid=>{ state.bonusApplied[r][tid]=0; });
@@ -948,18 +950,18 @@ function recomputeAllBonuses(){
       Object.keys(sels).forEach(tid=>{
         const sel = sels[tid]; if (!sel) return;
         let total = 0;
+
         if (sel.type === 'capitaine'){
           const m = matches.find(x=>x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
             if (oppSel && (oppSel.type === 'miroir' || oppSel.type === 'braquage')){
-              total = 0; // Capitaine transféré : l'effet sera appliqué côté Miroir adverse
+              // Transféré via Miroir / neutralisé par Braquage
+              total = 0;
             } else {
-              matches.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
+              total = computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport);
             }
-          } else {
-            matches.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
           }
         } else if (sel.type === 'melon'){
           const m = matches.find(x=>x.a===tid || x.b===tid);
@@ -967,7 +969,7 @@ function recomputeAllBonuses(){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
             if (oppSel && (oppSel.type === 'miroir' || oppSel.type === 'braquage')){
-              total = 0; // sera ajouté côté Miroir
+              total = 0; // transféré côté Miroir, ou neutralisé par Braquage
             } else {
               const sport = sel.sport || 'darts';
               total = computeMelonBonusForMatch(m, tid, sport);
@@ -982,12 +984,12 @@ function recomputeAllBonuses(){
               const sport = oppSel.sport || 'darts';
               total = computeMelonBonusForMatch(m, tid, sport);
             } else if (oppSel && oppSel.type === 'capitaine'){
-              // Transfert du Capitaine : applique le calcul Capitaine au camp Miroir
+              total = computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
+            } else {
               total = 0;
-              total += computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
             }
           }
-        {
+        } else if (sel.type === 'braquage'){
           const m = matches.find(x=>x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
@@ -1003,21 +1005,20 @@ function recomputeAllBonuses(){
               total = 5;
               state.bonusApplied[r] = state.bonusApplied[r] || {};
               const prev = +((state.bonusApplied[r][oppId]) || 0);
-              state.bonusApplied[r][oppId] = prev - 5;
+              state.bonusApplied[r][oppId] = prev - 5; // malus -5 à l'adversaire
             } else {
               total = 0;
             }
           }
-        
+        } else {
+          total = 0;
         }
+
         state.bonusApplied[r][tid] = total;
-      
+      });
     });
   }catch(e){ /* noop */ }
 }
-
-
-
 
 /* Icônes pour titres de sport */
 function sportIcon(name){
