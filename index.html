@@ -987,7 +987,7 @@ function recomputeAllBonuses(){
               total += computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
             }
           }
-        } else if (sel.type === 'braquage'){
+        {
           const m = matches.find(x=>x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
@@ -1646,7 +1646,7 @@ document.addEventListener("click",async(e)=>{
               total = 0;
             }
           }
-        } else if (sel.type === 'braquage') {
+        {
           const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
