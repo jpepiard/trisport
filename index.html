@@ -931,14 +931,14 @@ function computeMelonBonusForMatch(m, tid, sport){
     }
   }catch(e){ return 0; }
 }
-/* === Recompute all bonuses for finished rounds (used when admin edits scores after closure) === */
+/* === Recompute all bonuses for started/finished rounds (used when admin edits scores after closure) === */
 function recomputeAllBonuses(){
   try{
     const rounds = (state.matches || []).map(m=>m.round).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
     state.bonusApplied = state.bonusApplied || {};
     rounds.forEach(r=>{
       const rs = roundState(r);
-      if (!rs || !rs.finished) return;
+      if (!rs || !rs.started) return;
       const matches = (state.matches || []).filter(m=>m.round===r);
       const sels = (state.bonusSelections && state.bonusSelections[r]) || {};
       // reset applied
