@@ -1130,12 +1130,15 @@ function bonusChip(r, mTeam, rs){
       type === 'capitaine' ? (labelPlayer ? (' / ' + labelPlayer) : '') :
       ((type==='taupe' || type==='lefthand' || type==='melon') && labelSport ? (' / ' + labelSport) : '')
     );
-    const desc = (
-      type==='miroir'   ? 'Inverse le bonus adverse sur tout le match.' :
-      type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
-      type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
-      type==='melon'    ? 'Match au sport choisi : +5/manche gagnée (fléchettes & ping, différence appliquée). Palet : +PF si victoire, sinon −2×(11−PF).' :
-                          '+2pts/manche gagnée (fléchettes & ping, simples/doubles) et +2pts si palet.'
+const desc = (
+  type==='miroir'     ? 'Inverse le bonus adverse sur tout le match.' :
+  type==='taupe'      ? 'Lunettes gênantes imposées à l’adversaire (sport choisi).' :
+  type==='lefthand'   ? 'L’adversaire joue un sous-match avec sa mauvaise main (sport choisi).' :
+  type==='melon'      ? 'Match au sport choisi : +5/manche gagnée (fléchettes & ping). Palet : +PF si victoire, sinon −2×(11−PF).' :
+  type==='braquage'   ? 'Vole les points du bonus adverse si Melon/Capitaine (l’adversaire revient à 0). ±5 vs Taupe/Mauvaise main. Aucun effet vs Miroir.' :
+                        '+2pts/manche gagnée (fléchettes & ping, simples/doubles) et +2pts si palet.'
+);
+
     );
     return '<span class="pill bonus-flashy ' + valClass + '" aria-label="' + lblType + '">' +
        'Bonus' +
