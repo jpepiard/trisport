@@ -834,7 +834,7 @@ function clearMatch(mid){
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
 function setBonusSelection(r,tid,sel){state.bonusSelections[r]=state.bonusSelections[r]||{};state.bonusSelections[r][tid]=sel}
 function getBonusSelection(r,tid){return(state.bonusSelections[r]||{})[tid]||null}
-function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{};state.bonusApplied[r][tid]=(state.bonusApplied[r][tid]||0)+pts};state.bonusApplied[r][tid]=pts}
+function setBonusApplied(r,tid,pts){ state.bonusApplied[r]=state.bonusApplied[r]||{}; state.bonusApplied[r][tid]=(state.bonusApplied[r][tid]||0)+pts; }
 function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){const v=state.bonusApplied[r]?.[tid];if(v)s+=v}return s}
 function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
 
