@@ -1090,13 +1090,15 @@ function bonusChip(r, mTeam, rs){
     type === 'taupe'    ? 'René la taupe' :
     type === 'lefthand' ? '10 pouces 2 mains gauche' :
     type === 'melon'    ? 'Melon d\'or' :
-                          'Capitaine';
+    type === 'braquage' ? 'Braquage' :
+                          'Capitaine';;
 
   const img =
     type === 'miroir'   ? 'miroir.jpg' :
     type === 'taupe'    ? 'taupe.png' :
     type === 'lefthand' ? 'main-gauche.png' :
     type === 'melon'    ? 'melon.png' :
+    type === 'braquage' ? 'braquage.png' :
                           'capitaine.jpg';
 
   const labelSport = sel.sport ? BONUS.sportLabel(sel.sport) : null;
