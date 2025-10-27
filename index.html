@@ -528,18 +528,21 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <div class="bonus-sep"></div>
 <!-- Melon d'or -->
 <div class="bonus-card" data-bonus-type="melon">
-<div aria-hidden="true" class="bonus-illu">
-<img alt="Melon d'or" src="img/melon.png"/>
-</div>
-<div class="bonus-text">
-<div class="bonus-title">Melon d'or</div>
-<div class="help">• En cas de <b>victoire</b> : double le nombre de points.<br/>
-					• En cas de <b>défaite</b> : soustrait la différence de points.<br/>
-				Choisissez le sport concerné.
-				</div>
-
-</div>
+  <div aria-hidden="true" class="bonus-illu">
+    <img alt="Melon d'or" src="img/melon.png"/>
+  </div>
+  <div class="bonus-text">
+    <div class="bonus-title">Melon d'or</div>
+    <div class="help">
+      • En cas de <b>victoire</b> : double le nombre de points.<br/>
+      • En cas de <b>défaite</b> : soustrait la différence de points.<br/>
+      Choisissez le sport concerné.
+    </div>
+    <!-- (si tu as un <select id="melon-sport">, laisse-le ici, à l’intérieur de .bonus-text) -->
+  </div>
+</div> <!-- ⬅️ FERMETURE DE .bonus-card (Melon) -->
 <div class="bonus-sep"></div>
+
 <!-- Braquage -->
 <div class="bonus-card" data-bonus-type="braquage">
   <div aria-hidden="true" class="bonus-illu">
@@ -555,9 +558,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
   </div>
 </div>
 <div class="bonus-sep"></div>
-</div>
-</div>
-</div>
+
 <!-- Texte d'aide dynamique -->
 <div class="help" id="bonus-context">
         Capitaine : +2pts/manche gagnée ; +2pts sur le match au palet.
