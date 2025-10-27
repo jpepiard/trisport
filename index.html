@@ -539,6 +539,22 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 				Choisissez le sport concerné.
 				</div>
 </div>
+<div class="bonus-sep"></div>
+<!-- Braquage -->
+<div class="bonus-card" data-bonus-type="braquage">
+  <div aria-hidden="true" class="bonus-illu">
+    <img alt="Braquage" src="img/braquage.png"/>
+  </div>
+  <div class="bonus-text">
+    <div class="bonus-title">Braquage</div>
+    <div class="help">
+      • Si l’adversaire a <b>Melon</b> ou <b>Capitaine</b> : vous volez ses <b>points de bonus</b> (positifs ou négatifs) et il revient à <b>0</b> bonus.<br/>
+      • Si l’adversaire a <b>Taupe</b> ou <b>Mauvaise main</b> : <b>+5</b> points pour vous et <b>-5</b> pour lui.<br/>
+      • Face au <b>Miroir</b> : aucun effet.
+    </div>
+  </div>
+</div>
+<div class="bonus-sep"></div>
 </div>
 </div>
 <!-- Texte d'aide dynamique -->
@@ -619,6 +635,7 @@ const BONUS = {
       case "taupe":    return "René la taupe";
       case "lefthand": return "10 pouces 2 mains gauche";
       case "melon":    return "Melon d'or";
+      case "braquage": return "Braquage";
       default:         return "Capitaine";
     }
   },
@@ -628,6 +645,7 @@ const BONUS = {
       case "taupe":    return "taupe.png";
       case "lefthand": return "main-gauche.png";
       case "melon":    return "melon.png";
+      case "braquage": return "braquage.png";
       default:         return "capitaine.jpg";
     }
   },
@@ -924,12 +942,21 @@ function recomputeAllBonuses(){
       const sels = (state.bonusSelections && state.bonusSelections[r]) || {};
       // reset applied
       state.bonusApplied[r] = state.bonusApplied[r] || {};
-      Object.keys(sels).forEach(tid=>{ state.bonusApplied[r][tid]=0; });
+      Object.keys(sels).forEach(tid=>{ state.bonusApplied[r][tid]=0; }
+          });
 
       Object.keys(sels).forEach(tid=>{
         const sel = sels[tid]; if (!sel) return;
         let total = 0;
         if (sel.type === 'capitaine'){
+          const m = matches.find(x=>x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (oppSel && oppSel.type === 'braquage') { total = 0; }
+            else { total += computeCapitaineBonusForMatch(m, tid); }
+          }
+        
           const m = matches.find(x=>x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
@@ -1571,6 +1598,13 @@ document.addEventListener("click",async(e)=>{
         if (sel.type === 'capitaine') {
           matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
         } else if (sel.type === 'melon') {
+          const m = matches.find(x=>x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (oppSel && oppSel.type === 'braquage') { total = 0; }
+            else {
+          
           const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
@@ -1596,6 +1630,31 @@ document.addEventListener("click",async(e)=>{
               total = 0;
             }
           }
+        } else if (sel.type === 'braquage') {
+          const m = matches.find(x=>x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            const prevOpp = (state.bonusApplied?.[r]?.[oppId]) || 0;
+
+            if (!oppSel || oppSel.type === 'miroir') {
+              total = 0; // aucun effet
+            } else if (oppSel.type === 'melon') {
+              const sport = oppSel.sport || 'darts';
+              const oppWouldBe = computeMelonBonusForMatch(m, oppId, sport);
+              total = oppWouldBe;
+              setBonusApplied(r, oppId, 0);
+            } else if (oppSel.type === 'capitaine') {
+              const oppWouldBe = computeCapitaineBonusForMatch(m, oppId);
+              total = oppWouldBe;
+              setBonusApplied(r, oppId, 0);
+            } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
+              total = 5;
+              setBonusApplied(r, oppId, prevOpp - 5);
+            } else {
+              total = 0;
+            }
+          }
         } else {
           total = 0; // autres
         }
@@ -1603,7 +1662,7 @@ document.addEventListener("click",async(e)=>{
         setBonusApplied(r, tid, total); 
         state.bonusUsed = state.bonusUsed || {}; state.bonusUsed[r] = state.bonusUsed[r] || {}; state.bonusUsed[r][tid]=true; 
         markTeamBonusUsed(tid);
-      });
+      })
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
       showToast(`Journée #${r} terminée — bonus appliqués et révélés.`); break;
