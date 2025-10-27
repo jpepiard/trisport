@@ -72,37 +72,38 @@ function selectBonusType(t){
   }catch(_){}
 
   // 1) type valide (inclut 'melon')
-  window._bonusType = (['capitaine','miroir','taupe','lefthand','melon','braquage'].includes(t) ? t : 'capitaine');
+  window._bonusType = (['capitaine','miroir','braquage','taupe','lefthand','melon'].includes(t) ? t : 'capitaine');
 
-  // 2) cartes (5 cartes désormais)
+  // 2) cartes (6 cartes désormais)
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   const cap   = cards[0],
         mir   = cards[1],
-        tau   = cards[2],
-        leftc = cards[3],
-        melon = cards[4],
-        braq  = cards[5];
+        braq = cards[2],
+        tau   = cards[3],
+        leftc = cards[4],
+        melon = cards[5];
 
   // 3) reset + sélection
-  [cap, mir, tau, leftc, melon, braq].forEach(c => c && c.classList.remove('selected'));
+  [cap, mir, braq, tau, leftc, melon].forEach(c => c && c.classList.remove('selected'));
   if (cap   && window._bonusType === 'capitaine') cap.classList.add('selected');
+  if (mir   && window._bonusType === 'miroir') mir.classList.add('selected');
+  if (braq && window._bonusType === 'braquage') braq.classList.add('selected');
   if (mir   && window._bonusType === 'miroir')    mir.classList.add('selected');
+  if ( braq && window._bonusType === 'braquage') braq.classList.add('selected');
   if (tau   && window._bonusType === 'taupe')     tau.classList.add('selected');
   if (leftc && window._bonusType === 'lefthand')  leftc.classList.add('selected');
   if (melon && window._bonusType === 'melon')     melon.classList.add('selected');
-  if (braq  && window._bonusType === 'braquage')  braq.classList.add('selected');
 
   
   // 3bis) a11y state
-  [cap, mir, tau, leftc, melon, braq].forEach((c,i)=>{
+  [cap, mir, braq, tau, leftc, melon].forEach((c,i)=>{
     if(!c) return;
     const pressed =
       (i===0 && window._bonusType==='capitaine') ||
       (i===1 && window._bonusType==='miroir')    ||
       (i===2 && window._bonusType==='taupe')     ||
       (i===3 && window._bonusType==='lefthand')  ||
-      (i===4 && window._bonusType==='melon') ||
-      (i===5 && window._bonusType==='braquage');
+      (i===4 && window._bonusType==='melon');
     c.setAttribute('aria-pressed', pressed ? 'true' : 'false');
   });
 // 4) texte d’aide
@@ -113,7 +114,6 @@ function selectBonusType(t){
       window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
       window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
       window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport." :
-      window._bonusType === 'braquage' ? "Braquage : vole le bonus adverse (ou ±5 vs Taupe/Mauvaise main)." :
                                           "Capitaine : aucun réglage. +2/manche gagnée ; +2 si palet.";
   }
 
@@ -123,7 +123,7 @@ function selectBonusType(t){
 
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const map   = ['capitaine','miroir','taupe','lefthand','melon','braquage']; // 5 cartes
+  const map   = ['capitaine','miroir','braquage','taupe','lefthand','melon']; // 5 cartes
 
   cards.forEach((c, i)=>{
     c.classList.add('selectable');
@@ -496,6 +496,39 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </div>
 </div>
 <div class="bonus-sep"></div>
+<!-- Braquage -->
+<div class="bonus-card">
+  <div aria-hidden="true" class="bonus-illu">
+    <img alt="" src="img/braquage.png"/>
+  </div>
+  <div class="bonus-text">
+    <div class="bonus-title">Braquage</div>
+    <div class="help">
+      Applicable sur l’ensemble des 3 sports :<br/>
+      • <b>Vole</b> le total du bonus <b>Melon d’or</b> ou <b>Capitaine</b> adverse (positif ou négatif) et met l’adversaire à 0.<br/>
+      • Face à <b>10 pouces 2 mains gauche</b> ou <b>René la taupe</b> : <b>+5</b> pour vous et <b>-5</b> pour l’adversaire sur le sport visé.<br/>
+      • Face à <b>Miroir</b> : <b>aucun effet</b>.
+    </div>
+  </div>
+</div>
+<div class="bonus-sep"></div>
+<!-- Braquage -->
+<div class="bonus-card" data-bonus-type="braquage">
+  <div aria-hidden="true" class="bonus-illu">
+    <img alt="" src="img/braquage.png"/>
+  </div>
+  <div class="bonus-text">
+    <div class="bonus-title">Braquage</div>
+    <div class="help">
+      Applicable sur l’ensemble des 3 sports :<br/>
+      • <b>Vole</b> le total du bonus <b>Melon d’or</b> ou <b>Capitaine</b> adverse (positif ou négatif) et met l’adversaire à 0.<br/>
+      • Face à <b>10 pouces 2 mains gauche</b> ou <b>René la taupe</b> : <b>+5</b> pour vous et <b>-5</b> pour l’adversaire sur le sport visé.<br/>
+      • Face à <b>Miroir</b> : <b>aucun effet</b>.
+    </div>
+  </div>
+</div>
+<div class="bonus-sep"></div>
+
 <!-- René la taupe -->
 <div class="bonus-card">
 <div aria-hidden="true" class="bonus-illu">
@@ -528,23 +561,6 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </div>
 <div class="bonus-sep"></div>
 <!-- Melon d'or -->
-</div>
-<div class="bonus-sep"></div>
-<!-- Braquage -->
-<div class="bonus-card" data-bonus-type="braquage">
-  <div aria-hidden="true" class="bonus-illu">
-    <img alt="Braquage" src="img/braquage.png"/>
-  </div>
-  <div class="bonus-text">
-    <div class="bonus-title">Braquage</div>
-    <div class="help">
-      • Si l’adversaire a <b>Melon</b> ou <b>Capitaine</b> : vous volez ses <b>points de bonus</b> (positifs ou négatifs) et il revient à <b>0</b> bonus.<br/>
-      • Si l’adversaire a <b>Taupe</b> ou <b>Mauvaise main</b> : <b>+5</b> points pour vous et <b>-5</b> pour lui.<br/>
-      • Face au <b>Miroir</b> : aucun effet.
-    </div>
-  </div>
-</div>
-<div class="bonus-sep"></div>
 <div class="bonus-card" data-bonus-type="melon">
 <div aria-hidden="true" class="bonus-illu">
 <img alt="Melon d'or" src="img/melon.png"/>
@@ -953,677 +969,20 @@ function recomputeAllBonuses(){
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
-            if (oppSel && oppSel.type === 'miroir'){
-              total = 0; // Capitaine transféré : l'effet sera appliqué côté Miroir adverse
-            
-      } else if (sel.type === 'braquage') {
-        const m = matches.find(x=>x.a===tid || x.b===tid);
-        if (m){
-          const oppId = (m.a===tid ? m.b : m.a);
-          const oppSel = sels[oppId];
-          const prevOpp = (state.bonusApplied?.[r]?.[oppId]) || 0;
-
-          if (!oppSel || oppSel.type === 'miroir') {
-            total = 0; // aucun effet
-          } else if (oppSel.type === 'melon') {
-            const sport = oppSel.sport || 'darts';
-            const oppWouldBe = computeMelonBonusForMatch(m, oppId, sport);
-            total = oppWouldBe;
-            setBonusApplied(r, oppId, 0);
-          } else if (oppSel.type === 'capitaine') {
-            const oppWouldBe = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-            total = oppWouldBe;
-            setBonusApplied(r, oppId, 0);
-          } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
-            total = 5;
-            setBonusApplied(r, oppId, prevOpp - 5);
-          } else {
-            total = 0;
-          }
-        }
-    
-      } else {
-              matches.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
-            }
-          } else {
-            matches.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
-          }
-        } else if (sel.type === 'melon'){
-          const m = matches.find(x=>x.a===tid || x.b===tid);
-          if (m){
-            const oppId = (m.a===tid ? m.b : m.a);
-            const oppSel = sels[oppId];
-            if (oppSel && oppSel.type === 'miroir'){
-              total = 0; // sera ajouté côté Miroir
-            } else {
-              const sport = sel.sport || 'darts';
-              total = computeMelonBonusForMatch(m, tid, sport);
-            }
-          }
-        } else if (sel.type === 'miroir'){
-          const m = matches.find(x=>x.a===tid || x.b===tid);
-          if (m){
-            const oppId = (m.a===tid ? m.b : m.a);
-            const oppSel = sels[oppId];
-            if (oppSel && oppSel.type === 'melon'){
-              const sport = oppSel.sport || 'darts';
-              total = computeMelonBonusForMatch(m, tid, sport);
-            } else if (oppSel && oppSel.type === 'capitaine'){
-              // Transfert du Capitaine : applique le calcul Capitaine au camp Miroir
+            if (oppSel && (oppSel.type === 'miroir' || oppSel.type === 'braquage')) {
               total = 0;
-              total += computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
+            } else {
+              matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
             }
+          } else {
+            matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
           }
-        }
-        state.bonusApplied[r][tid] = total;
-      });
-    });
-  }catch(e){ /* noop */ }
-}
-
-
-
-
-/* Icônes pour titres de sport */
-function sportIcon(name){
-  if(name==='darts'){ return `<span class="sport-icon" role="img" aria-label="fléchettes">🎯</span>`; }
-  if(name==='ping'){  return `<span class="sport-icon" role="img" aria-label="ping-pong">🏓</span>`; }
-  return `<span class="sport-icon" role="img" aria-label="palet">🥏</span>`;
-}
-
-/* ===== Rendu Rencontres ===== */
-let CURRENT_ROUND=null;
-function setRoundStatusPillClasses(pill,rs){
-  pill.classList.remove('red','yellow','green');
-  if(rs.finished) pill.classList.add('green');
-  else if(rs.started) pill.classList.add('yellow');
-  else pill.classList.add('red');
-}
-function bonusChip(r, mTeam, rs){
-  const sel = getBonusSelection(r, mTeam);
-  const iAmTeam = hasClaim(mTeam);
-  const roundStarted  = !!rs.started;
-  const roundFinished = !!rs.finished;
-
-  // Récupère la sélection de l'adversaire pour les règles Miroir
-  let oppSel = null;
-  try{
-    const m = (state.matches || []).find(x => x.round===r && (x.a===mTeam || x.b===mTeam));
-    if (m){
-      const oppId = (m.a===mTeam ? m.b : m.a);
-      oppSel = getBonusSelection(r, oppId) || null;
-    }
-  }catch(_){}
-
-  // --- Règles de révélation "au démarrage" ---
-  // Révéler tout de suite si :
-  //  - mon type est taupe/lefthand
-  //  - OU je suis Miroir et l’adversaire est taupe/lefthand
-  // Bloquer la révélation si Miroir est face à Melon ou Capitaine
-  const isTaupeOrLeft   = !!(sel && (sel.type==='taupe' || sel.type==='lefthand'));
-  const isMirrorFacingT = !!(sel && sel.type==='miroir' && oppSel && (oppSel.type==='taupe' || oppSel.type==='lefthand'));
-  const isMirrorVsMC    = !!(
-    (sel && sel.type==='miroir' && oppSel && (oppSel.type==='melon' || oppSel.type==='capitaine')) ||
-    (sel && (sel.type==='melon' || sel.type==='capitaine') && oppSel && oppSel.type==='miroir')
-  );
-
-  const revealAtStart = roundStarted && !roundFinished && !isMirrorVsMC && (isTaupeOrLeft || isMirrorFacingT);
-
-  // --- Visibilité admin ---
-  // Avant la fin : l’admin ne voit RIEN sauf si revealAtStart (règle ci-dessus).
-  if (!roundFinished && isAdmin() && !revealAtStart) return '';
-
-  // --- Aucune sélection ---
-  const bonusUsed = (state.bonusUsed?.[r]?.[mTeam]) || false;
-  const canChoose = (!rs.started && !rs.finished && !bonusUsed && iAmTeam);
-  if (!sel) {
-    if (!roundFinished) {
-      return canChoose ? (
-        '<button type="button" class="bonus-btn" data-bonus data-team="' + mTeam + '">🎖 Bonus</button>'
-      ) : '';
-    }
-    return '<span class="pill">Pas de bonus</span>';
-  }
-
-  // --- Sélection faite, visibilité côté équipes/visiteurs ---
-  // Avant la fin : visible seulement si (je suis l’équipe) OU (révélation autorisée au démarrage)
-  if (!roundFinished && !(iAmTeam || revealAtStart)) return '';
-
-  const type = sel.type || 'capitaine';
-  const lblType =
-    type === 'miroir'   ? 'Miroir' :
-    type === 'taupe'    ? 'René la taupe' :
-    type === 'lefthand' ? '10 pouces 2 mains gauche' :
-    type === 'melon'    ? 'Melon d\'or' :
-    type === 'braquage' ? 'Braquage' :
-                          'Capitaine';
-
-  const img =
-    type === 'miroir'   ? 'miroir.jpg' :
-    type === 'taupe'    ? 'taupe.png' :
-    type === 'lefthand' ? 'main-gauche.png' :
-    type === 'melon'    ? 'melon.png' :
-    type === 'braquage' ? 'braquage.png' :
-                          'capitaine.jpg';
-
-  const labelSport = sel.sport ? BONUS.sportLabel(sel.sport) : null;
-  const sportEmoji = (labelSport === 'Fléchettes' ? '🎯' :
-                     labelSport === 'Ping'        ? '🏓' :
-                     labelSport === 'Palet'       ? '🥏' : '');
-  const labelPlayer = sel.player === 'p1' ? 'J1' : (sel.player === 'p2' ? 'J2' : null);
-
-  if (!roundFinished) {
-    // Pastille d’aperçu (sans valeur) avant la fin, quand visible
-    var parts = [lblType];
-    if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
-    if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
-    var __lbl = parts.join(' / ');
-    return '<span class="pill pill--blue">Bonus' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
-           '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' +
-           '</span>';
-  } else {
-    // Révélation complète + total appliqué (logique existante inchangée)
-    const applied = Math.abs((state.bonusApplied?.[r]?.[mTeam]) || 0);
-    const sign = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? '+' : '−';
-    const valClass = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? 'pos' : 'neg';
-    const extra = (
-      type === 'capitaine' ? (labelPlayer ? (' / ' + labelPlayer) : '') :
-      ((type==='taupe' || type==='lefthand' || type==='melon') && labelSport ? (' / ' + labelSport) : '')
-    );
-    const desc = (
-      type==='miroir'   ? 'Inverse le bonus adverse sur tout le match.' :
-      type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
-      type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
-      type==='melon'    ? 'Match au sport choisi : +5/manche gagnée (fléchettes & ping, différence appliquée). Palet : +PF si victoire, sinon −2×(11−PF).' :
-                          '+2pts/manche gagnée (fléchettes & ping, simples/doubles) et +2pts si palet.'
-    );
-    return '<span class="pill bonus-flashy ' + valClass + '" aria-label="' + lblType + '">' +
-       'Bonus' +
-       '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
-       (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
-       '<span class="' + valClass + '">'+ sign + applied + '</span>' +
-       '<span class="bonus-pop">' +
-         '<img src="img/' + img + '" alt="' + lblType + '">' +
-         '<strong>' + lblType + '</strong>' +
-         (labelSport ? '<div class="muted">Sport : ' + labelSport + '</div>' : '') +
-         '<div class="desc">' + desc + '</div>' +
-       '</span>' +
-       '</span>';
-  }
-}
-
-// === In-place update of the match completeness chip ===
-function updateMatchCompleteness(mid){
-  const m = (state.matches || []).find(x => x.id === mid);
-  if(!m) return;
-  const card = document.querySelector('.match-card[data-id="'+mid+'"]');
-  if(!card) return;
-  const chip = card.querySelector('.state-chip');
-  if(!chip) return;
-
-  const done = uiIsComplete(m);
-  chip.textContent = done ? 'Complet' : 'Incomplet';
-  chip.classList.remove('ok','warn');
-  chip.classList.add(done ? 'ok' : 'warn');
-  if(!done){
-    chip.classList.add('pulse');
-    setTimeout(()=>chip.classList.remove('pulse'), 700);
-  }
-  card.setAttribute('data-complete', done ? 'true' : 'false');
-}
-    
-function renderMatches(){
-  if (typeof recomputeAllBonuses==='function') recomputeAllBonuses();
-  const list=id("match-list");list.innerHTML="";
-  if(!state.matches.length){list.appendChild(help("Aucune rencontre planifiée."));id("stats-matches").textContent="0 / 0 matches complets";id("round-status").textContent="—";id("btn-start-round").style.display="none";id("btn-end-round").style.display="none";return}
-  const groups={};state.matches.forEach(m=>(groups[m.round]=groups[m.round]||[]).push(m));
-  const rounds=Object.keys(groups).map(Number).sort((a,b)=>a-b);
-  CURRENT_ROUND = rounds.find(r=>!roundState(r).finished) ?? rounds[rounds.length-1];
-  const rs=roundState(CURRENT_ROUND);
-  const roundPill=id("round-status");
-  roundPill.textContent=`Journée active : #${CURRENT_ROUND} — ${rs.finished?'Terminée':(rs.started?'En cours':'Préparation')}`;
-  roundPill.classList.remove('red','yellow','green');
-  setRoundStatusPillClasses(roundPill,rs);
-  id("btn-start-round").style.display=(isAdmin()&&!rs.started&&!rs.finished)?'inline-block':'none';
-  id("btn-end-round").style.display  =(isAdmin()&& rs.started&&!rs.finished)?'inline-block':'none';
-
-  let complete=0, idx=0;
-  rounds.forEach(r=>{
-    const rCtl=roundState(r);
-    const badgeClass = rCtl.finished ? 'green' : (rCtl.started ? 'yellow' : 'red');const hdr=document.createElement("div");hdr.className="round-head";hdr.innerHTML=`<span class="round-title">Journée ${r}</span> <span class="chip round-chip ${badgeClass}">#${r}</span>`;list.appendChild(hdr);
-    const roundWrap=document.createElement("div");roundWrap.className="round-grid";list.appendChild(roundWrap);
-    
-
-    groups[r].forEach(m=>{
-      ensureLengths(m);
-      const wins=computeSetWins(m), pal=m.palet;
-      const pa = (pal?.a==null ? null : +pal.a);
-      const pb = (pal?.b==null ? null : +pal.b);
-      const palA = (pa==null && pb==null) ? 0 : (pa ?? 0);
-      const palB = (pa==null && pb==null) ? 0 : (pb ?? 0);
-      const palScore = hy(palA, palB);
-      const palChip = `<span class="chip">🥏 <span class="score-compact">${palScore}</span></span>`;
-      const done = uiIsComplete(m);if(done)complete++;
-      const el=document.createElement("div");el.setAttribute("data-id",m.id);el.setAttribute("data-complete",uiIsComplete(m)?"true":"false");el.className="match-card";el.dataset.id=m.id;const isOpen=!!ui.open[m.id];el.setAttribute("aria-expanded",isOpen?"true":"false");
-      const bonusA=bonusChip(r,m.a,rCtl), bonusB=bonusChip(r,m.b,rCtl);
-      const totalA = (wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0) + ((state.bonusApplied?.[r]?.[m.a]) || 0));
-      const totalB = (wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0) + ((state.bonusApplied?.[r]?.[m.b]) || 0));
-      const aWinGold = (rCtl.finished && done && totalA>totalB) ? ' is-winner-gold' : '';
-      const bWinGold = (rCtl.finished && done && totalB>totalA) ? ' is-winner-gold' : '';
-
-      el.innerHTML=`<div class="hd" data-expand>
-    <div class="scorewrap">
-      <!-- Rail gauche : #Journée -->
-      <div class="left-rail">
-        <span class="chip round-chip ${badgeClass}">#${r}</span>
-      </div>
-
-      <!-- Centre : équipes verticales + score général + scores par sport -->
-      <div class="centerlane" style="width:100%">
-        <div class="teams-row">
-          <div class="team left">
-            ${avatarHtml(m.a,'sm').replace('class="avatar','class="avatar'+aWinGold)}
-            <div class="name">${esc(teamName(m.a))}</div>
-            <div class="bonus-line">${bonusA || ''}</div>
-          </div>
-
-          <div class="score"><span class="scorebox a">${(wins.aw.darts*5 + wins.aw.ping*5 + (m.palet?.a ?? 0) + ((state.bonusApplied?.[r]?.[m.a]) || 0))}</span><span class="scorebox b">${(wins.bw.darts*5 + wins.bw.ping*5 + (m.palet?.b ?? 0) + ((state.bonusApplied?.[r]?.[m.b]) || 0))}</span></div>
-
-          <div class="team right">
-            ${avatarHtml(m.b,'sm').replace('class="avatar','class="avatar'+bWinGold)}
-            <div class="name">${esc(teamName(m.b))}</div>
-            <div class="bonus-line">${bonusB || ''}</div>
-          </div>
-        </div>
-
-        <div class="sports-row">
-          <span class="chip">🎯 <span class="score-compact">${hy(wins.aw.darts*5, wins.bw.darts*5)}</span></span>
-          <span class="chip">🏓 <span class="score-compact">${hy(wins.aw.ping*5, wins.bw.ping*5)}</span></span>
-          ${palChip}
-        </div>
-      </div>
-
-      
-      <!-- État de complétude -->
-      <div class="right-rail">
-        <span class="chip state-chip ${uiIsComplete(m)?'ok':'warn'}">
-          ${uiIsComplete(m)?'Complet':'Incomplet'}
-        </span>
-      </div>
-
-      <!-- chevron à droite -->
-      <span class="chev" aria-hidden="true"></span>
-    </div>
-  </div>
-  <div class="bd">
-          <div class="match-two-col">
-            ${renderDarts(m)}${renderPing(m)}
-          </div>
-          ${renderPalet(m)}
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">
-            <div class="help">La saisie nécessite d’être connecté·e à une des deux équipes (ou admin).</div>
-            <div>${(isAdmin())?`<button type="button" class="btn small" data-clear="${m.id}">Effacer ce match</button>`:''}</div>
-          </div>
-        </div>`;
-      roundWrap.appendChild(el);
-
-      // darts
-      qsa('.match-card[data-id="'+m.id+'"] select[data-kind="darts"]').forEach(sel=>{
-        const can=(isAdmin()); sel.disabled=!canEditScores(m, rCtl);
-        sel.addEventListener("change",()=>{const i=parseInt(sel.getAttribute("data-index"),10),v=sel.value===""?null:parseInt(sel.value,10);const mm=findMatch(m.id);mm.darts[i]=v;window.logEvent('darts_set',{index:i,team:(v===0?m.a:m.b)});saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()});
-      });
-      // ping
-      
-      // ping (vainqueur A/B)
-      qsa('.match-card[data-id="'+m.id+'"] select[data-kind="ping"]').forEach(sel=>{
-        const can = (isAdmin());
-        sel.disabled = !canEditScores(m, rCtl);
-        sel.addEventListener("change", ()=>{
-          const i  = parseInt(sel.getAttribute("data-index"),10);
-          const vv = sel.value==="" ? null : parseInt(sel.value,10);
-          const mm = findMatch(m.id);
-          if (!Array.isArray(mm.ping)) mm.ping = [];
-          const TOTAL = 3;
-          
-          while(mm.ping.length < TOTAL) mm.ping.push(null);
-          mm.ping[i]=vv;window.logEvent('ping_set',{index:i,team:(vv===0?m.a:m.b)});saveState();
-updateMatchCompleteness(m.id);
-
-          renderMatches();
-          renderLeaderboard();
-          renderH2H();
-        });
-      });
-
-      // palet
-      qsa('.match-card[data-id="'+m.id+'"] input[data-palet]').forEach(inp=>{
-        const can=(isAdmin()); inp.disabled=!canEditScores(m, rCtl);
-        const mid=m.id,which=inp.getAttribute("data-palet");
-        const updateNote=()=>{const mm=findMatch(mid),T=+state.rules.paletTarget||11,a=(mm.palet?.a==null?null:+mm.palet?.a),b=(mm.palet?.b==null?null:+mm.palet?.b);const ok=(a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));const note=qs('.match-card[data-id="'+mid+'"] [data-note="pal-'+mid+'"]');if(note)note.textContent=ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}
-        inp.addEventListener("input",()=>{const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);const mm=findMatch(mid);mm.palet[which]=v;window.logScoreUpdate(which==='a'?m.a:m.b,'palet',v);saveState();updateNote()});
-        const commit=()=>{const mm=findMatch(mid);const v=inp.value===""?null:clampInt(parseInt(inp.value,10),0,state.rules.paletTarget||11);mm.palet[which]=v;window.logScoreUpdate(which==='a'?m.a:m.b,'palet',v);saveState();updateMatchCompleteness(m.id);renderMatches();renderLeaderboard();renderH2H()};
-        inp.addEventListener("change",commit);inp.addEventListener("blur",commit);inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();inp.blur()}})
-      });
-
-      const clr=qs('.match-card[data-id="'+m.id+'"] [data-clear]');if(clr)clr.addEventListener("click",()=>clearMatch(m.id));
-      const head=qs('.match-card[data-id="'+m.id+'"] [data-expand]');if(head)head.addEventListener("click",()=>{const open=el.getAttribute("aria-expanded")==="true";el.setAttribute("aria-expanded",open?"false":"true");ui.open[m.id]=!open});
-      qsa('.match-card[data-id="'+m.id+'"] [data-bonus]').forEach(b=>b.addEventListener('click',()=>openBonusModal(r,b.getAttribute('data-team'))));
-    });
-  });
-  id("stats-matches").textContent=complete+" / "+state.matches.length+" matches complets";
-  renderLeaderboard();
-}
-
-/* ---- Rendu des 3 sports (relookés) ---- */
-function renderDarts(m){
-  const s = state.rules.dartsSingles, N = dartsTotal();
-  let html = '<div class="sport-group">'
-    + '<div class="sport-title"><span class="sport-icon">' + sportIcon('darts') + '</span> Fléchettes</div>';
-  for (let i=0; i<N; i++){
-    const v = m.darts[i];
-    const lab = (i < s ? ('Simple ' + (i+1)) : ('Double ' + (i - s + 1)));
-    html += '<div class="sport-item">'
-      + '<label>' + lab + '</label>'
-      + '<select data-kind="darts" data-index="' + i + '">'
-      + '<option value="" ' + (v===null ? 'selected' : '') + '>Non joué</option>'
-      + '<option value="0" ' + (v===0 ? 'selected' : '') + '>Victoire ' + esc(teamName(m.a)) + '</option>'
-      + '<option value="1" ' + (v===1 ? 'selected' : '') + '>Victoire ' + esc(teamName(m.b)) + '</option>'
-      + '</select>'
-      + '</div>';
-  }
-  html += '</div>';
-  return html;
-}
-function renderPing(m){
-  const sSingles = state.rules.pingSingles || 0;
-  const sDoubles = state.rules.pingDoubles || 0;
-  const total = sSingles + sDoubles;
-  const rCtl = roundState(m.round || 1); // état de la journée
-
-  if (!Array.isArray(m.ping)) m.ping = [];
-  m.ping = m.ping.slice(0, total);
-  while (m.ping.length < total) m.ping.push(null);
-
-  let html = '<div class="sport-group">'
-    + '<div class="sport-title"><span class="sport-icon">' + sportIcon('ping') + '</span> Ping-pong</div>';
-
-  for (let i=0; i<total; i++){
-    // Valeur affichée : par défaut "Non joué". Si la journée n'est pas démarrée, on force l'affichage à "Non joué".
-    const raw = (m.ping[i]===0 || m.ping[i]===1) ? m.ping[i] : null;
-    const v = raw;
-    const label = (i < sSingles) ? ('Simple ' + (i+1)) : ('Double ' + (i - sSingles + 1));
-    html += '<div class="sport-item">'
-      + '<label class="muted">' + label + '</label>'
-      + '<select data-kind="ping" data-index="' + i + '">'
-      + '<option value="" ' + (v===null ? 'selected' : '') + '>Non joué</option>'
-      + '<option value="0" ' + (v===0 ? 'selected' : '') + '>Victoire ' + esc(teamName(m.a)) + '</option>'
-      + '<option value="1" ' + (v===1 ? 'selected' : '') + '>Victoire ' + esc(teamName(m.b)) + '</option>'
-      + '</select>'
-      + '</div>';
-  }
-  html += '</div>';
-  return html;
-}
-function renderPalet(m){
-  const T = +state.rules.paletTarget || 11;
-  const a = (m.palet?.a==null?null:+m.palet?.a),
-        b = (m.palet?.b==null?null:+m.palet?.b);
-  const ok = (a!=null&&b!=null)&&((a===T&&b>=0&&b<=T-1)||(b===T&&a>=0&&a<=T-1));
-  return `<div class="sport-group" style="margin-top:16px">
-    <div class="sport-title"><span class="sport-icon">${sportIcon('palet')}</span> Palet</div>
-    <div class="ping-row">
-      <div>
-        <label class="muted">${esc(teamName(m.a))}</label>
-        <input type="number" min="0" max="${T}" step="1"
-               value="${a==null?'':a}" data-palet="a">
-      </div>
-      <div>
-        <label class="muted">${esc(teamName(m.b))}</label>
-        <input type="number" min="0" max="${T}" step="1"
-               value="${b==null?'':b}" data-palet="b">
-      </div>
-    </div>
-    <div class="help" data-note="pal-${m.id}">${ok?'✔️ Score valide':`Saisissez les deux scores (l’un doit être ${T}).`}</div>
-  </div>`;
-}
-
-/* ===== Classement ===== */
-function baseLeaderboardStats(){const R=state.rules,stats={};state.teams.forEach(t=>stats[t.id]={teamId:t.id,name:t.name,avatar:t.avatar||null,pointsBase:0,bonus:0,malus:0,dartsW:0,pingW:0,palFor:0,palAg:0,matchesComplete:0});state.matches.forEach(m=>{const A=stats[m.a],B=stats[m.b];ensureLengths(m);m.darts.forEach(v=>{if(v===0){A.dartsW++;A.pointsBase+=R.dartsWinPoints}else if(v===1){B.dartsW++;B.pointsBase+=R.dartsWinPoints}});getPingPts(m).forEach(s=>{const a=(s.a==null?null:+s.a),b=(s.b==null?null:+s.b);if(isPingValid(a,b)){if(a>b){A.pingW++;A.pointsBase+=R.pingWinPoints}else if(b>a){B.pingW++;B.pointsBase+=R.pingWinPoints}}});const pa=(m.palet?.a==null?null:+m.palet?.a),pb=(m.palet?.b==null?null:+m.palet?.b);if(pa!=null&&pb!=null){A.palFor+=pa;B.palFor+=pb;A.palAg+=pb;B.palAg+=pa;A.pointsBase+=pa;B.pointsBase+=pb}if(isMatchComplete(m)){A.matchesComplete++;B.matchesComplete++}});Object.keys(state.bonusApplied||{}).forEach(r=>{const per=state.bonusApplied[r];Object.keys(per).forEach(tid=>{const v=per[tid]||0;if(stats[tid])stats[tid].bonus+=v})});return stats}
-function computeLeaderboard(){const stats=baseLeaderboardStats();const rows=Object.values(stats).map(x=>({teamId:x.teamId,name:x.name,avatar:x.avatar,points:x.pointsBase+x.bonus-x.malus,bonus:x.bonus,malus:x.malus,dartsW:x.dartsW,pingW:x.pingW,palFor:x.palFor,palAg:x.palAg,matchesComplete:x.matchesComplete}));rows.sort((x,y)=>(y.points-x.points)||((y.palFor-y.palAg)-(x.palFor-x.palAg))||((y.dartsW+y.pingW)-(x.dartsW+x.pingW))||x.name.localeCompare(y.name));rows.forEach((r,i)=>r.rank=i+1);return rows}
-
-function renderLeaderboard(){
-  if (typeof recomputeAllBonuses==='function') recomputeAllBonuses();
-  const tbody = qs("#table-classement tbody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-
-  const teams = state.teams.slice();
-  const rows = teams.map(t => {
-    const tid = t.id;
-    let dartsPF=0, dartsPA=0, pingPF=0, pingPA=0, palPF=0, palPA=0, pts=0, matchesComplete=0;
-
-    state.matches.forEach(m => {
-      if (m.a!==tid && m.b!==tid) return;
-      const isA = (m.a===tid);
-
-      // Points totaux (base + bonus appliqué)
-      if (typeof pointsForTeamInMatch === 'function') {
-        pts += pointsForTeamInMatch(m, tid) || 0;
-      }
-
-      // Stat fléchettes (manches gagnées → points ×5)
-      if (Array.isArray(m.darts)) {
-        let aw=0, bw=0;
-        m.darts.forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
-        dartsPF += (isA ? aw : bw) * 5;
-        dartsPA += (isA ? bw : aw) * 5;
-      }
-
-      // Stat ping (manches gagnées → points ×5)
-      if (typeof getPingPts === 'function') {
-        let aw=0, bw=0;
-        (getPingPts(m) || []).forEach(s=>{
-          const a = (s && s.a!=null) ? +s.a : null;
-          const b = (s && s.b!=null) ? +s.b : null;
-          if (!isPingValid(a,b)) return;
-          if (a>b) aw++; else if (b>a) bw++;
-        });
-        pingPF += (isA ? aw : bw) * 5;
-        pingPA += (isA ? bw : aw) * 5;
-      }
-
-      // Stat palet (PF/PA)
-      if (m.palet && m.palet.a!=null && m.palet.b!=null) {
-        palPF += isA ? (+m.palet.a||0) : (+m.palet.b||0);
-        palPA += isA ? (+m.palet.b||0) : (+m.palet.a||0);
-      }
-
-      // Match complet ?
-      if (typeof isMatchComplete === 'function' && isMatchComplete(m)) matchesComplete++;
-    });
-
-    // Bonus/Malus cumulés (toutes journées)
-    let bonusPos=0, malusNeg=0;
-    const BA = state.bonusApplied || {};
-    Object.keys(BA).forEach(r => {
-      const v = (BA[r] && BA[r][tid]) || 0;
-      if (v>0) bonusPos += v;
-      else if (v<0) malusNeg += (-v);
-    });
-
-    return {
-      id: tid,
-      name: t.name,
-      avatar: t.avatar,
-      points: pts,
-      dartsPF, dartsPA, pingPF, pingPA, palPF, palPA,
-      bonusPos, malusNeg, matchesComplete
-    };
-  });
-
-  rows.sort((a, b) =>
-  // 1) Points (desc)
-  (b.points - a.points) ||
-  // 2) Différence palet (PF-PA) (desc)
-  ((b.palPF - b.palPA) - (a.palPF - a.palPA)) ||
-  // 3) Nom (asc) pour stabiliser
-  a.name.localeCompare(b.name)
-);
-
-
-  rows.forEach((r,i)=>{
-    const avatar = avatarHtml ? avatarHtml(r.id, 22, '') : '';
-    const diffPal = r.palPF - r.palPA;
-    const signPal = diffPal>=0?'+':'';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${(()=>{const total=rows.length;const last= (i===total-1);
-  if(i===0) return '🥇';
-  if(i===1) return '🥈';
-  if(i===2) return '🥉';
-  if(last) return '💩';
-  if(i===3) return '😭';
-  return (i+1);
-})()}</td>
-      <td><span class="team-name">${avatar} ${esc(r.name||'')}</span></td>
-      <td class=\"points-cell\"><span class="points-pill"><b>${r.points}</b></span></td>
-      <td>${r.dartsPF}</td>
-      <td>${r.pingPF}</td>
-      <td>${r.palPF}-${r.palPA} <span class="muted">(${signPal}${diffPal})</span></td>
-      <td>${r.bonusPos?`<span class="pos">+${r.bonusPos}</span>`:'0'}</td>
-      <td>${r.malusNeg?`<span class="neg">-${r.malusNeg}</span>`:'0'}</td>
-      <td>${r.matchesComplete}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-
-/* ===== H2H ===== */
-
-function pointsForTeamInMatch(m, tid){
-  // Total de points marqués par l'équipe dans ce match (toutes disciplines) + bonus appliqué
-  const isA = (m.a === tid);
-  let pts = 0;
-
-  // Fléchettes : 1 manche gagnée = 5 points
-  if (Array.isArray(m.darts)) {
-    let aw=0, bw=0;
-    m.darts.forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
-    pts += (isA ? aw : bw) * 5;
-  }
-
-  // Ping : 1 manche gagnée = 5 points (on compte les manches gagnées par set)
-  if (typeof getPingPts === 'function') {
-    let aw=0, bw=0;
-    (getPingPts(m) || []).forEach(s=>{
-      const a = (s && s.a!=null) ? +s.a : null;
-      const b = (s && s.b!=null) ? +s.b : null;
-      if (!isPingValid(a,b)) return;
-      if (a>b) aw++; else if (b>a) bw++;
-    });
-    pts += (isA ? aw : bw) * 5;
-  }
-
-  // Palet : score direct
-  if (m.palet && m.palet.a!=null && m.palet.b!=null){
-    pts += isA ? (+m.palet.a||0) : (+m.palet.b||0);
-  }
-
-  // Bonus appliqué sur la journée du match
-  const applied = (state.bonusApplied?.[m.round]?.[tid]) || 0;
-  return pts + applied;
-}
-
-function renderH2H(){const thead=qs("#table-h2h thead"),tbody=qs("#table-h2h tbody");thead.innerHTML="";tbody.innerHTML="";const teams=state.teams.slice();if(!teams.length){tbody.appendChild(help("Ajoutez des équipes pour voir la matrice."));return}const trH=document.createElement("tr");trH.appendChild(document.createElement("th")).textContent="Équipe";teams.forEach(t=>{const th=document.createElement("th");th.innerHTML='<span class="team-name">'+avatarHtml(t.id,'sm')+esc(t.name)+'</span>';trH.appendChild(th)});thead.appendChild(trH);const byPair={};state.matches.forEach(m=>{byPair[[m.a,m.b].sort().join("|")]=m});teams.forEach(ti=>{const tr=document.createElement("tr");const th=document.createElement("th");th.innerHTML='<span class="team-name">'+avatarHtml(ti.id,'sm')+esc(ti.name)+'</span>';tr.appendChild(th);teams.forEach(tj=>{const td=document.createElement("td");if(ti.id===tj.id){td.textContent="—";tr.appendChild(td);return}const m=byPair[[ti.id,tj.id].sort().join("|")];if(!m){td.innerHTML='<span class="chip">—</span>';tr.appendChild(td);return}const pI=pointsForTeamInMatch(m,ti.id),pJ=pointsForTeamInMatch(m,tj.id);let cls="h2h-draw",icon="≡";if(pI>pJ){cls="h2h-win";icon="✔"}else if(pI<pJ){cls="h2h-loss";icon="✖"}td.innerHTML='<span class="h2h-pill '+cls+'">'+icon+' <span class="score-compact">'+hy(pI,pJ)+'</span></span>';td.style.cursor="pointer";td.dataset.matchId=m.id;tr.appendChild(td)});tbody.appendChild(tr)});tbody.addEventListener("click",e=>{let n=e.target;while(n&&n!==tbody&&!(n.tagName==="TD"&&n.dataset.matchId))n=n.parentNode;if(!n||n===tbody)return;goto("calendrier");ui.open[n.dataset.matchId]=true;setTimeout(()=>{const card=qs('.match-card[data-id="'+n.dataset.matchId+'"]');if(card){card.setAttribute("aria-expanded","true");card.scrollIntoView({behavior:"smooth",block:"start"})}},0)})}
-
-/* ===== Tabs & clicks ===== */
-function guardTab(t){const no=(!cloud.enabled&&!state.cloudId);return(t==='equipes'||t==='calendrier'||t==='classement'||t==='options')&&(no&&state.teams.length===0)}
-function goto(tabId){if(guardTab(tabId)){showToast("Aucun tournoi ouvert. Créez ou rejoignez un code Cloud.");tabId='setup'}qsa(".tab").forEach(b=>b.setAttribute("aria-selected","false"));const b=qs('.tab[data-tab="'+tabId+'"]');if(b)b.setAttribute("aria-selected","true");qsa("main section").forEach(s=>s.classList.remove("active"));id(tabId).classList.add("active")}
-
-document.addEventListener("click",async(e)=>{
-  const btn=e.target.closest("button");if(btn){switch(btn.id){
-    case "btn-fullscreen":(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen())?.catch?.(()=>{});break;
-
-    /* --- ADMIN : activation => re-render immédiat --- */
-    case "btn-admin-on-setup":
-    case "btn-admin-on":{const pin=prompt("PIN administrateur :");if(pin==="30041991"){session.admin=true;session.claims={};updateWho();renderAll();showToast("Mode administrateur activé (déconnexion des équipes sur cet appareil).")}else showToast("PIN incorrect.");break}
-    case "btn-admin-off":{session.admin=false;updateWho();renderAll();break}
-
-    case "btn-create-tournament":{if(!isAdmin()){const pin=prompt("PIN administrateur :");if(pin!=="30041991")return alert("PIN incorrect.");session.admin=true;session.claims={};updateWho();renderAll()}const code=(id("tcode-input").value||"").trim();if(!code)return alert("Code cloud obligatoire.");const name=(id("tname-input").value||"").trim()||"Tournoi";if(nameExistsLocally(name))return alert("Un tournoi portant ce nom existe déjà dans cette liste.");if(codeExistsLocally(code))return alert("Ce code cloud existe déjà dans votre liste.");const exists=await(async()=>{try{const db=cloud.db||initFB();if(!db)return false;const ref=db.ref("tournaments/"+code+"/payload");const snap=await ref.get?.()??await new Promise(res=>ref.once('value',res));return !!(snap&&snap.exists&&snap.exists())}catch(_){return false}})();if(exists)return alert("Ce code cloud existe déjà sur le serveur. Choisissez-en un autre.");const n=clampInt(id("teams-count-input").value,2,64);const R={dartsSingles:clampInt(id("rule-d-s").value,0,9),dartsDoubles:clampInt(id("rule-d-d").value,0,9),dartsWinPoints:clampInt(id("rule-d-p").value,1,50),pingSingles:clampInt(id("rule-p-s").value,0,9),pingDoubles:clampInt(id("rule-p-d").value,0,9),pingWinPoints:clampInt(id("rule-p-p").value,1,50),paletTarget:clampInt(id("rule-l-target").value,1,50),
-  bonusMaxPerTeam: clampInt(id("rule-bonus-max").value,0,50),};joinCloud(code);state={version:40,tid:uid(),cloudId:code,tournamentName:name,rules:R,teams:Array.from({length:n},(_,i)=>({id:uid(),name:"Équipe "+(i+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false})),matches:[],locked:false,createdAt:new Date().toISOString(),protect:{teamPassHash:{}},roundCtl:{},bonusSelections:{},bonusApplied:{}};saveState();pushCloud(true);renderAll();goto("equipes");break}
-    case "btn-join-code":{const code=(id("join-code").value||"").trim();if(!code)return alert("Renseigne un code.");joinCloud(code);goto("equipes");break}
-    case "btn-copy-link":{const code=(id("join-code").value||id("tcode-input").value||state.cloudId||"").trim();if(!code)return alert("Aucun code.");const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);navigator.clipboard?.writeText(url);showToast("Lien copié !\n"+url);break}
-
-    case "btn-add-team":{if(!isAdmin())return alert("Réservé à l’admin.");if(state.locked)return alert("Calendrier figé.");state.teams.push({id:uid(),name:"Équipe "+(state.teams.length+1),p1:"",p2:"",avatar:null,bonusCapitaineUsed:false});saveState();renderTeams();break}
-    case "btn-generate":{if(!isAdmin())return alert("Seul l’admin peut générer.");if(state.locked)return;generateSchedule();state.locked=true;saveState();renderAll();goto("calendrier");break}
-
-    case "btn-refresh-standings":
-    case "btn-refresh-standings-2":{renderMatches();
-      renderLeaderboard();renderH2H();if(btn.id==="btn-refresh-standings-2")goto("classement");break}
-    case "btn-show-summary":{id("view-summary").style.display="block";id("view-h2h").style.display="none";id("btn-show-summary").setAttribute("aria-pressed","true");id("btn-show-h2h").setAttribute("aria-pressed","false");break}
-    case "btn-show-h2h":{id("view-summary").style.display="none";id("view-h2h").style.display="block";id("btn-show-summary").setAttribute("aria-pressed","false");id("btn-show-h2h").setAttribute("aria-pressed","true");break}
-    case "btn-collapse":{qsa('#match-list .match-card').forEach(c=>c.setAttribute('aria-expanded','false'));ui.open={};break}
-
-    case "btn-export":{const data=JSON.stringify(state,null,2);const url=URL.createObjectURL(new Blob([data],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download=("tournoi-"+(state.tournamentName||"TriSports")).replace(/\s+/g,'_')+".json";a.click();URL.revokeObjectURL(url);break}
-    case "btn-import":{const f=id("file-import").files?.[0];if(!f)return alert("Sélectionnez un fichier JSON.");f.text().then(t=>{try{const data=JSON.parse(t);state=data;normalize();saveState();renderAll();showToast("Import réussi !")}catch(_){showToast("Fichier invalide.")}});break}
-
-    case "btn-cloud-copy":{const code=state.cloudId||cloud.id;if(!code)return alert("Pas de code cloud.");const url=location.origin+location.pathname+"?id="+encodeURIComponent(code);navigator.clipboard?.writeText(url);showToast("Lien copié !\n"+url);break}
-    case "btn-cloud-delete":{if(!isAdmin())return alert("Suppression cloud réservée à l’admin.");const code=state.cloudId||cloud.id;if(!code)return alert("Aucun code actif.");if(!confirm("Supprimer définitivement ce tournoi du cloud ?"))return;deleteCloud(code).then(()=>{setIndex(getIndex().filter(e=>e.id!==code));unsubscribeCloud();resetState();renderSetupRecent();renderAll();history.replaceState(null,"",location.pathname);showToast("Tournoi supprimé.");goto('setup')});break}
-
-    /* ---- Réinitialiser scores => réinitialise aussi BONUS + journées ---- */
-    case "btn-reset-scores":{
-      if (!isAdmin()) return alert("Réservé à l’admin.");
-      if (!confirm("Réinitialiser les SCORES et les BONUS ?")) return;
-      (state.matches || []).forEach(m=>{
-        m.darts = Array(dartsTotal()).fill(null);
-        m.ping  = Array(pingTotal()).fill(null);
-        m.pingPts = Array(pingTotal()).fill({a:null,b:null});
-        m.palet = { a:null, b:null };
-      });
-      state.roundCtl = {};
-      state.bonusSelections = {};
-      state.bonusApplied = {};
-      state.bonusUsed = {};
-      (state.teams||[]).forEach(t=>{ if(t) t.bonusCapitaineUsed=false; });
-      saveState();
-      renderAll();
-      goto("calendrier");
-      break}
-
-    case "btn-unlock":{if(!isAdmin())return alert("Réservé à l’admin.");if(!confirm("Déverrouiller le calendrier ?"))return;state.locked=false;saveState();renderTeams();renderMatches();updateLock();break}
-
-    case "btn-start-round":{if(!isAdmin())return;const r=CURRENT_ROUND,rs=roundState(r);if(rs.started||rs.finished)return;rs.started=true;saveState();renderMatches();showToast("Journée #"+r+" démarrée — bonus verrouillés.");break}
-
-    /* ---- Fin de journée : blocage si incomplet + bonus appliqués ---- */
-    case "btn-end-round": {
-      if (!isAdmin()) return;
-      const r  = CURRENT_ROUND;
-      const rs = roundState(r);
-      if (!rs.started || rs.finished) return;
-
-      const matchesOfRound = state.matches.filter(m => m.round === r);
-      const incomplets = matchesOfRound.filter(m => !isMatchComplete(m));
-      if (incomplets.length) { showToast(`Impossible de terminer la journée #${r} : ${incomplets.length} match(s) incomplet(s).`); return; }
-
-      
-      
-      const sels = state.bonusSelections[r] || {};
-      Object.keys(sels).forEach(tid=>{
-        const sel = sels[tid]; if (!sel) return;
-        if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
-        let total = 0;
-
-        if (sel.type === 'capitaine') {
-          matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
         } else if (sel.type === 'melon') {
           const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
-            if (oppSel && oppSel.type === 'miroir') {
-              // Melon se retourne : rien pour l'équipe Melon, Miroir prendra le total dans sa propre branche
-              total = 0;
+            if (oppSel && (oppSel.type === 'miroir' || oppSel.type === 'braquage')) { total = 0;
             } else {
               const sport = sel.sport || 'darts';
               total = computeMelonBonusForMatch(m, tid, sport);
@@ -1635,13 +994,37 @@ document.addEventListener("click",async(e)=>{
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
             if (oppSel && oppSel.type === 'melon') {
-              // Miroir récupère le Melon d’or de l’adversaire, même sport
               const sport = oppSel.sport || 'darts';
               total = computeMelonBonusForMatch(m, tid, sport);
+            } else if (oppSel && oppSel.type === 'capitaine') {
+              total = computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
             } else {
               total = 0;
             }
           }
+        } else if (sel.type === 'braquage'){
+          const m = matches.find(x=>x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (!oppSel || oppSel.type === 'miroir'){
+              total = 0;
+            } else if (oppSel.type === 'melon'){
+              const sport = oppSel.sport || 'darts';
+              total = computeMelonBonusForMatch(m, oppId, sport);
+            } else if (oppSel.type === 'capitaine'){
+              total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
+            } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand'){
+              total = 5;
+              state.bonusApplied[r] = state.bonusApplied[r] || {};
+              const prev = +((state.bonusApplied[r][oppId]) || 0);
+              state.bonusApplied[r][oppId] = prev - 5;
+            } else {
+              total = 0;
+            }
+          }
+        }
+        
         } else {
           total = 0; // autres
         }
@@ -1692,7 +1075,7 @@ function rebuildCategoryLocksFromSelections(){
   }catch(_){}
 }
 
-const BONUS_CATEGORY = { capitaine:'score', melon:'score', braquage:'score', taupe:'physique', lefthand:'physique', miroir:'miroir' };
+const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir', braquage:'miroir' }; /* keep original */;
 
 function markCategoryLocked(teamId, type){
   const cat = BONUS_CATEGORY[type];
@@ -1719,7 +1102,7 @@ function applyBonusLocks(teamId){
     const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
 
     const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-    const map   = ['capitaine','miroir','taupe','lefthand','melon','braquage'];
+    const map   = ['capitaine','miroir','braquage','taupe','lefthand','melon'];
     cards.forEach((c,i)=>{
       const type = map[i] || 'capitaine';
       const cat = BONUS_CATEGORY[type];
@@ -1830,8 +1213,6 @@ if (type === 'capitaine') {
   if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else if (type === 'miroir') {
   setBonusSelection(r, t, { type: 'miroir' });
-} else if (type === 'braquage') {
-  setBonusSelection(r, t, { type: 'braquage' });
   if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'miroir');
   if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else {
