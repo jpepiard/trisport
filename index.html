@@ -72,22 +72,20 @@ function selectBonusType(t){
   }catch(_){}
 
   // 1) type valide (inclut 'melon')
-  window._bonusType = (['capitaine','miroir','braquage','taupe','lefthand','melon'].includes(t) ? t : 'capitaine');
+  window._bonusType = (['capitaine','miroir','taupe','lefthand','melon'].includes(t) ? t : 'capitaine');
 
   // 2) cartes (5 cartes désormais)
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
   const cap   = cards[0],
         mir   = cards[1],
-        braq  = cards[2],
-        tau   = cards[3],
-        leftc = cards[4],
-        melon = cards[5];
+        tau   = cards[2],
+        leftc = cards[3],
+        melon = cards[4];
 
   // 3) reset + sélection
-  [cap, mir, braq, tau, leftc, melon].forEach(c => c && c.classList.remove('selected'));
+  [cap, mir, tau, leftc, melon].forEach(c => c && c.classList.remove('selected'));
   if (cap   && window._bonusType === 'capitaine') cap.classList.add('selected');
   if (mir   && window._bonusType === 'miroir')    mir.classList.add('selected');
-  if (braq  && window._bonusType === 'braquage') braq.classList.add('selected');
   if (tau   && window._bonusType === 'taupe')     tau.classList.add('selected');
   if (leftc && window._bonusType === 'lefthand')  leftc.classList.add('selected');
   if (melon && window._bonusType === 'melon')     melon.classList.add('selected');
@@ -99,10 +97,9 @@ function selectBonusType(t){
     const pressed =
       (i===0 && window._bonusType==='capitaine') ||
       (i===1 && window._bonusType==='miroir')    ||
-      (i===2 && window._bonusType==='braquage') ||
-      (i===3 && window._bonusType==='taupe')     ||
-      (i===4 && window._bonusType==='lefthand')  ||
-      (i===5 && window._bonusType==='melon');
+      (i===2 && window._bonusType==='taupe')     ||
+      (i===3 && window._bonusType==='lefthand')  ||
+      (i===4 && window._bonusType==='melon');
     c.setAttribute('aria-pressed', pressed ? 'true' : 'false');
   });
 // 4) texte d’aide
@@ -110,7 +107,6 @@ function selectBonusType(t){
   if (ctx) {
     ctx.textContent =
       window._bonusType === 'miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
-      window._bonusType === 'braquage' ? "Braquage : vole Melon/Capitaine adverse ; +5/-5 contre Taupe/Main gauche ; aucun effet face à Miroir." :
       window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
       window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
       window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport." :
@@ -123,7 +119,7 @@ function selectBonusType(t){
 
 function prepareBonusOptions(){
   const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-  const map   = ['capitaine','miroir','braquage','taupe','lefthand','melon']; // 6 cartes
+  const map   = ['capitaine','miroir','taupe','lefthand','melon']; // 5 cartes
 
   cards.forEach((c, i)=>{
     c.classList.add('selectable');
@@ -142,7 +138,7 @@ function prepareBonusOptions(){
   });
 
   // déplacer/afficher les panneaux de paramètres (Capitaine n’en a plus)
-  const cap = cards[0], mir = cards[1], braq = cards[2], tau = cards[3], leftc = cards[4], melon = cards[5];
+  const cap = cards[0], tau = cards[2], leftc = cards[3], melon = cards[4];
   const capTxt = cap?.querySelector('.bonus-text');
   const tauTxt = tau?.querySelector('.bonus-text');
   const leftTxt = leftc?.querySelector('.bonus-text');
@@ -496,23 +492,6 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 </div>
 </div>
 <div class="bonus-sep"></div>
-<!-- Braquage -->
-<div class="bonus-card" data-bonus-type="braquage">
-  <div aria-hidden="true" class="bonus-illu">
-    <img alt="" src="img/braquage.png"/>
-  </div>
-  <div class="bonus-text">
-    <div class="bonus-title">Braquage</div>
-    <div class="help">
-      Applicable sur l’ensemble des 3 sports :<br/>
-      • <b>Vole</b> le total du bonus <b>Melon d’or</b> ou <b>Capitaine</b> adverse (positif ou négatif) et met l’adversaire à 0.<br/>
-      • Face à <b>10 pouces 2 mains gauche</b> ou <b>René la taupe</b> : <b>+5</b> pour vous et <b>-5</b> pour l’adversaire sur le sport visé.<br/>
-      • Face à <b>Miroir</b> : <b>aucun effet</b>.
-    </div>
-  </div>
-</div>
-<div class="bonus-sep"></div>
-
 <!-- René la taupe -->
 <div class="bonus-card">
 <div aria-hidden="true" class="bonus-illu">
@@ -636,7 +615,6 @@ const BONUS = {
       case "taupe":    return "René la taupe";
       case "lefthand": return "10 pouces 2 mains gauche";
       case "melon":    return "Melon d'or";
-      case "braquage": return "Braquage";
       default:         return "Capitaine";
     }
   },
@@ -646,7 +624,6 @@ const BONUS = {
       case "taupe":    return "taupe.png";
       case "lefthand": return "main-gauche.png";
       case "melon":    return "melon.png";
-      case "braquage": return "braquage.png";
       default:         return "capitaine.jpg";
     }
   },
@@ -953,7 +930,7 @@ function recomputeAllBonuses(){
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
-            if (oppSel && (oppSel.type === 'miroir' || oppSel.type === 'braquage')){
+            if (oppSel && oppSel.type === 'miroir'){
               total = 0; // Capitaine transféré : l'effet sera appliqué côté Miroir adverse
             } else {
               matches.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
@@ -966,7 +943,7 @@ function recomputeAllBonuses(){
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
-            if (oppSel && (oppSel.type === 'miroir' || oppSel.type === 'braquage')){
+            if (oppSel && oppSel.type === 'miroir'){
               total = 0; // sera ajouté côté Miroir
             } else {
               const sport = sel.sport || 'darts';
@@ -987,28 +964,6 @@ function recomputeAllBonuses(){
               total += computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
             }
           }
-        } else if (sel.type === 'braquage'){
-          const m = matches.find(x=>x.a===tid || x.b===tid);
-          if (m){
-            const oppId = (m.a===tid ? m.b : m.a);
-            const oppSel = sels[oppId];
-            if (!oppSel || oppSel.type === 'miroir'){
-              total = 0;
-            } else if (oppSel.type === 'melon'){
-              const sport = oppSel.sport || 'darts';
-              total = computeMelonBonusForMatch(m, oppId, sport);
-            } else if (oppSel.type === 'capitaine'){
-              total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-            } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand'){
-              total = 5;
-              state.bonusApplied[r] = state.bonusApplied[r] || {};
-              const prev = +((state.bonusApplied[r][oppId]) || 0);
-              state.bonusApplied[r][oppId] = prev - 5;
-            } else {
-              total = 0;
-            }
-          }
-        
         }
         state.bonusApplied[r][tid] = total;
       });
@@ -1090,7 +1045,6 @@ function bonusChip(r, mTeam, rs){
     type === 'taupe'    ? 'René la taupe' :
     type === 'lefthand' ? '10 pouces 2 mains gauche' :
     type === 'melon'    ? 'Melon d\'or' :
-	type === 'braquage' ? 'Braquage' :
                           'Capitaine';
 
   const img =
@@ -1098,7 +1052,6 @@ function bonusChip(r, mTeam, rs){
     type === 'taupe'    ? 'taupe.png' :
     type === 'lefthand' ? 'main-gauche.png' :
     type === 'melon'    ? 'melon.png' :
-	type === 'braquage' ? 'braquage.png' :
                           'capitaine.jpg';
 
   const labelSport = sel.sport ? BONUS.sportLabel(sel.sport) : null;
@@ -1130,7 +1083,6 @@ function bonusChip(r, mTeam, rs){
       type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
       type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
       type==='melon'    ? 'Match au sport choisi : +5/manche gagnée (fléchettes & ping, différence appliquée). Palet : +PF si victoire, sinon −2×(11−PF).' :
-      type==='braquage' ? 'Vole le bonus Melon/Capitaine adverse ; +5/−5 vs Taupe/Main gauche ; aucun effet face à Miroir.' :
                           '+2pts/manche gagnée (fléchettes & ping, simples/doubles) et +2pts si palet.'
     );
     return '<span class="pill bonus-flashy ' + valClass + '" aria-label="' + lblType + '">' +
@@ -1611,21 +1563,13 @@ document.addEventListener("click",async(e)=>{
         let total = 0;
 
         if (sel.type === 'capitaine') {
-          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
-          if (m){
-            const oppId = (m.a===tid ? m.b : m.a);
-            const oppSel = sels[oppId];
-            if (oppSel && (oppSel.type === 'miroir' || oppSel.type === 'braquage')) { total = 0; }
-            else { matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); }); }
-          } else {
-            matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
-          }
+          matchesOfRound.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
         } else if (sel.type === 'melon') {
           const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
-            if (oppSel && (oppSel.type === 'miroir' || oppSel.type === 'braquage')) {
+            if (oppSel && oppSel.type === 'miroir') {
               // Melon se retourne : rien pour l'équipe Melon, Miroir prendra le total dans sa propre branche
               total = 0;
             } else {
@@ -1646,28 +1590,6 @@ document.addEventListener("click",async(e)=>{
               total = 0;
             }
           }
-        } else if (sel.type === 'braquage') {
-          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
-          if (m){
-            const oppId = (m.a===tid ? m.b : m.a);
-            const oppSel = sels[oppId];
-            if (!oppSel || oppSel.type === 'miroir') {
-              total = 0;
-            } else if (oppSel.type === 'melon') {
-              const sport = oppSel.sport || 'darts';
-              total = computeMelonBonusForMatch(m, oppId, sport);
-            } else if (oppSel.type === 'capitaine') {
-              total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-            } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
-              total = 5;
-              state.bonusApplied[r] = state.bonusApplied[r] || {};
-              const prev = +((state.bonusApplied[r][oppId]) || 0);
-              state.bonusApplied[r][oppId] = prev - 5;
-            } else {
-              total = 0;
-            }
-          }
-        
         } else {
           total = 0; // autres
         }
@@ -1718,7 +1640,7 @@ function rebuildCategoryLocksFromSelections(){
   }catch(_){}
 }
 
-const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir', braquage:'miroir' };
+const BONUS_CATEGORY = { capitaine:'score', melon:'score', taupe:'physique', lefthand:'physique', miroir:'miroir' };
 
 function markCategoryLocked(teamId, type){
   const cat = BONUS_CATEGORY[type];
@@ -1837,6 +1759,7 @@ id('bonus-save').addEventListener('click',()=>{
   (window._bonusType === 'taupe')    ? 'taupe'    :
   (window._bonusType === 'lefthand') ? 'lefthand' :
   (window._bonusType === 'melon')    ? 'melon'    :
+  (window._bonusType === 'braquage') ? 'braquage' :
                                        'capitaine';
 // Nouveau : 'capitaine' et 'melon' n'ont pas de paramètres à lire
 if (type === 'capitaine') {
@@ -1856,6 +1779,10 @@ if (type === 'capitaine') {
   if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else if (type === 'miroir') {
   setBonusSelection(r, t, { type: 'miroir' });
+  if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'miroir');
+  if (typeof applyBonusLocks==='function') applyBonusLocks(t);
+} else if (type === 'braquage') {
+  setBonusSelection(r, t, { type: 'braquage' });
   if (typeof markCategoryLocked==='function') markCategoryLocked(t, 'miroir');
   if (typeof applyBonusLocks==='function') applyBonusLocks(t);
 } else {
