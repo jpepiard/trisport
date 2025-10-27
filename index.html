@@ -1090,15 +1090,15 @@ function bonusChip(r, mTeam, rs){
     type === 'taupe'    ? 'René la taupe' :
     type === 'lefthand' ? '10 pouces 2 mains gauche' :
     type === 'melon'    ? 'Melon d\'or' :
-    type === 'braquage' ? 'Braquage' :
-                          'Capitaine';;
+	type === 'braquage' ? 'Braquage' :
+                          'Capitaine';
 
   const img =
     type === 'miroir'   ? 'miroir.jpg' :
     type === 'taupe'    ? 'taupe.png' :
     type === 'lefthand' ? 'main-gauche.png' :
     type === 'melon'    ? 'melon.png' :
-    type === 'braquage' ? 'braquage.png' :
+	type === 'braquage' ? 'braquage.png' :
                           'capitaine.jpg';
 
   const labelSport = sel.sport ? BONUS.sportLabel(sel.sport) : null;
@@ -1130,6 +1130,7 @@ function bonusChip(r, mTeam, rs){
       type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
       type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
       type==='melon'    ? 'Match au sport choisi : +5/manche gagnée (fléchettes & ping, différence appliquée). Palet : +PF si victoire, sinon −2×(11−PF).' :
+      type==='braquage' ? 'Vole le bonus Melon/Capitaine adverse ; +5/−5 vs Taupe/Main gauche ; aucun effet face à Miroir.' :
                           '+2pts/manche gagnée (fléchettes & ping, simples/doubles) et +2pts si palet.'
     );
     return '<span class="pill bonus-flashy ' + valClass + '" aria-label="' + lblType + '">' +
