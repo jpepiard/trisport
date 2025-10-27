@@ -834,7 +834,7 @@ function clearMatch(mid){
 function roundState(r){state.roundCtl[r]=state.roundCtl[r]||{started:false,finished:false};return state.roundCtl[r]}
 function setBonusSelection(r,tid,sel){state.bonusSelections[r]=state.bonusSelections[r]||{};state.bonusSelections[r][tid]=sel}
 function getBonusSelection(r,tid){return(state.bonusSelections[r]||{})[tid]||null}
-function setBonusApplied(r,tid,pts){ state.bonusApplied[r]=state.bonusApplied[r]||{}; state.bonusApplied[r][tid]=(state.bonusApplied[r][tid]||0)+pts; }
+function setBonusApplied(r,tid,pts){state.bonusApplied[r]=state.bonusApplied[r]||{};state.bonusApplied[r][tid]=pts}
 function getBonusAppliedSum(tid){let s=0;for(const r in state.bonusApplied){const v=state.bonusApplied[r]?.[tid];if(v)s+=v}return s}
 function teamBonusUsed(tid){const t=teamObj(tid);return !!(t&&t.bonusCapitaineUsed)}function markTeamBonusUsed(tid){const t=teamObj(tid);if(t)t.bonusCapitaineUsed=true}
 
@@ -931,14 +931,14 @@ function computeMelonBonusForMatch(m, tid, sport){
     }
   }catch(e){ return 0; }
 }
-/* === Recompute all bonuses for started/finished rounds (used when admin edits scores after closure) === */
+/* === Recompute all bonuses for finished rounds (used when admin edits scores after closure) === */
 function recomputeAllBonuses(){
   try{
     const rounds = (state.matches || []).map(m=>m.round).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
     state.bonusApplied = state.bonusApplied || {};
     rounds.forEach(r=>{
       const rs = roundState(r);
-      if (!rs || !rs.started) return;
+      if (!rs || !rs.finished) return;
       const matches = (state.matches || []).filter(m=>m.round===r);
       const sels = (state.bonusSelections && state.bonusSelections[r]) || {};
       // reset applied
@@ -973,47 +973,44 @@ function recomputeAllBonuses(){
               total = computeMelonBonusForMatch(m, tid, sport);
             }
           }
-        } else if (sel.type === 'miroir') {
-          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
+        } else if (sel.type === 'miroir'){
+          const m = matches.find(x=>x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
-            if (oppSel && oppSel.type === 'melon') {
-              // Miroir récupère le Melon d’or de l’adversaire, même sport
+            if (oppSel && oppSel.type === 'melon'){
               const sport = oppSel.sport || 'darts';
               total = computeMelonBonusForMatch(m, tid, sport);
             } else if (oppSel && oppSel.type === 'capitaine'){
-              total = computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
-            } else {
+              // Transfert du Capitaine : applique le calcul Capitaine au camp Miroir
               total = 0;
+              total += computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
             }
           }
-        } else if (sel.type === 'braquage') {
-          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
+        } else if (sel.type === 'braquage'){
+          const m = matches.find(x=>x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
-            if (!oppSel || oppSel.type === 'miroir') {
+            if (!oppSel || oppSel.type === 'miroir'){
               total = 0;
-            } else if (oppSel.type === 'melon') {
+            } else if (oppSel.type === 'melon'){
               const sport = oppSel.sport || 'darts';
               total = computeMelonBonusForMatch(m, oppId, sport);
-            } else if (oppSel.type === 'capitaine') {
+            } else if (oppSel.type === 'capitaine'){
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-            } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
+            } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand'){
               total = 5;
               state.bonusApplied[r] = state.bonusApplied[r] || {};
               const prev = +((state.bonusApplied[r][oppId]) || 0);
-              state.bonusApplied[r][oppId] = prev - 5; // malus -5 à l'adversaire
+              state.bonusApplied[r][oppId] = prev - 5;
             } else {
               total = 0;
             }
           }
-        } else {
-          total = 0;
-        }
         
-        state.bonusApplied[r][tid] = (state.bonusApplied[r][tid]||0) + total;
+        }
+        state.bonusApplied[r][tid] = total;
       });
     });
   }catch(e){ /* noop */ }
@@ -1748,7 +1745,7 @@ function applyBonusLocks(teamId){
     const currentSel = (typeof getBonusSelection==='function' && round!=null) ? (getBonusSelection(round, teamId) || null) : null;
 
     const cards = [...document.querySelectorAll('.bonus-select .bonus-card')];
-    const map   = ['capitaine','miroir','taupe','lefthand','melon'];
+    const map   = ['capitaine','miroir','braquage','taupe','lefthand','melon'];
     cards.forEach((c,i)=>{
       const type = map[i] || 'capitaine';
       const cat = BONUS_CATEGORY[type];
@@ -1828,12 +1825,6 @@ const rCtl = roundState(round);
 id('bonus-cancel').addEventListener('click',()=>id('bonus-modal').classList.remove('show'));
 id('bonus-save').addEventListener('click',()=>{
   const r=bonusCTX.round, t=bonusCTX.teamId;
-  // Block saving if category already used this season
-  try{
-    const locks = getTeamCategoryLocks(t);
-    const cat = BONUS_CATEGORY[type];
-    if (cat && locks.has(cat)) { showToast("Bonus déjà utilisé pour cette catégorie."); return; }
-  }catch(_){}
 
  const type =
   (window._bonusType === 'miroir')   ? 'miroir'   :
@@ -1842,6 +1833,14 @@ id('bonus-save').addEventListener('click',()=>{
   (window._bonusType === 'melon')    ? 'melon'    :
   (window._bonusType === 'braquage') ? 'braquage' :
                                        'capitaine';
+
+  // Block saving if category already used this season
+  try{
+    const locks = getTeamCategoryLocks(t);
+    const cat = BONUS_CATEGORY[type];
+    if (cat && locks.has(cat)) { showToast("Bonus déjà utilisé pour cette catégorie."); return; }
+  }catch(_){}
+
 // Nouveau : 'capitaine' et 'melon' n'ont pas de paramètres à lire
 if (type === 'capitaine') {
   setBonusSelection(r, t, { type });
