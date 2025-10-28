@@ -864,6 +864,34 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
       const max=Math.max(a,b), diff=Math.abs(a-b);
       return (max>=11)&&(diff>=2);
     };
+
+/* Points de l'équipe dans un sport donné (hors bonus) */
+function pointsForTeamInSport(m, tid, sport){
+  try{
+    const isA = (m.a === tid);
+    const s = (sport || 'darts');
+    if (s === 'darts'){
+      let aw=0, bw=0;
+      (m.darts||[]).forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
+      return (isA ? aw : bw) * 5;
+    } else if (s === 'ping'){
+      let aw=0, bw=0;
+      (getPingPts(m) || []).forEach(scor=>{
+        const a = (scor && scor.a!=null) ? +scor.a : null;
+        const b = (scor && scor.b!=null) ? +scor.b : null;
+        if (!isPingValid(a,b)) return;
+        if (a>b) aw++; else if (b>a) bw++;
+      });
+      return (isA ? aw : bw) * 5;
+    } else { // palet
+      if (m.palet && m.palet.a!=null && m.palet.b!=null){
+        return isA ? (+m.palet.a||0) : (+m.palet.b||0);
+      }
+      return 0;
+    }
+  }catch(e){ return 0; }
+}
+
     (getPingPts(match) || []).forEach(s=>{
       const a = (s && s.a!=null) ? +s.a : null;
       const b = (s && s.b!=null) ? +s.b : null;
@@ -999,20 +1027,18 @@ function recomputeAllBonuses(){
               total = computeMelonBonusForMatch(m, oppId, sport);
             } else if (oppSel.type === 'capitaine'){
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-            } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand'){
-              total = 5;
-              state.bonusApplied[r] = state.bonusApplied[r] || {};
-              const prev = +((state.bonusApplied[r][oppId]) || 0);
-              state.bonusApplied[r][oppId] = prev - 5;
-            } else if (sel.type === 'taupe' || sel.type === 'lefthand'){
-            // Important: ne pas écraser le malus appliqué par un Braquage adverse.
-            // Conserver la valeur courante (ex: -5) si elle a été posée par l'autre camp.
-            try{
-              total = (state.bonusApplied[r] && typeof state.bonusApplied[r][tid] === 'number')
-                ? state.bonusApplied[r][tid]
-                : 0;
-            }catch(_){ total = 0; }
-          } else {
+            } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
+              const sport = oppSel.sport || 'darts';
+              const myPtsInSport = pointsForTeamInSport(m, tid, sport);
+              if (myPtsInSport >= 5) {
+                total = 5;
+                state.bonusApplied[r] = state.bonusApplied[r] || {};
+                const prev = +((state.bonusApplied[r][oppId]) || 0);
+                state.bonusApplied[r][oppId] = prev - 5;
+              } else {
+                total = 0;
+              }
+             else {
               total = 0;
             }
           }
@@ -1138,7 +1164,7 @@ function bonusChip(r, mTeam, rs){
       type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
       type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
       type==='melon'    ? 'Match au sport choisi : +5/manche gagnée (fléchettes & ping, différence appliquée). Palet : +PF si victoire, sinon −2×(11−PF).' :
-      type==='braquage' ? 'Vole le bonus Melon/Capitaine adverse ; +5/−5 vs Taupe/Main gauche ; aucun effet face à Miroir.' :
+      type==='braquage' ? 'Vole le bonus Melon/Capitaine adverse ; +5/−5 vs Taupe/Main gauche si votre équipe a ≥5 pts sur le sport visé ; aucun effet face à Miroir.' :
                           '+2pts/manche gagnée (fléchettes & ping, simples/doubles) et +2pts si palet.'
     );
     return '<span class="pill bonus-flashy ' + valClass + '" aria-label="' + lblType + '">' +
@@ -1667,11 +1693,17 @@ document.addEventListener("click",async(e)=>{
             } else if (oppSel.type === 'capitaine') {
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
             } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
-              total = 5;
-              state.bonusApplied[r] = state.bonusApplied[r] || {};
-              const prev = +((state.bonusApplied[r][oppId]) || 0);
-              state.bonusApplied[r][oppId] = prev - 5;
-            } else {
+              const sport = oppSel.sport || 'darts';
+              const myPtsInSport = pointsForTeamInSport(m, tid, sport);
+              if (myPtsInSport >= 5) {
+                total = 5;
+                state.bonusApplied[r] = state.bonusApplied[r] || {};
+                const prev = +((state.bonusApplied[r][oppId]) || 0);
+                state.bonusApplied[r][oppId] = prev - 5;
+              } else {
+                total = 0;
+              }
+             else {
               total = 0;
             }
           }
