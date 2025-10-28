@@ -110,7 +110,7 @@ function selectBonusType(t){
   if (ctx) {
     ctx.textContent =
       window._bonusType === 'miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
-      window._bonusType === 'braquage' ? "Braquage : vole Melon/Capitaine adverse ; +5/-5 contre Taupe/Main gauche si votre équipe a ≥5 pts sur le sport visé ; aucun effet face à Miroir." :
+      window._bonusType === 'braquage' ? "Braquage : vole les points bonus (positif ou négatif) du bonus Melon/Capitaine adverse ; Vole 5 pts contre Taupe/Main gauche si l'équipe adverse a au moins 5pts ; aucun effet face à Miroir." :
       window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
       window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
       window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport." :
@@ -1026,6 +1026,7 @@ function recomputeAllBonuses(){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
             if (!oppSel || oppSel.type === 'miroir'){
+            if (!oppSel || oppSel.type === 'miroir'){
               total = 0;
             } else if (oppSel.type === 'melon'){
               const sport = oppSel.sport || 'darts';
@@ -1169,9 +1170,10 @@ function bonusChip(r, mTeam, rs){
       type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
       type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
       type==='melon'    ? 'Match au sport choisi : +5/manche gagnée (fléchettes & ping, différence appliquée). Palet : +PF si victoire, sinon −2×(11−PF).' :
-      type==='braquage' ? 'Vole le bonus Melon/Capitaine adverse ; +5/−5 vs Taupe/Main gauche ; aucun effet face à Miroir.' :
+      type==='braquage' ? 'Vole le bonus Melon/Capitaine adverse ; +5pts vs Taupe/Main gauche ; aucun effet face à Miroir.' :
                           '+2pts/manche gagnée (fléchettes & ping, simples/doubles) et +2pts si palet.'
-    );
+    )
+;
     return '<span class="pill bonus-flashy ' + valClass + '" aria-label="' + lblType + '">' +
        'Bonus' +
        '<span class="mini-bonus"><img src="img/' + img + '" alt="' + lblType + '"></span>' +
@@ -2418,7 +2420,8 @@ function onEnter(e){
     "Miroir": "Inverse le bonus adverse sur tout le match.",
     "René la taupe": "Lunettes gênantes imposées à l’adversaire dans le sport choisi.",
     "10 pouces 2 mains gauche": "L’adversaire doit jouer avec sa mauvaise main. Choisissez le sport concerné.",
-    "Melon d'or": "En cas de victoire : double le nombre de points.	En cas de défaite : au ping/fléchettes -> soustrait le nbr de pts de l'adversaire. Au palet soustrait la différence de points"
+    "Melon d'or": "En cas de victoire : double le nombre de points.	En cas de défaite : au ping/fléchettes -> soustrait le nbr de pts de l'adversaire. Au palet soustrait la différence de points",
+	"Braquage" : "vole les points bonus (positif ou négatif) du bonus Melon/Capitaine adverse ; Vole 5 pts contre Taupe/Main gauche si l'équipe adverse a au moins 5pts ; aucun effet face à Miroir.",
   };
 
   // Single tooltip node (no backdrop)
