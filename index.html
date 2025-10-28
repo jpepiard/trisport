@@ -325,7 +325,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <div></div>
 <div><label>Palet – Score cible (victoire)</label><input id="rule-l-target" max="50" min="1" type="number" value="11"/>
 <div><label>Bonus max par équipe (saison)</label>
-  <input id="rule-bonus-max" type="number" min="0" max="50" value="3"/>
+  <input id="rule-bonus-max" type="number" min="0" max="50" value="2"/>
 </div>
 </div>
 <div style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -867,7 +867,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
     };
 
 /* Points de l'équipe dans un sport donné (hors bonus) — robuste */
-function pointsForTeamInSport(m, oppId, sport){
+function pointsForTeamInSport(m, tid, sport){
   try{
     if(!m || !tid) return 0;
     const isA = (m.a === tid);
