@@ -1034,18 +1034,22 @@ function recomputeAllBonuses(){
               total = computeMelonBonusForMatch(m, oppId, sport);
             } else if (oppSel.type === 'capitaine'){
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-                        } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
+} else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
   const sport = oppSel.sport || 'darts';
-  const oppPts = pointsForTeamInSport(m, oppId, sport);
+  const oppIdLocal = getOppId(m, tid);               // <<< ne dépend plus d'une variable externe
+  const oppPts = pointsForTeamInSport(m, oppIdLocal, sport); // points ADVERSAIRE dans le sport imposé
+
   if (oppPts >= 5) {
-    total = 5; // +5 pour braqueur
+    total = 5; // +5 pour l'équipe au Braquage
+    // et on inscrit le -5 côté adversaire
     state.bonusApplied[r] = state.bonusApplied[r] || {};
-    const prev = +((state.bonusApplied[r][oppId]) || 0);
-    state.bonusApplied[r][oppId] = prev - 5; // -5 pour l'adversaire
+    const prev = +((state.bonusApplied[r][oppIdLocal]) || 0);
+    state.bonusApplied[r][oppIdLocal] = prev - 5;
   } else {
     total = 0;
   }
 }
+
 ;
                 const prev = +((state.bonusApplied[r][oppId]) || 0);
                 state.bonusApplied[r][oppId] = prev - 5;
@@ -1708,18 +1712,22 @@ if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
               total = computeMelonBonusForMatch(m, oppId, sport);
             } else if (oppSel.type === 'capitaine') {
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-                        } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
+} else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
   const sport = oppSel.sport || 'darts';
-  const oppPts = pointsForTeamInSport(m, oppId, sport);
+  const oppIdLocal = getOppId(m, tid);               // <<< ne dépend plus d'une variable externe
+  const oppPts = pointsForTeamInSport(m, oppIdLocal, sport); // points ADVERSAIRE dans le sport imposé
+
   if (oppPts >= 5) {
-    total = 5; // +5 pour braqueur
+    total = 5; // +5 pour l'équipe au Braquage
+    // et on inscrit le -5 côté adversaire
     state.bonusApplied[r] = state.bonusApplied[r] || {};
-    const prev = +((state.bonusApplied[r][oppId]) || 0);
-    state.bonusApplied[r][oppId] = prev - 5; // -5 pour l'adversaire
+    const prev = +((state.bonusApplied[r][oppIdLocal]) || 0);
+    state.bonusApplied[r][oppIdLocal] = prev - 5;
   } else {
     total = 0;
   }
 }
+
 ;
                 const prev = +((state.bonusApplied[r][oppId]) || 0);
                 state.bonusApplied[r][oppId] = prev - 5;
