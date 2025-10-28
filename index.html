@@ -1035,9 +1035,8 @@ function recomputeAllBonuses(){
                 state.bonusApplied[r] = state.bonusApplied[r] || {};
                 const prev = +((state.bonusApplied[r][oppId]) || 0);
                 state.bonusApplied[r][oppId] = prev - 5;
-              } else {
-                total = 0;
-              }
+              } else { total = 0; }
+             }
              else {
               total = 0;
             }
@@ -1700,9 +1699,8 @@ document.addEventListener("click",async(e)=>{
                 state.bonusApplied[r] = state.bonusApplied[r] || {};
                 const prev = +((state.bonusApplied[r][oppId]) || 0);
                 state.bonusApplied[r][oppId] = prev - 5;
-              } else {
-                total = 0;
-              }
+              } else { total = 0; }
+             }
              else {
               total = 0;
             }
