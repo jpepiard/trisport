@@ -1646,7 +1646,8 @@ document.addEventListener("click",async(e)=>{
       const sels = state.bonusSelections[r] || {};
       Object.keys(sels).forEach(tid=>{
         const sel = sels[tid]; if (!sel) return;
-        if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
+        try {
+if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
         let total = 0;
 
         if (sel.type === 'capitaine') {
@@ -1720,6 +1721,10 @@ document.addEventListener("click",async(e)=>{
         setBonusApplied(r, tid, total); 
         state.bonusUsed = state.bonusUsed || {}; state.bonusUsed[r] = state.bonusUsed[r] || {}; state.bonusUsed[r][tid]=true; 
         markTeamBonusUsed(tid);
+        } catch (e) {
+          console.error('bonus compute failed', e);
+          try { setBonusApplied(r, tid, 0); } catch(_){ }
+        }
       });
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
@@ -3129,7 +3134,43 @@ const html=`<!doctype html><html lang="fr"><head><meta charset="utf-8"/><title>R
 const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const f=document.createElement('iframe');f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='0';f.style.height='0';f.style.border='0';f.src=url;f.onload=function(){try{setTimeout(function(){f.contentWindow&&f.contentWindow.focus();f.contentWindow&&f.contentWindow.print();URL.revokeObjectURL(url);setTimeout(function(){f.remove();},1000);},50);}catch(err){console.error(err);alert('Échec de l’impression.');}};document.body.appendChild(f);
 function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 }
-</script></body>
+</script>
+<script>
+// Global fallback (au cas où l'insertion précédente serait dans une portée locale)
+if (typeof window.pointsForTeamInSport !== 'function') {
+  window.pointsForTeamInSport = function(m, tid, sport){
+    try{
+      if(!m || !tid) return 0;
+      const isA = (m.a === tid);
+      const s = (sport || 'darts');
+      if (s === 'darts'){
+        let aw=0, bw=0;
+        const arr = Array.isArray(m.darts) ? m.darts : [];
+        arr.forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
+        return (isA ? aw : bw) * 5;
+      } else if (s === 'ping'){
+        let aw=0, bw=0;
+        const pts = (typeof getPingPts === 'function') ? (getPingPts(m) || []) : [];
+        pts.forEach(scor=>{
+          if(!scor) return;
+          const a = (scor.a!=null) ? +scor.a : null;
+          const b = (scor.b!=null) ? +scor.b : null;
+          if (!isPingValid(a,b)) return;
+          if (a>b) aw++; else if (b>a) bw++;
+        });
+        return (isA ? aw : bw) * 5;
+      } else if (s === 'palet'){
+        const pa = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
+        const pb = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
+        if (pa==null || pb==null) return 0;
+        return isA ? pa : pb;
+      }
+      return 0;
+    }catch(_){ return 0; }
+  };
+}
+</script>
+</body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
 #confirm-overlay{
