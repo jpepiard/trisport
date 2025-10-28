@@ -2145,3 +2145,78 @@ header > .container > div:last-child{
   .match-card[data-complete="false"] .pill.pill--blue::before,
   .match-card[data-complete="false"] .pill.bonus-flashy::before{ animation: none !important; opacity: .35; }
 }
+
+/* === Match card — header TV-style ===================================== */
+.match-card .hd{
+  cursor: default;
+  padding: 18px 16px;
+}
+.matchcard-tv{
+  display:grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items:center;
+  gap:16px;
+}
+.matchcard-tv .team{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.matchcard-tv .team .crest{
+  width:56px; height:56px; border-radius:14px;
+  display:grid; place-items:center; overflow:hidden;
+  background:#0f1331; border:1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0,0,0,.35) inset;
+}
+.matchcard-tv .team .crest img{ width:100%; height:100%; object-fit:cover; }
+.matchcard-tv .team .name{
+  font-weight:800; letter-spacing:.2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  text-transform:uppercase;
+  opacity:.95;
+}
+.matchcard-tv .scorebox{
+  display:grid; grid-auto-flow:column; gap:12px; align-items:center;
+  background:linear-gradient(180deg,#1c234a,#141a38);
+  border:1px solid var(--border); border-radius:14px;
+  padding:8px 14px; box-shadow:0 6px 18px rgba(0,0,0,.35);
+}
+.matchcard-tv .score{
+  min-width:36px; text-align:center; font-variant-numeric:tabular-nums;
+  font-size:40px; font-weight:900; line-height:1;
+  text-shadow:0 2px 0 rgba(0,0,0,.35);
+}
+.matchcard-tv .sep{
+  width:2px; height:28px; background:rgba(255,255,255,.08); border-radius:2px;
+}
+.matchcard-tv .meta{
+  display:flex; justify-content:center; gap:12px; margin-top:8px;
+  font-weight:700; font-variant-numeric:tabular-nums;
+  color:#cbd5ff;
+}
+.matchcard-tv .meta .item{ display:inline-flex; align-items:center; gap:6px; }
+.matchcard-tv .meta .emo{ font-size:18px; line-height:1; vertical-align:-2px; }
+.match-card .hd .status{
+  margin-top:10px; display:inline-flex; align-items:center; gap:6px;
+  padding:6px 10px; border-radius:999px;
+  background:#0f1331; border:1px solid var(--border); color:var(--muted); font-weight:700;
+}
+.match-card .hd .status.incomplete{
+  border-color:#eab308; color:#fde68a; background:rgba(234,179,8,.08)
+}
+.match-card:hover .scorebox{
+  box-shadow:0 10px 24px rgba(0,0,0,.35), 0 0 0 1px rgba(122,162,255,.12) inset;
+}
+.match-card .bd .stats{
+  display:flex; justify-content:center; gap:16px; margin-top:4px;
+  color:#d7dbff; font-variant-numeric:tabular-nums; font-weight:700;
+}
+.match-card .bd .stats .s{ display:inline-flex; gap:6px; align-items:center; }
+.match-card .bd .stats .emo{ font-size:18px; line-height:1; vertical-align:-2px; }
+@media (max-width:520px){
+  .matchcard-tv{ grid-template-columns:1fr; gap:10px; }
+  .matchcard-tv .team{ justify-content:center }
+  .matchcard-tv .score{ font-size:36px }
+  .matchcard-tv .team .crest{ width:48px; height:48px }
+}
