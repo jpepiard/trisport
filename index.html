@@ -871,13 +871,13 @@ function pointsForTeamInSport(m, tid, sport){
   try{
     if(!m || !tid) return 0;
     const isA = (m.a === tid);
-    const spt = (sport || 'darts');
-    if (spt === 'darts'){
+    const s = (sport || 'darts');
+    if (s === 'darts'){
       let aw=0, bw=0;
       const arr = Array.isArray(m.darts) ? m.darts : [];
       arr.forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
       return (isA ? aw : bw) * 5;
-    } else if (spt === 'ping'){
+    } else if (s === 'ping'){
       let aw=0, bw=0;
       const pts = (typeof getPingPts === 'function') ? (getPingPts(m) || []) : [];
       pts.forEach(scor=>{
@@ -888,7 +888,7 @@ function pointsForTeamInSport(m, tid, sport){
         if (a>b) aw++; else if (b>a) bw++;
       });
       return (isA ? aw : bw) * 5;
-    } else if (spt === 'palet'){
+    } else if (s === 'palet'){
       const pa = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
       const pb = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
       if (pa==null || pb==null) return 0;
@@ -1035,17 +1035,11 @@ function recomputeAllBonuses(){
             } else if (oppSel.type === 'capitaine'){
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
                         } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
-      const sport = oppSel.sport || 'darts';
-      const oppPts = pointsForTeamInSport(m, oppId, sport);
-      if (oppPts >= 5) {
-        total = 5;
-        state.bonusApplied[r] = state.bonusApplied[r] || {};
-        const prev = +((state.bonusApplied[r][oppId]) || 0);
-        state.bonusApplied[r][oppId] = prev - 5;
-      } else {
-        total = 0;
-      }
-    };
+              const sport = oppSel.sport || 'darts';
+              const myPtsInSport = pointsForTeamInSport(m, oppId, sport);
+              if (myPtsInSport >= 5) {
+                total = 5;
+                state.bonusApplied[r] = state.bonusApplied[r] || {};
                 const prev = +((state.bonusApplied[r][oppId]) || 0);
                 state.bonusApplied[r][oppId] = prev - 5;
               } else {
@@ -1708,17 +1702,11 @@ if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
             } else if (oppSel.type === 'capitaine') {
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
                         } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
-      const sport = oppSel.sport || 'darts';
-      const oppPts = pointsForTeamInSport(m, oppId, sport);
-      if (oppPts >= 5) {
-        total = 5;
-        state.bonusApplied[r] = state.bonusApplied[r] || {};
-        const prev = +((state.bonusApplied[r][oppId]) || 0);
-        state.bonusApplied[r][oppId] = prev - 5;
-      } else {
-        total = 0;
-      }
-    };
+              const sport = oppSel.sport || 'darts';
+              const myPtsInSport = pointsForTeamInSport(m, oppId, sport);
+              if (myPtsInSport >= 5) {
+                total = 5;
+                state.bonusApplied[r] = state.bonusApplied[r] || {};
                 const prev = +((state.bonusApplied[r][oppId]) || 0);
                 state.bonusApplied[r][oppId] = prev - 5;
               } else {
