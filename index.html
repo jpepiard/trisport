@@ -1715,6 +1715,10 @@ document.addEventListener("click",async(e)=>{
         setBonusApplied(r, tid, total); 
         state.bonusUsed = state.bonusUsed || {}; state.bonusUsed[r] = state.bonusUsed[r] || {}; state.bonusUsed[r][tid]=true; 
         markTeamBonusUsed(tid);
+        } catch (e) {
+          console.error('bonus compute failed', e);
+          try { setBonusApplied(r, tid, 0); } catch(_){ }
+        }
       });
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
