@@ -110,7 +110,7 @@ function selectBonusType(t){
   if (ctx) {
     ctx.textContent =
       window._bonusType === 'miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
-      window._bonusType === 'braquage' ? "Braquage : vole Melon/Capitaine adverse ; +5/-5 contre Taupe/Main gauche si votre équipe a ≥5 pts dans le sport visé ; aucun effet face à Miroir." :
+      window._bonusType === 'braquage' ? "Braquage : vole Melon/Capitaine adverse ; +5/-5 contre Taupe/Main gauche si votre équipe a ≥5 pts sur le sport visé ; aucun effet face à Miroir." :
       window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
       window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
       window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport." :
@@ -889,7 +889,7 @@ function pointsForTeamInSport(m, tid, sport){
       }
       return 0;
     }
-  }catch(e){ return 0; }
+  }catch(_){ return 0; }
 }
 
     (getPingPts(match) || []).forEach(s=>{
@@ -1038,7 +1038,7 @@ function recomputeAllBonuses(){
               } else {
                 total = 0;
               }
-            } else {
+             else {
               total = 0;
             }
           }
@@ -1703,7 +1703,7 @@ document.addEventListener("click",async(e)=>{
               } else {
                 total = 0;
               }
-            } else {
+             else {
               total = 0;
             }
           }
@@ -1715,10 +1715,6 @@ document.addEventListener("click",async(e)=>{
         setBonusApplied(r, tid, total); 
         state.bonusUsed = state.bonusUsed || {}; state.bonusUsed[r] = state.bonusUsed[r] || {}; state.bonusUsed[r][tid]=true; 
         markTeamBonusUsed(tid);
-        } catch (e) {
-          console.error('bonus compute failed', e);
-          try { setBonusApplied(r, tid, 0); } catch(_){ }
-        }
       });
 
       rs.finished = true; saveState(); renderMatches(); renderLeaderboard();
