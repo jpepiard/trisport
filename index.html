@@ -866,7 +866,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
     };
 
 /* Points de l'équipe dans un sport donné (hors bonus) — robuste */
-function pointsForTeamInSport(m, tid, sport){
+function pointsForTeamInSport(m, oppId, sport){
   try{
     if(!m || !tid) return 0;
     const isA = (m.a === tid);
@@ -1034,7 +1034,7 @@ function recomputeAllBonuses(){
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
                         } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
               const sport = oppSel.sport || 'darts';
-              const myPtsInSport = pointsForTeamInSport(m, tid, sport);
+              const myPtsInSport = pointsForTeamInSport(m, oppId, sport);
               if (myPtsInSport >= 5) {
                 total = 5;
                 state.bonusApplied[r] = state.bonusApplied[r] || {};
@@ -1700,7 +1700,7 @@ if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
                         } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
               const sport = oppSel.sport || 'darts';
-              const myPtsInSport = pointsForTeamInSport(m, tid, sport);
+              const myPtsInSport = pointsForTeamInSport(m, oppId, sport);
               if (myPtsInSport >= 5) {
                 total = 5;
                 state.bonusApplied[r] = state.bonusApplied[r] || {};
