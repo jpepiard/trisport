@@ -110,7 +110,7 @@ function selectBonusType(t){
   if (ctx) {
     ctx.textContent =
       window._bonusType === 'miroir'   ? "Miroir : inverse le bonus adverse sur tout le match." :
-      window._bonusType === 'braquage' ? "Braquage : vole Melon/Capitaine adverse ; +5/-5 contre Taupe/Main gauche ; aucun effet face à Miroir." :
+      window._bonusType === 'braquage' ? "Braquage : vole Melon/Capitaine adverse ; +5/-5 contre Taupe/Main gauche si votre équipe a ≥5 pts dans le sport visé ; aucun effet face à Miroir." :
       window._bonusType === 'taupe'    ? "René la taupe : choisissez le sport." :
       window._bonusType === 'lefthand' ? "10 pouces 2 mains gauche : choisissez le sport." :
       window._bonusType === 'melon'    ? "Melon d'or : choisissez le sport." :
@@ -986,7 +986,9 @@ function recomputeAllBonuses(){
             } else {
               matches.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
             }
-                  }
+          } else {
+            matches.forEach(m=>{ total += computeCapitaineBonusForMatch(m, tid, sel.player, sel.sport); });
+          }
         } else if (sel.type === 'melon'){
           const m = matches.find(x=>x.a===tid || x.b===tid);
           if (m){
@@ -1025,7 +1027,7 @@ function recomputeAllBonuses(){
               total = computeMelonBonusForMatch(m, oppId, sport);
             } else if (oppSel.type === 'capitaine'){
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-            } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
+                        } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
               const sport = oppSel.sport || 'darts';
               const myPtsInSport = pointsForTeamInSport(m, tid, sport);
               if (myPtsInSport >= 5) {
@@ -1036,6 +1038,9 @@ function recomputeAllBonuses(){
               } else {
                 total = 0;
               }
+            } else {
+              total = 0;
+            }
           }
         
         }
@@ -1159,7 +1164,7 @@ function bonusChip(r, mTeam, rs){
       type==='taupe'    ? 'Lunettes gênantes imposées à l\u2019adversaire (sport choisi).' :
       type==='lefthand' ? 'L\u2019adversaire joue un sous\u2011match avec sa mauvaise main (sport choisi).' :
       type==='melon'    ? 'Match au sport choisi : +5/manche gagnée (fléchettes & ping, différence appliquée). Palet : +PF si victoire, sinon −2×(11−PF).' :
-      type==='braquage' ? 'Vole le bonus Melon/Capitaine adverse ; +5/−5 vs Taupe/Main gauche si votre équipe a ≥5 pts sur le sport visé ; aucun effet face à Miroir.' :
+      type==='braquage' ? 'Vole le bonus Melon/Capitaine adverse ; +5/−5 vs Taupe/Main gauche ; aucun effet face à Miroir.' :
                           '+2pts/manche gagnée (fléchettes & ping, simples/doubles) et +2pts si palet.'
     );
     return '<span class="pill bonus-flashy ' + valClass + '" aria-label="' + lblType + '">' +
@@ -1671,6 +1676,8 @@ document.addEventListener("click",async(e)=>{
               // Miroir récupère le Melon d’or de l’adversaire, même sport
               const sport = oppSel.sport || 'darts';
               total = computeMelonBonusForMatch(m, tid, sport);
+            } else {
+              total = 0;
             }
           }
         } else if (sel.type === 'braquage') {
@@ -1685,7 +1692,7 @@ document.addEventListener("click",async(e)=>{
               total = computeMelonBonusForMatch(m, oppId, sport);
             } else if (oppSel.type === 'capitaine') {
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-            } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
+                        } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
               const sport = oppSel.sport || 'darts';
               const myPtsInSport = pointsForTeamInSport(m, tid, sport);
               if (myPtsInSport >= 5) {
@@ -1696,6 +1703,11 @@ document.addEventListener("click",async(e)=>{
               } else {
                 total = 0;
               }
+            } else {
+              total = 0;
+            }
+          }
+        
         } else {
           total = 0; // autres
         }
