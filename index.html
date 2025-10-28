@@ -898,6 +898,26 @@ function pointsForTeamInSport(m, tid, sport){
   }catch(_){ return 0; }
 }
 
+// === Braquage vs Taupe/Main gauche — règle unique (PAR sport ciblé) ===
+function computeBraquageVsHindrance(m, tid, oppSel, round){
+  try{
+    if(!m || !tid || !oppSel) return 0;
+    const oppId  = (m.a === tid ? m.b : m.a);
+    const sport  = oppSel.sport || 'darts';
+    const oppPts = pointsForTeamInSport(m, oppId, sport);
+    if (oppPts >= 5){
+      if (round != null){
+        state.bonusApplied[round] = state.bonusApplied[round] || {};
+        const prev = +((state.bonusApplied[round][oppId]) || 0);
+        state.bonusApplied[round][oppId] = prev - 5;
+      }
+      return 5;
+    }
+    return 0;
+  }catch(_){ return 0; }
+}
+
+
     (getPingPts(match) || []).forEach(s=>{
       const a = (s && s.a!=null) ? +s.a : null;
       const b = (s && s.b!=null) ? +s.b : null;
@@ -1021,40 +1041,28 @@ function recomputeAllBonuses(){
               total += computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
             }
           }
- } else if (sel.type === 'braquage'){
-  const m = matches.find(x=>x.a===tid || x.b===tid);
-  if (m){
-    const oppId = (m.a===tid ? m.b : m.a);
+  } else if (sel.type === 'braquage') {
+  const ms = (typeof matchesOfRound !== 'undefined' && Array.isArray(matchesOfRound)) ? matchesOfRound : matches;
+  const m = ms.find(x => x.a === tid || x.b === tid);
+  if (m) {
+    const oppId  = (m.a === tid ? m.b : m.a);
     const oppSel = sels[oppId];
 
-    if (!oppSel || oppSel.type === 'miroir'){
+    if (!oppSel || oppSel.type === 'miroir') {
       total = 0;
-
-    } else if (oppSel.type === 'melon'){
+    } else if (oppSel.type === 'melon') {
       const sport = oppSel.sport || 'darts';
       total = computeMelonBonusForMatch(m, oppId, sport);
-
-    } else if (oppSel.type === 'capitaine'){
+    } else if (oppSel.type === 'capitaine') {
       total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-
-    } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand'){
-      // Condition “≥ 5” PAR sport imposé
-      const sport = oppSel.sport || 'darts';
-      const oppPts = pointsForTeamInSport(m, oppId, sport); // points de l’adversaire dans ce sport
-      if (oppPts >= 5){
-        total = 5; // +5 pour le braqueur
-        state.bonusApplied[r] = state.bonusApplied[r] || {};
-        const prev = +((state.bonusApplied[r][oppId]) || 0);
-        state.bonusApplied[r][oppId] = prev - 5; // −5 pour l’adversaire
-      } else {
-        total = 0;
-      }
-
+    } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
+      total = computeBraquageVsHindrance(m, tid, oppSel, r);
     } else {
       total = 0;
     }
   }
 }
+
 
         state.bonusApplied[r][tid] = total;
       });
@@ -1694,41 +1702,28 @@ if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
               total = 0;
             }
           }
-       } else if (sel.type === 'braquage') {
-  const m = matchesOfRound.find(x => x.a === tid || x.b === tid);
+              } else if (sel.type === 'braquage') {
+  const ms = (typeof matchesOfRound !== 'undefined' && Array.isArray(matchesOfRound)) ? matchesOfRound : matches;
+  const m = ms.find(x => x.a === tid || x.b === tid);
   if (m) {
     const oppId  = (m.a === tid ? m.b : m.a);
     const oppSel = sels[oppId];
 
     if (!oppSel || oppSel.type === 'miroir') {
       total = 0;
-
     } else if (oppSel.type === 'melon') {
       const sport = oppSel.sport || 'darts';
       total = computeMelonBonusForMatch(m, oppId, sport);
-
     } else if (oppSel.type === 'capitaine') {
       total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-
     } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
-      // Condition “≥ 5” PAR sport ciblé
-      const sport  = oppSel.sport || 'darts';
-      const oppPts = pointsForTeamInSport(m, oppId, sport); // points ADVERSAIRE dans ce sport
-
-      if (oppPts >= 5) {
-        total = 5; // +5 pour le braqueur
-        state.bonusApplied[r] = state.bonusApplied[r] || {};
-        const prev = +((state.bonusApplied[r][oppId]) || 0);
-        state.bonusApplied[r][oppId] = prev - 5; // −5 pour l’adversaire
-      } else {
-        total = 0;
-      }
-
+      total = computeBraquageVsHindrance(m, tid, oppSel, r);
     } else {
       total = 0;
     }
   }
 }
+
 
 
         setBonusApplied(r, tid, total); 
