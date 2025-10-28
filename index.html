@@ -867,15 +867,47 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
     };
 
 /* Points de l'équipe dans un sport donné (hors bonus) — robuste */
-function pointsForTeamInSport(m, tid, sport){
+function pointsForTeamInSport(m, teamId, sport){
   try{
-    if(!m || !tid) return 0;
-    const isA = (m.a === tid);
+    if (!m || !teamId) return 0;
+    const isA = (m.a === teamId), isB = (m.b === teamId);
     const s = (sport || 'darts');
+
     if (s === 'darts'){
       let aw=0, bw=0;
       const arr = Array.isArray(m.darts) ? m.darts : [];
       arr.forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
+      const W = (typeof state?.rules?.dartsWinPoints === 'number') ? +state.rules.dartsWinPoints : 5;
+      return isA ? (aw*W) : (isB ? (bw*W) : 0);
+    }
+
+    if (s === 'ping'){
+      // Accept either compact 0/1 or detailed pingPts
+      const getPingPts = (mm) => Array.isArray(mm.ping)
+        ? mm.ping.map(v => (v===0?{a:1,b:0} : (v===1?{a:0,b:1}:{a:null,b:null})))
+        : (Array.isArray(mm.pingPts) ? mm.pingPts : []);
+      const arr = getPingPts(m);
+      let aw=0, bw=0;
+      arr.forEach(s=>{
+        const a = (s && s.a!=null)? +s.a : null;
+        const b = (s && s.b!=null)? +s.b : null;
+        if (a==null || b==null) return;
+        if ((a===1&&b===0) || (a>b)) aw++; else if ((b===1&&a===0) || (b>a)) bw++;
+      });
+      const W = (typeof state?.rules?.pingWinPoints === 'number') ? +state.rules.pingWinPoints : 5;
+      return isA ? (aw*W) : (isB ? (bw*W) : 0);
+    }
+
+    // Palet: return the winning score as "points", since braquage checks >=5 only for darts/ping;
+    // but keep a sensible value anyway.
+    const A = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
+    const B = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
+    if(A==null || B==null) return 0;
+    return isA ? A : (isB ? B : 0);
+  }catch(e){
+    return 0;
+  }
+});
       return (isA ? aw : bw) * 5;
     } else if (s === 'ping'){
       let aw=0, bw=0;
