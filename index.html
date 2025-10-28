@@ -867,10 +867,10 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
     };
 
 /* Points de l'équipe dans un sport donné (hors bonus) — robuste */
-function pointsForTeamInSport(m, tid, sport){
+function pointsForTeamInSport(m, teamId, sport){
   try{
-    if(!m || !tid) return 0;
-    const isA = (m.a === tid);
+    if(!m || !teamId) return 0;
+    const isA = (m.a === teamId);
     const s = (sport || 'darts');
     if (s === 'darts'){
       let aw=0, bw=0;
@@ -923,7 +923,7 @@ function pointsForTeamInSport(m, tid, sport){
 
 function computeMelonBonusForMatch(m, tid, sport){
   try{
-    const isA = (m.a === tid);
+    const isA = (m.a === teamId);
     const isB = (m.b === tid);
     if(!isA && !isB) return 0;
 
@@ -1035,15 +1035,13 @@ function recomputeAllBonuses(){
             } else if (oppSel.type === 'capitaine'){
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
                         } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
-              const sport = oppSel.sport || 'darts';
-              const myPtsInSport = pointsForTeamInSport(m, oppId, sport);
-              if (myPtsInSport >= 5) {
-                total = 5;
+              // +5 pour l'équipe en Braquage ; -5 à l'adversaire si son score total de match ≥ 5
+              const oppTotal = pointsForTeamInMatch(m, oppId);
+              total = 5;
+              if (oppTotal >= 5) {
                 state.bonusApplied[r] = state.bonusApplied[r] || {};
                 const prev = +((state.bonusApplied[r][oppId]) || 0);
                 state.bonusApplied[r][oppId] = prev - 5;
-              } else {
-                total = 0;
               }
             } else {
               total = 0;
@@ -1442,7 +1440,7 @@ function renderLeaderboard(){
 
     state.matches.forEach(m => {
       if (m.a!==tid && m.b!==tid) return;
-      const isA = (m.a===tid);
+      const isA = (m.a === teamId);
 
       // Points totaux (base + bonus appliqué)
       if (typeof pointsForTeamInMatch === 'function') {
@@ -1541,7 +1539,7 @@ function renderLeaderboard(){
 
 function pointsForTeamInMatch(m, tid){
   // Total de points marqués par l'équipe dans ce match (toutes disciplines) + bonus appliqué
-  const isA = (m.a === tid);
+  const isA = (m.a === teamId);
   let pts = 0;
 
   // Fléchettes : 1 manche gagnée = 5 points
@@ -1702,15 +1700,13 @@ if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
             } else if (oppSel.type === 'capitaine') {
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
                         } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
-              const sport = oppSel.sport || 'darts';
-              const myPtsInSport = pointsForTeamInSport(m, oppId, sport);
-              if (myPtsInSport >= 5) {
-                total = 5;
+              // +5 pour l'équipe en Braquage ; -5 à l'adversaire si son score total de match ≥ 5
+              const oppTotal = pointsForTeamInMatch(m, oppId);
+              total = 5;
+              if (oppTotal >= 5) {
                 state.bonusApplied[r] = state.bonusApplied[r] || {};
                 const prev = +((state.bonusApplied[r][oppId]) || 0);
                 state.bonusApplied[r][oppId] = prev - 5;
-              } else {
-                total = 0;
               }
             } else {
               total = 0;
@@ -3144,8 +3140,8 @@ function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','
 if (typeof window.pointsForTeamInSport !== 'function') {
   window.pointsForTeamInSport = function(m, tid, sport){
     try{
-      if(!m || !tid) return 0;
-      const isA = (m.a === tid);
+      if(!m || !teamId) return 0;
+      const isA = (m.a === teamId);
       const s = (sport || 'darts');
       if (s === 'darts'){
         let aw=0, bw=0;
