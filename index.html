@@ -1038,9 +1038,6 @@ function recomputeAllBonuses(){
               } else {
                 total = 0;
               }
-             else {
-              total = 0;
-            }
           }
         
         }
@@ -1676,8 +1673,6 @@ document.addEventListener("click",async(e)=>{
               // Miroir récupère le Melon d’or de l’adversaire, même sport
               const sport = oppSel.sport || 'darts';
               total = computeMelonBonusForMatch(m, tid, sport);
-            } else {
-              total = 0;
             }
           }
         } else if (sel.type === 'braquage') {
@@ -1703,9 +1698,6 @@ document.addEventListener("click",async(e)=>{
               } else {
                 total = 0;
               }
-             else {
-              total = 0;
-            }
           }
         
         } else {
