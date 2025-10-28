@@ -867,7 +867,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
     };
 
 /* Points de l'équipe dans un sport donné (hors bonus) — robuste */
-function pointsForTeamInSport(m, tid, sport){
+function pointsForTeamInSport(m, oppId, sport){
   try{
     if(!m || !tid) return 0;
     const isA = (m.a === tid);
@@ -1021,39 +1021,36 @@ function recomputeAllBonuses(){
               total += computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport);
             }
           }
-                } else if (sel.type === 'braquage') {
-  const ms = (typeof matchesOfRound !== 'undefined' && Array.isArray(matchesOfRound)) ? matchesOfRound : matches;
-  const m = ms.find(x => x.a === tid || x.b === tid);
-  if (m) {
-    const oppId  = (m.a === tid ? m.b : m.a);
-    const oppSel = (sels && sels[oppId]) || null;
-
-    if (!oppSel || oppSel.type === 'miroir') {
-      total = 0;
-    } else if (oppSel.type === 'melon') {
-      const sport = oppSel.sport || 'darts';
-      total = computeMelonBonusForMatch(m, oppId, sport);
-    } else if (oppSel.type === 'capitaine') {
-      total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-    } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
-      const sport = oppSel.sport || 'darts';
-      const oppPts = pointsForTeamInSport(m, oppId, sport);
-      if (oppPts >= 5) {
-        total = 5;
-        if (typeof r !== 'undefined' && r != null) {
-          state.bonusApplied[r] = state.bonusApplied[r] || {};
-          const prev = +((state.bonusApplied[r][oppId]) || 0);
-          state.bonusApplied[r][oppId] = prev - 5;
+        } else if (sel.type === 'braquage'){
+          const m = matches.find(x=>x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+           
+            if (!oppSel || oppSel.type === 'miroir'){
+              total = 0;
+            } else if (oppSel.type === 'melon'){
+              const sport = oppSel.sport || 'darts';
+              total = computeMelonBonusForMatch(m, oppId, sport);
+            } else if (oppSel.type === 'capitaine'){
+              total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
+                        } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
+              const sport = oppSel.sport || 'darts';
+              const myPtsInSport = pointsForTeamInSport(m, oppId, sport);
+              if (myPtsInSport >= 5) {
+                total = 5;
+                state.bonusApplied[r] = state.bonusApplied[r] || {};
+                const prev = +((state.bonusApplied[r][oppId]) || 0);
+                state.bonusApplied[r][oppId] = prev - 5;
+              } else {
+                total = 0;
+              }
+            } else {
+              total = 0;
+            }
+          }
+        
         }
-      } else {
-        total = 0;
-      }
-    } else {
-      total = 0;
-    }
-  }
-}
-
         state.bonusApplied[r][tid] = total;
       });
     });
@@ -1152,15 +1149,36 @@ function bonusChip(r, mTeam, rs){
   const labelPlayer = sel.player === 'p1' ? 'J1' : (sel.player === 'p2' ? 'J2' : null);
 
   if (!roundFinished) {
-    // Pastille d’aperçu (sans valeur) avant la fin, quand visible
+    // OPTION A: afficher la valeur si déjà calculée dans state.bonusApplied
+    const appliedVal = (state.bonusApplied && state.bonusApplied[r] && typeof state.bonusApplied[r][mTeam] === 'number')
+      ? state.bonusApplied[r][mTeam] : null;
+
+    if (appliedVal != null){
+      const applied = Math.abs(appliedVal);
+      const sign = appliedVal >= 0 ? '+' : '−';
+      const valClass = appliedVal >= 0 ? 'pos' : 'neg';
+      const parts = [lblType];
+      if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
+      if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
+      var __lbl = parts.join(' / ');
+      return '<span class="pill bonus-flashy ' + valClass + '">Bonus ' +
+             (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
+             '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' +
+             '<span class="' + valClass + '">' + sign + applied + '</span>' +
+             '</span>';
+    }
+
+    // Sinon, pastille d’aperçu (sans valeur)
     var parts = [lblType];
     if (labelPlayer && type === 'capitaine') parts.push(labelPlayer);
     if (labelSport && (type==='taupe' || type==='lefthand' || type==='melon')) parts.push(labelSport);
     var __lbl = parts.join(' / ');
-    return '<span class="pill pill--blue">Bonus' + (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
+    return '<span class="pill pill--blue">Bonus' +
+           (sportEmoji?('<span class="sport-emo">'+sportEmoji+'</span>'):'') +
            '<span class="mini-bonus"><img src="img/' + img + '" alt="' + __lbl + '"></span>' +
            '</span>';
   } else {
+
     // Révélation complète + total appliqué (logique existante inchangée)
     const applied = Math.abs((state.bonusApplied?.[r]?.[mTeam]) || 0);
     const sign = ((state.bonusApplied?.[r]?.[mTeam]) || 0) >= 0 ? '+' : '−';
@@ -1692,39 +1710,35 @@ if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
               total = 0;
             }
           }
-                } else if (sel.type === 'braquage') {
-  const ms = (typeof matchesOfRound !== 'undefined' && Array.isArray(matchesOfRound)) ? matchesOfRound : matches;
-  const m = ms.find(x => x.a === tid || x.b === tid);
-  if (m) {
-    const oppId  = (m.a === tid ? m.b : m.a);
-    const oppSel = (sels && sels[oppId]) || null;
-
-    if (!oppSel || oppSel.type === 'miroir') {
-      total = 0;
-    } else if (oppSel.type === 'melon') {
-      const sport = oppSel.sport || 'darts';
-      total = computeMelonBonusForMatch(m, oppId, sport);
-    } else if (oppSel.type === 'capitaine') {
-      total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
-    } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
-      const sport = oppSel.sport || 'darts';
-      const oppPts = pointsForTeamInSport(m, oppId, sport);
-      if (oppPts >= 5) {
-        total = 5;
-        if (typeof r !== 'undefined' && r != null) {
-          state.bonusApplied[r] = state.bonusApplied[r] || {};
-          const prev = +((state.bonusApplied[r][oppId]) || 0);
-          state.bonusApplied[r][oppId] = prev - 5;
-        }
-      } else {
-        total = 0;
-      }
-    } else {
-      total = 0;
-    }
-  }
-}
- else {
+        } else if (sel.type === 'braquage') {
+          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
+          if (m){
+            const oppId = (m.a===tid ? m.b : m.a);
+            const oppSel = sels[oppId];
+            if (!oppSel || oppSel.type === 'miroir') {
+              total = 0;
+            } else if (oppSel.type === 'melon') {
+              const sport = oppSel.sport || 'darts';
+              total = computeMelonBonusForMatch(m, oppId, sport);
+            } else if (oppSel.type === 'capitaine') {
+              total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
+                        } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
+              const sport = oppSel.sport || 'darts';
+              const myPtsInSport = pointsForTeamInSport(m, oppId, sport);
+              if (myPtsInSport >= 5) {
+                total = 5;
+                state.bonusApplied[r] = state.bonusApplied[r] || {};
+                const prev = +((state.bonusApplied[r][oppId]) || 0);
+                state.bonusApplied[r][oppId] = prev - 5;
+              } else {
+                total = 0;
+              }
+            } else {
+              total = 0;
+            }
+          }
+        
+        } else {
           total = 0; // autres
         }
 
