@@ -505,7 +505,7 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
     <div class="bonus-title">Braquage</div>
     <div class="help">
       Applicable sur l’ensemble des 3 sports :<br/>
-      • <b>Vole</b> le total du bonus <b>Melon d’or</b> ou <b>Capitaine</b> adverse (positif ou négatif) et met l’adversaire à 0.<br/>
+      • <b>Vole</b> le total du bonus <b>Melon d’or</b> ou <b>Capitaine</b> adverse (positif ou négatif).<br/>
       • Face à <b>10 pouces 2 mains gauche</b> ou <b>René la taupe</b> : <b>+5</b> pour vous et <b>-5</b> pour l’adversaire sur le sport visé.<br/>
       • Face à <b>Miroir</b> : <b>aucun effet</b>.
     </div>
@@ -552,7 +552,8 @@ window.FIREBASE_CONFIG={apiKey:"AIzaSyBSxiTryd0T1Flv15LBdzu31UFvU_I2J7Q",authDom
 <div class="bonus-text">
 <div class="bonus-title">Melon d'or</div>
 <div class="help">• En cas de <b>victoire</b> : double le nombre de points.<br/>
-					• En cas de <b>défaite</b> : soustrait la différence de points.<br/>
+					• En cas de <b>défaite</b> : Au fléchettes/ping soustrait le nbr de points de l'équipe adverse la différence de points.<br/>
+					Au palet soustrait la différence de points.<br/>
 				Choisissez le sport concerné.
 				</div>
 </div>
@@ -2421,7 +2422,7 @@ function onEnter(e){
     "René la taupe": "Lunettes gênantes imposées à l’adversaire dans le sport choisi.",
     "10 pouces 2 mains gauche": "L’adversaire doit jouer avec sa mauvaise main. Choisissez le sport concerné.",
     "Melon d'or": "En cas de victoire : double le nombre de points.	En cas de défaite : au ping/fléchettes -> soustrait le nbr de pts de l'adversaire. Au palet soustrait la différence de points",
-	"Braquage" : "vole les points bonus (positif ou négatif) du bonus Melon/Capitaine adverse ; Vole 5 pts contre Taupe/Main gauche si l'équipe adverse a au moins 5pts ; aucun effet face à Miroir.",
+	"Braquage" : "Vole les points bonus (positif ou négatif) du bonus Melon/Capitaine adverse ; Vole 5 pts contre Taupe/Main gauche si l'équipe adverse a au moins 5pts ; aucun effet face à Miroir.",
   };
 
   // Single tooltip node (no backdrop)
