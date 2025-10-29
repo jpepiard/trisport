@@ -1911,9 +1911,24 @@ if (type === 'capitaine') {
   if(typeof renderMatches==='function') renderMatches();
 });
 
+<script>
 /* ===== Boot ===== */
-function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
-document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e) {} });</script>
+function renderAll(){
+  renderTitle();
+  updateWho();
+  renderSetupRecent();
+  renderManageList();
+  renderTeams();
+  renderMatches();
+  renderLeaderboard();
+  renderH2H();
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  try { renderAll(); } catch(e) { /* optionnel: console.error(e); */ }
+});
+</script>
+
 <script>
 (function(){
   function withFallback(img, primary, fall1, fall2){
@@ -1926,19 +1941,24 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
         };
         img.src = fall1;
       };
+      // 3e essai: même nom de fichier dans /img local
       img.src = 'img/' + primary.split('/').pop();
     };
   }
+
   function ensureBrandImages(){
     var brand = document.querySelector('header .brand') || document.querySelector('.brand');
     if(!brand) return;
+
     if(!brand.querySelector('img.brand-logo')){
       var logo = document.createElement('img');
       logo.className = 'brand-logo';
       logo.alt = 'TriSports logo';
       brand.prepend(logo);
-      withFallback(logo, 'tripsort/img/logo.png', 'trisport/img/logo.png', 'img/logo.png');
+      // chemins corrigés
+      withFallback(logo, 'trisports/img/logo.png', 'trisport/img/logo.png', 'img/logo.png');
     }
+
     if(!brand.querySelector('img.brand-title')){
       var title = document.createElement('img');
       title.className = 'brand-title';
@@ -1946,22 +1966,27 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
       var ref = brand.querySelector('img.brand-logo');
       if(ref && ref.nextSibling){ brand.insertBefore(title, ref.nextSibling); }
       else { brand.appendChild(title); }
-      withFallback(title, 'tripsort/img/titre.png', 'trisport/img/titre.png', 'img/titre.png');
+      // chemins corrigés
+      withFallback(title, 'trisports/img/titre.png', 'trisport/img/titre.png', 'img/titre.png');
     }
   }
+
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', ensureBrandImages);
-  }else{
+  } else {
     ensureBrandImages();
   }
+
   // garder la réécriture d'aide capitaine en async léger
-  document.addEventListener('click', function(){ if (typeof rewriteCapitaineHelp==='function') setTimeout(rewriteCapitaineHelp,0); }, true);
-  
+  document.addEventListener('click', function(){
+    if (typeof rewriteCapitaineHelp==='function') setTimeout(rewriteCapitaineHelp, 0);
+  }, true);
+
   // --- Affichage après révélation : ne pas afficher joueur/sport pour Capitaine ---
   if (typeof window.bonusChip === 'function'){
-    const _origChip = window.bonusChip;
+    var _origChip = window.bonusChip;
     window.bonusChip = function(r, mTeam, rs){
-      const html = _origChip(r, mTeam, rs);
+      var html = _origChip(r, mTeam, rs);
       if (typeof html === 'string' && /Capitaine\s*:?\s*J\d/i.test(html)){
         return html.replace(/Capitaine\s*:?\s*J\d\s*\/\s*(Fléchettes|Ping|Palet)/i, 'Capitaine');
       }
@@ -1969,6 +1994,8 @@ document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e)
     };
   }
 })();
+</script>
+
 </script>
 <script id="matchcard-animations-js">
 (function(){
