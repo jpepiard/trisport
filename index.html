@@ -3277,9 +3277,27 @@ if (typeof window.pointsForTeamInSport !== 'function') {
   const _oldRecompute = window.recomputeAllBonuses;
   window.recomputeAllBonuses = function recomputeAllBonuses(){
     try{
-      const rounds = (state.matches || [])
-        .map(m=>m.round).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
-      state.bonusApplied = state.bonusApplied || {};
+      const s = (typeof window !== 'undefined' ? window.state : undefined) || {};
+      const matches = Array.isArray(s.matches) ? s.matches : [];
+      const rounds = matches.map(m=>m.round).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+      s.bonusApplied = s.bonusApplied || {};
+      rounds.forEach(r=>{
+        const rs = (typeof roundState === 'function') ? roundState(r) : null;
+        if(!rs || !rs.finished) return;
+        const totals = computeRoundBonuses(r);
+        s.bonusApplied[r] = {};
+        Object.keys(totals).forEach(tid => { s.bonusApplied[r][tid] = totals[tid]; });
+      });
+      window.state = s;
+      if (typeof saveState === 'function') saveState();
+      if (typeof renderLeaderboard === 'function') renderLeaderboard();
+      if (typeof renderMatches === 'function') renderMatches();
+    }catch(e){
+      try{
+        console && console.error && console.error('recomputeAllBonuses error (safe):', e);
+      }catch(_){}
+    }
+  };
       rounds.forEach(r=>{
         const rs = (typeof roundState === 'function') ? roundState(r) : null;
         if(!rs || !rs.finished) return;
@@ -3299,8 +3317,25 @@ if (typeof window.pointsForTeamInSport !== 'function') {
 
   // helper to finalize a round using the pure totals (to be called by your "Terminer la journée" flow)
   window.finalizeRoundWithTotals = function(r){
-    const totals = computeRoundBonuses(r);
-    state.bonusApplied = state.bonusApplied || {};
+    try{
+      const s = (typeof window !== 'undefined' ? window.state : undefined) || {};
+      const totals = computeRoundBonuses(r);
+      s.bonusApplied = s.bonusApplied || {};
+      s.bonusApplied[r] = {};
+      Object.keys(totals).forEach(tid => { s.bonusApplied[r][tid] = totals[tid]; });
+      s.bonusUsed = s.bonusUsed || {};
+      s.bonusUsed[r] = s.bonusUsed[r] || {};
+      Object.keys(totals).forEach(tid => { s.bonusUsed[r][tid] = true; if (typeof markTeamBonusUsed === 'function') markTeamBonusUsed(tid); });
+      window.state = s;
+      const rs = (typeof roundState === 'function') ? roundState(r) : null;
+      if (rs) rs.finished = true;
+      if (typeof saveState === 'function') saveState();
+      if (typeof renderMatches === 'function') renderMatches();
+      if (typeof renderLeaderboard === 'function') renderLeaderboard();
+    }catch(e){
+      try{ console && console.error && console.error('finalizeRoundWithTotals error (safe):', e); }catch(_){}
+    }
+  };
     state.bonusApplied[r] = {};
     Object.keys(totals).forEach(tid => { state.bonusApplied[r][tid] = totals[tid]; });
     state.bonusUsed = state.bonusUsed || {};
