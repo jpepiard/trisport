@@ -867,7 +867,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
     };
 
 /* Points de l'équipe dans un sport donné (hors bonus) — robuste */
-function pointsForTeamInSport(m, tid, sport){
+function pointsForTeamInSport(m, oppId, sport){
   try{
     if(!m || !tid) return 0;
     const isA = (m.a === tid);
@@ -888,15 +888,15 @@ function pointsForTeamInSport(m, tid, sport){
         if (a>b) aw++; else if (b>a) bw++;
       });
       return (isA ? aw : bw) * 5;
-    } else { // palet
+    } else if (s === 'palet'){
       const pa = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
       const pb = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
       if (pa==null || pb==null) return 0;
-      return (isA ? pa : pb); // points “PF” de l’équipe au palet
+      return isA ? pa : pb;
     }
-  }catch(e){ return 0; }
+    return 0;
+  }catch(_){ return 0; }
 }
-
 
     (getPingPts(match) || []).forEach(s=>{
       const a = (s && s.a!=null) ? +s.a : null;
@@ -1690,7 +1690,7 @@ if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
             }
           }
         } else if (sel.type === 'braquage') {
-  const m = matches.find(x => x.a===tid || x.b===tid);
+          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
@@ -3173,181 +3173,6 @@ if (typeof window.pointsForTeamInSport !== 'function') {
     }catch(_){ return 0; }
   };
 }
-</script>
-
-<script>
-/* === Injected by ChatGPT: deterministic bonus recompute (no cross-writes) === */
-(function(){
-  // pure accumulator for a round
-  function computeRoundBonuses(r){
-    const rs = (typeof roundState === 'function') ? roundState(r) : null;
-    const matchesOfRound = (window.state && Array.isArray(state.matches) ? state.matches : []).filter(m => m.round === r);
-    const sels = (state && state.bonusSelections && state.bonusSelections[r]) || {};
-    const totals = {};
-    Object.keys(sels).forEach(tid => totals[tid] = 0);
-
-    const getOpp = (tid)=>{
-      const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
-      if(!m) return {m:null, oppId:null};
-      return { m, oppId: (m.a===tid ? m.b : m.a) };
-    };
-
-    const safeAdd = (tid, val)=>{
-      totals[tid] = (totals[tid] || 0) + (val||0);
-    };
-
-    Object.keys(sels).forEach(tid=>{
-      const sel = sels[tid]; if(!sel) return;
-      if (state && state.bonusUsed && state.bonusUsed[r] && state.bonusUsed[r][tid]) { safeAdd(tid, 0); return; }
-
-      let add = 0;
-      const { m, oppId } = getOpp(tid);
-      const oppSel = oppId ? (sels[oppId] || null) : null;
-
-      switch(sel.type){
-        case 'capitaine':
-          if (m && !(oppSel && (oppSel.type==='miroir' || oppSel.type==='braquage'))) {
-            matchesOfRound.forEach(mm=>{
-              if (typeof computeCapitaineBonusForMatch === 'function'){
-                add += (computeCapitaineBonusForMatch(mm, tid, sel.player, sel.sport) || 0);
-              }
-            });
-          }
-          break;
-
-        case 'melon':
-          if (m && !(oppSel && (oppSel.type==='miroir' || oppSel.type==='braquage'))){
-            if (typeof computeMelonBonusForMatch === 'function'){
-              add = (computeMelonBonusForMatch(m, tid, sel.sport) || 0);
-            }
-          }
-          break;
-
-        case 'miroir':
-          if (m && oppSel && oppSel.type==='melon'){
-            if (typeof computeMelonBonusForMatch === 'function'){
-              add = (computeMelonBonusForMatch(m, tid, oppSel.sport) || 0);
-            }
-          } else if (m && oppSel && oppSel.type==='capitaine'){
-            if (typeof computeCapitaineBonusForMatch === 'function'){
-              add = (computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport) || 0);
-            }
-          }
-          break;
-
-        case 'braquage':
-          if (m && oppSel){
-            if (oppSel.type==='melon'){
-              if (typeof computeMelonBonusForMatch === 'function'){
-                add = (computeMelonBonusForMatch(m, oppId, oppSel.sport) || 0);
-              }
-            } else if (oppSel.type==='capitaine'){
-              if (typeof computeCapitaineBonusForMatch === 'function'){
-                add = (computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport) || 0);
-              }
-            } else if (oppSel.type==='taupe' || oppSel.type==='lefthand'){
-              const sport = oppSel.sport || 'darts';
-              if (typeof pointsForTeamInSport === 'function'){
-                const oppPtsInSport = (pointsForTeamInSport(m, oppId, sport) || 0);
-                if (oppPtsInSport >= 5){
-                  add = 5;                  // +5 to robber
-                  safeAdd(oppId, -5);       // -5 to opponent (no direct state write)
-                }
-              }
-            }
-          }
-          break;
-
-        // taupe/lefthand do not directly change totals; effects applied by braquage above
-        case 'taupe':
-        case 'lefthand':
-        default:
-          add = 0;
-      }
-      safeAdd(tid, add);
-    });
-
-    return totals;
-  }
-
-  // expose for other scripts
-  window.computeRoundBonuses = computeRoundBonuses;
-
-  // override recomputeAllBonuses to be deterministic
-  const _oldRecompute = window.recomputeAllBonuses;
-  window.recomputeAllBonuses = function recomputeAllBonuses(){
-    try{
-      const s = (typeof window !== 'undefined' ? window.state : undefined) || {};
-      const matches = Array.isArray(s.matches) ? s.matches : [];
-      const rounds = matches.map(m=>m.round).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
-      s.bonusApplied = s.bonusApplied || {};
-      rounds.forEach(r=>{
-        const rs = (typeof roundState === 'function') ? roundState(r) : null;
-        if(!rs || !rs.finished) return;
-        const totals = computeRoundBonuses(r);
-        s.bonusApplied[r] = {};
-        Object.keys(totals).forEach(tid => { s.bonusApplied[r][tid] = totals[tid]; });
-      });
-      window.state = s;
-      if (typeof saveState === 'function') saveState();
-      if (typeof renderLeaderboard === 'function') renderLeaderboard();
-      if (typeof renderMatches === 'function') renderMatches();
-    }catch(e){
-      try{
-        console && console.error && console.error('recomputeAllBonuses error (safe):', e);
-      }catch(_){}
-    }
-  };
-      rounds.forEach(r=>{
-        const rs = (typeof roundState === 'function') ? roundState(r) : null;
-        if(!rs || !rs.finished) return;
-        const totals = computeRoundBonuses(r);
-        state.bonusApplied[r] = {};
-        Object.keys(totals).forEach(tid => { state.bonusApplied[r][tid] = totals[tid]; });
-      });
-      if (typeof saveState === 'function') saveState();
-      if (typeof renderLeaderboard === 'function') renderLeaderboard();
-      if (typeof renderMatches === 'function') renderMatches();
-    }catch(e){
-      if (typeof _oldRecompute === 'function'){
-        try{ _oldRecompute(); }catch(_){}
-      }
-    }
-  };
-
-  // helper to finalize a round using the pure totals (to be called by your "Terminer la journée" flow)
-  window.finalizeRoundWithTotals = function(r){
-    try{
-      const s = (typeof window !== 'undefined' ? window.state : undefined) || {};
-      const totals = computeRoundBonuses(r);
-      s.bonusApplied = s.bonusApplied || {};
-      s.bonusApplied[r] = {};
-      Object.keys(totals).forEach(tid => { s.bonusApplied[r][tid] = totals[tid]; });
-      s.bonusUsed = s.bonusUsed || {};
-      s.bonusUsed[r] = s.bonusUsed[r] || {};
-      Object.keys(totals).forEach(tid => { s.bonusUsed[r][tid] = true; if (typeof markTeamBonusUsed === 'function') markTeamBonusUsed(tid); });
-      window.state = s;
-      const rs = (typeof roundState === 'function') ? roundState(r) : null;
-      if (rs) rs.finished = true;
-      if (typeof saveState === 'function') saveState();
-      if (typeof renderMatches === 'function') renderMatches();
-      if (typeof renderLeaderboard === 'function') renderLeaderboard();
-    }catch(e){
-      try{ console && console.error && console.error('finalizeRoundWithTotals error (safe):', e); }catch(_){}
-    }
-  };
-    state.bonusApplied[r] = {};
-    Object.keys(totals).forEach(tid => { state.bonusApplied[r][tid] = totals[tid]; });
-    state.bonusUsed = state.bonusUsed || {};
-    state.bonusUsed[r] = state.bonusUsed[r] || {};
-    Object.keys(totals).forEach(tid => { state.bonusUsed[r][tid] = true; if (typeof markTeamBonusUsed === 'function') markTeamBonusUsed(tid); });
-    const rs = (typeof roundState === 'function') ? roundState(r) : null;
-    if (rs) rs.finished = true;
-    if (typeof saveState === 'function') saveState();
-    if (typeof renderMatches === 'function') renderMatches();
-    if (typeof renderLeaderboard === 'function') renderLeaderboard();
-  };
-})();
 </script>
 </body>
 <style id="pretty-confirm-modal">
