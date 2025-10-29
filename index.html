@@ -867,7 +867,7 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
     };
 
 /* Points de l'équipe dans un sport donné (hors bonus) — robuste */
-function pointsForTeamInSport(m, oppId, sport){
+function pointsForTeamInSport(m, tid, sport){
   try{
     if(!m || !tid) return 0;
     const isA = (m.a === tid);
@@ -888,15 +888,15 @@ function pointsForTeamInSport(m, oppId, sport){
         if (a>b) aw++; else if (b>a) bw++;
       });
       return (isA ? aw : bw) * 5;
-    } else if (s === 'palet'){
+    } else { // palet
       const pa = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
       const pb = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
       if (pa==null || pb==null) return 0;
-      return isA ? pa : pb;
+      return (isA ? pa : pb); // points “PF” de l’équipe au palet
     }
-    return 0;
-  }catch(_){ return 0; }
+  }catch(e){ return 0; }
 }
+
 
     (getPingPts(match) || []).forEach(s=>{
       const a = (s && s.a!=null) ? +s.a : null;
@@ -1690,7 +1690,7 @@ if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
             }
           }
         } else if (sel.type === 'braquage') {
-          const m = matchesOfRound.find(x => x.a===tid || x.b===tid);
+  const m = matches.find(x => x.a===tid || x.b===tid);
           if (m){
             const oppId = (m.a===tid ? m.b : m.a);
             const oppSel = sels[oppId];
