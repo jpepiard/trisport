@@ -900,28 +900,6 @@ function pointsForTeamInSport(m, tid, sport){
   }catch(e){ return 0; }
 }
 
-
-    (getPingPts(match) || []).forEach(s=>{
-      const a = (s && s.a!=null) ? +s.a : null;
-      const b = (s && s.b!=null) ? +s.b : null;
-      if (!isPingValid(a,b)) return;
-      if (a>b && isA) wins++;
-      else if (b>a && isB) wins++;
-    });
-
-    // Palet
-    const target = +((window.state && state.rules && state.rules.paletTarget) ?? 11);
-    const pa = (match.palet && match.palet.a!=null) ? +match.palet.a : null;
-    const pb = (match.palet && match.palet.b!=null) ? +match.palet.b : null;
-    if (pa!=null && pb!=null){
-      if (pa>=target && pa>pb && isA) wins++;
-      else if (pb>=target && pb>pa && isB) wins++;
-    }
-
-    return 2 * wins;
-  }catch(e){ return 0; }
-}
-
 /* Melon d’or — ±2 × différence en POINTS sur le sport choisi (1 manche = 5 pts au ping & fléchettes) */
 
 function computeMelonBonusForMatch(m, tid, sport){
