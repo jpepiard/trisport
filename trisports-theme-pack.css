@@ -416,38 +416,34 @@ input[type=text]:focus, input[type=number]:focus, select:focus{
 }
 
 /* GREEN (bonus) */
-/* === Style amélioré des pilules vertes et rouges (plus glossy + halo doux) === */
-.match-card .pill.green,
-.pill.bonus-flashy.pos {
-  background: linear-gradient(145deg, #16a34a 0%, #0e7c3b 40%, #065f2e 100%);
+.match-card .pill.green{
+  border: 1px solid rgba(34,197,94,.6);
+  background: linear-gradient(135deg, #0e9f6e 0%, #0b7d58 100%);
   box-shadow:
-    0 0 12px rgba(34,197,94,.5),
-    0 0 28px rgba(34,197,94,.35),
-    inset 0 0 6px rgba(255,255,255,.1);
-  border: 1px solid rgba(34,197,94,.7);
-  animation: pulseGreen 2.2s ease-in-out infinite;
+    0 0 8px rgba(34,197,94,.35),
+    0 0 18px rgba(15,133,92,.25),
+    inset 0 0 6px rgba(255,255,255,.06);
+  animation: neonPulseGreen 2.4s ease-in-out infinite;
+}
+@keyframes neonPulseGreen{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 10px rgba(34,197,94,.55); }
+  50%     { filter: brightness(1.12); box-shadow: 0 0 20px rgba(34,220,120,.85); }
 }
 
-.match-card .pill.red,
-.pill.bonus-flashy.neg {
-  background: linear-gradient(145deg, #ef4444 0%, #b91c1c 40%, #7f1d1d 100%);
+/* RED (malus) */
+.match-card .pill.red{
+  border: 1px solid rgba(239,68,68,.6);
+  background: linear-gradient(135deg, #c02626 0%, #8a1f1f 100%);
   box-shadow:
-    0 0 12px rgba(239,68,68,.5),
-    0 0 28px rgba(239,68,68,.35),
-    inset 0 0 6px rgba(255,255,255,.1);
-  border: 1px solid rgba(239,68,68,.7);
-  animation: pulseRed 2.2s ease-in-out infinite;
+    0 0 8px rgba(239,68,68,.35),
+    0 0 18px rgba(139,32,32,.25),
+    inset 0 0 6px rgba(255,255,255,.06);
+  animation: neonPulseRed 2.4s ease-in-out infinite;
 }
-
-@keyframes pulseGreen {
-  0%,100% { filter: brightness(1); transform: scale(1); }
-  50% { filter: brightness(1.15); transform: scale(1.04); }
+@keyframes neonPulseRed{
+  0%,100%{ filter: brightness(1); box-shadow: 0 0 10px rgba(239,68,68,.55); }
+  50%     { filter: brightness(1.12); box-shadow: 0 0 20px rgba(255,92,92,.85); }
 }
-@keyframes pulseRed {
-  0%,100% { filter: brightness(1); transform: scale(1); }
-  50% { filter: brightness(1.15); transform: scale(1.04); }
-}
-
 
 /* Keep the same inner alignment for icon/emoji as blue pill */
 .match-card .pill.green .mini-bonus img,
@@ -2149,6 +2145,7 @@ header > .container > div:last-child{
   .match-card[data-complete="false"] .pill.pill--blue::before,
   .match-card[data-complete="false"] .pill.bonus-flashy::before{ animation: none !important; opacity: .35; }
 }
+
 
 /* === Pilules vertes/rouges — MATCHS UNIQUEMENT (pas le classement) ===== */
 /* Match cards */
