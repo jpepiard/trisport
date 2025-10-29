@@ -3178,11 +3178,9 @@ if (typeof window.pointsForTeamInSport !== 'function') {
 <script>
 /* === Injected by ChatGPT: deterministic bonus recompute (no cross-writes) === */
 (function(){
-  // pure accumulator for a round
   function computeRoundBonuses(r){
-    const rs = (typeof roundState === 'function') ? roundState(r) : null;
-    const matchesOfRound = (window.state && Array.isArray(state.matches) ? state.matches : []).filter(m => m.round === r);
-    const sels = (state && state.bonusSelections && state.bonusSelections[r]) || {};
+    const matchesOfRound = (window.state && Array.isArray(window.state.matches) ? window.state.matches : []).filter(m => m.round === r);
+    const sels = (window.state && window.state.bonusSelections && window.state.bonusSelections[r]) || {};
     const totals = {};
     Object.keys(sels).forEach(tid => totals[tid] = 0);
 
@@ -3192,13 +3190,11 @@ if (typeof window.pointsForTeamInSport !== 'function') {
       return { m, oppId: (m.a===tid ? m.b : m.a) };
     };
 
-    const safeAdd = (tid, val)=>{
-      totals[tid] = (totals[tid] || 0) + (val||0);
-    };
+    const safeAdd = (tid, val)=>{ totals[tid] = (totals[tid] || 0) + (val||0); };
 
     Object.keys(sels).forEach(tid=>{
       const sel = sels[tid]; if(!sel) return;
-      if (state && state.bonusUsed && state.bonusUsed[r] && state.bonusUsed[r][tid]) { safeAdd(tid, 0); return; }
+      if (window.state && window.state.bonusUsed && window.state.bonusUsed[r] && window.state.bonusUsed[r][tid]) { safeAdd(tid, 0); return; }
 
       let add = 0;
       const { m, oppId } = getOpp(tid);
@@ -3250,18 +3246,15 @@ if (typeof window.pointsForTeamInSport !== 'function') {
               if (typeof pointsForTeamInSport === 'function'){
                 const oppPtsInSport = (pointsForTeamInSport(m, oppId, sport) || 0);
                 if (oppPtsInSport >= 5){
-                  add = 5;                  // +5 to robber
-                  safeAdd(oppId, -5);       // -5 to opponent (no direct state write)
+                  add = 5;                 // +5 to robber
+                  safeAdd(oppId, -5);      // -5 to opponent
                 }
               }
             }
           }
           break;
 
-        // taupe/lefthand do not directly change totals; effects applied by braquage above
-        case 'taupe':
-        case 'lefthand':
-        default:
+        default: // taupe / lefthand or unknown
           add = 0;
       }
       safeAdd(tid, add);
@@ -3270,18 +3263,30 @@ if (typeof window.pointsForTeamInSport !== 'function') {
     return totals;
   }
 
-  // expose for other scripts
   window.computeRoundBonuses = computeRoundBonuses;
 
-  // override recomputeAllBonuses to be deterministic
-  const _oldRecompute = window.recomputeAllBonuses;
   window.recomputeAllBonuses = function recomputeAllBonuses(){
     try{
       const s = (typeof window !== 'undefined' ? window.state : undefined) || {};
       const matches = Array.isArray(s.matches) ? s.matches : [];
       const rounds = matches.map(m=>m.round).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
-      s.bonusApplied = s.bonusApplied || {
-  // helper to finalize a round using the pure totals (to be called by your "Terminer la journée" flow)
+      s.bonusApplied = s.bonusApplied || {};
+      rounds.forEach(r=>{
+        const rs = (typeof roundState === 'function') ? roundState(r) : null;
+        if(!rs || !rs.finished) return;
+        const totals = computeRoundBonuses(r);
+        s.bonusApplied[r] = {};
+        Object.keys(totals).forEach(tid => { s.bonusApplied[r][tid] = totals[tid]; });
+      });
+      window.state = s;
+      if (typeof saveState === 'function') saveState();
+      if (typeof renderLeaderboard === 'function') renderLeaderboard();
+      if (typeof renderMatches === 'function') renderMatches();
+    }catch(e){
+      try{ console && console.error && console.error('recomputeAllBonuses error (safe):', e); }catch(_){}
+    }
+  };
+
   window.finalizeRoundWithTotals = function(r){
     try{
       const s = (typeof window !== 'undefined' ? window.state : undefined) || {};
@@ -3291,7 +3296,10 @@ if (typeof window.pointsForTeamInSport !== 'function') {
       Object.keys(totals).forEach(tid => { s.bonusApplied[r][tid] = totals[tid]; });
       s.bonusUsed = s.bonusUsed || {};
       s.bonusUsed[r] = s.bonusUsed[r] || {};
-      Object.keys(totals).forEach(tid => { s.bonusUsed[r][tid] = true; if (typeof markTeamBonusUsed === 'function') markTeamBonusUsed(tid); });
+      Object.keys(totals).forEach(tid => {
+        s.bonusUsed[r][tid] = true;
+        if (typeof markTeamBonusUsed === 'function') markTeamBonusUsed(tid);
+      });
       window.state = s;
       const rs = (typeof roundState === 'function') ? roundState(r) : null;
       if (rs) rs.finished = true;
@@ -3302,19 +3310,7 @@ if (typeof window.pointsForTeamInSport !== 'function') {
       try{ console && console.error && console.error('finalizeRoundWithTotals error (safe):', e); }catch(_){}
     }
   };
-    state.bonusApplied[r] = {};
-    Object.keys(totals).forEach(tid => { state.bonusApplied[r][tid] = totals[tid]; });
-    state.bonusUsed = state.bonusUsed || {};
-    state.bonusUsed[r] = state.bonusUsed[r] || {};
-    Object.keys(totals).forEach(tid => { state.bonusUsed[r][tid] = true; if (typeof markTeamBonusUsed === 'function') markTeamBonusUsed(tid); });
-    const rs = (typeof roundState === 'function') ? roundState(r) : null;
-    if (rs) rs.finished = true;
-    if (typeof saveState === 'function') saveState();
-    if (typeof renderMatches === 'function') renderMatches();
-    if (typeof renderLeaderboard === 'function') renderLeaderboard();
-  };
-})();
-</script>
+})();</script>
 </body>
 <style id="pretty-confirm-modal">
 /* === Pretty Confirm Modal ============================================ */
