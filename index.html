@@ -870,33 +870,52 @@ function computeCapitaineBonusForMatch(match, teamId/*, _player, _sport */){
 function pointsForTeamInSport(m, tid, sport){
   try{
     if(!m || !tid) return 0;
-    var isA = (m.a === tid);
-    var s = sport || 'darts';
-
+    const isA = (m.a === tid);
+    const s = (sport || 'darts');
     if (s === 'darts'){
-      var aw=0, bw=0;
-      var arr = Array.isArray(m.darts) ? m.darts : [];
-      arr.forEach(function(v){ if(v===0) aw++; else if(v===1) bw++; });
+      let aw=0, bw=0;
+      const arr = Array.isArray(m.darts) ? m.darts : [];
+      arr.forEach(v=>{ if(v===0) aw++; else if(v===1) bw++; });
       return (isA ? aw : bw) * 5;
     } else if (s === 'ping'){
-      var awp=0, bwp=0;
-      var pts = (typeof getPingPts === 'function') ? (getPingPts(m) || []) : [];
-      pts.forEach(function(scor){
+      let aw=0, bw=0;
+      const pts = (typeof getPingPts === 'function') ? (getPingPts(m) || []) : [];
+      pts.forEach(scor=>{
         if(!scor) return;
-        var a = (scor.a!=null) ? +scor.a : null;
-        var b = (scor.b!=null) ? +scor.b : null;
-        var valid = (typeof isPingValid === 'function') ? isPingValid(a,b) : (a!=null && b!=null && a!==b);
-        if (!valid) return;
-        if (a>b) awp++; else if (b>a) bwp++;
+        const a = (scor.a!=null) ? +scor.a : null;
+        const b = (scor.b!=null) ? +scor.b : null;
+        if (!isPingValid(a,b)) return;
+        if (a>b) aw++; else if (b>a) bw++;
       });
-      return (isA ? awp : bwp) * 5;
+      return (isA ? aw : bw) * 5;
     } else if (s === 'palet'){
-      var pa = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
-      var pb = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
+      const pa = (m.palet && m.palet.a!=null) ? +m.palet.a : null;
+      const pb = (m.palet && m.palet.b!=null) ? +m.palet.b : null;
       if (pa==null || pb==null) return 0;
       return isA ? pa : pb;
     }
     return 0;
+  }catch(_){ return 0; }
+}
+
+    (getPingPts(match) || []).forEach(s=>{
+      const a = (s && s.a!=null) ? +s.a : null;
+      const b = (s && s.b!=null) ? +s.b : null;
+      if (!isPingValid(a,b)) return;
+      if (a>b && isA) wins++;
+      else if (b>a && isB) wins++;
+    });
+
+    // Palet
+    const target = +((window.state && state.rules && state.rules.paletTarget) ?? 11);
+    const pa = (match.palet && match.palet.a!=null) ? +match.palet.a : null;
+    const pb = (match.palet && match.palet.b!=null) ? +match.palet.b : null;
+    if (pa!=null && pb!=null){
+      if (pa>=target && pa>pb && isA) wins++;
+      else if (pb>=target && pb>pa && isB) wins++;
+    }
+
+    return 2 * wins;
   }catch(e){ return 0; }
 }
 
@@ -1017,8 +1036,8 @@ function recomputeAllBonuses(){
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
                         } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
               const sport = oppSel.sport || 'darts';
-              const myPtsInSport = pointsForTeamInSport(m, oppId, sport);
-              if (myPtsInSport >= 5) {
+              const oppPtsInSport = pointsForTeamInSport(m, oppId, sport);
+              if (oppPtsInSport >= 5) {
                 total = 5;
                 state.bonusApplied[r] = state.bonusApplied[r] || {};
                 const prev = +((state.bonusApplied[r][oppId]) || 0);
@@ -1684,8 +1703,8 @@ if ((state.bonusUsed?.[r]?.[tid])) { setBonusApplied(r, tid, 0); return; }
               total = computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport);
                         } else if (oppSel.type === 'taupe' || oppSel.type === 'lefthand') {
               const sport = oppSel.sport || 'darts';
-              const myPtsInSport = pointsForTeamInSport(m, oppId, sport);
-              if (myPtsInSport >= 5) {
+              const oppPtsInSport = pointsForTeamInSport(m, oppId, sport);
+              if (oppPtsInSport >= 5) {
                 total = 5;
                 state.bonusApplied[r] = state.bonusApplied[r] || {};
                 const prev = +((state.bonusApplied[r][oppId]) || 0);
@@ -1911,24 +1930,9 @@ if (type === 'capitaine') {
   if(typeof renderMatches==='function') renderMatches();
 });
 
-<script>
 /* ===== Boot ===== */
-function renderAll(){
-  renderTitle();
-  updateWho();
-  renderSetupRecent();
-  renderManageList();
-  renderTeams();
-  renderMatches();
-  renderLeaderboard();
-  renderH2H();
-}
-
-document.addEventListener("DOMContentLoaded", function(){
-  try { renderAll(); } catch(e) { /* optionnel: console.error(e); */ }
-});
-</script>
-
+function renderAll(){renderTitle();updateWho();renderSetupRecent();renderManageList();renderTeams();renderMatches();renderLeaderboard();renderH2H()}
+document.addEventListener("DOMContentLoaded",()=>{ try { renderAll(); } catch(e) {} });</script>
 <script>
 (function(){
   function withFallback(img, primary, fall1, fall2){
@@ -1941,24 +1945,19 @@ document.addEventListener("DOMContentLoaded", function(){
         };
         img.src = fall1;
       };
-      // 3e essai: même nom de fichier dans /img local
       img.src = 'img/' + primary.split('/').pop();
     };
   }
-
   function ensureBrandImages(){
     var brand = document.querySelector('header .brand') || document.querySelector('.brand');
     if(!brand) return;
-
     if(!brand.querySelector('img.brand-logo')){
       var logo = document.createElement('img');
       logo.className = 'brand-logo';
       logo.alt = 'TriSports logo';
       brand.prepend(logo);
-      // chemins corrigés
-      withFallback(logo, 'trisports/img/logo.png', 'trisport/img/logo.png', 'img/logo.png');
+      withFallback(logo, 'tripsort/img/logo.png', 'trisport/img/logo.png', 'img/logo.png');
     }
-
     if(!brand.querySelector('img.brand-title')){
       var title = document.createElement('img');
       title.className = 'brand-title';
@@ -1966,27 +1965,22 @@ document.addEventListener("DOMContentLoaded", function(){
       var ref = brand.querySelector('img.brand-logo');
       if(ref && ref.nextSibling){ brand.insertBefore(title, ref.nextSibling); }
       else { brand.appendChild(title); }
-      // chemins corrigés
-      withFallback(title, 'trisports/img/titre.png', 'trisport/img/titre.png', 'img/titre.png');
+      withFallback(title, 'tripsort/img/titre.png', 'trisport/img/titre.png', 'img/titre.png');
     }
   }
-
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', ensureBrandImages);
-  } else {
+  }else{
     ensureBrandImages();
   }
-
   // garder la réécriture d'aide capitaine en async léger
-  document.addEventListener('click', function(){
-    if (typeof rewriteCapitaineHelp==='function') setTimeout(rewriteCapitaineHelp, 0);
-  }, true);
-
+  document.addEventListener('click', function(){ if (typeof rewriteCapitaineHelp==='function') setTimeout(rewriteCapitaineHelp,0); }, true);
+  
   // --- Affichage après révélation : ne pas afficher joueur/sport pour Capitaine ---
   if (typeof window.bonusChip === 'function'){
-    var _origChip = window.bonusChip;
+    const _origChip = window.bonusChip;
     window.bonusChip = function(r, mTeam, rs){
-      var html = _origChip(r, mTeam, rs);
+      const html = _origChip(r, mTeam, rs);
       if (typeof html === 'string' && /Capitaine\s*:?\s*J\d/i.test(html)){
         return html.replace(/Capitaine\s*:?\s*J\d\s*\/\s*(Fléchettes|Ping|Palet)/i, 'Capitaine');
       }
@@ -1994,8 +1988,6 @@ document.addEventListener("DOMContentLoaded", function(){
     };
   }
 })();
-</script>
-
 </script>
 <script id="matchcard-animations-js">
 (function(){
@@ -3509,115 +3501,7 @@ if (typeof window.pointsForTeamInSport !== 'function') {
 
 
 
-</head><script>(function(){
-  function computeRoundBonuses(r){
-    var s = (window && window.state) ? window.state : {};
-    var matches = Array.isArray(s.matches) ? s.matches : [];
-    var matchesOfRound = matches.filter(function(m){ return m.round===r; });
-    var sels = (s.bonusSelections && s.bonusSelections[r]) || {};
-    var totals = {}; Object.keys(sels).forEach(function(tid){ totals[tid]=0; });
-    function getOpp(tid){
-      var m=null, i;
-      for(i=0;i<matchesOfRound.length;i++){ var x=matchesOfRound[i]; if(x.a===tid||x.b===tid){ m=x; break; } }
-      if(!m) return {m:null, oppId:null};
-      return { m: m, oppId: (m.a===tid ? m.b : m.a) };
-    }
-    function safeAdd(tid, val){ totals[tid]=(totals[tid]||0)+(val||0); }
-    Object.keys(sels).forEach(function(tid){
-      var sel=sels[tid]; if(!sel) return;
-      if (s.bonusUsed && s.bonusUsed[r] && s.bonusUsed[r][tid]) { safeAdd(tid,0); return; }
-      var add=0, ref=getOpp(tid), m=ref.m, oppId=ref.oppId, oppSel=oppId?(sels[oppId]||null):null;
-      switch(sel.type){
-        case 'capitaine':
-          if (m && !(oppSel && (oppSel.type==='miroir' || oppSel.type==='braquage'))) {
-            for (var j=0;j<matchesOfRound.length;j++){
-              var mm=matchesOfRound[j];
-              if (typeof computeCapitaineBonusForMatch==='function'){
-                add += (computeCapitaineBonusForMatch(mm, tid, sel.player, sel.sport) || 0);
-              }
-            }
-          } break;
-        case 'melon':
-          if (m && !(oppSel && (oppSel.type==='miroir' || oppSel.type==='braquage'))){
-            if (typeof computeMelonBonusForMatch==='function'){
-              add = (computeMelonBonusForMatch(m, tid, sel.sport) || 0);
-            }
-          } break;
-        case 'miroir':
-          if (m && oppSel && oppSel.type==='melon'){
-            if (typeof computeMelonBonusForMatch==='function'){
-              add = (computeMelonBonusForMatch(m, tid, oppSel.sport) || 0);
-            }
-          } else if (m && oppSel && oppSel.type==='capitaine'){
-            if (typeof computeCapitaineBonusForMatch==='function'){
-              add = (computeCapitaineBonusForMatch(m, tid, oppSel.player, oppSel.sport) || 0);
-            }
-          } break;
-        case 'braquage':
-          if (m && oppSel){
-            if (oppSel.type==='melon'){
-              if (typeof computeMelonBonusForMatch==='function'){
-                add = (computeMelonBonusForMatch(m, oppId, oppSel.sport) || 0);
-              }
-            } else if (oppSel.type==='capitaine'){
-              if (typeof computeCapitaineBonusForMatch==='function'){
-                add = (computeCapitaineBonusForMatch(m, oppId, oppSel.player, oppSel.sport) || 0);
-              }
-            } else if (oppSel.type==='taupe' || oppSel.type==='lefthand'){
-              var sport = sel.sport || (oppSel.sport || 'darts');
-              if (typeof pointsForTeamInSport==='function'){
-                var oppPtsInSport = (pointsForTeamInSport(m, oppId, sport) || 0);
-                if (oppPtsInSport >= 5){ add = 5; safeAdd(oppId, -5); }
-              }
-            }
-          } break;
-        default: add=0;
-      }
-      safeAdd(tid, add);
-    });
-    return totals;
-  }
-  window.computeRoundBonuses = computeRoundBonuses;
-  window.recomputeAllBonuses = function(){
-    try{
-      var s = (window && window.state) ? window.state : (window.state = {});
-      var matches = Array.isArray(s.matches) ? s.matches : [];
-      var uniq = {}, rounds=[], i;
-      for(i=0;i<matches.length;i++){ var r=matches[i].round; if(!uniq[r]){ uniq[r]=1; rounds.push(r); } }
-      rounds.sort(function(a,b){return a-b;});
-      s.bonusApplied = s.bonusApplied || {};
-      for(i=0;i<rounds.length;i++){
-        var rr = rounds[i];
-        var rs = (typeof roundState==='function') ? roundState(rr) : null;
-        if(!rs || !rs.finished) continue;
-        var totals = computeRoundBonuses(rr);
-        s.bonusApplied[rr] = {};
-        Object.keys(totals).forEach(function(tid){ s.bonusApplied[rr][tid] = totals[tid]; });
-      }
-      if (typeof saveState==='function') saveState();
-      if (typeof renderLeaderboard==='function') renderLeaderboard();
-      if (typeof renderMatches==='function') renderMatches();
-    }catch(e){ try{ console.error('recomputeAllBonuses (safe) failed:', e); }catch(_){} }
-  };
-  window.finalizeRoundWithTotals = function(r){
-    try{
-      var s = (window && window.state) ? window.state : (window.state = {});
-      var totals = computeRoundBonuses(r);
-      s.bonusApplied = s.bonusApplied || {}; s.bonusApplied[r] = {};
-      Object.keys(totals).forEach(function(tid){ s.bonusApplied[r][tid] = totals[tid]; });
-      s.bonusUsed = s.bonusUsed || {}; s.bonusUsed[r] = s.bonusUsed[r] || {};
-      Object.keys(totals).forEach(function(tid){
-        s.bonusUsed[r][tid] = true;
-        if (typeof markTeamBonusUsed==='function') markTeamBonusUsed(tid);
-      });
-      var rs = (typeof roundState==='function') ? roundState(r) : null;
-      if (rs) rs.finished = true;
-      if (typeof saveState==='function') saveState();
-      if (typeof renderMatches==='function') renderMatches();
-      if (typeof renderLeaderboard==='function') renderLeaderboard();
-    }catch(e){ try{ console.error('finalizeRoundWithTotals (safe) failed:', e); }catch(_){} }
-  };
-})();</script></html>
+</head></html>
 <style id="rencontres-polish">
 /* Card container */
 .matches, .calendar, .journees, .games { gap: 20px; }
