@@ -1051,7 +1051,7 @@ function recomputeAllBonuses(){
           }
         
         }
-        state.bonusApplied[r][tid] = total;
+        state.bonusApplied[r][tid] = ((state.bonusApplied[r][tid]||0) + total);
       });
     });
   }catch(e){ /* noop */ }
